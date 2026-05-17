@@ -1,5 +1,11 @@
 import { spawn, ChildProcess } from 'child_process';
 import readline from 'readline';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ENV_PATH = path.join(__dirname, '.env');
 
 type ScriptMap = Record<string, string[]>;
 
@@ -81,6 +87,26 @@ async function runInteractive(name: string) {
     showMenu();
 }
 
+function patchEnv(patches: Record<string, string>) {
+    let content = fs.existsSync(ENV_PATH) ? fs.readFileSync(ENV_PATH, 'utf8') : '';
+
+    for (const [key, value] of Object.entries(patches)) {
+        const pattern = new RegExp(`^#?\\s*${key}\\s*=.*$`, 'm');
+        const replacement = `${key}=${value}`;
+        if (pattern.test(content)) {
+            content = content.replace(pattern, replacement);
+        } else {
+            content += `\n${replacement}`;
+        }
+    }
+
+    fs.writeFileSync(ENV_PATH, content, 'utf8');
+    console.log('✅ .env patched:');
+    for (const [key, value] of Object.entries(patches)) {
+        console.log(`   ${key}=${value}`);
+    }
+}
+
 function showMenu() {
     console.log(`
 === Node Launcher ===
@@ -96,6 +122,7 @@ function showMenu() {
 9.  Stop Hiscores
 10. Start Server & Hiscores (Best Option)
 11. Setup (npm run setup)
+12. Patch .env (disable routefinder & build verify)
 0.  Exit
 
 Choose an option:
@@ -153,6 +180,13 @@ async function handleInput(input: string) {
         case '11':
             await runInteractive('setup');
             return; // runInteractive shows the menu after exit
+
+        case '12':
+            patchEnv({
+                NODE_CLIENT_ROUTEFINDER: 'false',
+                BUILD_VERIFY: 'false',
+            });
+            break;
 
         case '0':
             console.log('👋 Exiting...');
