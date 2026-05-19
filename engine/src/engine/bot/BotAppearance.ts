@@ -3,7 +3,7 @@ import InvType from '#/cache/config/InvType.js';
 import { PlayerStat, setVarp } from '#/engine/bot/BotAction.js';
 import { Items, randInt } from '#/engine/bot/tasks/BotTaskBase.js';
 import Player, { getExpByLevel } from '#/engine/entity/Player.js';
-import { check, IDKTypeValid } from '#/engine/script/ScriptValidators.js';
+import { check, IDKTypeValid, GenderValid } from '#/engine/script/ScriptValidators.js';
 
 const SKIN_TONES = [0, 1, 2, 3, 4, 5];
 const HAIR_COLOURS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -37,6 +37,23 @@ function item(id: number, player:Player) {
 }
 
 export class BotAppearance {
+
+     static set_gender(player:Player, gender1:number) {
+        const gender = check(gender1, GenderValid);
+        if(!player) return;
+        for (let i = 0; i < 7; i++) {
+            if (gender === 1) {
+                player.body[i] = Player.MALE_FEMALE_MAP.get(player.body[i]) ?? -1;
+            } else {
+                if (i == 1) {
+                    player.body[i] = 14;
+                    continue;
+                }
+                player.body[i] = Player.FEMALE_MALE_MAP.get(player.body[i]) ?? -1;
+            }
+        }
+        player.gender = gender;
+    }
 
     static set_appearance(player:Player, idkit:number, color:number) {
         const idkType: IdkType = check(idkit, IDKTypeValid);
@@ -75,13 +92,14 @@ export class BotAppearance {
 
         const worn = player.getInventory(InvType.WORN);
         if (!worn) throw new Error('WORN inventory missing');
+        const inv = player.getInventory(InvType.INV);
+        if (!inv) throw new Error('Invalid inv');
 
         // gender
-        const gender = Math.random() < 0.5 ? GENDERS.MALE : GENDERS.FEMALE;
-        player.gender = gender;
-
+        const gender = Math.random() < 0.51 ? GENDERS.MALE : GENDERS.FEMALE;
+        BotAppearance.set_gender(player, gender);
         // appearance
-                if (player.gender === GENDERS.MALE) {
+        if (player.gender === GENDERS.MALE) {
             BotAppearance.set_appearance(player, MAN_HAIR_IDS[randInt(0, MAN_HAIR_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
             BotAppearance.set_appearance(player, MAN_JAW_IDS[randInt(0, MAN_JAW_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
             BotAppearance.set_appearance(player, MAN_TORSO_IDS[randInt(0, MAN_TORSO_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
@@ -92,7 +110,7 @@ export class BotAppearance {
             player.colors[4] = SKIN_TONES[randInt(0, SKIN_TONES.length-1)];
         } else {
             BotAppearance.set_appearance(player, WOMAN_HAIR_IDS[randInt(0, WOMAN_HAIR_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, MAN_JAW_IDS[4], 0); //Always 0 for women? //4 is bald id
+            //BotAppearance.set_appearance(player, MAN_JAW_IDS[4], 0); //Just don't set it
             BotAppearance.set_appearance(player, WOMAN_TORSO_IDS[randInt(0, WOMAN_TORSO_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
             BotAppearance.set_appearance(player, WOMAN_ARMS_IDS[randInt(0, WOMAN_ARMS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
             BotAppearance.set_appearance(player, WOMAN_LEGS_IDS[randInt(0, WOMAN_LEGS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
@@ -100,7 +118,7 @@ export class BotAppearance {
             BotAppearance.set_appearance(player, WOMAN_HANDS_IDS[randInt(0, WOMAN_HANDS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
             player.colors[4] = SKIN_TONES[randInt(0, SKIN_TONES.length-1)];
         }
-
+       
         worn.set(3, item(pick(STARTER_WEAPONS), player)); // weapon
         //^ I believe the login script already does this ^
 
