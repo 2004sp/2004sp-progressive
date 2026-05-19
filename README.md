@@ -243,8 +243,9 @@ This project is **fully open source** and available under the same license as Lo
 
 **Development Team:**
 - **attackishere** - lead developer
-- **_mrsam** - Bot AI system, world interaction
+- **_mrsam** - trading, bot ai, lots more
 - **K-andy** - bot phrases
+- **callum** - node switch
 
 **Built on:**
 - [Lost City 2004](https://github.com/LostCityRS) - Open-source RuneScape 2004 reimplementation
