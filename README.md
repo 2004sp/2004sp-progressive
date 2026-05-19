@@ -49,8 +49,7 @@ Experience the nostalgia of early RuneScape while enjoying modern quality-of-lif
 ## 🚀 Quick Start
 
 ### Requirements
-- **Bun**: Included with installation package
-- **Node.js**: Optional for development
+- **Node.js**
 
 ### Installation
 
