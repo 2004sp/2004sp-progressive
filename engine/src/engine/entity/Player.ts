@@ -1918,7 +1918,13 @@ export default class Player extends PathingEntity {
             return;
         }
 
-        const multi = allowMulti ? Environment.NODE_XPRATE : 1;
+        let multi = allowMulti ? Environment.NODE_XPRATE : 1;
+        if (allowMulti && Environment.NODE_PROGRESSIVE_XP) {
+            // Square-root curve: level 1 = 1x, level 99 = NODE_PROGRESSIVE_XP_SCALE x.
+            const currentLevel = this.baseLevels[stat];
+            const scale = Environment.NODE_PROGRESSIVE_XP_SCALE;
+            multi *= 1 + Math.sqrt((currentLevel - 1) / 98) * (scale - 1);
+        }
         this.stats[stat] += xp * multi;
 
         // cap to 200m, this is represented as "2 billion" because we use 32-bit signed integers and divide by 10 to give us a decimal point
