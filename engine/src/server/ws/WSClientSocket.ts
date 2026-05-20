@@ -3,6 +3,7 @@ import ClientSocket from '#/server/ClientSocket.js';
 
 export default class WSClientSocket extends ClientSocket {
     socket: WebSocket | null = null;
+    private _closeTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor() {
         super();
@@ -23,7 +24,7 @@ export default class WSClientSocket extends ClientSocket {
         // give time to acknowledge and receive packets
         this.state = -1;
 
-        setTimeout(() => {
+        this._closeTimer = setTimeout(() => {
             if (this.socket) {
                 this.socket.close();
             }
@@ -32,6 +33,11 @@ export default class WSClientSocket extends ClientSocket {
 
     terminate(): void {
         this.state = -1;
+
+        if (this._closeTimer) {
+            clearTimeout(this._closeTimer);
+            this._closeTimer = undefined;
+        }
 
         if (this.socket) {
             this.socket.terminate();
