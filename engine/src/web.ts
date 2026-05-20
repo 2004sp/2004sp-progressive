@@ -240,9 +240,15 @@ export async function startWeb() {
                 }
             });
 
+            ws.on('error', () => {
+                ws.terminate();
+            });
+
             ws.on('close', () => {
                 const { client } = data;
                 client.state = -1;
+
+                World.loginRequests.delete(client.uuid);
 
                 if (client.player) {
                     client.player.addSessionLog(LoggerEventType.ENGINE, 'WS socket closed');
