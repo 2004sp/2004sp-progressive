@@ -41,6 +41,7 @@ import { WaterFillingTask } from '#/engine/bot/tasks/WaterFillingTask.js';
 import { SocialTask } from '#/engine/bot/tasks/SocialTask.js';
 import { VendorTask } from '#/engine/bot/tasks/VendorTask.js';
 import { PKerTask } from '#/engine/bot/tasks/PKerTask.js';
+import { AgilityTask } from '#/engine/bot/tasks/AgilityTask.js';
 
 // ── Personality ───────────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ export const Personalities: Record<string, BotPersonality> = {
             FLETCHING: 17,   // 65% share of the fletch/FM pair
             RUNECRAFT: 5,    // unlocks once a talisman drops
             HERBLORE: 8,     // requires guams (chaos druid drops) + coins for vials/newts
+            AGILITY: 10,
         }
     },
     FIGHTER: {
@@ -97,6 +99,7 @@ export const Personalities: Record<string, BotPersonality> = {
             FLETCHING: 24,   // 65% share of the fletch/FM pair
             RUNECRAFT: 8,    // unlocks once a talisman drops
             HERBLORE: 6,     // requires guams (chaos druid drops) + coins
+            AGILITY: 8,
         }
     }
 };
@@ -120,7 +123,8 @@ const SKILL_STAT: Record<string, PlayerStat> = {
     MINING: PlayerStat.MINING,
     THIEVING: PlayerStat.THIEVING,
     RUNECRAFT: PlayerStat.RUNECRAFT,
-    HERBLORE: PlayerStat.HERBLORE
+    HERBLORE: PlayerStat.HERBLORE,
+    AGILITY: PlayerStat.AGILITY,
 };
 
 // Only skills with content implemented in BotKnowledge.ts
@@ -333,6 +337,7 @@ export class BotGoalPlanner {
                 if (step.action === 'fish') return new FishingTask(step);
                 if (step.action === 'firemaking') return new FiremakingTask(step);
                 if (step.action === 'smelt' || step.action === 'smith') return new SmithingTask(step);
+                if (step.action === 'agility') return new AgilityTask(step);
                 if (step.action === 'thieve') return new ThievingTask(step);
                 if (step.action === 'herblore_attack') {
                     // Require guams (chaos druid drops) — no guams, no herblore.

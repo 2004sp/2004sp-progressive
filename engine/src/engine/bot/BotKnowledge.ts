@@ -573,7 +573,9 @@ export const Objects = {
 
 export interface AgilityObstacle {
     name: string;
-    op: number;
+    op: 1 | 2 | 3 | 4 | 5;
+    /** Z offset from the loc tile to stand on before interacting (negative = south). */
+    approachDz?: number;
 }
 
 export const AgilityCourses: Record<string, AgilityObstacle[]> = {
@@ -583,8 +585,8 @@ export const AgilityCourses: Record<string, AgilityObstacle[]> = {
         { name: 'gnome_tree_branch_1', op: 1 },
         { name: 'gnome_balancing_rope', op: 1 },
         { name: 'gnome_tree_branch_2', op: 1 },
-        { name: 'gnome_obstacle_net_2', op: 1 },
-        { name: 'gnome_obstacle_pipe', op: 1 }
+        { name: 'gnome_obstacle_net_2', op: 1, approachDz: -1 },
+        { name: 'gnome_obstacle_pipe', op: 1, approachDz: -1 }
     ],
     BARBARIAN: [
         { name: 'barbarian_rope_swing', op: 1 },
