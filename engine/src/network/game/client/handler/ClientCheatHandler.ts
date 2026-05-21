@@ -105,6 +105,22 @@ export default class ClientCheatHandler extends ClientGameMessageHandler<ClientC
         return true;
     }
 
+    private addItem(args: string[], player: Player): boolean {
+        if (args.length < 1) {
+            return false;
+        }
+
+        const obj = tryParseInt(args[0], -1);
+        if (obj < 0 || obj >= ObjType.count) {
+            return false;
+        }
+
+        const count = Math.max(1, Math.min(tryParseInt(args[1], 1), 0x7fffffff));
+        player.invAdd(InvType.INV, obj, count, false);
+
+        return true;
+    }
+
     handle(message: ClientCheat, player: Player): boolean {
         if (message.input.length > 80) {
             return false;
@@ -129,6 +145,10 @@ export default class ClientCheatHandler extends ClientGameMessageHandler<ClientC
                 // debugprocs are NOT allowed on live ;)
                 if (cmd.slice(1) === 'tele') {
                     return this.teleportPlayer(args, player);
+                }
+
+                if (cmd.slice(1) === 'additem') {
+                    return this.addItem(args, player);
                 }
 
                 const script = ScriptProvider.getByName(`[debugproc,${cmd.slice(1)}]`);
