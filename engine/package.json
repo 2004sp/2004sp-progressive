@@ -32,7 +32,7 @@
   },
   "lint-staged": {
     "*.{js,ts}": [
-      "bun run lint:staged"
+      "npm run lint:staged"
     ]
   },
   "dependencies": {
