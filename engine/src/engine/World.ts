@@ -107,6 +107,7 @@ const priv = forge.pki.privateKeyFromPem(fs.readFileSync('data/config/private.pe
 type LogoutRequest = {
     save: Uint8Array;
     lastAttempt: number;
+    createdAt: number;
 };
 
 class World {
@@ -838,14 +839,24 @@ class World {
         player: for (const player of this.newPlayers) {
             // prevent logging in if a player save is being flushed
             if (this.logoutRequests.has(player.username)) {
-                player.addSessionLog(LoggerEventType.ENGINE, 'Tried to log in - old session is mid-logout');
+                const request = this.logoutRequests.get(player.username)!;
+                if (request.createdAt < Date.now() - Environment.NODE_HOP_TIME) {
+                    this.logoutRequests.delete(player.username);
+                } else {
+                    player.addSessionLog(LoggerEventType.ENGINE, 'Tried to log in - old session is mid-logout');
 
-                if (isClientConnected(player)) {
-                    player.client.send(Uint8Array.from([5]));
-                    player.client.close();
+                    if (isClientConnected(player)) {
+                        player.client.send(Uint8Array.from([5]));
+                        player.client.close();
+                    }
+
+                    this.loginThread.postMessage({
+                        type: 'player_force_logout',
+                        username: player.username
+                    });
+
+                    continue;
                 }
-
-                continue;
             }
 
             // reconnect a new socket with player in the world
@@ -1902,7 +1913,12 @@ class World {
             }
 
             const { username, lowMemory, reconnecting, staffmodlevel, muted_until, members, messageCount } = msg;
-            const save = msg.save ?? new Uint8Array();
+            const pendingLogout = this.logoutRequests.get(username);
+            const pendingLogoutExpired = pendingLogout && pendingLogout.createdAt < Date.now() - Environment.NODE_HOP_TIME;
+            const save = pendingLogoutExpired ? pendingLogout.save : msg.save ?? new Uint8Array();
+            if (pendingLogoutExpired) {
+                this.logoutRequests.delete(username);
+            }
 
             // if (reconnecting && !this.getPlayerByUsername(username)) {
             //     // rejected
@@ -1932,6 +1948,10 @@ class World {
                     // already logged in (on another world)
                     client.send(Uint8Array.from([5]));
                     client.close();
+                    this.loginThread.postMessage({
+                        type: 'player_force_logout',
+                        username: username
+                    });
                     return;
                 }
 
@@ -2235,13 +2255,6 @@ class World {
                 return;
             }
 
-            if (this.logoutRequests.has(username)) {
-                // still trying to log out from the last session on this world!
-                client.send(Uint8Array.from([5]));
-                client.close();
-                return;
-            }
-
             const safeName = toSafeName(username);
 
             this.loginRequests.set(client.uuid, client);
@@ -2372,7 +2385,8 @@ class World {
 
         this.logoutRequests.set(player.username, {
             save,
-            lastAttempt: -1
+            lastAttempt: -1,
+            createdAt: Date.now()
         });
     }
 }
