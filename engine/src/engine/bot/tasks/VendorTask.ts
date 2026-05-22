@@ -11,7 +11,8 @@ import {
     interactIfButtonByName,
     interactPlayerOp,
 } from '#/engine/bot/BotAction.js';
-import { Interfaces, Items, Locations } from '#/engine/bot/BotKnowledge.js';
+import ObjType from '#/cache/config/ObjType.js';
+import { Interfaces, Items } from '#/engine/bot/BotKnowledge.js';
 import {
     BotTask,
     Player,
@@ -31,125 +32,125 @@ const BUYBACK_RATE = 0.7;
 const STARTING_VENDOR_COINS = 500_000_000;
 
 interface VendorStock {
-    notedId: number;
+    itemId: number;
     name: string;
     priceEach: number;
 }
 
 const VENDOR_ITEMS: VendorStock[] = [
-// 🔥 High-tier weapons & gear
-{ notedId: Items.RUNE_SCIMITAR + 1, name: 'Rune scimitar', priceEach: 25000 },
-{ notedId: Items.RUNE_2H_SWORD + 1, name: 'Rune 2h sword', priceEach: 40000 },
-{ notedId: Items.RUNE_LONGSWORD + 1, name: 'Rune longsword', priceEach: 32000 },
-{ notedId: Items.RUNE_KITESHIELD + 1, name: 'Rune kiteshield', priceEach: 35000 },
+    // 🔥 High-tier weapons & gear
+    { itemId: Items.RUNE_SCIMITAR, name: 'Rune scimitar', priceEach: 25000 },
+    { itemId: Items.RUNE_2H_SWORD, name: 'Rune 2h sword', priceEach: 40000 },
+    { itemId: Items.RUNE_LONGSWORD, name: 'Rune longsword', priceEach: 32000 },
+    { itemId: Items.RUNE_KITESHIELD, name: 'Rune kiteshield', priceEach: 35000 },
 
-{ notedId: Items.DRAGON_DAGGER + 1, name: 'Dragon dagger', priceEach: 60000 },
-{ notedId: Items.DRAGON_MED_HELM + 1, name: 'Dragon med helm', priceEach: 100000 },
-{ notedId: Items.DRAGON_SQ_SHIELD + 1, name: 'Dragon sq shield', priceEach: 150000 },
+    { itemId: Items.DRAGON_DAGGER, name: 'Dragon dagger', priceEach: 60000 },
+    { itemId: Items.DRAGON_MED_HELM, name: 'Dragon med helm', priceEach: 100000 },
+    { itemId: Items.DRAGON_SQ_SHIELD, name: 'Dragon sq shield', priceEach: 150000 },
 
-// 🏹 Ranged BIS
-{ notedId: Items.MAGIC_SHORTBOW + 1, name: 'Magic shortbow', priceEach: 30000 },
-{ notedId: Items.MAGIC_LONGBOW + 1, name: 'Magic longbow', priceEach: 25000 },
-{ notedId: Items.RUNE_ARROWHEADS + 1, name: 'Rune arrowheads', priceEach: 400 },
-{ notedId: Items.ADAMANT_ARROWHEADS + 1, name: 'Adamant arrowheads', priceEach: 200 },
+    // 🏹 Ranged BIS
+    { itemId: Items.MAGIC_SHORTBOW, name: 'Magic shortbow', priceEach: 30000 },
+    { itemId: Items.MAGIC_LONGBOW, name: 'Magic longbow', priceEach: 25000 },
+    { itemId: Items.RUNE_ARROWHEADS, name: 'Rune arrowheads', priceEach: 400 },
+    { itemId: Items.ADAMANT_ARROWHEADS, name: 'Adamant arrowheads', priceEach: 200 },
 
-// 🧙 Magic essentials
-{ notedId: Items.DEATH_RUNE + 1, name: 'Death rune', priceEach: 400 },
-{ notedId: Items.BLOOD_RUNE + 1, name: 'Blood rune', priceEach: 500 },
-{ notedId: Items.CHAOS_RUNE + 1, name: 'Chaos rune', priceEach: 120 },
-{ notedId: Items.NATURE_RUNE + 1, name: 'Nature rune', priceEach: 250 },
-{ notedId: Items.LAW_RUNE + 1, name: 'Law rune', priceEach: 300 },
-{ notedId: Items.COSMIC_RUNE + 1, name: 'Cosmic rune', priceEach: 150 },
+    // 🧙 Magic essentials
+    { itemId: Items.DEATH_RUNE, name: 'Death rune', priceEach: 400 },
+    { itemId: Items.BLOOD_RUNE, name: 'Blood rune', priceEach: 500 },
+    { itemId: Items.CHAOS_RUNE, name: 'Chaos rune', priceEach: 120 },
+    { itemId: Items.NATURE_RUNE, name: 'Nature rune', priceEach: 250 },
+    { itemId: Items.LAW_RUNE, name: 'Law rune', priceEach: 300 },
+    { itemId: Items.COSMIC_RUNE, name: 'Cosmic rune', priceEach: 150 },
 
-// QUEST ITEMS
-{ notedId: Items.ARRAV_SHIELD_LEFT + 1, name: 'Arrav Shield Left', priceEach: 1500 },
-{ notedId: Items.ARRAV_SHIELD_RIGHT+ 1, name: 'Arrav Shield Right', priceEach: 1500 },
-{ notedId: Items.PETE_CANDLESTICK + 1, name: 'Petes Candlestick', priceEach: 25000 },
-{ notedId: Items.MISC_KEY_HERO + 1, name: 'Miscellaneous Key', priceEach: 25000 },
+    // QUEST ITEMS
+    { itemId: Items.ARRAV_SHIELD_LEFT, name: 'Arrav Shield Left', priceEach: 1500 },
+    { itemId: Items.ARRAV_SHIELD_RIGHT, name: 'Arrav Shield Right', priceEach: 1500 },
+    { itemId: Items.PETE_CANDLESTICK, name: 'Petes Candlestick', priceEach: 25000 },
+    { itemId: Items.MISC_KEY_HERO, name: 'Miscellaneous Key', priceEach: 25000 },
 
-// 🧪 Potions (huge utility)
-{ notedId: Items.PRAYER_POTION_3 + 1, name: 'Prayer potion (3)', priceEach: 8000 },
-{ notedId: Items.STRENGTH_POTION_3 + 1, name: 'Strength potion (3)', priceEach: 3000 },
-{ notedId: Items.ATTACK_POTION_3 + 1, name: 'Attack potion (3)', priceEach: 1500 },
-{ notedId: Items.ANTIPOISON_POTION_3 + 1, name: 'Antipoison (3)', priceEach: 2000 },
-{ notedId: Items.RESTORE_POTION_3 + 1, name: 'Restore potion (3)', priceEach: 2500 },
+    // 🧪 Potions (huge utility)
+    { itemId: Items.PRAYER_POTION_3, name: 'Prayer potion (3)', priceEach: 8000 },
+    { itemId: Items.STRENGTH_POTION_3, name: 'Strength potion (3)', priceEach: 3000 },
+    { itemId: Items.ATTACK_POTION_3, name: 'Attack potion (3)', priceEach: 1500 },
+    { itemId: Items.ANTIPOISON_POTION_3, name: 'Antipoison (3)', priceEach: 2000 },
+    { itemId: Items.RESTORE_POTION_3, name: 'Restore potion (3)', priceEach: 2500 },
 
-// 🍖 Food meta
-{ notedId: Items.RAW_SHARK + 1, name: 'Raw shark', priceEach: 1000 },
-{ notedId: Items.RAW_MANTA_RAY + 1, name: 'Raw manta ray', priceEach: 1200 },
-{ notedId: Items.RAW_SEA_TURTLE + 1, name: 'Raw sea turtle', priceEach: 1100 },
-{ notedId: Items.SWORDFISH + 1, name: 'Swordfish', priceEach: 400 },
+    // 🍖 Food meta
+    { itemId: Items.RAW_SHARK, name: 'Raw shark', priceEach: 1000 },
+    { itemId: Items.RAW_MANTA_RAY, name: 'Raw manta ray', priceEach: 1200 },
+    { itemId: Items.RAW_SEA_TURTLE, name: 'Raw sea turtle', priceEach: 1100 },
+    { itemId: Items.SWORDFISH, name: 'Swordfish', priceEach: 400 },
 
-// ⛏️ Skilling core
-{ notedId: Items.RUNE_ESSENCE + 1, name: 'Rune essence', priceEach: 50 },
-{ notedId: Items.COAL + 1, name: 'Coal', priceEach: 700 },
-{ notedId: Items.MITHRIL_ORE + 1, name: 'Mithril ore', priceEach: 600 },
-{ notedId: Items.IRON_ORE + 1, name: 'Iron ore', priceEach: 300 },
+    // ⛏️ Skilling core
+    { itemId: Items.RUNE_ESSENCE, name: 'Rune essence', priceEach: 50 },
+    { itemId: Items.COAL, name: 'Coal', priceEach: 700 },
+    { itemId: Items.MITHRIL_ORE, name: 'Mithril ore', priceEach: 600 },
+    { itemId: Items.IRON_ORE, name: 'Iron ore', priceEach: 300 },
 
-// 🌲 Logs progression
-{ notedId: Items.LOGS + 1, name: 'Logs', priceEach: 100 },
-{ notedId: Items.OAK_LOGS + 1, name: 'Oak logs', priceEach: 150 },
-{ notedId: Items.WILLOW_LOGS + 1, name: 'Willow logs', priceEach: 200 },
-{ notedId: Items.MAPLE_LOGS + 1, name: 'Maple logs', priceEach: 300 },
-{ notedId: Items.YEW_LOGS + 1, name: 'Yew logs', priceEach: 500 },
-{ notedId: Items.MAGIC_LOGS + 1, name: 'Magic logs', priceEach: 1000 },
+    // 🌲 Logs progression
+    { itemId: Items.LOGS, name: 'Logs', priceEach: 100 },
+    { itemId: Items.OAK_LOGS, name: 'Oak logs', priceEach: 150 },
+    { itemId: Items.WILLOW_LOGS, name: 'Willow logs', priceEach: 200 },
+    { itemId: Items.MAPLE_LOGS, name: 'Maple logs', priceEach: 300 },
+    { itemId: Items.YEW_LOGS, name: 'Yew logs', priceEach: 500 },
+    { itemId: Items.MAGIC_LOGS, name: 'Magic logs', priceEach: 1000 },
 
-// 💎 Crafting / money makers
-{ notedId: Items.UNCUT_DIAMOND + 1, name: 'Uncut diamond', priceEach: 2000 },
-{ notedId: Items.UNCUT_RUBY + 1, name: 'Uncut ruby', priceEach: 1200 },
-{ notedId: Items.UNCUT_EMERALD + 1, name: 'Uncut emerald', priceEach: 800 },
-{ notedId: Items.UNCUT_SAPPHIRE + 1, name: 'Uncut sapphire', priceEach: 500 },
-{ notedId: Items.DRAGONSTONE + 1, name: 'Dragonstone', priceEach: 10000 },
+    // 💎 Crafting / money makers
+    { itemId: Items.UNCUT_DIAMOND, name: 'Uncut diamond', priceEach: 2000 },
+    { itemId: Items.UNCUT_RUBY, name: 'Uncut ruby', priceEach: 1200 },
+    { itemId: Items.UNCUT_EMERALD, name: 'Uncut emerald', priceEach: 800 },
+    { itemId: Items.UNCUT_SAPPHIRE, name: 'Uncut sapphire', priceEach: 500 },
+    { itemId: Items.DRAGONSTONE, name: 'Dragonstone', priceEach: 10000 },
 
-// 🧪 Herblore secondaries (high demand)
-{ notedId: Items.EYE_OF_NEWT + 1, name: 'Eye of newt', priceEach: 300 },
-{ notedId: Items.SNAPE_GRASS + 1, name: 'Snape grass', priceEach: 800 },
-{ notedId: Items.LIMPWURT_ROOT + 1, name: 'Limpwurt root', priceEach: 700 },
-{ notedId: Items.RED_SPIDERS_EGGS + 1, name: 'Red spiders eggs', priceEach: 900 },
+    // 🧪 Herblore secondaries (high demand)
+    { itemId: Items.EYE_OF_NEWT, name: 'Eye of newt', priceEach: 300 },
+    { itemId: Items.SNAPE_GRASS, name: 'Snape grass', priceEach: 800 },
+    { itemId: Items.LIMPWURT_ROOT, name: 'Limpwurt root', priceEach: 700 },
+    { itemId: Items.RED_SPIDERS_EGGS, name: 'Red spiders eggs', priceEach: 900 },
 
-// 🌿 High-tier herbs
-{ notedId: Items.GRIMY_RANARR + 1, name: 'Grimy ranarr', priceEach: 8000 },
-{ notedId: Items.GRIMY_KWUARM + 1, name: 'Grimy kwuarm', priceEach: 5000 },
-{ notedId: Items.GRIMY_CADANTINE + 1, name: 'Grimy cadantine', priceEach: 6000 },
-{ notedId: Items.GRIMY_TORSTOL + 1, name: 'Grimy torstol', priceEach: 10000 },
+    // 🌿 High-tier herbs
+    { itemId: Items.GRIMY_RANARR, name: 'Grimy ranarr', priceEach: 8000 },
+    { itemId: Items.GRIMY_KWUARM, name: 'Grimy kwuarm', priceEach: 5000 },
+    { itemId: Items.GRIMY_CADANTINE, name: 'Grimy cadantine', priceEach: 6000 },
+    { itemId: Items.GRIMY_TORSTOL, name: 'Grimy torstol', priceEach: 10000 },
 
-// 🦴 Prayer training
-{ notedId: Items.DRAGON_BONES + 1, name: 'Dragon bones', priceEach: 3000 },
-{ notedId: Items.BABYDRAGON_BONES + 1, name: 'Babydragon bones', priceEach: 1500 },
-{ notedId: Items.BIG_BONES + 1, name: 'Big bones', priceEach: 300 },
+    // 🦴 Prayer training
+    { itemId: Items.DRAGON_BONES, name: 'Dragon bones', priceEach: 3000 },
+    { itemId: Items.BABYDRAGON_BONES, name: 'Babydragon bones', priceEach: 1500 },
+    { itemId: Items.BIG_BONES, name: 'Big bones', priceEach: 300 },
 
-// 🧵 Fletching essentials
-{ notedId: Items.BOW_STRING + 1, name: 'Bow string', priceEach: 200 },
-{ notedId: Items.ARROW_SHAFT + 1, name: 'Arrow shaft', priceEach: 20 },
+    // 🧵 Fletching essentials
+    { itemId: Items.BOW_STRING, name: 'Bow string', priceEach: 200 },
+    { itemId: Items.ARROW_SHAFT, name: 'Arrow shaft', priceEach: 20 },
 
-// 🛡️ Mid-tier gear (progression)
-{ notedId: Items.ADAMANT_PLATEBODY + 1, name: 'Adamant platebody', priceEach: 40000 },
-{ notedId: Items.MITHRIL_PLATEBODY + 1, name: 'Mithril platebody', priceEach: 20000 },
-{ notedId: Items.BLACK_PLATEBODY + 1, name: 'Black platebody', priceEach: 10000 },
+    // 🛡️ Mid-tier gear (progression)
+    { itemId: Items.ADAMANT_PLATEBODY, name: 'Adamant platebody', priceEach: 40000 },
+    { itemId: Items.MITHRIL_PLATEBODY, name: 'Mithril platebody', priceEach: 20000 },
+    { itemId: Items.BLACK_PLATEBODY, name: 'Black platebody', priceEach: 10000 },
 
-{ notedId: Items.ADAMANT_SCIMITAR + 1, name: 'Adamant scimitar', priceEach: 12000 },
-{ notedId: Items.MITHRIL_SCIMITAR + 1, name: 'Mithril scimitar', priceEach: 6000 },
+    { itemId: Items.ADAMANT_SCIMITAR, name: 'Adamant scimitar', priceEach: 12000 },
+    { itemId: Items.MITHRIL_SCIMITAR, name: 'Mithril scimitar', priceEach: 6000 },
 
-// 🎯 Extra economy fillers (useful bulk items)
-{ notedId: Items.CAKE + 1, name: 'Cake', priceEach: 100 },
+    // 🎯 Extra economy fillers (useful bulk items)
+    { itemId: Items.CAKE, name: 'Cake', priceEach: 100 },
 
-// 🧪 Supplies
-{ notedId: Items.VIAL_OF_WATER + 1, name: 'Vial of water', priceEach: 50 },
+    // 🧪 Supplies
+    { itemId: Items.VIAL_OF_WATER, name: 'Vial of water', priceEach: 50 },
 
-{ notedId: Items.SOFT_CLAY + 1, name: 'Soft clay', priceEach: 200 },
-{ notedId: Items.BUCKET_OF_WATER + 1, name: 'Bucket of water', priceEach: 50 },
-{ notedId: Items.JUG_OF_WATER + 1, name: 'Jug of water', priceEach: 50 },
-    { notedId: Items.BLUE_PARTYHAT + 1,  name: 'Blue Partyhat',   priceEach: 100000000  },
-    { notedId: Items.RED_PARTYHAT + 1,  name: 'Red Partyhat',   priceEach: 100000000   },
-    { notedId: Items.WHITE_PARTYHAT + 1,  name: 'White Partyhat',   priceEach: 100000000   },
-    { notedId: Items.PURPLE_PARTYHAT + 1,  name: 'Purple Partyhat',   priceEach: 100000000   },
-    { notedId: Items.GREEN_PARTYHAT + 1,  name: 'Green Partyhat',   priceEach: 100000000  },
-    { notedId: Items.WHITE_PARTYHAT + 1,  name: 'White Partyhat',   priceEach: 100000000   },
-    { notedId: Items.YELLOW_PARTYHAT + 1,  name: 'Yellow Partyhat',   priceEach: 100000000  },
-    { notedId: Items.RED_HALLOWEEN_MASK + 1,  name: 'Red Halloween Mask',   priceEach: 100000000  },
-    { notedId: Items.BLUE_HALLOWEEN_MASK + 1,  name: 'Blue Halloween Mask',   priceEach: 100000000 },
-    { notedId: Items.GREEN_HALLOWEEN_MASK + 1,  name: 'Green Halloween Mask',   priceEach: 100000000 },
-    { notedId: Items.SANTA_HAT + 1,  name: 'Santa Hat',   priceEach: 100000000   },
+    { itemId: Items.SOFT_CLAY, name: 'Soft clay', priceEach: 200 },
+    { itemId: Items.BUCKET_OF_WATER, name: 'Bucket of water', priceEach: 50 },
+    { itemId: Items.JUG_OF_WATER, name: 'Jug of water', priceEach: 50 },
+    { itemId: Items.BLUE_PARTYHAT,  name: 'Blue Partyhat',   priceEach: 100000000  },
+    { itemId: Items.RED_PARTYHAT,  name: 'Red Partyhat',   priceEach: 100000000   },
+    { itemId: Items.WHITE_PARTYHAT,  name: 'White Partyhat',   priceEach: 100000000   },
+    { itemId: Items.PURPLE_PARTYHAT,  name: 'Purple Partyhat',   priceEach: 100000000   },
+    { itemId: Items.GREEN_PARTYHAT,  name: 'Green Partyhat',   priceEach: 100000000  },
+    { itemId: Items.WHITE_PARTYHAT,  name: 'White Partyhat',   priceEach: 100000000   },
+    { itemId: Items.YELLOW_PARTYHAT,  name: 'Yellow Partyhat',   priceEach: 100000000  },
+    { itemId: Items.RED_HALLOWEEN_MASK,  name: 'Red Halloween Mask',   priceEach: 100000000  },
+    { itemId: Items.BLUE_HALLOWEEN_MASK,  name: 'Blue Halloween Mask',   priceEach: 100000000 },
+    { itemId: Items.GREEN_HALLOWEEN_MASK,  name: 'Green Halloween Mask',   priceEach: 100000000 },
+    { itemId: Items.SANTA_HAT,  name: 'Santa Hat',   priceEach: 100000000   },
     
 ];
 
@@ -286,15 +287,17 @@ export class VendorTask extends BotTask {
 
         // Pick a random stock item and give it to the bot.
         const picked = VENDOR_ITEMS[Math.floor(Math.random() * VENDOR_ITEMS.length)];
+        const pickedTradeId = this._tradeItemId(picked);
+        const pickedObj = ObjType.get(pickedTradeId);
         this.stock = picked;
-        this.itemCount = randInt(5000, 8000);
+        this.itemCount = pickedObj?.stackable ? randInt(5000, 8000) : 1;
         this.stockMax = this.itemCount;
 
         if (inv) {
-            inv.add(picked.notedId, this.itemCount);
+            inv.add(pickedTradeId, this.itemCount);
         }
 
-        console.log(`[VendorTask] ${player.displayName} stocking ${this.itemCount}x noted ${picked.name} @ ${picked.priceEach}gp ea`);
+        console.log(`[VendorTask] ${player.displayName} stocking ${this.itemCount}x ${this._stockOfferName(picked)} @ ${picked.priceEach}gp ea`);
 
         this.state = 'walk';
         this.cooldown = randInt(2, 4);
@@ -339,15 +342,17 @@ export class VendorTask extends BotTask {
         // Announce stock, always including the bot's name so players know who is selling.
         const name = player.displayName;
         const buyPrice = Math.floor(this.stock.priceEach * BUYBACK_RATE);
+        const offerName = this._stockOfferName(this.stock);
+        const buysNotes = this._isNotedStock(this.stock);
         const roll = Math.random();
         if (roll < 0.3) {
-            player.say(`${name}: Selling ${this.itemCount}x noted ${this.stock.name} @ ${this.stock.priceEach}gp ea`);
+            player.say(`${name}: Selling ${this.itemCount}x ${offerName} @ ${this.stock.priceEach}gp ea`);
         } else if (roll < 0.5) {
-            player.say(`${name}: ${this.stock.name} (noted) ${this.stock.priceEach}gp ea | trade me`);
+            player.say(`${name}: ${offerName} ${this.stock.priceEach}gp ea | trade me`);
         } else if (roll < 0.65) {
-            player.say(`${name} WTS ${this.itemCount} noted ${this.stock.name} - ${this.stock.priceEach}gp ea`);
-        } else if (roll < 0.80) {
-            player.say(`${name}: Also buying ${this.stock.name} @ ${buyPrice}gp ea! Trade me to sell.`);
+            player.say(`${name} WTS ${this.itemCount} ${offerName} - ${this.stock.priceEach}gp ea`);
+        } else if (roll < 0.80 && buysNotes) {
+            player.say(`${name}: Also buying noted ${this.stock.name} @ ${buyPrice}gp ea! Trade me to sell.`);
         }
 
         this.watchdog.notifyActivity();
@@ -362,7 +367,8 @@ export class VendorTask extends BotTask {
         }
 
         const buybackPrice = this.stock ? Math.floor(this.stock.priceEach * BUYBACK_RATE) : 0;
-        player.say(`Hi ${target.displayName}! Selling ${this.stock?.name ?? 'items'} @ ${this.stock?.priceEach ?? 0}gp ea. Also buying @ ${buybackPrice}gp ea. Put up coins to buy, or items to sell!`);
+        const buybackText = this.stock && this._isNotedStock(this.stock) ? ` Also buying noted ${this.stock.name} @ ${buybackPrice}gp ea.` : '';
+        player.say(`Hi ${target.displayName}! Selling ${this.stock?.name ?? 'items'} @ ${this.stock?.priceEach ?? 0}gp ea.${buybackText} Put up coins to buy, or noted items to sell!`);
         interactPlayerOp(player, target.slot, 4);
         this.watchdog.notifyActivity();
         player.botTradeTargetStage = 0;
@@ -384,7 +390,7 @@ export class VendorTask extends BotTask {
                 return;
             }
 
-            const notedId = this.stock.notedId;
+            const tradeItemId = this._tradeItemId(this.stock);
 
             let gpOffered    = 0;
             let itemsOffered = 0;
@@ -393,7 +399,7 @@ export class VendorTask extends BotTask {
                 const item = this._getItemFromSlotInv(target, i, 90);
                 if (!item) continue;
                 if (item.id === Items.COINS) { gpOffered += item.count; }
-                if (item.id === notedId) { itemsOffered += item.count; }
+                if (this._isOfferedNotedStock(item.id, this.stock)) { itemsOffered += item.count; }
             }
 
             const hasCoins = gpOffered > 0;
@@ -402,7 +408,7 @@ export class VendorTask extends BotTask {
             // Neither or both — ask player to put up one or the other
             if ((!hasCoins && !hasItems) || (hasCoins && hasItems)) {
                 if (Math.random() < 0.3) {
-                    player.say(`Put up coins to buy ${this.stock.name}, or put up ${this.stock.name} to sell. Not both!`);
+                    player.say(`Put up coins to buy ${this.stock.name}, or put up noted ${this.stock.name} to sell. Not both!`);
                 }
                 this.cooldown = randInt(4, 7);
                 return;
@@ -425,20 +431,20 @@ export class VendorTask extends BotTask {
 
                 const inv = player.getInventory(InvType.INV);
                 if (inv && canAfford < this.itemCount) {
-                    inv.remove(this.stock.notedId, this.itemCount - canAfford);
+                    inv.remove(tradeItemId, this.itemCount - canAfford);
                 }
                 this.itemCount = canAfford;
 
                 if (inv) {
                     for (let slot = 0; slot < inv.capacity; slot++) {
                         const item = inv.get(slot);
-                        if (!item || item.id !== this.stock.notedId) continue;
+                        if (!item || item.id !== tradeItemId) continue;
                         interactIF_UseOp(player, Interfaces.TRADE_SIDE_INV, item.id, slot, 4, InvType.INV);
                         break;
                     }
                 }
 
-                player.say(`Offering ${canAfford}x noted ${this.stock.name} for ${this.requestedTotal}gp. Accept when ready!`);
+                player.say(`Offering ${canAfford}x ${this._stockOfferName(this.stock)} for ${this.requestedTotal}gp. Accept when ready!`);
                 player.botTradeTargetStage = 1;
                 this.cooldown = randInt(3, 5);
                 return;
@@ -514,11 +520,10 @@ export class VendorTask extends BotTask {
 
         } else if (this.tradeMode === 'buying') {
             if (!this.stock) { this._resetTrade(player, 'no stock in confirm'); return; }
-            const notedId = this.stock.notedId;
             let itemsOffered = 0;
             for (let i = 0; i < 28; i++) {
                 const item = this._getItemFromSlotInv(target, i, 90);
-                if (item && item.id === notedId) { itemsOffered += item.count; }
+                if (item && this._isOfferedNotedStock(item.id, this.stock)) { itemsOffered += item.count; }
             }
             if (itemsOffered >= this.requestedCount && this.requestedCount > 0) {
                 interactIfButtonByName(player, 'trademain:accept');
@@ -563,10 +568,9 @@ export class VendorTask extends BotTask {
         } else if (this.tradeMode === 'buying') {
             let itemsOffered = 0;
             if (target && this.stock) {
-                const notedId = this.stock.notedId;
                 for (let i = 0; i < 28; i++) {
                     const item = this._getItemFromSlotInv(target, i, 90);
-                    if (item && item.id === notedId) { itemsOffered += item.count; }
+                    if (item && this._isOfferedNotedStock(item.id, this.stock)) { itemsOffered += item.count; }
                 }
                 if (itemsOffered >= this.requestedCount) {
                     interactIfButtonByName(player, 'tradeconfirm:accept');
@@ -609,6 +613,26 @@ export class VendorTask extends BotTask {
         return inv.get(slot) ?? null;
     }
 
+    private _tradeItemId(stock: VendorStock): number {
+        const obj = ObjType.get(stock.itemId);
+        if (obj?.certtemplate === -1 && obj.certlink >= 0) {
+            return obj.certlink;
+        }
+        return stock.itemId;
+    }
+
+    private _isNotedStock(stock: VendorStock): boolean {
+        return this._tradeItemId(stock) !== stock.itemId;
+    }
+
+    private _isOfferedNotedStock(itemId: number, stock: VendorStock): boolean {
+        return this._isNotedStock(stock) && itemId === this._tradeItemId(stock);
+    }
+
+    private _stockOfferName(stock: VendorStock): string {
+        return this._tradeItemId(stock) === stock.itemId ? stock.name : `noted ${stock.name}`;
+    }
+
     private _resetTrade(player: Player, reason?: string): void {
         if (reason) console.log(`[VendorTask] Trade reset: ${reason}`);
         player.botTradeTargetPid = -1;
@@ -625,6 +649,7 @@ export class VendorTask extends BotTask {
         if (this.stock && this.stockMax > 0) {
             const inv = player.getInventory(InvType.INV);
             if (inv) {
+                const tradeItemId = this._tradeItemId(this.stock);
                 // Clear all non-coin items so bought items and partial stacks never accumulate.
                 for (let slot = 0; slot < inv.capacity; slot++) {
                     const existing = inv.get(slot);
@@ -632,7 +657,7 @@ export class VendorTask extends BotTask {
                         inv.remove(existing.id, existing.count);
                     }
                 }
-                inv.add(this.stock.notedId, this.stockMax);
+                inv.add(tradeItemId, this.stockMax);
             }
             this.itemCount = this.stockMax;
         }
