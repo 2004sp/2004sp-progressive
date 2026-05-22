@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>2004Scape Game</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.7">
+
+    <style>
+        html {
+            touch-action: manipulation;
+        }
+
+        body,
+        td,
+        p {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: white;
+        }
+
+        body {
+            margin: 0px 0px;
+            overflow: auto;
+            background-color: black;
+        }
+
+        #game {
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+
+        canvas {
+            width: 765px;
+            height: 503px;
+            display: block;
+            /* touch-action: none; */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            outline: none;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+            z-index: -1;
+            image-rendering: pixelated;
+        }
+
+        html:-webkit-full-screen {
+            background-color: black !important;
+        }
+
+        .centered {
+            text-align: center;
+        }
+
+        .green {
+            text-decoration: none;
+            color: #04A800;
+        }
+
+        #controls {
+            margin-top: 3px;
+            margin-bottom: 10px;
+        }
+
+        #controls > a, #controls select, #controls optgroup, #controls optgroup > option {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .blink {
+            animation: blink 1.5s linear infinite;
+        }
+
+        select {
+            text-decoration: none;
+            background-color: black;
+            color: #04A800;
+            border: none;
+        }
+
+        #mobilekeyboard-container {
+            display: none;
+        }
+
+    </style>
+
+    <script>
+        function isTouchDevice() {
+            return (('ontouchstart' in window) ||
+                (navigator.maxTouchPoints > 0) ||
+                (navigator.msMaxTouchPoints > 0));
+        }
+
+        function isMobile() {
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone|Mobile/i.test(navigator.userAgent)) {
+                return true;
+            }
+
+            return isTouchDevice();
+        }
+
+        function toggleFullscreen() {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            } else {
+                let element = document.getElementById('canvas');
+
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    element.mozRequestFullScreen();
+                } else if (element.msRequestFullscreen) {
+                    element.msRequestFullscreen();
+                }
+            }
+        }
+
+        function saveScreenshot() {
+            document.getElementById('screenshot').download = 'screenshot-' + Math.floor(Date.now() / 1000) + '.png';
+            document.getElementById('screenshot').href = document.getElementById('canvas').toDataURL('image/png').replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+        }
+
+        function hideControls() {
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('hide-message').style.display = '';
+
+            countDown = 0;
+            hideMessage();
+
+            localStorage.setItem('hideControls', true);
+        }
+
+        let timer;
+        let countDown = 0;
+        let countDownMax = 10;
+        function hideMessage() {
+            if (countDown >= countDownMax) {
+                document.getElementById('hide-message').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('count-down').textContent = (countDownMax - countDown) + 's';
+
+            countDown++;
+            timer = setTimeout(hideMessage, 1000);
+        }
+
+        function showControls() {
+            clearTimeout(timer);
+
+            document.getElementById('controls').style.display = '';
+            document.getElementById('hide-message').style.display = 'none';
+
+            localStorage.removeItem('hideControls');
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.altKey) {
+                if (e.code === 'KeyI') {
+                    e.preventDefault();
+                    showControls();
+                }
+            }
+        });
+
+        function loadSettings() {
+            setFilter((localStorage.getItem('filtering') == 'true') ? 'pixelated' : 'auto');
+            if (isMobile()) {
+                const keyboardChoiceContainerElement = document.getElementById('mobilekeyboard-container');
+                const keyboardChoiceElement = document.getElementById('mobilekeyboard');
+                keyboardChoiceContainerElement.style.display = 'inline-block';
+                let mobilekeyboard = localStorage.getItem('mobileKeyboardMode');
+                if (mobilekeyboard === 'canvas') {
+                    keyboardChoiceElement.value = 'canvas';
+                } else if (mobilekeyboard === 'native') {
+                    keyboardChoiceElement.value = 'native';
+                } else {
+                    // Unset choice = hybrid
+                    keyboardChoiceElement.value = 'hybrid';
+                }
+            } else {
+                let size = localStorage.getItem('canvasSize');
+                if (size) { setSize(size); }
+
+                let controls = localStorage.getItem('hideControls');
+                if (controls === 'true') { hideControls(); }
+            }
+        }
+
+        function setKeyboardChoice(ev) {
+            const target = document.getElementById('mobilekeyboard').value;
+            localStorage.setItem('mobileKeyboardMode', target);
+            alert('Please reload the page to apply the changes.');
+        }
+
+        function setSize(size) {
+            let canvas = document.getElementById('canvas');
+            if (size == null) { size = document.getElementById('size').value; }
+            switch (size) {
+                default:
+                case '1':
+                case '2':
+                case '3':
+                    canvas.style.width = (765 * parseInt(size)) + 'px';
+                    canvas.style.height = (503 * parseInt(size)) + 'px';
+                    canvas.style.maxWidth = 'none';
+                    break;
+                case 'auto':
+                    canvas.style.width = '100%';
+                    canvas.style.height = 'auto';
+                    break;
+            }
+            document.getElementById('size').value = size;
+            localStorage.setItem('canvasSize', size);
+        }
+
+        function setFilter(type) {
+            let canvas = document.getElementById('canvas');
+            let filterSelect = 'auto';
+            switch (type) {
+                default:
+                case 'dropdown':
+                    filterSelect = document.getElementById('filtering').value;
+                    localStorage.setItem('filtering', filterSelect == 'auto' ? false : true);
+                    break;
+                case 'pixelated':
+                case 'auto':
+                    filterSelect = type;
+                    document.getElementById('filtering').value = type;
+                    break;
+            }
+            canvas.style.imageRendering = filterSelect;
+        }
+    </script>
+</head>
+
+<body>
+    <center>
+        <div id="game">
+            <canvas id="canvas" width="765" height="503">
+                Your browser is not capable of running our web client.
+            </canvas>
+        </div>
+
+        <div class="centered" id="controls">
+            <select id="size" name="size" onchange="setSize();">
+                <optgroup>
+                <option value="1" id="1">1x Size</option>
+                <option value="2" id="2">2x Size</option>
+                <option value="3" id="3">3x Size</option>
+                <option value="auto" id="auto">Auto Sizing</option>
+                </optgroup>
+            </select> |
+            <select id="filtering" name="filtering" onchange="setFilter('dropdown');">
+                <optgroup>
+                <option value="auto" id="auto">Auto Scaling</option>
+                <option value="pixelated" id="pixelated">Pixel Scaling</option>
+                </optgroup>
+            </select> |
+            <span id="mobilekeyboard-container">
+                <select id="mobilekeyboard" name="mobilekeyboard" onchange="setKeyboardChoice();">
+                    <optgroup>
+                    <option value="hybrid" id="hybrid">Hybrid keyboard</option>
+                    <option value="canvas" id="canvas">Canvas keyboard</option>
+                    <option value="native" id="native">Native keyboard</option>
+                    </optgroup>
+                </select> |
+            </span>
+            <a class="green" href="#" id="fullscreen" onclick="toggleFullscreen();">Go Fullscreen</a> |
+            <a class="green" href="#" id="screenshot" onclick="saveScreenshot();">Take screenshot</a> |
+            <a class="green" href="#" id="hide" onclick="hideControls();">Hide controls</a>
+        </div>
+        <div id="hide-message" style="display: none;">
+            <p class="green blink">Controls have been hidden press ctrl+alt+i to unhide.</p>
+            <p class="green" id="count-down"></p>
+        </div>
+    </center>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2);
+        }
+    </script>
+
+    <script type="module">
+        import { Client } from './client/client.js?v=compass-mobile-1';
+
+        function resetCompassAndCamera(client) {
+            client.tw = 0;
+            client.ru = 0;
+            client.uu = 0;
+            client.uw = 0;
+            client.ww = 0;
+            client.rw = 0;
+            client.sw = 128;
+            client.northLock = 20;
+            client.bw = true;
+            client.Vc[1] = 0;
+            client.Vc[2] = 0;
+            client.Vc[3] = 0;
+            client.Vc[4] = 0;
+        }
+
+        function isCompassClick(client, x, y) {
+            return x >= 500 && x < 620 && y >= 0 && y < 80;
+        }
+
+        const originalMouseDown = Client.prototype.pd;
+        Client.prototype.pd = function (x, y, event) {
+            if (isCompassClick(this, x, y)) {
+                resetCompassAndCamera(this);
+                this.Oc = -1;
+                this.Pc = -1;
+                this.Nc = 0;
+                this.Kc = 0;
+                event?.preventDefault();
+                return;
+            }
+
+            return originalMouseDown.call(this, x, y, event);
+        };
+
+        const originalPointerDown = Client.prototype.qd;
+        Client.prototype.qd = function (x, y, event) {
+            if (isCompassClick(this, x, y)) {
+                resetCompassAndCamera(this);
+                this.Oc = -1;
+                this.Pc = -1;
+                this.Nc = 0;
+                this.Kc = 0;
+                event?.preventDefault();
+                return;
+            }
+
+            return originalPointerDown.call(this, x, y, event);
+        };
+
+        const originalMouseUp = Client.prototype.rd;
+        Client.prototype.rd = function (x, y, event) {
+            if (isCompassClick(this, x, y)) {
+                resetCompassAndCamera(this);
+                this.Oc = -1;
+                this.Pc = -1;
+                this.Nc = 0;
+                this.Kc = 0;
+                event?.preventDefault();
+                return;
+            }
+
+            return originalMouseUp.call(this, x, y, event);
+        };
+
+        const originalPointerUp = Client.prototype.sd;
+        Client.prototype.sd = function (x, y, event) {
+            if (isCompassClick(this, x, y)) {
+                resetCompassAndCamera(this);
+                this.Oc = -1;
+                this.Pc = -1;
+                this.Nc = 0;
+                this.Kc = 0;
+                event?.preventDefault();
+                return;
+            }
+
+            return originalPointerUp.call(this, x, y, event);
+        };
+
+        const originalPointerMove = Client.prototype.vd;
+        Client.prototype.vd = function (x, y, event) {
+            const previousScreenX = this.mobileRotateX;
+            const previousScreenY = this.mobileRotateY;
+
+            if (event?.pointerType && event.pointerType !== 'mouse') {
+                this.mobileRotateX = event.screenX;
+                this.mobileRotateY = event.screenY;
+            }
+
+            const result = originalPointerMove.call(this, x, y, event);
+
+            if (event?.pointerType && event.pointerType !== 'mouse' && this.BC && (this.Vc[1] || this.Vc[2] || this.Vc[3] || this.Vc[4])) {
+                if (Number.isFinite(previousScreenX) && Number.isFinite(previousScreenY)) {
+                    const dx = event.screenX - previousScreenX;
+                    const dy = event.screenY - previousScreenY;
+                    this.tw = (this.tw - dx * 3) & 2047;
+                    this.sw = Math.max(128, Math.min(383, this.sw - dy));
+                    this.uw = 0;
+                    this.ww = 0;
+                    this.bw = true;
+                }
+            }
+
+            return result;
+        };
+
+        const originalPointerLeave = Client.prototype.ud;
+        Client.prototype.ud = function (event) {
+            this.mobileRotateX = undefined;
+            this.mobileRotateY = undefined;
+            return originalPointerLeave.call(this, event);
+        };
+
+        const originalMinimapClick = Client.prototype.UA;
+        Client.prototype.UA = function () {
+            if (this.Qc === 1 && isCompassClick(this, this.Rc, this.Sc)) {
+                resetCompassAndCamera(this);
+                return;
+            }
+
+            return originalMinimapClick.call(this);
+        };
+
+        const originalCameraUpdate = Client.prototype.tB;
+        Client.prototype.tB = function () {
+            const result = originalCameraUpdate.call(this);
+
+            if (this.northLock > 0) {
+                this.tw = 0;
+                this.ru = 0;
+                this.uu = 0;
+                this.uw = 0;
+                this.ww = 0;
+                this.sw = 128;
+                this.northLock--;
+            }
+
+            return result;
+        };
+
+        (() => {
+            const client = new Client(<%= nodeid %>, <%= lowmem %>, <%= members %>);
+            window.__gameClient = client;
+
+            const canvas = document.getElementById('canvas');
+            let middleRotating = false;
+            let middleLastX = 0;
+            let middleLastY = 0;
+
+            const rotateFromMiddleMouse = (event) => {
+                const dx = event.clientX - middleLastX;
+                const dy = event.clientY - middleLastY;
+
+                middleLastX = event.clientX;
+                middleLastY = event.clientY;
+
+                client.tw = (client.tw - dx * 4) & 2047;
+                client.sw = Math.max(128, Math.min(383, client.sw - dy));
+                client.uw = 0;
+                client.ww = 0;
+                client.northLock = 0;
+                client.bw = true;
+            };
+
+            const stopMiddleRotate = (event) => {
+                if (!middleRotating) {
+                    return;
+                }
+
+                middleRotating = false;
+                client.uw = 0;
+                client.ww = 0;
+                event?.preventDefault();
+                event?.stopImmediatePropagation();
+            };
+
+            const startMiddleRotate = (event) => {
+                if (event.button !== 1) {
+                    return;
+                }
+
+                middleRotating = true;
+                middleLastX = event.clientX;
+                middleLastY = event.clientY;
+                client.uw = 0;
+                client.ww = 0;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (Number.isFinite(event.pointerId)) {
+                    canvas.setPointerCapture?.(event.pointerId);
+                }
+            };
+
+            const moveMiddleRotate = (event) => {
+                if (!middleRotating || (event.buttons & 4) === 0) {
+                    stopMiddleRotate(event);
+                    return;
+                }
+
+                rotateFromMiddleMouse(event);
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            };
+
+            const resetFromCanvasEvent = (event) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((event.clientX - rect.left) * (canvas.width / rect.width));
+                const y = Math.floor((event.clientY - rect.top) * (canvas.height / rect.height));
+
+                if (isCompassClick(client, x, y)) {
+                    resetCompassAndCamera(client);
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            };
+
+            canvas.addEventListener('mousedown', resetFromCanvasEvent, true);
+            canvas.addEventListener('pointerdown', resetFromCanvasEvent, true);
+            canvas.addEventListener('mouseup', resetFromCanvasEvent, true);
+            canvas.addEventListener('pointerup', resetFromCanvasEvent, true);
+            canvas.addEventListener('mousedown', startMiddleRotate, true);
+            canvas.addEventListener('pointerdown', startMiddleRotate, true);
+            canvas.addEventListener('mousemove', moveMiddleRotate, true);
+            canvas.addEventListener('pointermove', moveMiddleRotate, true);
+            canvas.addEventListener('mouseup', stopMiddleRotate, true);
+            canvas.addEventListener('pointerup', stopMiddleRotate, true);
+            canvas.addEventListener('pointercancel', stopMiddleRotate, true);
+            canvas.addEventListener('auxclick', (event) => {
+                if (event.button === 1) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }, true);
+        })();
+
+        loadSettings();
+    </script>
+</body>
+
+</html>
