@@ -30,6 +30,7 @@
  *   findLocNear(x, z, level, locTypeId, radius)   — search for a live Loc
  *   findNpcByName(x, z, level, npcName, radius)   — search by debug name
  *   findLocByName(x, z, level, locName, radius)   — search by debug name
+ *   findLocByNameWhere(...)                       — search by debug name + predicate
  *
  *   getLevel / getBaseLevel / getXp / addXp
  *   getBackpack / isInventoryFull / freeSlots
@@ -1179,6 +1180,22 @@ export function findLocByName(cx: number, cz: number, level: number, locName: st
     const typeId = LocType.getId(locName);
     if (typeId === -1) return null;
     return findLocNear(cx, cz, level, typeId, radius);
+}
+
+/**
+ * Search for a live Loc whose debug name matches and satisfies a caller predicate.
+ */
+export function findLocByNameWhere(
+    cx: number,
+    cz: number,
+    level: number,
+    locName: string,
+    radius: number,
+    predicate: (loc: Loc) => boolean
+): Loc | null {
+    const typeId = LocType.getId(locName);
+    if (typeId === -1) return null;
+    return _findLoc(cx, cz, level, radius, loc => loc.type === typeId && predicate(loc));
 }
 
 /**
