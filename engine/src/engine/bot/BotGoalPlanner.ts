@@ -768,6 +768,43 @@ export function makeRandom(): BotGoalPlanner {
 
 // ── Extras personalities ───────────────────────────────────────────────────────
 
+/**
+ * Temporary tester planner for Barbarian Agility course validation.
+ * Seeds the entry requirement so the bot can immediately use the course.
+ */
+export class AgilityTestGoalPlanner extends BotGoalPlanner {
+    private started = false;
+    private seededStats = false;
+
+    constructor() {
+        super({ name: 'Agility Test', weights: { AGILITY: 100 } });
+    }
+
+    override pickTask(player: Player): BotTask | null {
+        if (!this.seededStats) {
+            this.seededStats = true;
+            if (getBaseLevel(player, PlayerStat.AGILITY) < 35) {
+                player.setLevel(PlayerStat.AGILITY, 35);
+            }
+            if (getBaseLevel(player, PlayerStat.HITPOINTS) < 30) {
+                player.setLevel(PlayerStat.HITPOINTS, 30);
+            }
+        }
+
+        if (!this.started) {
+            this.started = true;
+            return new InitTask([]);
+        }
+
+        const step = SkillProgression.AGILITY.find(s => s.extra?.course === 'BARBARIAN');
+        return step ? new AgilityTask(step) : new IdleTask(30);
+    }
+}
+
+export function makeAgilityTester(): AgilityTestGoalPlanner {
+    return new AgilityTestGoalPlanner();
+}
+
 export type ExtrasType = 'social' | 'vendor' | 'pker';
 
 /**

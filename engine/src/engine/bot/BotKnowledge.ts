@@ -574,6 +574,8 @@ export const Objects = {
 export interface AgilityObstacle {
     name: string;
     op: 1 | 2 | 3 | 4 | 5;
+    /** X offset from the loc tile to stand on before interacting (negative = west). */
+    approachDx?: number;
     /** Z offset from the loc tile to stand on before interacting (negative = south). */
     approachDz?: number;
 }
@@ -589,12 +591,14 @@ export const AgilityCourses: Record<string, AgilityObstacle[]> = {
         { name: 'gnome_obstacle_pipe', op: 1, approachDz: -1 }
     ],
     BARBARIAN: [
-        { name: 'barbarian_rope_swing', op: 1 },
+        { name: 'barbarian_rope_swing', op: 1, approachDz: 5 },
         { name: 'barbarian_log_balance', op: 1 },
         { name: 'barbarian_obstacle_net', op: 1 },
         { name: 'barbarian_ledge', op: 1 },
-        { name: 'castlecrumbly1', op: 1 },
-        { name: 'barbarian_obstacle_pipe', op: 1 }
+        { name: 'laddertop_norim', op: 1 },   // descend from level 1 → 0 after the ledge
+        { name: 'castlecrumbly1', op: 1, approachDx: -1 },
+        { name: 'castlecrumbly1', op: 1, approachDx: -1 },
+        { name: 'castlecrumbly1', op: 1, approachDx: -1 }
     ],
     WILDERNESS: [
         { name: 'loc_2309', op: 1 },
@@ -698,7 +702,7 @@ export const Locations = {
     FISH_SHARK: [2600, 3415, 0] as [number, number, number], // Catherby shark spot
     // ── Agility ───────────────────────────────────────────────────────────────
     GNOME_AGILITY: [2474, 3436, 0] as [number, number, number], // ✅
-    BARBARIAN_AGILITY: [2541, 3556, 0] as [number, number, number], // ✅
+    BARBARIAN_AGILITY: [2552, 3561, 0] as [number, number, number], // ✅ north side of entry pipe
     WILDERNESS_AGILITY: [2998, 3912, 0] as [number, number, number], // ✅
     // ── Combat ────────────────────────────────────────────────────────────────
     CHICKENS_LUMBRIDGE: [3237, 3295, 0] as [number, number, number], // ✅ level 1 chickens, no walls

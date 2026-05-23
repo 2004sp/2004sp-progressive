@@ -30,7 +30,7 @@ import { PlayerStat, getBaseLevel } from '#/engine/bot/BotAction.js';
 import { BotPlayer } from '#/engine/bot/BotPlayer.js';
 import { setWorld, BotWorldHandle } from '#/engine/bot/BotWorld.js';
 import { ensureBotAccount } from '#/engine/bot/BotDatabase.js';
-import { BotGoalPlanner, makeSkiller, makeFighter, makeBalanced, makeRandom, makeExtrasSocial, makeExtrasVendor, makeExtrasPKer } from '#/engine/bot/BotGoalPlanner.js';
+import { BotGoalPlanner, makeSkiller, makeFighter, makeBalanced, makeRandom, makeAgilityTester, makeExtrasSocial, makeExtrasVendor, makeExtrasPKer } from '#/engine/bot/BotGoalPlanner.js';
 import { PlayerLoading } from '#/engine/entity/PlayerLoading.js';
 import Packet from '#/io/Packet.js';
 import { Locations } from '#/engine/bot/BotKnowledge.js';
@@ -52,6 +52,7 @@ const PLANNER_MAP = {
     fighter: makeFighter,
     balanced: makeBalanced,
     random: makeRandom,
+    agility_test: makeAgilityTester,
     extras_social: makeExtrasSocial,
     extras_vendor: makeExtrasVendor,
     extras_pker: makeExtrasPKer,
