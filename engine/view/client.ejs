@@ -409,35 +409,11 @@
 
         const originalPointerMove = Client.prototype.vd;
         Client.prototype.vd = function (x, y, event) {
-            const previousScreenX = this.mobileRotateX;
-            const previousScreenY = this.mobileRotateY;
-
-            if (event?.pointerType && event.pointerType !== 'mouse') {
-                this.mobileRotateX = event.screenX;
-                this.mobileRotateY = event.screenY;
-            }
-
-            const result = originalPointerMove.call(this, x, y, event);
-
-            if (event?.pointerType && event.pointerType !== 'mouse' && this.BC && (this.Vc[1] || this.Vc[2] || this.Vc[3] || this.Vc[4])) {
-                if (Number.isFinite(previousScreenX) && Number.isFinite(previousScreenY)) {
-                    const dx = event.screenX - previousScreenX;
-                    const dy = event.screenY - previousScreenY;
-                    this.tw = (this.tw - dx * 3) & 2047;
-                    this.sw = Math.max(128, Math.min(383, this.sw - dy));
-                    this.uw = 0;
-                    this.ww = 0;
-                    this.bw = true;
-                }
-            }
-
-            return result;
+            return originalPointerMove.call(this, x, y, event);
         };
 
         const originalPointerLeave = Client.prototype.ud;
         Client.prototype.ud = function (event) {
-            this.mobileRotateX = undefined;
-            this.mobileRotateY = undefined;
             return originalPointerLeave.call(this, event);
         };
 
