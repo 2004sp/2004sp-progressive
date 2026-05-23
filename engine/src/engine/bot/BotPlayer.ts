@@ -12,7 +12,6 @@ import { BotTask } from '#/engine/bot/tasks/Index.js';
 import { BotGoalPlanner } from '#/engine/bot/BotGoalPlanner.js';
 import { addXp, getBaseLevel, PlayerStat, openNearbyGate } from '#/engine/bot/BotAction.js';
 import { PlayerStatNameMap } from '#/engine/entity/PlayerStat.js';
-import ScriptState from '#/engine/script/ScriptState.js';
 
 const RESCAN_TICKS = 600;
 
@@ -110,14 +109,6 @@ export class BotPlayer {
             this.player.playAnimation(-1, 0); // anim(null) — stops the cast loop
             this.player.teleJump(x, z, level);
             return; // let the task pick up normally next tick
-        }
-
-        // Auto-respond to p_countdialog: bots have no client to send resume_p_countdialog,
-        // so the script hangs forever. Reply with 99 so the full inventory is processed.
-        if (this.player.activeScript?.execution === ScriptState.COUNTDIALOG) {
-            this.player.activeScript.lastInt = 99;
-            this.player.executeScript(this.player.activeScript, true, true);
-            return;
         }
 
         if (chance(0.003)) this._say(pick(IDLE_PHRASES));
