@@ -185,13 +185,14 @@ const VENDOR_SPOTS: Array<[number, number]> = [
 ];
 
 export class VendorTask extends BotTask {
-    private state: 'init' | 'walk' | 'idle' | 'trade_init' | 'trade_offer' | 'trade_confirm' | 'trade_finalize' = 'init';
+    private state: 'init' | 'walk' | 'idle' | 'trade_init' | 'trade_offer' | 'trade_confirm' | 'trade_finalize' | 'return_home' = 'init';
 
     private stock: VendorStock | null = null;
     private itemCount = 0;
     private stockMax = 0;       // original stocked amount — never decremented
     private currentOfferSlot = 0;
     private assignedSpot: [number, number] | null = null; // deterministic stall position
+    private tradeReturnSpot: [number, number] | null = null;
 
     private requestedCount = 0;
     private requestedTotal = 0;
@@ -245,6 +246,7 @@ export class VendorTask extends BotTask {
             case 'trade_offer':  return this.handleTradeOffer(player);
             case 'trade_confirm':return this.handleTradeConfirm(player);
             case 'trade_finalize': return this.handleTradeFinalize(player);
+            case 'return_home':   return this.handleReturnHome(player);
         }
     }
 
@@ -262,6 +264,7 @@ export class VendorTask extends BotTask {
         this.currentOfferSlot = 0;
         this.tradeMode = null;
         this.assignedSpot = null;
+        this.tradeReturnSpot = null;
         this.stuck.reset();
         this.watchdog.reset();
     }
@@ -362,6 +365,26 @@ export class VendorTask extends BotTask {
         this.cooldown = randInt(12, 20);
     }
 
+    private handleReturnHome(player: Player): void {
+        if (!this.tradeReturnSpot) {
+            this.state = this.itemCount > 0 ? 'idle' : 'init';
+            return;
+        }
+
+        const [tx, tz] = this.tradeReturnSpot;
+        if (player.x === tx && player.z === tz) {
+            this.tradeReturnSpot = null;
+            player.botComeHereReturnX = -1;
+            player.botComeHereReturnZ = -1;
+            this.state = this.itemCount > 0 ? 'idle' : 'init';
+            this.cooldown = randInt(2, 4);
+            return;
+        }
+
+        this._stuckWalk(player, tx, tz);
+        this.cooldown = 1;
+    }
+
     private handleTradeInit(player: Player): void {
         const target = this._getTradeTarget(player);
         if (!target) {
@@ -369,6 +392,9 @@ export class VendorTask extends BotTask {
             return;
         }
 
+        this.tradeReturnSpot = player.botComeHereReturnX !== -1 && player.botComeHereReturnZ !== -1
+            ? [player.botComeHereReturnX, player.botComeHereReturnZ]
+            : [player.x, player.z];
         const buybackPrice = this.stock ? Math.floor(this.stock.priceEach * BUYBACK_RATE) : 0;
         const buysNotes = this.stock ? this._isNotedStock(this.stock) : false;
         const buybackText = this.stock && buysNotes ? ` Also buying noted ${this.stock.name} @ ${buybackPrice}gp ea.` : '';
@@ -379,7 +405,7 @@ export class VendorTask extends BotTask {
         player.botTradeTargetStage = 0;
         this.state = 'trade_offer';
         this.currentOfferSlot = 0;
-        this.cooldown = randInt(4, 6);
+        this.cooldown = 1;
     }
 
     private handleTradeOffer(player: Player): void {
@@ -419,7 +445,7 @@ export class VendorTask extends BotTask {
                         player.say(`Put up coins to buy ${this.stock.name}.`);
                     }
                 }
-                this.cooldown = randInt(4, 7);
+                this.cooldown = 2;
                 return;
             }
 
@@ -429,7 +455,7 @@ export class VendorTask extends BotTask {
                     if (Math.random() < 0.3) {
                         player.say(`Need at least ${this.stock.priceEach}gp for 1 item. You have ${gpOffered}gp up.`);
                     }
-                    this.cooldown = randInt(4, 7);
+                    this.cooldown = 2;
                     return;
                 }
 
@@ -444,18 +470,14 @@ export class VendorTask extends BotTask {
                 }
                 this.itemCount = canAfford;
 
-                if (inv) {
-                    for (let slot = 0; slot < inv.capacity; slot++) {
-                        const item = inv.get(slot);
-                        if (!item || item.id !== tradeItemId) continue;
-                        interactIF_UseOp(player, Interfaces.TRADE_SIDE_INV, item.id, slot, 4, InvType.INV);
-                        break;
-                    }
+                if (!this._offerInventoryItem(player, tradeItemId)) {
+                    this.cooldown = 1;
+                    return;
                 }
 
                 player.say(`Offering ${canAfford}x ${this._stockOfferName(this.stock)} for ${this.requestedTotal}gp. Accept when ready!`);
                 player.botTradeTargetStage = 1;
-                this.cooldown = randInt(3, 5);
+                this.cooldown = 1;
                 return;
             }
 
@@ -482,24 +504,22 @@ export class VendorTask extends BotTask {
                 if (excess > 0) {
                     inv.remove(Items.COINS, excess);
                 }
-                for (let slot = 0; slot < inv.capacity; slot++) {
-                    const item = inv.get(slot);
-                    if (!item || item.id !== Items.COINS) continue;
-                    interactIF_UseOp(player, Interfaces.TRADE_SIDE_INV, item.id, slot, 4, InvType.INV);
-                    break;
+                if (!this._offerInventoryItem(player, Items.COINS)) {
+                    this.cooldown = 1;
+                    return;
                 }
             }
 
             player.say(`Buying ${itemsOffered}x ${this.stock.name} for ${coinsToOffer}gp (${buyPrice}gp ea)`);
             player.botTradeTargetStage = 1;
-            this.cooldown = randInt(3, 5);
+            this.cooldown = 1;
             return;
         }
 
         if (player.botTradeTargetStage === 1) {
             // Items have been offered — move to confirm/accept.
             this.state = 'trade_confirm';
-            this.cooldown = randInt(2, 4);
+            this.cooldown = 1;
         }
     }
 
@@ -511,6 +531,15 @@ export class VendorTask extends BotTask {
         }
 
         if (this.tradeMode === 'selling') {
+            if (!this.stock) { this._resetTrade(player, 'no stock in confirm'); return; }
+            const tradeItemId = this._tradeItemId(this.stock);
+            if (this._countTradeOffer(player, tradeItemId) < this.requestedCount) {
+                if (!this._offerInventoryItem(player, tradeItemId)) {
+                    this.cooldown = 1;
+                    return;
+                }
+            }
+
             let gpOffered = 0;
             for (let i = 0; i < 28; i++) {
                 const item = this._getItemFromSlotInv(target, i, 90);
@@ -519,7 +548,7 @@ export class VendorTask extends BotTask {
             if (gpOffered >= this.requestedTotal && this.requestedTotal > 0) {
                 interactIfButtonByName(player, 'trademain:accept');
                 this.state = 'trade_finalize';
-                this.cooldown = randInt(2, 4);
+                this.cooldown = 1;
             } else {
                 if (Math.random() < 0.3) {
                     player.say(`Still need ${this.requestedTotal}gp up, you have ${gpOffered}gp.`);
@@ -529,6 +558,13 @@ export class VendorTask extends BotTask {
 
         } else if (this.tradeMode === 'buying') {
             if (!this.stock) { this._resetTrade(player, 'no stock in confirm'); return; }
+            if (this._countTradeOffer(player, Items.COINS) < this.requestedTotal) {
+                if (!this._offerInventoryItem(player, Items.COINS)) {
+                    this.cooldown = 1;
+                    return;
+                }
+            }
+
             let itemsOffered = 0;
             for (let i = 0; i < 28; i++) {
                 const item = this._getItemFromSlotInv(target, i, 90);
@@ -537,7 +573,7 @@ export class VendorTask extends BotTask {
             if (itemsOffered >= this.requestedCount && this.requestedCount > 0) {
                 interactIfButtonByName(player, 'trademain:accept');
                 this.state = 'trade_finalize';
-                this.cooldown = randInt(2, 4);
+                this.cooldown = 1;
             } else {
                 if (Math.random() < 0.3) {
                     player.say(`Still need ${this.requestedCount}x ${this.stock.name} up.`);
@@ -600,7 +636,7 @@ export class VendorTask extends BotTask {
         }
 
         this._resetTrade(player);
-        this.cooldown = randInt(20, 30);
+        this.cooldown = this.state === 'return_home' ? 1 : randInt(20, 30);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -645,6 +681,30 @@ export class VendorTask extends BotTask {
         return this._tradeItemId(stock) === stock.itemId ? stock.name : `noted ${stock.name}`;
     }
 
+    private _offerInventoryItem(player: Player, itemId: number): boolean {
+        const inv = player.getInventory(InvType.INV);
+        if (!inv) return false;
+
+        for (let slot = 0; slot < inv.capacity; slot++) {
+            const item = inv.get(slot);
+            if (!item || item.id !== itemId) continue;
+            return interactIF_UseOp(player, Interfaces.TRADE_SIDE_INV, item.id, slot, 4, InvType.INV);
+        }
+
+        return false;
+    }
+
+    private _countTradeOffer(player: Player, itemId: number): number {
+        let count = 0;
+        for (let slot = 0; slot < 28; slot++) {
+            const item = this._getItemFromSlotInv(player, slot, 90);
+            if (item && item.id === itemId) {
+                count += item.count;
+            }
+        }
+        return count;
+    }
+
     private _resetTrade(player: Player, reason?: string): void {
         if (reason) console.log(`[VendorTask] Trade reset: ${reason}`);
         player.botTradeTargetPid = -1;
@@ -683,7 +743,7 @@ export class VendorTask extends BotTask {
             }
         }
 
-        this.state = this.itemCount > 0 ? 'idle' : 'init';
+        this.state = this.tradeReturnSpot ? 'return_home' : (this.itemCount > 0 ? 'idle' : 'init');
     }
 
     /**

@@ -2411,6 +2411,8 @@ export default class Player extends PathingEntity {
     botTradeTargetChatName: string = '';
     botTradeTargetChatMessage: string = '';
     botVendorPmCooldowns: Record<string, number> = {};
+    botComeHereReturnX: number = -1;
+    botComeHereReturnZ: number = -1;
 
 
     memory?: BotMemory;
@@ -2559,8 +2561,8 @@ export default class Player extends PathingEntity {
             return false;
         }
 
-        const requested = this.getRequestedBuyText(mes);
-        if (!requested || !isClientConnected(this)) {
+        const request = this.getRequestedTradeText(mes);
+        if (!request || !isClientConnected(this)) {
             return false;
         }
 
@@ -2569,13 +2571,17 @@ export default class Player extends PathingEntity {
             return false;
         }
 
-        const match = this.findMatchingVendorItem(inv, requested);
+        const match = this.findMatchingVendorItem(inv, request.item);
         if (!match) {
             return false;
         }
 
+        if (request.mode === 'sell' && !match.noted) {
+            return false;
+        }
+
         const now = Date.now();
-        const cooldownKey = `${name}:${match.id}`;
+        const cooldownKey = `${name}:${request.mode}:${match.id}`;
         if ((bot.botVendorPmCooldowns[cooldownKey] ?? 0) > now) {
             return true;
         }
@@ -2583,21 +2589,29 @@ export default class Player extends PathingEntity {
         bot.botVendorPmCooldowns[cooldownKey] = now + 30000;
         const pmId = (Environment.NODE_ID << 24) + ((Math.random() * 0xff) << 16) + World.pmCount++;
         const displayName = bot.displayName || toDisplayName(bot.username);
-        this.write(new MessagePrivate(toBase37(bot.username), pmId, Math.min(bot.staffModLevel, 2), `${displayName}: I have ${match.name} for sale. Trade me.`));
+        const reply = request.mode === 'buy'
+            ? `${displayName}: I have ${match.name} for sale. Trade me.`
+            : `${displayName}: I'm buying noted ${match.name}. Trade me and put them up for coins.`;
+        this.write(new MessagePrivate(toBase37(bot.username), pmId, Math.min(bot.staffModLevel, 2), reply));
         return true;
     }
 
-    private getRequestedBuyText(message: string): string | null {
+    private getRequestedTradeText(message: string): { mode: 'buy' | 'sell'; item: string } | null {
         const cleaned = this.normalizeTradeText(message);
-        const match = cleaned.match(/\b(?:buying|buy|need|looking for|lf)\s+(.+?)\s*(?:$|\b(?:pls|please|pm|trade|paying|for)\b)/);
-        if (!match) {
-            return null;
+        const buyMatch = cleaned.match(/\b(?:buying|buy|need|looking for|lf)\s+(.+?)\s*(?:$|\b(?:pls|please|pm|trade|paying|for)\b)/);
+        if (buyMatch) {
+            return { mode: 'buy', item: this.normalizeTradeText(buyMatch[1]) };
         }
 
-        return this.normalizeTradeText(match[1]);
+        const sellMatch = cleaned.match(/\b(?:selling|sell|wts)\s+(.+?)\s*(?:$|\b(?:pls|please|pm|trade|for)\b)/);
+        if (sellMatch) {
+            return { mode: 'sell', item: this.normalizeTradeText(sellMatch[1]) };
+        }
+
+        return null;
     }
 
-    private findMatchingVendorItem(inv: Inventory, requested: string): { id: number; name: string } | null {
+    private findMatchingVendorItem(inv: Inventory, requested: string): { id: number; name: string; noted: boolean } | null {
         for (let slot = 0; slot < inv.capacity; slot++) {
             const item = inv.get(slot);
             if (!item || item.id === 995) {
@@ -2611,7 +2625,7 @@ export default class Player extends PathingEntity {
             }
 
             if (this.tradeTextMatches(requested, itemName)) {
-                return { id: item.id, name: type?.name ?? type?.debugname ?? 'items' };
+                return { id: item.id, name: type?.name ?? type?.debugname ?? 'items', noted: type !== undefined && type.certtemplate !== -1 };
             }
         }
 

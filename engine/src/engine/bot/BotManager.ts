@@ -104,6 +104,7 @@ interface BotConfig {
 }
 
 const BOT_CONFIGS: BotConfig[] = loadBotConfigs();
+const CONFIGURED_BOT_USERNAMES = new Set(BOT_CONFIGS.map(cfg => normalizeBotUsername(cfg.username)));
 
 const STATUS_EVERY_TICKS = 100;
 
@@ -155,6 +156,10 @@ class BotManagerClass {
         if (this.tickCount % STATUS_EVERY_TICKS === 0) {
             this._printStatus();
         }
+    }
+
+    isConfiguredBot(username: string): boolean {
+        return CONFIGURED_BOT_USERNAMES.has(normalizeBotUsername(username));
     }
 
     // ── Private ───────────────────────────────────────────────────────────────
@@ -240,7 +245,7 @@ class BotManagerClass {
 
         // ─────────────────────────────────────────────
         // 🔥 IMPORTANT: APPLY BOT APPEARANCE HERE
-        // Only randomize if new bot (no save file exists)
+        // Refresh body/clothes for every bot so old default-looking saves do not stay default.
         // ─────────────────────────────────────────────
         if (!saveExists) {
             try {
@@ -250,7 +255,12 @@ class BotManagerClass {
                 console.error(`[BotManager] BotAppearance failed for ${normalizedUsername}:`, err);
             }
         } else {
-            console.log(`[BotManager] Loaded existing appearance for: ${normalizedUsername}`);
+            try {
+                BotAppearance.randomizeBody(player);
+                console.log(`[BotManager] Refreshed appearance for existing bot: ${normalizedUsername}`);
+            } catch (err) {
+                console.error(`[BotManager] BotAppearance refresh failed for ${normalizedUsername}:`, err);
+            }
         }
 
         // ─────────────────────────────────────────────

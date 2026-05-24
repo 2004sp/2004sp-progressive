@@ -58,6 +58,8 @@ export default class MessagePrivateHandler extends ClientGameMessageHandler<Mess
         }
 
         const destination = this.getAdjacentTileNearestPlayer(player, bot);
+        bot.botComeHereReturnX = bot.x;
+        bot.botComeHereReturnZ = bot.z;
         bot.clearPendingAction();
         bot.clearWaypoints();
         bot.run = 1;
