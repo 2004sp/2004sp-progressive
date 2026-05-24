@@ -1573,6 +1573,16 @@ class World {
             username: player.username,
             target: targetUsername37
         });
+
+        const target = this.getPlayerByUsername(fromBase37(targetUsername37));
+        if (target?.is_bot) {
+            player.write(new UpdateFriendList(targetUsername37, Environment.NODE_ID));
+            setTimeout(() => {
+                if (!player.loggingOut && this.getPlayerByUsername(fromBase37(targetUsername37))?.is_bot) {
+                    player.write(new UpdateFriendList(targetUsername37, Environment.NODE_ID));
+                }
+            }, 1000);
+        }
     }
 
     removeFriend(player: Player, targetUsername37: bigint) {

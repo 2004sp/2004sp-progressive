@@ -39,6 +39,7 @@ import { BotAppearance } from '#/engine/bot/BotAppearance.js';
 import InvType from '#/cache/config/InvType.js';
 import Environment from '#/util/Environment.js';
 import { toBase37, fromBase37 } from '#/util/JString.js';
+import { ChatModePrivate } from '#/engine/entity/ChatModes.js';
 
 /** Normalize a bot username the same way PlayerLoading does.
  *  RS2 base37 maps underscores → spaces and strips unsupported chars,
@@ -81,6 +82,7 @@ function loadBotConfigs(): BotConfig[] {
             return {
                 username: b.username,
                 description: b.description,
+                planner: plannerKey,
                 makePlanner: PLANNER_MAP[plannerKey]
             };
         });
@@ -96,6 +98,7 @@ function loadBotConfigs(): BotConfig[] {
 
 interface BotConfig {
     username: string;
+    planner: PlannerKey;
     makePlanner: () => BotGoalPlanner;
     description: string;
 }
@@ -261,6 +264,8 @@ class BotManagerClass {
         const bot = new BotPlayer(player, cfg.makePlanner());
         this.bots.set(normalizedUsername, bot);
         player.is_bot = true; // mark as headless bot
+        player.botPlanner = cfg.planner;
+        player.privateChat = ChatModePrivate.ON;
         this.world.newPlayers.add(player);
 
         // ─────────────────────────────────────────────
@@ -289,10 +294,10 @@ class BotManagerClass {
         const now = new Date().toLocaleTimeString();
 
         console.log('');
-        console.log(`┌──────────────────── BotManager Status ────────────────────┐`);
+        console.log('┌──────────────────── BotManager Status ────────────────────┐');
         console.log(`│ Time: ${now.padEnd(50)}│`);
         console.log(`│ Bots: ${String(activeBots.length).padEnd(5)} active / ${String(this.bots.size).padEnd(5)} total${' '.repeat(25)}│`);
-        console.log(`└───────────────────────────────────────────────────────────┘`);
+        console.log('└───────────────────────────────────────────────────────────┘');
         console.log('');
 
         for (const bot of activeBots) {
