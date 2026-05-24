@@ -738,7 +738,7 @@ export const Locations = {
     FALADOR_RANGE: [3040, 3366, 0] as [number, number, number], // ✅ cooking range in house west of Falador east bank — open building
     FIRE_LUMBRIDGE_ROAD: [3218, 3253, 0] as [number, number, number], // ✅ firemaking road
     FIRE_VARROCK_ROAD:       [3184, 3430, 0] as [number, number, number],
-    AL_KHARID_FURNACE: [3192, 3162, 0] as [number, number, number], // ⛩ inside Al Kharid
+    AL_KHARID_FURNACE: [3275, 3186, 0] as [number, number, number], // ⛩ inside Al Kharid
     FALADOR_FURNACE: [2975, 3369, 0] as [number, number, number], // ✅ near Falador east bank
     VARROCK_ANVIL: [3188, 3422, 0] as [number, number, number], // ✅
     LUMBRIDGE_ALTAR: [3243, 3210, 0] as [number, number, number], // ✅
