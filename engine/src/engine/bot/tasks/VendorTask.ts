@@ -30,6 +30,9 @@ import World from '#/engine/World.js';
 
 const BUYBACK_RATE = 0.7;
 const STARTING_VENDOR_COINS = 500_000_000;
+const NEVER_BUYBACK_ITEMS = new Set<number>([
+    Items.ARROW_SHAFT,
+]);
 
 interface VendorStock {
     itemId: number;
@@ -367,8 +370,10 @@ export class VendorTask extends BotTask {
         }
 
         const buybackPrice = this.stock ? Math.floor(this.stock.priceEach * BUYBACK_RATE) : 0;
-        const buybackText = this.stock && this._isNotedStock(this.stock) ? ` Also buying noted ${this.stock.name} @ ${buybackPrice}gp ea.` : '';
-        player.say(`Hi ${target.displayName}! Selling ${this.stock?.name ?? 'items'} @ ${this.stock?.priceEach ?? 0}gp ea.${buybackText} Put up coins to buy, or noted items to sell!`);
+        const buysNotes = this.stock ? this._isNotedStock(this.stock) : false;
+        const buybackText = this.stock && buysNotes ? ` Also buying noted ${this.stock.name} @ ${buybackPrice}gp ea.` : '';
+        const tradePrompt = buysNotes ? 'Put up coins to buy, or noted items to sell!' : 'Put up coins to buy!';
+        player.say(`Hi ${target.displayName}! Selling ${this.stock?.name ?? 'items'} @ ${this.stock?.priceEach ?? 0}gp ea.${buybackText} ${tradePrompt}`);
         interactPlayerOp(player, target.slot, 4);
         this.watchdog.notifyActivity();
         player.botTradeTargetStage = 0;
@@ -408,7 +413,11 @@ export class VendorTask extends BotTask {
             // Neither or both — ask player to put up one or the other
             if ((!hasCoins && !hasItems) || (hasCoins && hasItems)) {
                 if (Math.random() < 0.3) {
-                    player.say(`Put up coins to buy ${this.stock.name}, or put up noted ${this.stock.name} to sell. Not both!`);
+                    if (this._isNotedStock(this.stock)) {
+                        player.say(`Put up coins to buy ${this.stock.name}, or put up noted ${this.stock.name} to sell. Not both!`);
+                    } else {
+                        player.say(`Put up coins to buy ${this.stock.name}.`);
+                    }
                 }
                 this.cooldown = randInt(4, 7);
                 return;
@@ -622,6 +631,9 @@ export class VendorTask extends BotTask {
     }
 
     private _isNotedStock(stock: VendorStock): boolean {
+        if (NEVER_BUYBACK_ITEMS.has(stock.itemId)) {
+            return false;
+        }
         return this._tradeItemId(stock) !== stock.itemId;
     }
 
