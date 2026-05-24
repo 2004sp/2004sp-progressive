@@ -33,6 +33,7 @@ import VarPlayerType from '#/cache/config/VarPlayerType.js';
 import VarSharedType from '#/cache/config/VarSharedType.js';
 import { CrcBuffer32, makeCrcs } from '#/cache/CrcTable.js';
 import WordEnc from '#/cache/wordenc/WordEnc.js';
+import { ensureBotAccount } from '#/engine/bot/BotDatabase.js';
 import { BlockWalk } from '#/engine/entity/BlockWalk.js';
 import { EntityLifeCycle } from '#/engine/entity/EntityLifeCycle.js';
 import { NpcList } from '#/engine/entity/EntityList.js';
@@ -1568,11 +1569,26 @@ class World {
 
     addFriend(player: Player, targetUsername37: bigint) {
         //printDebug(`[World] addFriend => player: ${player.username}, target: ${targetUsername37} (${fromBase37(targetUsername37)})`);
-        this.friendThread.postMessage({
+        const postAddFriend = () => this.friendThread.postMessage({
             type: 'player_friendslist_add',
             username: player.username,
             target: targetUsername37
         });
+
+        const target = this.getPlayerByUsername(fromBase37(targetUsername37));
+        if (target?.is_bot) {
+            ensureBotAccount(target.username)
+                .catch(err => console.error(`[World] ensureBotAccount failed for friend ${target.username}:`, err))
+                .finally(postAddFriend);
+            player.write(new UpdateFriendList(targetUsername37, Environment.NODE_ID));
+            setTimeout(() => {
+                if (!player.loggingOut && this.getPlayerByUsername(fromBase37(targetUsername37))?.is_bot) {
+                    player.write(new UpdateFriendList(targetUsername37, Environment.NODE_ID));
+                }
+            }, 1000);
+        } else {
+            postAddFriend();
+        }
     }
 
     removeFriend(player: Player, targetUsername37: bigint) {
@@ -2013,7 +2029,11 @@ class World {
 
                 for (let i = 0; i < data.friends.length; i++) {
                     const [world, friendUsername37] = data.friends[i];
-                    player.write(new UpdateFriendList(BigInt(friendUsername37), world));
+                    const friend37 = BigInt(friendUsername37);
+                    const friendUsername = fromBase37(friend37);
+                    const friend = this.getPlayerByUsername(friendUsername);
+                    const visibleWorld = friend?.is_bot || BotManager.isConfiguredBot(friendUsername) ? Environment.NODE_ID : world;
+                    player.write(new UpdateFriendList(friend37, visibleWorld));
                 }
 
                 player.write(new FriendlistLoaded(2));

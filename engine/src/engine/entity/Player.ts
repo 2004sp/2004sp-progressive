@@ -52,6 +52,7 @@ import IfClose from '#/network/game/server/model/IfClose.js';
 import IfSetTab from '#/network/game/server/model/IfSetTab.js';
 import LastLoginInfo from '#/network/game/server/model/LastLoginInfo.js';
 import MessageGame from '#/network/game/server/model/MessageGame.js';
+import MessagePrivate from '#/network/game/server/model/MessagePrivate.js';
 import MidiJingle from '#/network/game/server/model/MidiJingle.js';
 import MidiSong from '#/network/game/server/model/MidiSong.js';
 import ResetAnims from '#/network/game/server/model/ResetAnims.js';
@@ -69,14 +70,14 @@ import ServerGameMessage from '#/network/game/server/ServerGameMessage.js';
 import { LoggerEventType } from '#/server/logger/LoggerEventType.js';
 import { ChatModePrivate, ChatModePublic, ChatModeTradeDuel } from '#/engine/entity/ChatModes.js';
 import Environment from '#/util/Environment.js';
-import { toDisplayName } from '#/util/JString.js';
+import { toBase37, toDisplayName } from '#/util/JString.js';
 import LinkList from '#/datastruct/LinkList.js';
 import VarBitType from '#/cache/config/VarBitType.js';
 import FriendlistLoaded from '#/network/game/server/model/FriendlistLoaded.js';
 import UpdateIgnoreList from '#/network/game/server/model/UpdateIgnoreList.js';
 import Midi from '#/cache/midi/Midi.js';
-import fs from "fs";
-import path from "path";
+import fs from 'fs';
+import path from 'path';
 
 
 const levelExperience = new Int32Array(99);
@@ -2405,20 +2406,23 @@ export default class Player extends PathingEntity {
         return super.isValid();
     }
 
-botTradeTargetPid: number = -1;
-botTradeTargetStage: number = -1;
-botTradeTargetChatName: string = '';
-botTradeTargetChatMessage: string = '';
+    botTradeTargetPid: number = -1;
+    botTradeTargetStage: number = -1;
+    botTradeTargetChatName: string = '';
+    botTradeTargetChatMessage: string = '';
+    botVendorPmCooldowns: Record<string, number> = {};
+    botComeHereReturnX: number = -1;
+    botComeHereReturnZ: number = -1;
 
 
- memory?: BotMemory;
+    memory?: BotMemory;
 
     /**
      * AI Chat (For bots)
      * @param name
      * @param mes
      */
-       sendMessageToNearbyBots(name: string, mes: string) {
+    sendMessageToNearbyBots(name: string, mes: string) {
         if (!mes?.length) return;
         for (const bot of World.players) {
             if (!bot) continue;
@@ -2457,7 +2461,14 @@ botTradeTargetChatMessage: string = '';
 
         const distanceToX = Math.abs(bot.x - this.x);
         const distanceToZ = Math.abs(bot.z - this.z);
-        if (Math.max(distanceToX, distanceToZ) > 14) return;
+        const distance = Math.max(distanceToX, distanceToZ);
+        if (distance > 50) return;
+
+        if (this.tryVendorPrivateMessage(name, mes, bot)) {
+            return;
+        }
+
+        if (distance > 14) return;
 
         const memory = (bot.memory ??= {
             state: 'idle',
@@ -2543,6 +2554,104 @@ botTradeTargetChatMessage: string = '';
 
             this.delayedSay(bot, response);
         }
+    }
+
+    private tryVendorPrivateMessage(name: string, mes: string, bot: Player): boolean {
+        if (bot.botPlanner !== 'extras_vendor') {
+            return false;
+        }
+
+        const request = this.getRequestedTradeText(mes);
+        if (!request || !isClientConnected(this)) {
+            return false;
+        }
+
+        const inv = bot.getInventory(InvType.INV);
+        if (!inv) {
+            return false;
+        }
+
+        const match = this.findMatchingVendorItem(inv, request.item);
+        if (!match) {
+            return false;
+        }
+
+        if (request.mode === 'sell' && !match.noted) {
+            return false;
+        }
+
+        const now = Date.now();
+        const cooldownKey = `${name}:${request.mode}:${match.id}`;
+        if ((bot.botVendorPmCooldowns[cooldownKey] ?? 0) > now) {
+            return true;
+        }
+
+        bot.botVendorPmCooldowns[cooldownKey] = now + 30000;
+        const pmId = (Environment.NODE_ID << 24) + ((Math.random() * 0xff) << 16) + World.pmCount++;
+        const displayName = bot.displayName || toDisplayName(bot.username);
+        const reply = request.mode === 'buy'
+            ? `${displayName}: I have ${match.name} for sale. Trade me.`
+            : `${displayName}: I'm buying noted ${match.name}. Trade me and put them up for coins.`;
+        this.write(new MessagePrivate(toBase37(bot.username), pmId, Math.min(bot.staffModLevel, 2), reply));
+        return true;
+    }
+
+    private getRequestedTradeText(message: string): { mode: 'buy' | 'sell'; item: string } | null {
+        const cleaned = this.normalizeTradeText(message);
+        const buyMatch = cleaned.match(/\b(?:buying|buy|need|looking for|lf)\s+(.+?)\s*(?:$|\b(?:pls|please|pm|trade|paying|for)\b)/);
+        if (buyMatch) {
+            return { mode: 'buy', item: this.normalizeTradeText(buyMatch[1]) };
+        }
+
+        const sellMatch = cleaned.match(/\b(?:selling|sell|wts)\s+(.+?)\s*(?:$|\b(?:pls|please|pm|trade|for)\b)/);
+        if (sellMatch) {
+            return { mode: 'sell', item: this.normalizeTradeText(sellMatch[1]) };
+        }
+
+        return null;
+    }
+
+    private findMatchingVendorItem(inv: Inventory, requested: string): { id: number; name: string; noted: boolean } | null {
+        for (let slot = 0; slot < inv.capacity; slot++) {
+            const item = inv.get(slot);
+            if (!item || item.id === 995) {
+                continue;
+            }
+
+            const type = ObjType.get(item.id);
+            const itemName = this.normalizeTradeText(type?.name ?? type?.debugname ?? '');
+            if (!itemName) {
+                continue;
+            }
+
+            if (this.tradeTextMatches(requested, itemName)) {
+                return { id: item.id, name: type?.name ?? type?.debugname ?? 'items', noted: type !== undefined && type.certtemplate !== -1 };
+            }
+        }
+
+        return null;
+    }
+
+    private tradeTextMatches(requested: string, itemName: string): boolean {
+        const singularRequested = this.singularizeTradeText(requested);
+        const singularItem = this.singularizeTradeText(itemName);
+        return singularRequested === singularItem || singularRequested.includes(singularItem) || singularItem.includes(singularRequested);
+    }
+
+    private normalizeTradeText(value: string): string {
+        return value
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\b(noted|some|any|a|an|the)\b/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    private singularizeTradeText(value: string): string {
+        return value
+            .split(' ')
+            .map(part => part.endsWith('s') && part.length > 3 ? part.slice(0, -1) : part)
+            .join(' ');
     }
 
 
@@ -2839,6 +2948,7 @@ botTradeTargetChatMessage: string = '';
         return this.pickSmart(data.greetingReplies, memory, bot);
     }
     is_bot:boolean = false;
+    botPlanner: string = '';
     /**
      * AI Chat (For bots)
      * @param name

@@ -39,6 +39,7 @@ import { BotAppearance } from '#/engine/bot/BotAppearance.js';
 import InvType from '#/cache/config/InvType.js';
 import Environment from '#/util/Environment.js';
 import { toBase37, fromBase37 } from '#/util/JString.js';
+import { ChatModePrivate } from '#/engine/entity/ChatModes.js';
 
 /** Normalize a bot username the same way PlayerLoading does.
  *  RS2 base37 maps underscores → spaces and strips unsupported chars,
@@ -81,6 +82,7 @@ function loadBotConfigs(): BotConfig[] {
             return {
                 username: b.username,
                 description: b.description,
+                planner: plannerKey,
                 makePlanner: PLANNER_MAP[plannerKey]
             };
         });
@@ -96,11 +98,13 @@ function loadBotConfigs(): BotConfig[] {
 
 interface BotConfig {
     username: string;
+    planner: PlannerKey;
     makePlanner: () => BotGoalPlanner;
     description: string;
 }
 
 const BOT_CONFIGS: BotConfig[] = loadBotConfigs();
+const CONFIGURED_BOT_USERNAMES = new Set(BOT_CONFIGS.map(cfg => normalizeBotUsername(cfg.username)));
 
 const STATUS_EVERY_TICKS = 100;
 
@@ -152,6 +156,10 @@ class BotManagerClass {
         if (this.tickCount % STATUS_EVERY_TICKS === 0) {
             this._printStatus();
         }
+    }
+
+    isConfiguredBot(username: string): boolean {
+        return CONFIGURED_BOT_USERNAMES.has(normalizeBotUsername(username));
     }
 
     // ── Private ───────────────────────────────────────────────────────────────
@@ -237,7 +245,7 @@ class BotManagerClass {
 
         // ─────────────────────────────────────────────
         // 🔥 IMPORTANT: APPLY BOT APPEARANCE HERE
-        // Only randomize if new bot (no save file exists)
+        // Refresh body/clothes for every bot so old default-looking saves do not stay default.
         // ─────────────────────────────────────────────
         if (!saveExists) {
             try {
@@ -247,7 +255,12 @@ class BotManagerClass {
                 console.error(`[BotManager] BotAppearance failed for ${normalizedUsername}:`, err);
             }
         } else {
-            console.log(`[BotManager] Loaded existing appearance for: ${normalizedUsername}`);
+            try {
+                BotAppearance.randomizeBody(player);
+                console.log(`[BotManager] Refreshed appearance for existing bot: ${normalizedUsername}`);
+            } catch (err) {
+                console.error(`[BotManager] BotAppearance refresh failed for ${normalizedUsername}:`, err);
+            }
         }
 
         // ─────────────────────────────────────────────
@@ -261,6 +274,8 @@ class BotManagerClass {
         const bot = new BotPlayer(player, cfg.makePlanner());
         this.bots.set(normalizedUsername, bot);
         player.is_bot = true; // mark as headless bot
+        player.botPlanner = cfg.planner;
+        player.privateChat = ChatModePrivate.ON;
         this.world.newPlayers.add(player);
 
         // ─────────────────────────────────────────────
@@ -289,10 +304,10 @@ class BotManagerClass {
         const now = new Date().toLocaleTimeString();
 
         console.log('');
-        console.log(`┌──────────────────── BotManager Status ────────────────────┐`);
+        console.log('┌──────────────────── BotManager Status ────────────────────┐');
         console.log(`│ Time: ${now.padEnd(50)}│`);
         console.log(`│ Bots: ${String(activeBots.length).padEnd(5)} active / ${String(this.bots.size).padEnd(5)} total${' '.repeat(25)}│`);
-        console.log(`└───────────────────────────────────────────────────────────┘`);
+        console.log('└───────────────────────────────────────────────────────────┘');
         console.log('');
 
         for (const bot of activeBots) {

@@ -17,8 +17,8 @@ const MAN_FEET_IDS = [42, 43];
 const WOMAN_HAIR_IDS = [45, 46, 47, 48, 49, 50, 51, 52, 53, 54];
 const WOMAN_TORSO_IDS = [56, 57, 58, 59, 60];
 const WOMAN_ARMS_IDS = [61, 62, 63, 64, 65];
-const WOMAN_HANDS_IDS = [66, 67];
-const WOMAN_FEET_IDS = [68, 69];
+const WOMAN_HANDS_IDS = [67, 68];
+const WOMAN_FEET_IDS = [79, 80];
 const WOMAN_LEGS_IDS = [70, 71, 72, 73, 74, 75, 76, 77];
 
 const GENDERS = {
@@ -30,6 +30,19 @@ const STARTER_WEAPONS = [Items.BRONZE_AXE, Items.BRONZE_PICKAXE, Items.BRONZE_SW
 
 function pick<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickIdkit(ids: number[], type: number): number {
+    const valid = ids.filter(id => {
+        const idk = IdkType.get(id);
+        return idk && !idk.disable && idk.type === type;
+    });
+
+    if (valid.length === 0) {
+        throw new Error(`No valid idkits for type ${type}`);
+    }
+
+    return pick(valid);
 }
 
 function item(id: number, player:Player) {
@@ -88,6 +101,38 @@ export class BotAppearance {
         }
     }
 
+    static randomizeBody(player: Player): void {
+        const gender = Math.random() < 0.51 ? GENDERS.MALE : GENDERS.FEMALE;
+        player.gender = gender;
+        player.body.fill(-1);
+
+        const hairColour = pick(HAIR_COLOURS);
+        const torsoColour = pick(HAIR_COLOURS);
+        const legColour = pick(HAIR_COLOURS);
+        const feetColour = pick(HAIR_COLOURS);
+
+        if (gender === GENDERS.MALE) {
+            BotAppearance.set_appearance(player, pickIdkit(MAN_HAIR_IDS, 0), hairColour);
+            BotAppearance.set_appearance(player, pickIdkit(MAN_JAW_IDS, 1), hairColour);
+            BotAppearance.set_appearance(player, pickIdkit(MAN_TORSO_IDS, 2), torsoColour);
+            BotAppearance.set_appearance(player, pickIdkit(MAN_ARMS_IDS, 3), torsoColour);
+            BotAppearance.set_appearance(player, pickIdkit(MAN_HANDS_IDS, 4), torsoColour);
+            BotAppearance.set_appearance(player, pickIdkit(MAN_LEGS_IDS, 5), legColour);
+            BotAppearance.set_appearance(player, pickIdkit(MAN_FEET_IDS, 6), feetColour);
+        } else {
+            BotAppearance.set_appearance(player, pickIdkit(WOMAN_HAIR_IDS, 7), hairColour);
+            player.body[1] = -1;
+            BotAppearance.set_appearance(player, pickIdkit(WOMAN_TORSO_IDS, 9), torsoColour);
+            BotAppearance.set_appearance(player, pickIdkit(WOMAN_ARMS_IDS, 10), torsoColour);
+            BotAppearance.set_appearance(player, pickIdkit(WOMAN_HANDS_IDS, 11), torsoColour);
+            BotAppearance.set_appearance(player, pickIdkit(WOMAN_LEGS_IDS, 12), legColour);
+            BotAppearance.set_appearance(player, pickIdkit(WOMAN_FEET_IDS, 13), feetColour);
+        }
+
+        player.colors[4] = pick(SKIN_TONES);
+        player.buildAppearance(InvType.WORN);
+    }
+
     static randomize(player: Player): void {
 
         const worn = player.getInventory(InvType.WORN);
@@ -95,30 +140,8 @@ export class BotAppearance {
         const inv = player.getInventory(InvType.INV);
         if (!inv) throw new Error('Invalid inv');
 
-        // gender
-        const gender = Math.random() < 0.51 ? GENDERS.MALE : GENDERS.FEMALE;
-        BotAppearance.set_gender(player, gender);
-        // appearance
-        if (player.gender === GENDERS.MALE) {
-            BotAppearance.set_appearance(player, MAN_HAIR_IDS[randInt(0, MAN_HAIR_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, MAN_JAW_IDS[randInt(0, MAN_JAW_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, MAN_TORSO_IDS[randInt(0, MAN_TORSO_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, MAN_ARMS_IDS[randInt(0, MAN_ARMS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, MAN_LEGS_IDS[randInt(0, MAN_LEGS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, MAN_FEET_IDS[randInt(0, MAN_FEET_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, MAN_HANDS_IDS[randInt(0, MAN_HANDS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            player.colors[4] = SKIN_TONES[randInt(0, SKIN_TONES.length-1)];
-        } else {
-            BotAppearance.set_appearance(player, WOMAN_HAIR_IDS[randInt(0, WOMAN_HAIR_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            //BotAppearance.set_appearance(player, MAN_JAW_IDS[4], 0); //Just don't set it
-            BotAppearance.set_appearance(player, WOMAN_TORSO_IDS[randInt(0, WOMAN_TORSO_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, WOMAN_ARMS_IDS[randInt(0, WOMAN_ARMS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, WOMAN_LEGS_IDS[randInt(0, WOMAN_LEGS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, WOMAN_FEET_IDS[randInt(0, WOMAN_FEET_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            BotAppearance.set_appearance(player, WOMAN_HANDS_IDS[randInt(0, WOMAN_HANDS_IDS.length-1)], HAIR_COLOURS[randInt(0, HAIR_COLOURS.length-1)]);
-            player.colors[4] = SKIN_TONES[randInt(0, SKIN_TONES.length-1)];
-        }
-       
+        BotAppearance.randomizeBody(player);
+
         worn.set(3, item(pick(STARTER_WEAPONS), player)); // weapon
         //^ I believe the login script already does this ^
 
