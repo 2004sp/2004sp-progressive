@@ -342,9 +342,7 @@
                 return false;
             }
 
-            const dx = localX - 16;
-            const dy = localY - 16;
-            return dx * dx + dy * dy <= 16 * 16;
+            return true;
         }
 
         const originalMouseDown = Client.prototype.pd;
@@ -409,11 +407,43 @@
 
         const originalPointerMove = Client.prototype.vd;
         Client.prototype.vd = function (x, y, event) {
-            return originalPointerMove.call(this, x, y, event);
+            const previousScreenX = this.mobileRotateX;
+            const previousScreenY = this.mobileRotateY;
+
+            if (event?.pointerType && event.pointerType !== 'mouse') {
+                this.mobileRotateX = event.screenX;
+                this.mobileRotateY = event.screenY;
+            }
+
+            const result = originalPointerMove.call(this, x, y, event);
+
+            if (event?.pointerType && event.pointerType !== 'mouse' && this.BC && (this.Vc[1] || this.Vc[2] || this.Vc[3] || this.Vc[4])) {
+                if (Number.isFinite(previousScreenX) && Number.isFinite(previousScreenY)) {
+                    const dx = event.screenX - previousScreenX;
+                    const dy = event.screenY - previousScreenY;
+                    const yawDelta = Math.round(dx * 2);
+                    const pitchDelta = Math.round(dy * 0.75);
+                    this.tw = (this.tw - yawDelta) & 2047;
+                    this.sw = Math.max(128, Math.min(383, this.sw + pitchDelta));
+                    this.bw = true;
+                    this.northLock = 0;
+                }
+
+                this.uw = 0;
+                this.ww = 0;
+                this.Vc[1] = 0;
+                this.Vc[2] = 0;
+                this.Vc[3] = 0;
+                this.Vc[4] = 0;
+            }
+
+            return result;
         };
 
         const originalPointerLeave = Client.prototype.ud;
         Client.prototype.ud = function (event) {
+            this.mobileRotateX = undefined;
+            this.mobileRotateY = undefined;
             return originalPointerLeave.call(this, event);
         };
 
@@ -456,12 +486,14 @@
             const rotateFromMiddleMouse = (event) => {
                 const dx = event.clientX - middleLastX;
                 const dy = event.clientY - middleLastY;
+                const yawDelta = Math.round(dx * 2);
+                const pitchDelta = Math.round(dy * 0.75);
 
                 middleLastX = event.clientX;
                 middleLastY = event.clientY;
 
-                client.tw = (client.tw - dx * 4) & 2047;
-                client.sw = Math.max(128, Math.min(383, client.sw + dy));
+                client.tw = (client.tw - yawDelta) & 2047;
+                client.sw = Math.max(128, Math.min(383, client.sw + pitchDelta));
                 client.uw = 0;
                 client.ww = 0;
                 client.northLock = 0;
@@ -508,12 +540,26 @@
                 event.stopImmediatePropagation();
             };
 
-            const resetFromCanvasEvent = (event) => {
-                const rect = canvas.getBoundingClientRect();
-                const x = Math.floor((event.clientX - rect.left) * (canvas.width / rect.width));
-                const y = Math.floor((event.clientY - rect.top) * (canvas.height / rect.height));
+            const getCanvasPoint = (event) => {
+                const touch = event.changedTouches?.[0] ?? event.touches?.[0];
+                const clientX = touch?.clientX ?? event.clientX;
+                const clientY = touch?.clientY ?? event.clientY;
 
-                if (isCompassClick(client, x, y)) {
+                if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+                    return null;
+                }
+
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: Math.floor((clientX - rect.left) * (canvas.width / rect.width)),
+                    y: Math.floor((clientY - rect.top) * (canvas.height / rect.height))
+                };
+            };
+
+            const resetFromCanvasEvent = (event) => {
+                const point = getCanvasPoint(event);
+
+                if (point && isCompassClick(client, point.x, point.y)) {
                     resetCompassAndCamera(client);
                     event.preventDefault();
                     event.stopImmediatePropagation();
@@ -522,8 +568,10 @@
 
             canvas.addEventListener('mousedown', resetFromCanvasEvent, true);
             canvas.addEventListener('pointerdown', resetFromCanvasEvent, true);
+            canvas.addEventListener('touchstart', resetFromCanvasEvent, true);
             canvas.addEventListener('mouseup', resetFromCanvasEvent, true);
             canvas.addEventListener('pointerup', resetFromCanvasEvent, true);
+            canvas.addEventListener('touchend', resetFromCanvasEvent, true);
             canvas.addEventListener('mousedown', startMiddleRotate, true);
             canvas.addEventListener('pointerdown', startMiddleRotate, true);
             canvas.addEventListener('mousemove', moveMiddleRotate, true);
