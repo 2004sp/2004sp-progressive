@@ -1,7 +1,7 @@
 import fs from 'fs';
 import fsp from 'fs/promises';
 
-import bcrypt from 'bcrypt';
+import { compare, hashSync } from 'bcrypt-ts';
 import { WebSocket, WebSocketServer } from 'ws';
 
 
@@ -210,7 +210,7 @@ export default class LoginServer {
                                     .insertInto('account')
                                     .values({
                                         username,
-                                        password: bcrypt.hashSync(password.toLowerCase(), 10),
+                                        password: hashSync(password.toLowerCase(), 10),
                                         registration_ip: remoteAddress,
                                         registration_date: toDbDate(new Date())
                                     })
@@ -230,7 +230,7 @@ export default class LoginServer {
                                     .executeTakeFirst();
                             }
 
-                            if (!account || !(await bcrypt.compare(password.toLowerCase(), account.password))) {
+                            if (!account || !(await compare(password.toLowerCase(), account.password))) {
                                 // invalid username or password
                                 s.send(
                                     JSON.stringify({

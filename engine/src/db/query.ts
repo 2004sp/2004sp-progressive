@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import { Kysely, MysqlDialect } from 'kysely';
 import type { Dialect, LogEvent } from 'kysely';
 import { createPool } from 'mysql2';
@@ -11,7 +11,7 @@ let dialect: Dialect;
 
 if (Environment.DB_BACKEND === 'sqlite') {
     dialect = new BunSqliteDialect({
-        database: new Database('db.sqlite')
+        database: new DatabaseSync('db.sqlite')
     });
 } else {
     dialect = new MysqlDialect({

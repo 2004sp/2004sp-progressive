@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import { CompiledQuery, DatabaseConnection, Driver, QueryResult } from 'kysely';
 import { BunSqliteDialectConfig } from './BunSqliteDialectConfig.js';
 
@@ -8,7 +8,7 @@ export class BunSqliteDriver implements Driver {
     readonly #config: BunSqliteDialectConfig;
     readonly #connectionMutex = new ConnectionMutex();
 
-    #db?: Database.Database;
+    #db?: DatabaseSync;
     #connection?: DatabaseConnection;
 
     constructor(config: BunSqliteDialectConfig) {
@@ -54,9 +54,9 @@ export class BunSqliteDriver implements Driver {
 }
 
 class BunSqliteConnection implements DatabaseConnection {
-    readonly #db: Database.Database;
+    readonly #db: DatabaseSync;
 
-    constructor(db: Database.Database) {
+    constructor(db: DatabaseSync) {
         this.#db = db;
     }
 
@@ -66,7 +66,7 @@ class BunSqliteConnection implements DatabaseConnection {
                 const { sql, parameters } = compiledQuery;
                 const stmt = this.#db.prepare(sql);
 
-                if (stmt.reader) {
+                if (stmt.columns().length > 0) {
                     return {
                         rows: stmt.all(...(parameters as any[])) as O[]
                     };
