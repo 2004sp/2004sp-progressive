@@ -103,7 +103,11 @@ inv_clear(deathkeep);
 
 [proc,pvp_death_lose_items]
 ~pvp_death_message(.uid);
-if (p_isbot = 1) { return; }
+if (p_isbot = 1) {
+    def_int $coin_drop = calc(random(50000) + 1);
+    .obj_add(coord, coins, $coin_drop, ^lootdrop_duration);
+    return;
+}
 if (staffmodlevel > 1 & map_live = true) { return; }
 
 def_boolean $skulled = false;
