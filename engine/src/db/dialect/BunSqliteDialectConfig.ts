@@ -1,14 +1,14 @@
 import { DatabaseConnection } from 'kysely';
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 
 /**
  * Config for the SQLite dialect.
  */
 export interface BunSqliteDialectConfig {
     /**
-     * A better-sqlite3 Database instance.
+     * A node:sqlite DatabaseSync instance.
      */
-    database: Database.Database;
+    database: DatabaseSync;
 
     /**
      * Called once when the first query is executed.

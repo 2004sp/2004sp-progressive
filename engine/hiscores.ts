@@ -1,9 +1,9 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 
-const db = new Database('db.sqlite');
+const db = new DatabaseSync('db.sqlite');
 
 const MIME_TYPES: Record<string, string> = {
     '.html': 'text/html',
