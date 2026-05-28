@@ -104,6 +104,7 @@ inv_clear(deathkeep);
 [proc,pvp_death_lose_items]
 ~pvp_death_message(.uid);
 if (p_isbot = 1) {
+    if (.p_isbot = 1) { return; }
     def_int $coin_drop = calc(random(50000) + 1);
     .obj_add(coord, coins, $coin_drop, ^lootdrop_duration);
     return;
