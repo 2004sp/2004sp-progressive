@@ -1,14 +1,3 @@
-/**
- * PKerTask.ts
- *
- * "Extras" personality — deep-wilderness PKer.
- * Picks one of 60 generated profiles (30 pures + 30 mains) and hunts across
- * 12 deep-wilderness patrol zones (Z ~3663–3820).  Full combat engine shared
- * with EdgevillePKerTask: special attacks, food, potions, banking, blacklist,
- * stacking detection.  The only difference from EdgevillePKerTask is the
- * hunting area — this bot goes deep, not shallow-ditch.
- */
-
 import Player, { getExpByLevel } from '#/engine/entity/Player.js';
 import ObjType from '#/cache/config/ObjType.js';
 import {
@@ -19,12 +8,14 @@ import {
     PlayerStat,
     hasItem,
     addItem,
+    removeItem,
     countItem,
     isInventoryFull,
     teleportNear,
     StuckDetector,
     ProgressWatchdog,
     Items,
+    FOOD_IDS,
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import {
     interactPlayerOp,
@@ -36,8 +27,6 @@ import {
 import World from '#/engine/World.js';
 import InvType from '#/cache/config/InvType.js';
 import { botWalkPath } from '#/engine/GameMap.js';
-
-// ── Item IDs ──────────────────────────────────────────────────────────────────
 
 const I = {
     RUNE_SCIMITAR: 1333,
@@ -110,7 +99,7 @@ const DHIDE_VAMBS: [number, number, number][] = [
     [I.BLACK_DHIDE_VAMBRACES, 70, 1],
 ];
 
-// ── Profile generation (identical to EdgevillePKerTask) ───────────────────────
+const GL_PHRASES = ['Gl', 'Gl noob', 'Attack is a newb so ill take my anger out on you'];
 
 interface PkerProfile {
     name: string;
@@ -228,53 +217,29 @@ function generateProfiles(): PkerProfile[] {
 
 const PROFILES = generateProfiles();
 
-// ── Patrol zones (deep wilderness) ────────────────────────────────────────────
-
-// Deep wilderness hunting zones (wild levels ~18–38).
-const HUNTING_ZONES: [number, number][] = [
-    [3082, 3663],  //  0 — Graveyard of Shadows west  (~wild 18)
-    [3235, 3663],  //  1 — Graveyard of Shadows east  (~wild 18)
-    [3050, 3695],  //  2 — west wilderness             (~wild 22)
-    [3100, 3715],  //  3 — mid wilderness              (~wild 25)
-    [3285, 3715],  //  4 — east wilderness ruins       (~wild 25)
-    [3060, 3750],  //  5 — deep west                  (~wild 29)
-    [3190, 3752],  //  6 — deep mid                   (~wild 30)
-    [3290, 3752],  //  7 — deep east                  (~wild 30)
-    [3050, 3790],  //  8 — far west                   (~wild 34)
-    [3105, 3800],  //  9 — far mid (Lava Maze area)    (~wild 36)
-    [3240, 3800],  // 10 — far east                   (~wild 36)
-    [2972, 3820],  // 11 — far west deep               (~wild 38)
-];
-
-const EDGEVILLE_BANK: [number, number] = [3093, 3491];
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const SCAN_RADIUS      = 25;
-const DISENGAGE_DIST   = 55;
-const ZONE_DURATION_MIN = 60;
-const ZONE_DURATION_MAX = 130;
-const ZONE_WANDER       = 18;
-const WILD_Z_START      = 3520;
-
-const GL_PHRASES    = ['Gl', 'Gl noob', 'gl hf'];
-const PATROL_TAUNTS = ['1v1?', 'looking for trouble', 'come out come out', 'safe spot?', 'gf gear', 'who wants some', 'free kills', 'anyone out here?'];
-const FIGHT_TAUNTS  = ['get rekt', 'gg', 'nowhere to run', 'rip', 'gf noob', 'lol', 'u ded', 'ez'];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const EDGEVILLE_CENTER: [number, number, number] = [3093, 3491, 0];
+const WILD_ZONE_CX = 3093;
+const WILD_Z_MIN = 3526;
+const WILD_Z_MAX = 3559;
+const WILD_X_RADIUS = 14;
+const SCAN_RADIUS = 22;
+const DISENGAGE_DIST = 40;
+const DIESPAWN_DIST = 120;
+const BANK_DIST = 5;
+const WILD_Z_START = 3520;
 
 function chebyshev(ax: number, az: number, bx: number, bz: number): number {
     return Math.max(Math.abs(ax - bx), Math.abs(az - bz));
 }
 
-function wildernessLevel(z: number): number {
+function wildLevel(z: number): number {
     if (z < WILD_Z_START) return 0;
     return Math.max(1, Math.floor((z - WILD_Z_START) / 8) + 1);
 }
 
-function inCombatRange(wildLevel: number, attackerCb: number, targetCb: number): boolean {
-    if (wildLevel <= 0) return false;
-    return Math.abs(attackerCb - targetCb) <= wildLevel;
+function inCombatRange(wildLvl: number, myCb: number, theirCb: number): boolean {
+    if (wildLvl <= 0) return false;
+    return Math.abs(myCb - theirCb) <= wildLvl;
 }
 
 function isFightingAnother(target: Player, self: Player): boolean {
@@ -294,25 +259,20 @@ function isTargetClaimed(target: Player, excludeBot: Player): boolean {
         if (p === target || p === excludeBot) continue;
         if (p.slot === -1) continue;
         const bot = (p as any)._bot;
-        if (bot && bot.task instanceof PKerTask && bot.task.target === target) return true;
+        if (bot && bot.task instanceof EdgevillePKerTask && bot.task.target === target) return true;
     }
     return false;
 }
 
-function findNearbyRealPlayer(bot: Player, radius: number, blacklist?: Map<string, number>): Player | null {
-    const wildLevel = wildernessLevel(bot.z);
-    if (wildLevel <= 0) return null;
-
+function findNearbyTarget(bot: Player, radius: number, blacklist?: Map<string, number>): Player | null {
     let best: Player | null = null;
     let bestDist = radius + 1;
     for (const p of (World as any).playerLoop.all() as Iterable<Player>) {
         if (p === bot) continue;
-        if ((p as any).is_bot) continue;
         if (p.level !== bot.level) continue;
         if (p.slot === -1) continue;
-        if (blacklist?.has(p.username)) continue;
         if (isTargetClaimed(p, bot)) continue;
-        if (!inCombatRange(wildLevel, bot.combatLevel, p.combatLevel)) continue;
+        if (blacklist?.has(p.username)) continue;
         const d = chebyshev(bot.x, bot.z, p.x, p.z);
         if (d < bestDist) { best = p; bestDist = d; }
     }
@@ -377,70 +337,57 @@ function tryEquipFromInventory(player: Player, weaponId: number): boolean {
     return true;
 }
 
-// ── Task ──────────────────────────────────────────────────────────────────────
-
-export class PKerTask extends BotTask {
-    private state: 'init' | 'walk' | 'banking' | 'patrol' | 'engage' = 'init';
-
+export class EdgevillePKerTask extends BotTask {
+    private state: 'init' | 'walk_to_wild' | 'banking' | 'idle' | 'engage' = 'init';
     private profile: PkerProfile | null = null;
-    target: Player | null = null;  // public so isTargetClaimed can read it
-
-    private engageTicks      = 0;
-    private potsDrunk        = 0;
+    private target: Player | null = null;
+    private engageTicks = 0;
+    private potsDrunk = 0;
+    private wildTargetX = 0;
+    private wildTargetZ = 0;
     private specUsesRemaining = 0;
-    private stackFixed       = false;
-    private stackAttempts    = 0;
+    private stackFixed = false;
+    private stackAttempts = 0;
     private stackWalkCooldown = 0;
-    private respawnTimer     = 0;
-    private gearVersion      = 0;
+    private wanderTimer = 0;
+    private respawnTimer = 0;
+    private gearVersion = 0;
     private static readonly GEAR_VERSION = 1;
 
     private readonly blacklist = new Map<string, number>();
-
-    private zonePoolIdx   = 0;
-    private zoneTicks     = 0;
-    private zoneDuration  = 0;
-    private waypointX     = 0;
-    private waypointZ     = 0;
-    private waypointSet   = false;
-    // rescanTimer inherited as protected from BotTask
-
-    private readonly stuck    = new StuckDetector(25, 4, 2);
+    private readonly stuck = new StuckDetector(25, 4, 2);
     private readonly watchdog = new ProgressWatchdog(300);
 
     constructor() {
-        super('PKer');
-        this.zonePoolIdx  = Math.floor(Math.random() * HUNTING_ZONES.length);
-        this.zoneDuration = randInt(ZONE_DURATION_MIN, ZONE_DURATION_MAX);
+        super('EdgevillePKer');
     }
 
-    shouldRun(_player: Player): boolean { return true; }
+    shouldRun(_player: Player): boolean {
+        return true;
+    }
 
     tick(player: Player): void {
         if (this.interrupted) return;
-
-        // Tick down blacklist entries.
         for (const [k, v] of this.blacklist) {
             if (v <= 1) this.blacklist.delete(k);
             else this.blacklist.set(k, v - 1);
         }
-
         if (this.watchdog.check(player, false)) {
             player.clearWaypoints();
             player.clearPendingAction();
             this.interrupt();
             return;
         }
-
-        if (this.cooldown > 0) { this.cooldown--; return; }
-
+        if (this.cooldown > 0) {
+            this.cooldown--;
+            return;
+        }
         if (!this.profile) {
             this.profile = PROFILES[Math.floor(Math.random() * PROFILES.length)]!;
         }
 
-        // Force re-init when gear version bumps.
-        if (this.gearVersion < PKerTask.GEAR_VERSION) {
-            this.gearVersion = PKerTask.GEAR_VERSION;
+        if (this.gearVersion < EdgevillePKerTask.GEAR_VERSION) {
+            this.gearVersion = EdgevillePKerTask.GEAR_VERSION;
             this.target = null;
             this.state = 'init';
             this.potsDrunk = 0;
@@ -451,16 +398,38 @@ export class PKerTask extends BotTask {
             return;
         }
 
+        const [ex, ez] = EDGEVILLE_CENTER;
+        const dist = chebyshev(player.x, player.z, ex, ez);
+        if (this.state !== 'init' && (dist > DIESPAWN_DIST || (dist < 10 && (this.state === 'idle' || this.state === 'engage')))) {
+            this.target = null;
+            this.state = 'init';
+            this.potsDrunk = 0;
+            this.specUsesRemaining = 0;
+            this.stackFixed = false;
+            this.respawnTimer = randInt(10, 40);
+            this.watchdog.notifyActivity();
+            return;
+        }
+
+        const hp = player.levels[PlayerStat.HITPOINTS] ?? 0;
+        const maxHp = player.baseLevels[PlayerStat.HITPOINTS] ?? 10;
+
+        if (this.state === 'engage' && hp < maxHp * 0.5) {
+            this.eatFood(player);
+        }
+
         switch (this.state) {
-            case 'init':    return this.handleInit(player);
-            case 'walk':    return this.handleWalk(player);
+            case 'init': return this.handleInit(player);
+            case 'walk_to_wild': return this.handleWalkToWild(player);
             case 'banking': return this.handleBanking(player);
-            case 'patrol':  return this.handlePatrol(player);
-            case 'engage':  return this.handleEngage(player);
+            case 'idle': return this.handleIdle(player);
+            case 'engage': return this.handleEngage(player);
         }
     }
 
-    isComplete(): boolean { return false; }
+    isComplete(): boolean {
+        return false;
+    }
 
     override reset(): void {
         super.reset();
@@ -472,40 +441,36 @@ export class PKerTask extends BotTask {
         this.stackFixed = false;
         this.stackAttempts = 0;
         this.stackWalkCooldown = 0;
+        this.wanderTimer = 0;
         this.respawnTimer = 0;
-        this.zoneTicks = 0;
-        this.waypointSet = false;
-        this.rescanTimer = 0;
         this.blacklist.clear();
         this.stuck.reset();
         this.watchdog.reset();
-        // profile and zonePoolIdx intentionally kept — bot retains identity across cycles
     }
-
-    // ── States ────────────────────────────────────────────────────────────────
 
     private handleInit(player: Player): void {
         const p = this.profile!;
 
         if (player.baseLevels[PlayerStat.ATTACK] !== p.atk) {
+            const xp = getExpByLevel(p.atk);
             player.baseLevels[PlayerStat.ATTACK] = p.atk;
-            player.levels[PlayerStat.ATTACK]     = p.atk;
-            player.stats[PlayerStat.ATTACK]      = getExpByLevel(p.atk);
+            player.levels[PlayerStat.ATTACK] = p.atk;
+            player.stats[PlayerStat.ATTACK] = xp;
             player.baseLevels[PlayerStat.STRENGTH] = p.str;
-            player.levels[PlayerStat.STRENGTH]     = p.str;
-            player.stats[PlayerStat.STRENGTH]      = getExpByLevel(p.str);
+            player.levels[PlayerStat.STRENGTH] = p.str;
+            player.stats[PlayerStat.STRENGTH] = getExpByLevel(p.str);
             player.baseLevels[PlayerStat.DEFENCE] = p.def;
-            player.levels[PlayerStat.DEFENCE]     = p.def;
-            player.stats[PlayerStat.DEFENCE]      = getExpByLevel(p.def);
+            player.levels[PlayerStat.DEFENCE] = p.def;
+            player.stats[PlayerStat.DEFENCE] = getExpByLevel(p.def);
             player.baseLevels[PlayerStat.HITPOINTS] = p.hp;
-            player.levels[PlayerStat.HITPOINTS]     = p.hp;
-            player.stats[PlayerStat.HITPOINTS]      = getExpByLevel(p.hp);
+            player.levels[PlayerStat.HITPOINTS] = p.hp;
+            player.stats[PlayerStat.HITPOINTS] = getExpByLevel(p.hp);
             player.baseLevels[PlayerStat.RANGED] = p.range;
-            player.levels[PlayerStat.RANGED]     = p.range;
-            player.stats[PlayerStat.RANGED]      = getExpByLevel(p.range);
+            player.levels[PlayerStat.RANGED] = p.range;
+            player.stats[PlayerStat.RANGED] = getExpByLevel(p.range);
             player.baseLevels[PlayerStat.PRAYER] = p.pray;
-            player.levels[PlayerStat.PRAYER]     = p.pray;
-            player.stats[PlayerStat.PRAYER]      = getExpByLevel(p.pray);
+            player.levels[PlayerStat.PRAYER] = p.pray;
+            player.stats[PlayerStat.PRAYER] = getExpByLevel(p.pray);
             player.combatLevel = player.getCombatLevel();
         }
 
@@ -516,11 +481,13 @@ export class PKerTask extends BotTask {
 
         this.replenish(player);
 
-        const [zx, zz] = this._currentZoneCoords();
-        teleportNear(player, zx, zz);
-        console.log(`[PKerTask] ${player.displayName} profile=${p.name} cb=${player.combatLevel} zone=${zx},${zz}`);
-        this.state    = 'walk';
+        const [wx, wz] = this.getWildernessSpot(player);
+        this.wildTargetX = wx;
+        this.wildTargetZ = wz;
+        console.log(`[EdgevillePKer] ${player.displayName} profile=${p.name} cb=${player.combatLevel} spot=${wx},${wz}`);
+        this.state = 'walk_to_wild';
         this.cooldown = randInt(2, 4);
+        teleportNear(player, EDGEVILLE_CENTER[0], EDGEVILLE_CENTER[1]);
     }
 
     private replenish(player: Player): void {
@@ -550,10 +517,16 @@ export class PKerTask extends BotTask {
             }
         }
 
-        if (p.specWeapon !== -1 && !hasItem(player, p.specWeapon)) addItem(player, p.specWeapon, 1);
-        if (p.rangeWeapon !== -1 && !hasItem(player, p.rangeWeapon)) addItem(player, p.rangeWeapon, 1);
+        if (p.specWeapon !== -1 && !hasItem(player, p.specWeapon)) {
+            addItem(player, p.specWeapon, 1);
+        }
+        if (p.rangeWeapon !== -1 && !hasItem(player, p.rangeWeapon)) {
+            addItem(player, p.rangeWeapon, 1);
+        }
         for (const potId of p.pots) {
-            if (!hasItem(player, potId)) addItem(player, potId, 1);
+            if (!hasItem(player, potId)) {
+                addItem(player, potId, 1);
+            }
         }
         const foodCount = countItem(player, p.food);
         for (let i = 0; i < 20 - foodCount && !isInventoryFull(player); i++) {
@@ -561,24 +534,7 @@ export class PKerTask extends BotTask {
         }
     }
 
-    private handleWalk(player: Player): void {
-        const [zx, zz] = this._currentZoneCoords();
-        if (!isNear(player, zx, zz, ZONE_WANDER + 5)) {
-            if (Math.abs(player.x - zx) > 120 || Math.abs(player.z - zz) > 120) {
-                teleportNear(player, zx, zz);
-                this.cooldown = randInt(1, 2);
-                return;
-            }
-            this.stuckWalk(player, zx + randInt(-8, 8), zz + randInt(-8, 8));
-            this.cooldown = 1;
-            return;
-        }
-        this.waypointSet = false;
-        this.state = 'patrol';
-    }
-
     private handleBanking(player: Player): void {
-        // If something attacked the bot on the way back, engage it.
         if (player.target && 'slot' in player.target) {
             this.target = player.target as Player;
             this.engageTicks = 0;
@@ -589,68 +545,72 @@ export class PKerTask extends BotTask {
             this.watchdog.notifyActivity();
             return;
         }
-
-        const [bx, bz] = EDGEVILLE_BANK;
+        const [bx, bz] = EDGEVILLE_CENTER;
         this.stuckWalk(player, bx, bz);
-
-        if (isNear(player, bx, bz, 5)) {
+        if (isNear(player, bx, bz, BANK_DIST)) {
             this.replenish(player);
-            const [zx, zz] = this._currentZoneCoords();
-            teleportNear(player, zx, zz);
-            this.waypointSet = false;
-            this.state    = 'patrol';
+            const [wx, wz] = this.getWildernessSpot(player);
+            this.wildTargetX = wx;
+            this.wildTargetZ = wz;
+            this.state = 'walk_to_wild';
             this.cooldown = randInt(2, 4);
         }
         this.watchdog.notifyActivity();
     }
 
-    private handlePatrol(player: Player): void {
-        this.zoneTicks++;
+    private handleWalkToWild(player: Player): void {
+        this.stuckWalk(player, this.wildTargetX, this.wildTargetZ);
+        if (isNear(player, this.wildTargetX, this.wildTargetZ, 5)) {
+            this.state = 'idle';
+            this.cooldown = randInt(2, 4);
+            return;
+        }
+        this.watchdog.notifyActivity();
+        if (this.state !== 'init') {
+            this.cooldown = 1;
+        }
+    }
 
-        // Throttled target scan.
+    private handleIdle(player: Player): void {
+        if (player.target && 'slot' in player.target) {
+            this.target = player.target as Player;
+            this.engageTicks = 0;
+            this.potsDrunk = 0;
+            this.specUsesRemaining = randInt(1, 2);
+            this.state = 'engage';
+            this.drinkPots(player);
+            this.watchdog.notifyActivity();
+            return;
+        }
         if (this.rescanTimer <= 0) {
-            const found = findNearbyRealPlayer(player, SCAN_RADIUS, this.blacklist);
+            const found = findNearbyTarget(player, SCAN_RADIUS, this.blacklist);
             if (found) {
-                this.target = found;
-                this.engageTicks = 0;
-                this.potsDrunk = 0;
-                this.specUsesRemaining = randInt(1, 2);
-                this.state = 'engage';
-                this.drinkPots(player);
-                player.say(GL_PHRASES[Math.floor(Math.random() * GL_PHRASES.length)]!);
-                interactPlayerOp(player, found.slot, 2);
-                walkTo(player, found.x, found.z);
-                this.watchdog.notifyActivity();
-                return;
+                const wildLvl = wildLevel(player.z);
+                if (inCombatRange(wildLvl, player.combatLevel, found.combatLevel)) {
+                    this.target = found;
+                    this.engageTicks = 0;
+                    this.potsDrunk = 0;
+                    this.specUsesRemaining = randInt(1, 2);
+                    this.state = 'engage';
+                    this.drinkPots(player);
+                    player.say(GL_PHRASES[Math.floor(Math.random() * GL_PHRASES.length)]);
+                    interactPlayerOp(player, found.slot, 2);
+                    walkTo(player, found.x, found.z);
+                    this.watchdog.notifyActivity();
+                    return;
+                }
             }
             this.rescanTimer = randInt(3, 6);
         } else {
             this.rescanTimer--;
         }
-
-        // Cycle zone after spending enough time here.
-        if (this.zoneTicks >= this.zoneDuration) {
-            this.zoneTicks    = 0;
-            this.zoneDuration = randInt(ZONE_DURATION_MIN, ZONE_DURATION_MAX);
-            this.zonePoolIdx  = (this.zonePoolIdx + 1) % HUNTING_ZONES.length;
-            this.waypointSet  = false;
-            if (Math.random() < 0.4) player.say(pick(PATROL_TAUNTS));
-            this.state = 'walk';
-            return;
+        if (--this.wanderTimer <= 0) {
+            const wx = player.x + randInt(-4, 4);
+            const wz = player.z + randInt(-4, 4);
+            walkTo(player, wx, wz);
+            this.wanderTimer = randInt(150, 300);
+            this.watchdog.notifyActivity();
         }
-
-        // Wander within zone.
-        const [zx, zz] = this._currentZoneCoords();
-        if (!this.waypointSet || isNear(player, this.waypointX, this.waypointZ, 3)) {
-            this.waypointX  = zx + randInt(-ZONE_WANDER, ZONE_WANDER);
-            this.waypointZ  = zz + randInt(-ZONE_WANDER / 2, ZONE_WANDER / 2);
-            this.waypointSet = true;
-        }
-
-        this.stuckWalk(player, this.waypointX, this.waypointZ);
-
-        if (Math.random() < 0.008) player.say(pick(PATROL_TAUNTS));
-
         this.cooldown = 1;
     }
 
@@ -658,25 +618,23 @@ export class PKerTask extends BotTask {
         const t = this.target;
         if (!t || t.slot === -1) {
             this.target = null;
-            this.state  = 'banking';
+            this.state = 'banking';
             return;
         }
 
         this.engageTicks++;
 
-        // Bail if target was already fighting someone else on tick 1.
         if (this.engageTicks === 1 && isFightingAnother(t, player)) {
-            this.blacklist.set(t.username, 100);
+            this.blacklist.set(t.username, 1000);
             this.target = null;
-            player.say('Woops, sorry!');
+            player.say("Woops, sorry!");
             walkTo(player, player.x + randInt(-6, 6), player.z + randInt(-6, 6));
-            this.state    = 'patrol';
+            this.state = 'idle';
             this.cooldown = randInt(3, 6);
             this.watchdog.notifyActivity();
             return;
         }
 
-        // Switch to whoever is attacking the bot if the target isn't.
         if (this.engageTicks > 3) {
             const hitsMe = t.target && 'slot' in t.target && t.target === player;
             if (!hitsMe) {
@@ -694,37 +652,36 @@ export class PKerTask extends BotTask {
 
         if (chebyshev(player.x, player.z, t.x, t.z) > DISENGAGE_DIST) {
             this.target = null;
-            this.state  = 'banking';
+            this.state = 'banking';
             return;
         }
 
-        // Drop target if combat range is no longer legal (fled to shallower wild).
-        const wildLevel = wildernessLevel(player.z);
-        if (!inCombatRange(wildLevel, player.combatLevel, t.combatLevel)) {
+        const wildLvl = wildLevel(player.z);
+        if (!inCombatRange(wildLvl, player.combatLevel, t.combatLevel)) {
             this.target = null;
-            this.state  = 'banking';
+            this.state = 'banking';
             return;
         }
 
-        // Switch back to main weapon if spec uses are exhausted.
         if (this.specUsesRemaining === 0 && this.profile && this.profile.specWeapon !== -1 && this.profile.specWeapon !== this.profile.weapon) {
             const worn = player.getInventory(InvType.WORN);
             if (worn) {
                 const curWepId = (worn.get(3)?.id) ?? -1;
                 if (curWepId === this.profile.specWeapon) {
                     tryEquipFromInventory(player, this.profile.weapon);
-                    if (this.profile.shield !== -1) tryEquipFromInventory(player, this.profile.shield);
+                    if (this.profile.shield !== -1) {
+                        tryEquipFromInventory(player, this.profile.shield);
+                    }
                 }
             }
         }
 
-        // Stacking detection.
         const stackedWith = this.isStackedWith(player);
         if (stackedWith) {
             this.stackAttempts++;
             const allDirs: [number, number][] = [[1,0], [-1,0], [0,1], [0,-1]];
             const dirIndex = (this.stackAttempts - 1) % 4;
-            const isMover  = player.slot > (stackedWith as any).slot;
+            const isMover = player.slot > (stackedWith as any).slot;
 
             if (this.stackWalkCooldown <= 0) {
                 let dx: number, dz: number;
@@ -732,12 +689,15 @@ export class PKerTask extends BotTask {
                     [dx, dz] = allDirs[dirIndex]!;
                 } else {
                     const [mx, mz] = allDirs[dirIndex]!;
-                    dx = -mx; dz = -mz;
+                    dx = -mx;
+                    dz = -mz;
                 }
                 const tx = player.x + dx;
                 const tz = player.z + dz;
                 const path = botWalkPath(player.level, player.x, player.z, tx, tz);
-                if (path.length > 0) walkTo(player, tx, tz);
+                if (path.length > 0) {
+                    walkTo(player, tx, tz);
+                }
                 this.stackWalkCooldown = 6;
             } else {
                 this.stackWalkCooldown--;
@@ -748,10 +708,14 @@ export class PKerTask extends BotTask {
             }
         } else {
             this.stackWalkCooldown = 0;
-            if (this.stackAttempts > 0) this.stackFixed = true;
+            if (this.stackAttempts > 0) {
+                this.stackFixed = true;
+            }
             this.stackAttempts = 0;
             if (!this.stackFixed) {
-                if (chebyshev(player.x, player.z, t.x, t.z) > 1) walkTo(player, t.x, t.z);
+                if (chebyshev(player.x, player.z, t.x, t.z) > 1) {
+                    walkTo(player, t.x, t.z);
+                }
             }
             if (this.engageTicks % 5 === 0) {
                 interactPlayerOp(player, t.slot, 2);
@@ -759,36 +723,35 @@ export class PKerTask extends BotTask {
             }
         }
 
-        const hp    = player.levels[PlayerStat.HITPOINTS] ?? 0;
+        const hp = player.levels[PlayerStat.HITPOINTS] ?? 0;
         const maxHp = player.baseLevels[PlayerStat.HITPOINTS] ?? 10;
 
-        if (hp < maxHp * 0.5) this.eatFood(player);
+        if (hp < maxHp * 0.5) {
+            this.eatFood(player);
+        }
 
         if (this.profile && this.profile.specWeapon !== -1 && hp > maxHp * 0.3 && this.specUsesRemaining > 0) {
-            const targetHp    = t.levels[PlayerStat.HITPOINTS] ?? 0;
+            const targetHp = t.levels[PlayerStat.HITPOINTS] ?? 0;
             const targetMaxHp = t.baseLevels[PlayerStat.HITPOINTS] ?? 10;
             if (targetHp < targetMaxHp * 0.65) {
-                const saWeapon      = ObjType.get(this.profile.specWeapon);
+                const saWeapon = ObjType.get(this.profile.specWeapon);
                 const requiredEnergy = (saWeapon.params?.get(110) ?? 1000) as number;
-                const playerEnergy  = player.getVar(300) as number;
+                const playerEnergy = player.getVar(300) as number;
                 if (playerEnergy >= requiredEnergy && this.useSpecial(player, t)) {
                     this.specUsesRemaining--;
                 }
             }
         }
 
-        if (Math.random() < 0.015) player.say(pick(FIGHT_TAUNTS));
-
         this.cooldown = 1;
     }
-
-    // ── Combat helpers ────────────────────────────────────────────────────────
 
     private eatFood(player: Player): void {
         const p = this.profile;
         if (!p) return;
         const inv = player.getInventory(InvType.INV);
         if (!inv) return;
+
         const preferred = [p.food, I.SHARK, I.SWORDFISH, I.LOBSTER];
         for (const foodId of preferred) {
             const slot = findSlot(inv, foodId);
@@ -807,25 +770,26 @@ export class PKerTask extends BotTask {
         const inv = player.getInventory(InvType.INV);
         if (!inv) return;
         const potStats: Record<number, PlayerStat> = {
-            [I.SUPER_ATTACK4]:   PlayerStat.ATTACK,
+            [I.SUPER_ATTACK4]: PlayerStat.ATTACK,
             [I.SUPER_STRENGTH4]: PlayerStat.STRENGTH,
-            [I.SUPER_DEFENCE4]:  PlayerStat.DEFENCE,
-            [I.PRAYER_POTION4]:  PlayerStat.PRAYER,
-            [I.SUPER_RESTORE4]:  PlayerStat.PRAYER,
+            [I.SUPER_DEFENCE4]: PlayerStat.DEFENCE,
+            [I.PRAYER_POTION4]: PlayerStat.PRAYER,
+            [I.SUPER_RESTORE4]: PlayerStat.PRAYER,
         };
         const potBoosts: Record<number, number> = {
-            [I.SUPER_ATTACK4]:   3,
+            [I.SUPER_ATTACK4]: 3,
             [I.SUPER_STRENGTH4]: 3,
-            [I.SUPER_DEFENCE4]:  3,
-            [I.PRAYER_POTION4]:  7,
-            [I.SUPER_RESTORE4]:  8,
+            [I.SUPER_DEFENCE4]: 3,
+            [I.PRAYER_POTION4]: 7,
+            [I.SUPER_RESTORE4]: 8,
         };
+
         for (const potId of p.pots) {
             const stat = potStats[potId];
             if (stat === undefined) continue;
-            const boost   = potBoosts[potId] ?? 3;
+            const boost = potBoosts[potId] ?? 3;
             const current = player.levels[stat] ?? 0;
-            const base    = player.baseLevels[stat] ?? 1;
+            const base = player.baseLevels[stat] ?? 1;
             if (current <= base + 1) {
                 const slot = findSlot(inv, potId);
                 if (slot !== -1) {
@@ -888,14 +852,15 @@ export class PKerTask extends BotTask {
         return null;
     }
 
-    // ── Locomotion ────────────────────────────────────────────────────────────
-
-    private _currentZoneCoords(): [number, number] {
-        return HUNTING_ZONES[this.zonePoolIdx % HUNTING_ZONES.length] ?? [3100, 3752];
+    private getWildernessSpot(_player: Player): [number, number] {
+        return [WILD_ZONE_CX + randInt(-WILD_X_RADIUS, WILD_X_RADIUS), randInt(WILD_Z_MIN, WILD_Z_MAX)];
     }
 
     private stuckWalk(player: Player, tx: number, tz: number): void {
-        if (!this.stuck.check(player, tx, tz)) { walkTo(player, tx, tz); return; }
+        if (!this.stuck.check(player, tx, tz)) {
+            walkTo(player, tx, tz);
+            return;
+        }
         if (this.stuck.desperatelyStuck) {
             this.respawnTimer = randInt(10, 40);
             this.state = 'init';

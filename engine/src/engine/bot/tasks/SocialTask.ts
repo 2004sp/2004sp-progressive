@@ -5,18 +5,16 @@
  * Approaches real players, chats, then leads them on a short walking tour.
  *
  * Pathfinding strategy:
- *  - Scan areas use safe OUTDOOR spawn coords — never inside buildings.
- *  - Wander during scan uses pre-defined outdoor waypoints, not random offsets.
- *  - Floor-level 0 is enforced every tick — if the bot ends up upstairs it is
- *    immediately teleported back to the safe spawn and the sequence resets.
- *  - Lead walking uses 5-tile steps. Stuck phases escalate quickly:
- *      phase 1 (0-3 ticks)  — direct step toward target
- *      phase 2 (4-9 ticks)  — perpendicular left detour
- *      phase 3 (10-16 ticks) — perpendicular right detour
- *      phase 4 (17+ ticks)  — small 6-tile forward hop (teleport), then reset
- *  - BLOCKED_ZONES prevents steps toward known permanently impassable tiles.
- *  - Destinations are filtered to within [15, 120] tiles of the bot so it
- *    never tries to cross the map.
+ *  - All destination coordinates come from BotKnowledge.Locations (verified ✅).
+ *  - Destinations with tricky approach routes use a `via` waypoint (same pattern
+ *    as SkillProgression) — the bot walks the via point first, then the destination.
+ *    e.g. Barbarian Village uses Locations.WILLOWS_BARBARIAN_VIA to route south-west
+ *    of Varrock before heading north, avoiding the wall cluster on the east road.
+ *  - Movement during lead uses _stuckWalk (StuckDetector + walkTo) — the same
+ *    proven path stack every other bot task uses.
+ *  - Floor-level 0 is enforced every tick so bots never end up upstairs.
+ *  - 5% of tours are wilderness lures — bot leads player to Edgeville, crosses the
+ *    ditch, reveals its true nature and attacks if the player follows.
  */
 
 import {
@@ -34,37 +32,29 @@ import {
 import { Interfaces } from '#/engine/bot/BotKnowledge.js';
 import {
     addItem,
+    countItem,
+    removeItem,
     interactPlayerOp,
     interactIF_UseOp,
-    interactIfButton,
+    interactIfButtonByName,
 } from '#/engine/bot/BotAction.js';
 import World from '#/engine/World.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SCAN_RADIUS      = 20;
-const FOLLOW_RADIUS    = 14;    // tiles — "player is keeping up"
-const DEST_MIN_DIST    = 15;    // don't pick a destination closer than this
-const DEST_MAX_DIST    = 120;   // don't pick a destination further than this
-const LEAD_STEP        = 5;     // tiles per step when walking
-const STUCK_PERP_TICK  = 4;     // ticks before trying perpendicular detour
-const STUCK_PERP2_TICK = 10;    // ticks before trying opposite perpendicular
-const STUCK_HOP_TICK   = 17;    // ticks before tiny teleport hop forward
-const ARRIVE_LINGER    = 120;   // ticks to hang around after arriving
-const MISS_LIMIT       = 4;     // consecutive missed follow-checks before giving up
+const SOCIAL_STARTING_COINS = 100_000;
 
-// Tiles the bot must never step toward — permanently locked doors, bank interiors, etc.
-// Each entry is [centerX, centerZ, avoidRadius].
-const BLOCKED_ZONES: [number, number, number][] = [
-    [3216, 3381, 4],   // south Varrock permanently locked door
-    [3186, 3446, 3],   // Varrock West Bank teller zone (behind counter)
-];
+const SCAN_RADIUS   = 20;
+const FOLLOW_RADIUS = 14;
+const DEST_MIN_DIST = 15;
+const DEST_MAX_DIST = 140;
+const ARRIVE_LINGER = 120;
+const MISS_LIMIT    = 4;
 
 // ── Scan areas ────────────────────────────────────────────────────────────────
-// x/z    — scan-center used for isNear proximity check only
-// spawnX/Z — guaranteed safe OUTDOOR position used for all teleportation
-// wanderPoints — pre-defined outdoor spots the bot cycles through when idle;
-//                NEVER uses random offsets from bank interior coords
+// spawnX/Z are guaranteed outdoor coords used for the one-time init teleport.
+// x/z is the centre used for the isNear proximity check.
+// wanderPoints keep the bot on the road — never inside buildings.
 
 interface ScanArea {
     x: number; z: number;
@@ -74,9 +64,8 @@ interface ScanArea {
 
 const SCAN_AREAS: ScanArea[] = [
     {
-        // Varrock West Bank — bot stays on the road south of the building.
-        // Bank interior is at z≈3444; road outside starts at z≈3434.
-        x: 3185, z: 3444,
+        // Varrock West Bank — road south of the building
+        x: 3185, z: 3436,
         spawnX: 3185, spawnZ: 3433,
         wanderPoints: [
             [3185, 3433], [3178, 3434], [3192, 3434],
@@ -84,8 +73,35 @@ const SCAN_AREAS: ScanArea[] = [
         ],
     },
     {
-        // Draynor Village Bank — road south of the bank.
-        x: 3092, z: 3245,
+        // Varrock East Bank — road south of the building
+        x: 3253, z: 3417,
+        spawnX: 3253, spawnZ: 3415,
+        wanderPoints: [
+            [3253, 3415], [3259, 3417], [3246, 3416],
+            [3255, 3411], [3262, 3413], [3248, 3412], [3257, 3419],
+        ],
+    },
+    {
+        // Lumbridge — road south of the castle (LUMBRIDGE_SPAWN area)
+        x: 3222, z: 3218,
+        spawnX: 3222, spawnZ: 3218,
+        wanderPoints: [
+            [3222, 3218], [3228, 3219], [3216, 3217],
+            [3225, 3213], [3219, 3213], [3232, 3215], [3212, 3220],
+        ],
+    },
+    {
+        // Barbarian Village — road through the village (BARBARIANS_VILLAGE)
+        x: 3083, z: 3428,
+        spawnX: 3083, spawnZ: 3420,
+        wanderPoints: [
+            [3083, 3420], [3077, 3421], [3089, 3419],
+            [3081, 3426], [3087, 3415], [3075, 3417], [3092, 3423],
+        ],
+    },
+    {
+        // Draynor Village — road south of the bank (DRAYNOR_BANK area)
+        x: 3092, z: 3242,
         spawnX: 3092, spawnZ: 3240,
         wanderPoints: [
             [3092, 3240], [3087, 3242], [3097, 3241],
@@ -93,25 +109,35 @@ const SCAN_AREAS: ScanArea[] = [
         ],
     },
     {
-        // Varrock East Bank — road south of the building.
-        x: 3253, z: 3420,
-        spawnX: 3253, spawnZ: 3415,
+        // Falador East Bank — road outside the bank (FALADOR_EAST_BANK)
+        x: 3012, z: 3360,
+        spawnX: 3012, spawnZ: 3360,
         wanderPoints: [
-            [3253, 3415], [3259, 3417], [3246, 3416],
-            [3255, 3411], [3262, 3413], [3248, 3412], [3257, 3419],
+            [3013, 3354], [3007, 3355], [3019, 3353],
+            [3011, 3349], [3016, 3360], [3005, 3351], [3021, 3357],
+        ],
+    },
+    {
+        // Port Sarim — road near the docks (GERRANTS_FISHING area)
+        x: 3028, z: 3222,
+        spawnX: 3028, spawnZ: 3220,
+        wanderPoints: [
+            [3028, 3220], [3022, 3221], [3034, 3219],
+            [3026, 3215], [3031, 3226], [3018, 3217], [3038, 3222],
         ],
     },
 ];
 
 // ── Destinations ──────────────────────────────────────────────────────────────
+// All coordinates come from BotKnowledge.Locations (verified ✅).
+// `via` mirrors the SkillProgression pattern — bot walks the via coord first,
+// then the final location. This is what keeps routing predictable across regions.
 
 interface Destination {
     name: string;
-    x: number;
-    z: number;
+    location: [number, number, number];
+    via?: [number, number, number];
     radius: number;
-    // Road waypoints the bot walks through in order before reaching the final coord.
-    waypoints: [number, number][];
     approachPhrases: string[];
     arrivalPhrases:  string[];
     idlePhrases:     string[];
@@ -120,106 +146,85 @@ interface Destination {
 const DESTINATIONS: Destination[] = [
     // ── Varrock area ──────────────────────────────────────────────────────────
     {
-        name: 'Grand Exchange',
-        x: 3165, z: 3420, radius: 8,
-        waypoints: [
-            [3175, 3433],  // road west from Varrock West Bank
-        ],
-        approachPhrases: ['follow me to the GE!', 'lets check the marketplace', 'heading to GE, u coming?', 'marketplace is just up here'],
-        arrivalPhrases:  ['here we are!', 'GE, always busy', 'love this spot'],
-        idlePhrases:     ['u ever trade here?', 'prices are alright', 'busy place', 'what do u usually buy?', 'I come here loads'],
+        name: 'Varrock Smithy',
+        location: Locations.VARROCK_ANVIL,   // [3188, 3422, 0] ✅
+        radius: 5,
+        approachPhrases: ['come see the smithy', 'follow me east', 'smithy is just here', 'good spot for smithing'],
+        arrivalPhrases:  ['the smithy!', 'loads of anvils here', 'good spot to train smithing'],
+        idlePhrases:     ['u train smithing?', 'need a lot of ore for this', 'good xp if u got the bars', 'classic training spot', 'u use the ge for bars?'],
     },
     {
-        name: 'Varrock Square',
-        x: 3212, z: 3446, radius: 5,
-        waypoints: [
-            [3196, 3440],  // east along south road
-        ],
-        approachPhrases: ['come see varrock square', 'follow me to the fountain', 'this way!', 'varrock centre, follow'],
-        arrivalPhrases:  ['the fountain!', 'classic varrock square', 'nice spot right'],
-        idlePhrases:     ['people always hang here', 'varrock is my fave town', 'chill spot tbh', 'u been here before?', 'pretty central'],
+        name: 'Varrock Sword Shop',
+        location: Locations.VARROCK_SWORD_SHOP,  // [3205, 3420, 0] ✅
+        radius: 5,
+        approachPhrases: ['come check the sword shop', 'follow me east', 'good weapons here', 'swords just up here'],
+        arrivalPhrases:  ['varrock sword shop!', 'decent selection here', 'good early weapons'],
+        idlePhrases:     ['u use a sword or scimitar?', 'swords are solid for training', 'cheap iron here', 'u been to al kharid? better scimitars there', 'good starter shop'],
     },
     {
-        name: 'Varrock Palace',
-        x: 3213, z: 3468, radius: 6,
-        waypoints: [
-            [3196, 3440],  // east road
-            [3210, 3452],  // through the square, heading north
-        ],
-        approachPhrases: ['wanna see the palace?', 'follow me north', 'come check the palace out', 'just up here, follow'],
-        arrivalPhrases:  ['the palace!', 'pretty big right', 'guards everywhere lol'],
-        idlePhrases:     ['wonder what the king gets up to', 'big fancy building lol', 'lots of guards', 'u done the varrock quest?', 'impressive building'],
+        name: 'Varrock Rune Shop',
+        location: Locations.VARROCK_RUNES,  // [3253, 3400, 0] ✅
+        radius: 5,
+        approachPhrases: ['come see the rune shop', 'follow me south-east', 'auburys is just here', 'magic supplies down here'],
+        arrivalPhrases:  ['auburys rune shop!', 'good for magic supplies', 'loads of runes here'],
+        idlePhrases:     ['u do magic?', 'cheap runes here', 'air runes are handy', 'good stock always', 'come here a lot tbh'],
+    },
+    {
+        name: 'Varrock Archery',
+        location: Locations.VARROCK_ARCHERY,  // [3233, 3425, 0] ✅
+        radius: 5,
+        approachPhrases: ['come see lowes archery', 'follow me east', 'good range gear here', 'archery shop is just here'],
+        arrivalPhrases:  ['lowes archery!', 'bows and arrows here', 'good for rangers'],
+        idlePhrases:     ['u train range?', 'decent bow selection', 'bronze arrows are cheap', 'range is a solid skill', 'useful for safespotting'],
     },
     {
         name: 'Barbarian Village',
-        x: 3082, z: 3422, radius: 6,
-        waypoints: [
-            [3155, 3433],  // west road out of Varrock
-            [3120, 3433],  // continuing west
-            [3100, 3425],  // approaching barb village
-        ],
+        location: Locations.BARBARIANS_VILLAGE,  // [3082, 3434, 0] ✅
+        via:      Locations.WILLOWS_BARBARIAN_VIA, // [3045, 3340, 0] routes south-west of Varrock
+        radius: 8,
         approachPhrases: ['ever been to barb village?', 'follow me west', 'come to barb village with me', 'barb village is west of here'],
         arrivalPhrases:  ['barbarian village!', 'bit sketchy but cool', 'wild spot'],
         idlePhrases:     ['barbarians everywhere lol', 'good fishing on the river', 'stronghold is near here', 'u like combat stuff?', 'classic rs area'],
     },
     {
-        name: 'Champions Guild',
-        x: 3191, z: 3366, radius: 6,
-        waypoints: [
-            [3230, 3404],  // south road from east Varrock
-            [3207, 3393],  // main south gate approach (west of locked door at 3216,3381)
-            [3195, 3378],  // outside south wall, clear of locked door
-        ],
-        approachPhrases: ['come see the champions guild', 'follow me south', 'just down here, follow', 'cool building south of varrock'],
-        arrivalPhrases:  ['champions guild!', 'u gotta do dragon slayer to get in', 'cool spot'],
-        idlePhrases:     ['u done dragon slayer?', 'need 32 qp to enter', 'fancy looking building', 'good goal to work toward', 'classic rs milestone'],
+        name: 'Varrock West Mine',
+        location: Locations.MINE_VARROCK_WEST,  // [3177, 3368, 0] ✅
+        radius: 6,
+        approachPhrases: ['come see the mine', 'follow me south', 'mining spot just down here', 'good ore south of varrock'],
+        arrivalPhrases:  ['varrock west mine!', 'tin and iron here', 'solid early mining spot'],
+        idlePhrases:     ['u train mining?', 'good iron here', 'close to the bank', 'easy xp if u got a pick', 'nice open area'],
     },
     {
-        name: 'Varrock Smithy',
-        x: 3188, z: 3426, radius: 5,
-        waypoints: [
-            [3192, 3433],  // east from West Bank, south side of road
-        ],
-        approachPhrases: ['come see the smithy', 'follow me east', 'smithy is just here', 'good spot for smithing'],
-        arrivalPhrases:  ['the smithy!', 'loads of anvils here', 'good spot to train smithing'],
-        idlePhrases:     ['u train smithing?', 'need a lot of ore for this', 'good xp if u got the bars', 'classic training spot', 'u use the ge for bars?'],
+        name: 'Varrock East Mine',
+        location: Locations.MINE_VARROCK_EAST,     // [3285, 3365, 0] ✅
+        via:      Locations.MINE_VARROCK_EAST_VIA, // [3302, 3342, 0] ✅
+        radius: 6,
+        approachPhrases: ['come see the east mine', 'follow me east', 'iron mine is just here', 'good mining east of varrock'],
+        arrivalPhrases:  ['varrock east mine!', 'good iron deposits here', 'popular mining spot'],
+        idlePhrases:     ['u mine here much?', 'iron is worth banking', 'can sell it or smelt it', 'gets busy sometimes', 'good spot to train'],
     },
 
     // ── Draynor / south area ──────────────────────────────────────────────────
     {
-        name: 'Draynor Willows',
-        x: 3086, z: 3236, radius: 5,
-        waypoints: [],
-        approachPhrases: ['come see the willows', 'follow me south', 'good wc spot down here', 'willows are just south'],
-        arrivalPhrases:  ['the willows!', 'good woodcutting spot', 'people train here a lot'],
-        idlePhrases:     ['u train woodcutting?', 'willows are solid xp', 'nice and peaceful here', 'good spot to afk', 'the river is right there'],
+        name: 'Draynor Riverside',
+        location: Locations.FISH_DRAYNOR,  // [3088, 3228, 0] ✅
+        radius: 6,
+        approachPhrases: ['come see the riverside', 'follow me south', 'good fishing spot down here', 'draynor river is just south'],
+        arrivalPhrases:  ['draynor riverside!', 'good fishing here', 'people train here a lot'],
+        idlePhrases:     ['u train fishing?', 'shrimp and sardine here', 'nice and peaceful', 'good spot to afk', 'the river is right there'],
     },
     {
-        name: 'Draynor Market',
-        x: 3079, z: 3254, radius: 5,
-        waypoints: [],
-        approachPhrases: ['come see the market', 'follow me', 'market area, this way', 'just over here'],
-        arrivalPhrases:  ['draynor market!', 'small but cosy', 'love draynor tbh'],
-        idlePhrases:     ['quiet little town', 'got everything u need here', 'friendly vibe', 'u been to draynor before?', 'nice area'],
+        name: 'Lumbridge Goblins',
+        location: Locations.GOBLINS_LUMBRIDGE,  // [3258, 3236, 0] ✅
+        radius: 7,
+        approachPhrases: ['come this way toward lumbridge', 'follow me east', 'good walk this way', 'lumbridge is just east'],
+        arrivalPhrases:  ['lumbridge area!', 'goblins everywhere here', 'classic starter spot'],
+        idlePhrases:     ['lumbridge is not far', 'good road to know', 'cows just north of here', 'u been to lumbridge much?', 'classic starter area'],
     },
     {
-        name: 'Lumbridge Road',
-        x: 3148, z: 3271, radius: 7,
-        waypoints: [
-            [3105, 3259],  // road north-east out of Draynor
-            [3130, 3266],  // road toward Lumbridge
-        ],
-        approachPhrases: ['come this way toward lumbridge', 'follow me up the road', 'good walk east', 'road to lumbridge, this way'],
-        arrivalPhrases:  ['nice road this', 'halfway to lumbridge', 'peaceful walk eh'],
-        idlePhrases:     ['lumbridge is not far from here', 'good road to know', 'cows just east of here', 'u been to lumbridge much?', 'classic starter area nearby'],
-    },
-    {
-        name: 'Port Sarim',
-        x: 3028, z: 3220, radius: 8,
-        waypoints: [
-            [3063, 3233],  // road south-west out of Draynor
-            [3042, 3222],  // road to Port Sarim
-        ],
+        name: 'Port Sarim Docks',
+        location: Locations.GERRANTS_FISHING,  // [3014, 3224, 0] ✅
+        radius: 8,
         approachPhrases: ['ever been to port sarim?', 'follow me to the docks', 'port sarim is just west', 'ships are just down here'],
         arrivalPhrases:  ['port sarim!', 'u can get a boat from here', 'love the docks area'],
         idlePhrases:     ['u can sail to karamja from here', 'fishing is good near the docks', 'pirates lol', 'nice view of the sea', 'u done pirates quest?'],
@@ -228,30 +233,38 @@ const DESTINATIONS: Destination[] = [
     // ── Falador area ─────────────────────────────────────────────────────────
     {
         name: 'Falador Park',
-        x: 2993, z: 3373, radius: 6,
-        waypoints: [
-            [3033, 3390],  // east Falador road
-            [3012, 3377],  // approaching park
-        ],
+        location: Locations.FALADOR_FOUNTAIN,  // [2997, 3373, 0] ✅
+        radius: 7,
         approachPhrases: ['come see falador park', 'follow me to the park', 'this way, falador!', 'falador park is just here'],
         arrivalPhrases:  ['falador park!', 'nice open area right', 'love it here'],
         idlePhrases:     ['white knights castle is nearby', 'one of the bigger cities', 'u done falador quest?', 'clean city vibes', 'good place to chill'],
     },
     {
         name: 'Falador East Bank',
-        x: 3013, z: 3356, radius: 5,
-        waypoints: [
-            [3033, 3390],  // road from east
-            [3020, 3370],  // road south into falador
-        ],
+        location: Locations.FALADOR_EAST_BANK,  // [3013, 3355, 0] ✅
+        radius: 5,
         approachPhrases: ['follow me to falador bank', 'falador bank is just here', 'come this way', 'heading to the bank'],
         arrivalPhrases:  ['falador east bank!', 'handy bank', 'solid spot'],
         idlePhrases:     ['decent bank location', 'mining guild is nearby', 'u mine at all?', 'good central bank', 'falador is underrated tbh'],
     },
 ];
 
+// ── Wilderness lure destination (used only on 5% rolls) ──────────────────────
+// Edgeville yews are a verified ✅ outdoor coord just south of the wilderness ditch.
+
+const WILDERNESS_LURE_DEST: Destination = {
+    name: 'Edgeville',
+    location: Locations.YEWS_EDGEVILLE,  // [3087, 3476, 0] ✅ — just south of ditch
+    via:      Locations.BARBARIANS_VILLAGE, // [3082, 3434, 0] — route through barb village first
+    radius: 5,
+    approachPhrases: ['edgeville is nice, follow me', 'good spot up north, come see', 'follow me north a sec', 'theres something cool up here'],
+    arrivalPhrases:  ['nearly there...', 'just up here...', 'this way...'],
+    idlePhrases:     [],
+};
+
 // ── Phrase banks ──────────────────────────────────────────────────────────────
 
+const BETRAY_PHRASES   = ['lol gotcha', 'enjoy the respawn :)', 'pk time lmao', 'shouldnt have followed', 'surprise!'];
 const GREET_PHRASES    = ['hey', 'hi', 'yo', 'hiya', 'sup', 'ello', 'heya', 'wagwan'];
 const CHAT_LINES       = ['nice to meet u!', 'how long u been playing?', 'ur levels look decent', 'what quest r u doing?', 'this game is addictive ngl'];
 const FOLLOW_PROMPTS   = ['follow me ill show u something cool', 'wanna see a good spot? follow me!', 'come with me, I know somewhere', 'follow me real quick', "let's go exploring, follow!"];
@@ -286,26 +299,27 @@ function findNearbyRealPlayer(bot: Player, radius: number): Player | null {
 // ── Task ──────────────────────────────────────────────────────────────────────
 
 export class SocialTask extends BotTask {
-    private state: 'scan' | 'approach' | 'chat' | 'lead' | 'arrived' | 'reward' | 'move_area' = 'scan';
+    private static readonly activePids = new Set<number>();
+
+    private state: 'scan' | 'approach' | 'chat' | 'lead' | 'arrived' | 'reward' | 'move_area' | 'wilderness_trap' = 'scan';
 
     private target:      Player | null = null;
     private destination: Destination | null = null;
 
-    private areaIndex = 0;
+    private areaIndex:      number;
+    private areaInitialized = false;
     private scanFail  = 0;
     private chatPhase = 0;
-    private wanderIdx = 0;    // cycles through scan-area outdoor wander points
+    private wanderIdx = 0;
+
+    // Approach state
+    private approachTicks = 0;
 
     // Lead state
-    private waypointIndex       = 0;
-    private leadTicks           = 0;
-    private leadCommentTick     = 0;
-    private missedFollowChecks  = 0;
-
-    // Smart pathfinding — position-change stuck detection
-    private leadLastX    = 0;
-    private leadLastZ    = 0;
-    private leadStuckTick = 0;
+    private leadTicks          = 0;
+    private leadCommentTick    = 0;
+    private missedFollowChecks = 0;
+    private viaReached         = false;  // true once the via waypoint has been passed
 
     // Arrived / reward state
     private arrivedTicks    = 0;
@@ -314,24 +328,35 @@ export class SocialTask extends BotTask {
     private rewardStage     = 0;
     private rewardCoins     = 0;
 
-    private readonly stuck = new StuckDetector(12, 3, 1);
+    private coinsInitialized = false;
+    private wildernessLure   = false;
+    private wildernessPhase  = 0;
 
-    constructor() { super('Social'); }
+    private readonly stuck     = new StuckDetector(12, 3, 1);
+    private readonly leadStuck = new StuckDetector(20, 4, 2);
+
+    constructor() {
+        super('Social');
+        this.areaIndex = Math.floor(Math.random() * SCAN_AREAS.length);
+    }
 
     shouldRun(_player: Player): boolean { return true; }
 
     tick(player: Player): void {
         if (this.interrupted) return;
 
-        // ── Floor-level guard ─────────────────────────────────────────────────
-        // Social bots always operate at ground level (level 0).
-        // If the bot somehow ends up upstairs or inside a restricted area on a
-        // different floor, teleport it back to the current scan area's safe
-        // outdoor spawn immediately.
-        if (player.level !== 0) {
+        if (!this.coinsInitialized) {
+            this.coinsInitialized = true;
+            const have = countItem(player, Items.COINS);
+            if (have < SOCIAL_STARTING_COINS) {
+                addItem(player, Items.COINS, SOCIAL_STARTING_COINS - have);
+            }
+        }
+
+        if (player.level !== 0 && this.state !== 'wilderness_trap') {
             const area = SCAN_AREAS[this.areaIndex]!;
             teleportNear(player, area.spawnX, area.spawnZ);
-            this._resetTarget();   // also sets state = 'scan'
+            this._resetTarget();
             this.cooldown = 3;
             return;
         }
@@ -339,13 +364,14 @@ export class SocialTask extends BotTask {
         if (this.cooldown > 0) { this.cooldown--; return; }
 
         switch (this.state) {
-            case 'scan':      return this.handleScan(player);
-            case 'approach':  return this.handleApproach(player);
-            case 'chat':      return this.handleChat(player);
-            case 'lead':      return this.handleLead(player);
-            case 'arrived':   return this.handleArrived(player);
-            case 'reward':    return this.handleReward(player);
-            case 'move_area': return this.handleMoveArea(player);
+            case 'scan':            return this.handleScan(player);
+            case 'approach':        return this.handleApproach(player);
+            case 'chat':            return this.handleChat(player);
+            case 'lead':            return this.handleLead(player);
+            case 'arrived':         return this.handleArrived(player);
+            case 'reward':          return this.handleReward(player);
+            case 'move_area':       return this.handleMoveArea(player);
+            case 'wilderness_trap': return this.handleWildernessTrap(player);
         }
     }
 
@@ -354,9 +380,11 @@ export class SocialTask extends BotTask {
     override reset(): void {
         super.reset();
         this._resetTarget();
-        this.areaIndex = 0;
-        this.scanFail  = 0;
-        this.wanderIdx = 0;
+        this.areaIndex        = Math.floor(Math.random() * SCAN_AREAS.length);
+        this.areaInitialized  = false;
+        this.scanFail         = 0;
+        this.wanderIdx        = 0;
+        this.coinsInitialized = false;
     }
 
     // ── States ────────────────────────────────────────────────────────────────
@@ -364,20 +392,19 @@ export class SocialTask extends BotTask {
     private handleScan(player: Player): void {
         const area = SCAN_AREAS[this.areaIndex]!;
 
-        // Navigate to this area if not already nearby.
-        // Use the safe spawn coord — never the bank interior center.
+        if (!this.areaInitialized) {
+            this.areaInitialized = true;
+            teleportNear(player, area.spawnX, area.spawnZ);
+            this.cooldown = randInt(4, 8);
+            return;
+        }
+
         if (!isNear(player, area.x, area.z, 14)) {
-            if (Math.abs(player.x - area.spawnX) > 60 || Math.abs(player.z - area.spawnZ) > 60) {
-                teleportNear(player, area.spawnX, area.spawnZ);
-            } else {
-                this._stuckWalk(player, area.spawnX, area.spawnZ);
-            }
+            this._stuckWalk(player, area.spawnX, area.spawnZ);
             this.cooldown = 2;
             return;
         }
 
-        // Idle wander: cycle through pre-defined outdoor waypoints so the bot
-        // never randomly walks into a building or behind a bank counter.
         if (Math.random() < 0.3) {
             const wp = area.wanderPoints[this.wanderIdx % area.wanderPoints.length]!;
             this.wanderIdx++;
@@ -385,10 +412,11 @@ export class SocialTask extends BotTask {
         }
 
         const found = findNearbyRealPlayer(player, SCAN_RADIUS);
-        if (found) {
+        if (found && !SocialTask.activePids.has(found.uid)) {
             this.target    = found;
             this.chatPhase = 0;
             this.scanFail  = 0;
+            SocialTask.activePids.add(found.uid);
             this.state     = 'approach';
             return;
         }
@@ -402,6 +430,13 @@ export class SocialTask extends BotTask {
         const t = this.target;
         if (!t || (t as any).is_bot) { this._resetTarget(); return; }
         if (chebyshev(player.x, player.z, t.x, t.z) > 45) { this._resetTarget(); return; }
+
+        this.approachTicks++;
+        if (this.approachTicks > 25) {
+            // Player kept moving — give up so another bot can try.
+            this._resetTarget();
+            return;
+        }
 
         if (!isNear(player, t.x, t.z, 2)) {
             this._stuckWalk(player, t.x + randInt(-1, 1), t.z + randInt(-1, 1));
@@ -431,15 +466,17 @@ export class SocialTask extends BotTask {
             return;
         }
 
-        // Pick a destination near the bot's current position.
-        this.destination        = this._pickNearbyDest(player);
-        this.waypointIndex      = 0;
+        this.destination    = this._pickNearbyDest(player);
+        this.wildernessLure = false;
+        if (Math.random() < 0.05) {
+            this.destination    = WILDERNESS_LURE_DEST;
+            this.wildernessLure = true;
+        }
         this.leadTicks          = 0;
         this.leadCommentTick    = 0;
         this.missedFollowChecks = 0;
-        this.leadLastX          = player.x;
-        this.leadLastZ          = player.z;
-        this.leadStuckTick      = 0;
+        this.viaReached         = false;
+        this.leadStuck.reset();
 
         player.say(pickRandom(FOLLOW_PROMPTS));
         this.state    = 'lead';
@@ -447,14 +484,13 @@ export class SocialTask extends BotTask {
     }
 
     /**
-     * Lead state — walks toward destination via road waypoints.
+     * Lead state — walks toward destination using the via→location pattern from
+     * SkillProgression. All coordinates come from verified BotKnowledge.Locations.
      *
      * Navigation:
-     *  - Each waypoint must be physically reached (within 5 tiles) before
-     *    advancing to the next. leadStuckTick resets when advancing.
-     *  - Movement is delegated to _leadWalk which handles obstacles.
-     *  - Pauses and calls out when the player falls behind.
-     *  - Gives up and says farewell if player disappears for MISS_LIMIT checks.
+     *  1. If destination has a `via` and it hasn't been reached, walk to via first.
+     *  2. Once via is reached (or no via), walk directly to the final location.
+     *  3. Movement uses _stuckWalk (StuckDetector + walkTo) — same as every other task.
      */
     private handleLead(player: Player): void {
         const t    = this.target;
@@ -469,8 +505,10 @@ export class SocialTask extends BotTask {
 
         this.leadTicks++;
 
+        const [dx, dz] = dest.location;
+
         // Arrived at destination?
-        if (isNear(player, dest.x, dest.z, dest.radius)) {
+        if (isNear(player, dx, dz, dest.radius)) {
             player.say(pickRandom(dest.arrivalPhrases));
             this.arrivedTicks    = 0;
             this.idleCommentTick = 0;
@@ -479,22 +517,17 @@ export class SocialTask extends BotTask {
             return;
         }
 
-        // Determine current navigation target: next waypoint or final dest.
-        const waypoints = dest.waypoints;
-        let navX = dest.x;
-        let navZ = dest.z;
-
-        while (this.waypointIndex < waypoints.length) {
-            const [wx, wz] = waypoints[this.waypointIndex]!;
-            if (chebyshev(player.x, player.z, wx, wz) <= 5) {
-                // Reached this waypoint — advance and reset stuck counter so
-                // the new leg starts with a clean slate.
-                this.waypointIndex++;
-                this.leadStuckTick = 0;
+        // Determine navigation target: via first, then final destination.
+        let navX = dx;
+        let navZ = dz;
+        if (dest.via && !this.viaReached) {
+            const [vx, vz] = dest.via;
+            if (isNear(player, vx, vz, 10)) {
+                this.viaReached = true;
+                this.leadStuck.reset();
             } else {
-                navX = wx;
-                navZ = wz;
-                break;
+                navX = vx;
+                navZ = vz;
             }
         }
 
@@ -525,14 +558,14 @@ export class SocialTask extends BotTask {
             this.leadCommentTick = 0;
         }
 
-        // Pause and wait if the player has fallen behind.
+        // Pause if the player has fallen behind.
         if (!playerFollowing && this.missedFollowChecks >= 2) {
             this.cooldown = 3;
             return;
         }
 
-        // Walk toward nav target with smart stuck handling.
-        this._leadWalk(player, navX, navZ);
+        // Walk using the proven StuckDetector-backed walker.
+        this._leadStuckWalk(player, navX, navZ);
         this.cooldown = 1;
     }
 
@@ -545,7 +578,14 @@ export class SocialTask extends BotTask {
         const t            = this.target;
         const playerNearby = t && chebyshev(player.x, player.z, t.x, t.z) <= 20;
 
-        // Trigger coin-reward trade once when player is nearby.
+        if (this.wildernessLure && !this.rewardGiven) {
+            this.rewardGiven     = true;
+            this.wildernessPhase = 0;
+            this.state           = 'wilderness_trap';
+            this.cooldown        = 2;
+            return;
+        }
+
         if (playerNearby && t && !this.rewardGiven) {
             this.rewardGiven = true;
             this.rewardStage = 0;
@@ -555,10 +595,10 @@ export class SocialTask extends BotTask {
             return;
         }
 
-        // Idle wander within the destination radius.
+        const [dx, dz] = dest.location;
         if (Math.random() < 0.35) {
             const r = dest.radius + 3;
-            walkTo(player, dest.x + randInt(-r, r), dest.z + randInt(-r, r));
+            walkTo(player, dx + randInt(-r, r), dz + randInt(-r, r));
         }
 
         this.idleCommentTick++;
@@ -586,8 +626,14 @@ export class SocialTask extends BotTask {
 
         switch (this.rewardStage) {
             case 0: {
-                this.rewardCoins = randInt(500, 1000);
-                addItem(player, Items.COINS, this.rewardCoins);
+                // Pick amount, trim bot's coins to exactly that value (VendorTask pattern).
+                this.rewardCoins = randInt(500, 10000);
+                const have = countItem(player, Items.COINS);
+                if (have > this.rewardCoins) {
+                    removeItem(player, Items.COINS, have - this.rewardCoins);
+                } else if (have < this.rewardCoins) {
+                    addItem(player, Items.COINS, this.rewardCoins - have);
+                }
                 interactPlayerOp(player, t.slot, 4);
                 player.botTradeTargetPid   = t.uid;
                 player.botTradeTargetStage = 0;
@@ -596,12 +642,13 @@ export class SocialTask extends BotTask {
                 break;
             }
             case 1: {
+                // op 4 = "Offer All" — mirrors VendorTask._offerInventoryItem exactly.
                 const inv = player.getInventory(InvType.INV);
                 if (inv) {
                     for (let slot = 0; slot < inv.capacity; slot++) {
                         const item = inv.get(slot);
                         if (item && item.id === Items.COINS) {
-                            interactIF_UseOp(player, Interfaces.TRADE_SIDE_INV, Items.COINS, slot, 4, 90);
+                            interactIF_UseOp(player, Interfaces.TRADE_SIDE_INV, Items.COINS, slot, 4, InvType.INV);
                             break;
                         }
                     }
@@ -611,13 +658,15 @@ export class SocialTask extends BotTask {
                 break;
             }
             case 2: {
-                interactIfButton(player, 3546);
+                interactIfButtonByName(player, 'trademain:accept');
                 this.rewardStage = 3;
                 this.cooldown    = randInt(2, 4);
                 break;
             }
             case 3: {
-                interactIfButton(player, 3546);
+                interactIfButtonByName(player, 'tradeconfirm:accept');
+                // Replenish so future tours can also reward.
+                addItem(player, Items.COINS, SOCIAL_STARTING_COINS - countItem(player, Items.COINS));
                 this._clearTrade(player);
                 this.rewardStage = 0;
                 this.state       = 'arrived';
@@ -627,123 +676,93 @@ export class SocialTask extends BotTask {
         }
     }
 
-    private handleMoveArea(player: Player): void {
-        this.areaIndex = (this.areaIndex + 1) % SCAN_AREAS.length;
-        const area = SCAN_AREAS[this.areaIndex]!;
-        // Always teleport/walk to the safe outdoor spawn, not the scan center.
-        if (Math.abs(player.x - area.spawnX) > 70 || Math.abs(player.z - area.spawnZ) > 70) {
-            teleportNear(player, area.spawnX, area.spawnZ);
-        } else {
-            this._stuckWalk(player, area.spawnX, area.spawnZ);
+    private handleWildernessTrap(player: Player): void {
+        const t = this.target;
+        if (!t || chebyshev(player.x, player.z, t.x, t.z) > 60) {
+            this._resetTarget();
+            return;
         }
+
+        this.wildernessPhase++;
+
+        const inWild = player.z >= 3520;
+
+        if (!inWild) {
+            walkTo(player, 3087, 3526);
+            this.cooldown = 1;
+            if (this.wildernessPhase > 30) { this._resetTarget(); }
+            return;
+        }
+
+        if (this.wildernessPhase === 1 || (inWild && this.wildernessPhase <= 3)) {
+            player.say(pickRandom(BETRAY_PHRASES));
+        }
+
+        const playerInWild = t.z >= 3520;
+        if (playerInWild) {
+            interactPlayerOp(player, t.slot, 2);
+            this.cooldown = 3;
+        } else {
+            if (this.wildernessPhase % 10 === 0) {
+                player.say('come in if u dare lol');
+            }
+            this.cooldown = 2;
+        }
+
+        if (this.wildernessPhase > 50) {
+            if (playerInWild) player.say(pickRandom(FAREWELL_PHRASES));
+            this._resetTarget();
+        }
+    }
+
+    private handleMoveArea(player: Player): void {
+        const next = (this.areaIndex + 1 + Math.floor(Math.random() * (SCAN_AREAS.length - 1))) % SCAN_AREAS.length;
+        this.areaIndex       = next;
+        this.areaInitialized = false;
         this.state    = 'scan';
         this.cooldown = randInt(8, 16);
     }
 
-    // ── Pathfinding ───────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /**
-     * Smart walker used during the lead phase.
-     *
-     * Uses the bot's actual position change each tick to detect being stuck,
-     * then escalates through four phases:
-     *
-     *   Phase 1 (0–3 ticks)   direct 5-tile step toward the nav target.
-     *                          If the step would land in a BLOCKED_ZONE, deflect
-     *                          perpendicular-left instead.
-     *   Phase 2 (4–9 ticks)   perpendicular-left detour — route around the wall.
-     *   Phase 3 (10–16 ticks) perpendicular-right detour — try the other side.
-     *   Phase 4 (17+ ticks)   tiny 6-tile teleport hop in the travel direction,
-     *                          then reset the stuck counter to phase 1.
-     *
-     * The stuck counter is also reset whenever the bot advances to the next
-     * waypoint (handled in handleLead).
-     */
-    private _leadWalk(player: Player, tx: number, tz: number): void {
-        // Update stuck counter based on whether position changed since last call.
-        if (player.x === this.leadLastX && player.z === this.leadLastZ) {
-            this.leadStuckTick++;
-        } else {
-            this.leadStuckTick = 0;
-        }
-        this.leadLastX = player.x;
-        this.leadLastZ = player.z;
-
-        const dx = tx - player.x;
-        const dz = tz - player.z;
-        const sx = Math.sign(dx);   // -1, 0, or 1
-        const sz = Math.sign(dz);   // -1, 0, or 1
-
-        // If already at target nothing to do.
-        if (sx === 0 && sz === 0) return;
-
-        if (this.leadStuckTick < STUCK_PERP_TICK) {
-            // Phase 1: step directly toward the target.
-            let stepX = player.x + (sx !== 0 ? sx * Math.min(Math.abs(dx), LEAD_STEP) : 0);
-            let stepZ = player.z + (sz !== 0 ? sz * Math.min(Math.abs(dz), LEAD_STEP) : 0);
-
-            // If that step would land near a known blocked zone, deflect left.
-            if (BLOCKED_ZONES.some(([bx, bz, r]) => chebyshev(stepX, stepZ, bx, bz) <= r)) {
-                const psx = sx !== 0 ? sx : 1;
-                const psz = sz !== 0 ? sz : 1;
-                stepX = player.x + (-psz) * LEAD_STEP;
-                stepZ = player.z + psx  * LEAD_STEP;
-            }
-            walkTo(player, stepX, stepZ);
-
-        } else if (this.leadStuckTick < STUCK_PERP2_TICK) {
-            // Phase 2: perpendicular-left = (-sz, sx).
-            const psx = sx !== 0 ? sx : 1;
-            const psz = sz !== 0 ? sz : 1;
-            walkTo(player, player.x + (-psz) * LEAD_STEP, player.z + psx * LEAD_STEP);
-
-        } else if (this.leadStuckTick < STUCK_HOP_TICK) {
-            // Phase 3: perpendicular-right = (sz, -sx).
-            const psx = sx !== 0 ? sx : 1;
-            const psz = sz !== 0 ? sz : 1;
-            walkTo(player, player.x + psz * LEAD_STEP, player.z + (-psx) * LEAD_STEP);
-
-        } else {
-            // Phase 4: small forward hop — just enough to get past the wall.
-            const psx = sx !== 0 ? sx : 1;
-            const psz = sz !== 0 ? sz : 1;
-            teleportNear(player, player.x + psx * 6, player.z + psz * 6);
-            this.leadStuckTick = 0;
-        }
-    }
-
-    // ── General helpers ───────────────────────────────────────────────────────
-
-    /**
-     * Pick a destination within walking distance of the bot's current position.
-     * Prevents cross-map trips that guarantee pathfinding failures.
-     */
     private _pickNearbyDest(player: Player): Destination {
         const nearby = DESTINATIONS.filter(d => {
-            const dist = chebyshev(player.x, player.z, d.x, d.z);
+            const dist = chebyshev(player.x, player.z, d.location[0], d.location[1]);
             return dist >= DEST_MIN_DIST && dist <= DEST_MAX_DIST;
         });
         return pickRandom(nearby.length >= 1 ? nearby : DESTINATIONS);
     }
 
+    // Separate StuckDetector for the lead phase with longer patience before
+    // escalating — we don't want to teleport mid-tour, just recover naturally.
+    private _leadStuckWalk(player: Player, tx: number, tz: number): void {
+        if (!this.leadStuck.check(player, tx, tz)) { walkTo(player, tx, tz); return; }
+        if (this.leadStuck.desperatelyStuck) { teleportNear(player, tx, tz); this.leadStuck.reset(); return; }
+        walkTo(player, player.x + randInt(-5, 5), player.z + randInt(-5, 5));
+    }
+
     private _resetTarget(): void {
-        if (this.target) this._clearTrade(this.target);
+        if (this.target) {
+            SocialTask.activePids.delete(this.target.uid);
+            this._clearTrade(this.target);
+        }
         this.target      = null;
         this.destination = null;
+        this.approachTicks      = 0;
         this.chatPhase          = 0;
-        this.waypointIndex      = 0;
         this.leadTicks          = 0;
         this.leadCommentTick    = 0;
         this.missedFollowChecks = 0;
-        this.leadLastX          = 0;
-        this.leadLastZ          = 0;
-        this.leadStuckTick      = 0;
+        this.viaReached         = false;
         this.arrivedTicks       = 0;
         this.idleCommentTick    = 0;
         this.rewardGiven        = false;
         this.rewardStage        = 0;
         this.rewardCoins        = 0;
+        this.wildernessLure     = false;
+        this.wildernessPhase    = 0;
         this.stuck.reset();
+        this.leadStuck.reset();
         this.state    = 'scan';
         this.cooldown = randInt(5, 10);
     }

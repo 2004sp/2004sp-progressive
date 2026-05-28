@@ -41,6 +41,7 @@ import { WaterFillingTask } from '#/engine/bot/tasks/WaterFillingTask.js';
 import { SocialTask } from '#/engine/bot/tasks/SocialTask.js';
 import { VendorTask } from '#/engine/bot/tasks/VendorTask.js';
 import { PKerTask } from '#/engine/bot/tasks/PKerTask.js';
+import { EdgevillePKerTask } from '#/engine/bot/tasks/EdgevillePKerTask.js';
 import { AgilityTask } from '#/engine/bot/tasks/AgilityTask.js';
 
 // ── Personality ───────────────────────────────────────────────────────────────
@@ -805,7 +806,7 @@ export function makeAgilityTester(): AgilityTestGoalPlanner {
     return new AgilityTestGoalPlanner();
 }
 
-export type ExtrasType = 'social' | 'vendor' | 'pker';
+export type ExtrasType = 'social' | 'vendor' | 'pker' | 'edgeville_pker';
 
 /**
  * Goal planner for "extras" bots — social, vendor, and wilderness PKer.
@@ -826,9 +827,10 @@ export class ExtrasGoalPlanner extends BotGoalPlanner {
             // Extras bots skip the normal InitTask — their tasks self-initialise.
         }
         switch (this.extrasType) {
-            case 'social': return new SocialTask();
-            case 'vendor': return new VendorTask();
-            case 'pker':   return new PKerTask();
+            case 'social':         return new SocialTask();
+            case 'vendor':         return new VendorTask();
+            case 'pker':           return new PKerTask();
+            case 'edgeville_pker': return new EdgevillePKerTask();
         }
     }
 }
@@ -841,4 +843,7 @@ export function makeExtrasVendor(): ExtrasGoalPlanner {
 }
 export function makeExtrasPKer(): ExtrasGoalPlanner {
     return new ExtrasGoalPlanner('pker');
+}
+export function makeExtrasEdgevillePKer(): ExtrasGoalPlanner {
+    return new ExtrasGoalPlanner('edgeville_pker');
 }
