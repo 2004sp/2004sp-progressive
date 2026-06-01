@@ -125,6 +125,8 @@ function showMenu() {
 11. Start Server & Hiscores (Best Option)
 12. Setup (npm run setup)
 13. Patch .env (disable routefinder & build verify)
+14. Import Character (.sav -> account)
+15. Change Password (requires .sav in player folder)
 0.  Exit
 
 Choose an option:
@@ -194,12 +196,141 @@ async function handleInput(input: string) {
             });
             break;
 
+        case '14':
+            await importCharacter();
+            return; // importCharacter shows the menu after finishing
+
+        case '15':
+            await changePassword();
+            return; // changePassword shows the menu after finishing
+
         case '0':
             console.log('👋 Exiting...');
             process.exit(0);
     }
 
     showMenu();
+}
+
+async function importCharacter() {
+    rl.close();
+
+    const tempRl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const question = (q: string) => new Promise<string>(resolve => tempRl.question(q, resolve));
+
+    try {
+        console.log('\n📂 Import Character');
+        console.log('──────────────────────────────────────────');
+        console.log('Place your .sav file in:');
+        console.log('  engine/data/players/main/');
+        console.log('──────────────────────────────────────────');
+        await question('\nPress Enter once your .sav file is in place...');
+
+        const username = (await question('Enter username (filename without .sav, e.g. "bob"): ')).trim().toLowerCase();
+        if (!username) {
+            console.log('❌ Username cannot be empty.');
+            return;
+        }
+
+        const savPath = path.join(__dirname, 'data', 'players', 'main', `${username}.sav`);
+        if (!fs.existsSync(savPath)) {
+            console.log(`❌ File not found: ${savPath}`);
+            console.log('   Make sure the filename matches the username exactly.');
+            return;
+        }
+
+        const password = (await question('Enter password for this account: ')).trim();
+        if (!password) {
+            console.log('❌ Password cannot be empty.');
+            return;
+        }
+
+        const { hashSync } = await import('bcrypt-ts');
+        const { DatabaseSync } = await import('node:sqlite');
+
+        const hash = hashSync(password.toLowerCase(), 10);
+        const db = new DatabaseSync(path.join(__dirname, 'db.sqlite'));
+
+        try {
+            db.prepare("INSERT INTO account (username, password, registration_ip, registration_date) VALUES (?, ?, ?, datetime('now'))").run(username, hash, '127.0.0.1');
+            console.log(`✅ Account created — ${username} can now log in.`);
+        } catch (e: any) {
+            if (e.message?.includes('UNIQUE')) {
+                db.prepare('UPDATE account SET password = ? WHERE username = ?').run(hash, username);
+                console.log(`✅ Password updated — ${username} can now log in.`);
+            } else {
+                throw e;
+            }
+        } finally {
+            db.close();
+        }
+    } catch (e: any) {
+        console.log(`❌ Error: ${e.message}`);
+    } finally {
+        tempRl.close();
+        createReadline();
+        showMenu();
+    }
+}
+
+async function changePassword() {
+    rl.close();
+
+    const tempRl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const question = (q: string) => new Promise<string>(resolve => tempRl.question(q, resolve));
+
+    try {
+        console.log('\n🔑 Change Password');
+        console.log('──────────────────────────────────────────');
+        console.log('Your .sav file must be present in:');
+        console.log('  engine/data/player/main/');
+        console.log('This verifies you own the account.');
+        console.log('──────────────────────────────────────────');
+
+        const username = (await question('\nEnter username: ')).trim().toLowerCase();
+        if (!username) {
+            console.log('❌ Username cannot be empty.');
+            return;
+        }
+
+        const savPath = path.join(__dirname, 'data', 'players', 'main', `${username}.sav`);
+        if (!fs.existsSync(savPath)) {
+            console.log(`❌ No .sav found for "${username}" — cannot verify account ownership.`);
+            console.log(`   Expected: ${savPath}`);
+            return;
+        }
+
+        console.log(`✔️  Save file verified for "${username}".`);
+
+        const newPassword = (await question('Enter new password: ')).trim();
+        if (!newPassword) {
+            console.log('❌ Password cannot be empty.');
+            return;
+        }
+
+        const { hashSync } = await import('bcrypt-ts');
+        const { DatabaseSync } = await import('node:sqlite');
+
+        const hash = hashSync(newPassword.toLowerCase(), 10);
+        const db = new DatabaseSync(path.join(__dirname, 'db.sqlite'));
+
+        try {
+            const result = db.prepare('UPDATE account SET password = ? WHERE username = ?').run(hash, username) as { changes: number };
+            if (result.changes === 0) {
+                console.log(`⚠️  No account found for "${username}". Use option 14 to import it first.`);
+            } else {
+                console.log(`✅ Password updated — ${username} can now log in with the new password.`);
+            }
+        } finally {
+            db.close();
+        }
+    } catch (e: any) {
+        console.log(`❌ Error: ${e.message}`);
+    } finally {
+        tempRl.close();
+        createReadline();
+        showMenu();
+    }
 }
 
 showMenu();
