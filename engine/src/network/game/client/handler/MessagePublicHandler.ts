@@ -41,7 +41,7 @@ export default class MessagePublicHandler extends ClientGameMessageHandler<Messa
         console.log('Player sent public message: ' + player.username + ': ' + unpack + ' (' + player.x + ' : ' + player.z + ')');
         if(player) {
             console.log('Messaging nearby bots...');
-            player.sendMessageToNearbyBots(player.username, unpack);
+            player.sendMessageToNearbyBots(player.displayName || player.username, unpack);
         }
         player.socialProtect = true;
         return true;

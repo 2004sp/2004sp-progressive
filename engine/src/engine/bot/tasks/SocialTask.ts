@@ -39,6 +39,7 @@ import {
     interactIfButtonByName,
 } from '#/engine/bot/BotAction.js';
 import World from '#/engine/World.js';
+import { BotLLM } from '#/engine/bot/BotLLM.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -418,6 +419,12 @@ export class SocialTask extends BotTask {
             this.scanFail  = 0;
             SocialTask.activePids.add(found.uid);
             this.state     = 'approach';
+            // Pre-generate greeting during approach ticks so it's ready on arrival
+            BotLLM.prefetch(
+                `social:${player.uid}:greet`,
+                [`Say a casual greeting to ${found.displayName}.`],
+                [pickRandom(GREET_PHRASES)]
+            );
             return;
         }
 
@@ -444,8 +451,22 @@ export class SocialTask extends BotTask {
             return;
         }
 
-        const greet = pickRandom(GREET_PHRASES);
+        const greetFallback = pickRandom(GREET_PHRASES);
+        // Key format: prefetch stores as "${key}:${i}" → "social:uid:greet:0"
+        const greet = BotLLM.getSync(`social:${player.uid}:greet:0`, greetFallback);
         player.say(Math.random() < 0.5 ? `${greet} ${t.displayName}!` : greet);
+
+        // Pre-generate the next two chat lines while the cooldown ticks down
+        BotLLM.prefetch(
+            `social:${player.uid}`,
+            [
+                `Say something casual about RuneScape.`,
+                `Ask a short question about the game.`,
+                `Say a short goodbye.`,
+            ],
+            [pickRandom(CHAT_LINES), pickRandom(CHAT_LINES), pickRandom(FAREWELL_PHRASES)]
+        );
+
         this.state     = 'chat';
         this.chatPhase = 0;
         this.cooldown  = randInt(5, 9);
@@ -461,7 +482,8 @@ export class SocialTask extends BotTask {
 
         this.chatPhase++;
         if (this.chatPhase <= 2) {
-            player.say(pickRandom(CHAT_LINES));
+            // Use a pre-generated LLM phrase if ready, otherwise a static fallback
+            player.say(BotLLM.getSync(`social:${player.uid}:${this.chatPhase - 1}`, pickRandom(CHAT_LINES)));
             this.cooldown = randInt(8, 16);
             return;
         }

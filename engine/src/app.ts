@@ -10,6 +10,7 @@ import Environment from '#/util/Environment.js';
 import { printError, printInfo } from '#/util/Logger.js';
 import { startManagementWeb, startWeb } from '#/web.js';
 import OnDemand from '#/engine/OnDemand.js';
+import { BotLLM } from '#/engine/bot/BotLLM.js';
 
 if (
     OnDemand.cache.count(0) !== 9 ||
@@ -36,6 +37,9 @@ if (Environment.EASY_STARTUP) {
     new Worker('./src/friend.ts', { execArgv: ['--import', 'tsx'] });
     new Worker('./src/logger.ts', { execArgv: ['--import', 'tsx'] });
 }
+
+// Gemma 3 270M GGUF — no-op if file absent, bots fall back to static phrases.
+BotLLM.init('models/gemma-3-270m-q4_k_m.gguf');
 
 await World.start();
 
