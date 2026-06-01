@@ -1,6 +1,8 @@
 import fs from 'fs';
 import { Worker } from 'worker_threads';
 
+const tsxWorkerHook = new URL('./engine/worker-bootstrap.mjs', import.meta.url).href;
+
 import { collectDefaultMetrics, register } from 'prom-client';
 
 import { packAll } from '#tools/pack/PackAll.js';
@@ -32,9 +34,9 @@ if (
 }
 
 if (Environment.EASY_STARTUP) {
-    new Worker('./src/login.ts', { execArgv: ['--import', 'tsx'] });
-    new Worker('./src/friend.ts', { execArgv: ['--import', 'tsx'] });
-    new Worker('./src/logger.ts', { execArgv: ['--import', 'tsx'] });
+    new Worker('./src/login.ts', { execArgv: ['--import', tsxWorkerHook] });
+    new Worker('./src/friend.ts', { execArgv: ['--import', tsxWorkerHook] });
+    new Worker('./src/logger.ts', { execArgv: ['--import', tsxWorkerHook] });
 }
 
 await World.start();

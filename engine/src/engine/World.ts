@@ -2,6 +2,8 @@
 import fs from 'fs';
 import { Worker } from 'worker_threads';
 
+const tsxWorkerHook = new URL('./worker-bootstrap.mjs', import.meta.url).href;
+
 // deps
 import * as rsbuf from '@2004scape/rsbuf';
 import { PlayerInfoProt } from '@2004scape/rsbuf';
@@ -112,9 +114,9 @@ type LogoutRequest = {
 };
 
 class World {
-    private loginThread = new Worker('./src/server/login/LoginThread.ts');
-    private friendThread = new Worker('./src/server/friend/FriendThread.ts');
-    private loggerThread = new Worker('./src/server/logger/LoggerThread.ts');
+    private loginThread = new Worker('./src/server/login/LoginThread.ts', { execArgv: ['--import', tsxWorkerHook] });
+    private friendThread = new Worker('./src/server/friend/FriendThread.ts', { execArgv: ['--import', tsxWorkerHook] });
+    private loggerThread = new Worker('./src/server/logger/LoggerThread.ts', { execArgv: ['--import', tsxWorkerHook] });
     private devThread: Worker | null = null;
 
     private static readonly PLAYERS: number = Environment.NODE_MAX_PLAYERS;
@@ -1794,7 +1796,7 @@ class World {
     }
 
     private createDevThread() {
-        this.devThread = new Worker('./src/cache/DevThread.ts');
+        this.devThread = new Worker('./src/cache/DevThread.ts', { execArgv: ['--import', tsxWorkerHook] });
 
         this.devThread.on('message', msg => {
             try {
