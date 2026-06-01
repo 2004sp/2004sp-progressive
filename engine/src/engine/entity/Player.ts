@@ -45,8 +45,6 @@ import ScriptRunner from '#/engine/script/ScriptRunner.js';
 import ScriptState from '#/engine/script/ScriptState.js';
 import ServerTriggerType from '#/engine/script/ServerTriggerType.js';
 import World from '#/engine/World.js';
-import { BotLLM } from '#/engine/bot/BotLLM.js';
-import { ChatRouter } from '#/engine/bot/ChatRouter.js';
 import Packet from '#/io/Packet.js';
 import ChatFilterSettings from '#/network/game/server/model/ChatFilterSettings.js';
 import HintArrow from '#/network/game/server/model/HintArrow.js';
@@ -189,9 +187,6 @@ interface BotMemory {
 
     // 🎯 Engagement tracking
     engagementScore?: number;       // increases if convo is active
-
-    // 🤖 LLM conversation history — last N user/bot exchange pairs fed into BotLLM
-    llmHistory?: Array<{ user: string; bot: string }>;
 }
 
 
@@ -2529,34 +2524,15 @@ export default class Player extends PathingEntity {
                 response = null;
             }
             // 🔒 STRICT SINGLE OUTPUT RULE
-            // Use the intent response directly when one matched — it is already a
-            // complete sentence.  The greeting is only used when there is no other
-            // content (pure address / pure greeting messages).
             let combined: string;
 
             if (!response || isGreeting) {
                 combined = greeting;
             } else {
-                combined = response;
+                combined = `${greeting.replace(/$/, ',')} ${response}`;
             }
 
-            if (BotLLM.available) {
-                memory.llmHistory ??= [];
-                const historySnapshot = memory.llmHistory.slice(-3);
-                const llmInput = this.stripBotName(mes, bot);
-                ChatRouter.route(llmInput, combined, historySnapshot, name).then(reply => {
-                    if (bot.uid === -1 || this.uid === -1) return;
-                    const safeReply = this.sanitizeBotReply(reply, bot, combined);
-                    memory.llmHistory ??= [];
-                    memory.llmHistory.push({ user: llmInput, bot: safeReply });
-                    if (memory.llmHistory.length > 4) memory.llmHistory.shift();
-                    this.delayedSay(bot, safeReply);
-                }).catch(() => {
-                    if (bot.uid !== -1 && this.uid !== -1) this.delayedSay(bot, combined);
-                });
-            } else {
-                this.delayedSay(bot, combined);
-            }
+            this.delayedSay(bot, combined);
             return;
         }
 
@@ -2576,23 +2552,7 @@ export default class Player extends PathingEntity {
             const response = this.processIntent(mes, memory, bot);
             if (!response) return;
 
-            if (BotLLM.available) {
-                memory.llmHistory ??= [];
-                const historySnapshot = memory.llmHistory.slice(-3);
-                const llmInput = this.stripBotName(mes, bot);
-                ChatRouter.route(llmInput, response, historySnapshot, name).then(reply => {
-                    if (bot.uid === -1 || this.uid === -1) return;
-                    const safeReply = this.sanitizeBotReply(reply, bot, response);
-                    memory.llmHistory ??= [];
-                    memory.llmHistory.push({ user: llmInput, bot: safeReply });
-                    if (memory.llmHistory.length > 4) memory.llmHistory.shift();
-                    this.delayedSay(bot, safeReply);
-                }).catch(() => {
-                    if (bot.uid !== -1 && this.uid !== -1) this.delayedSay(bot, response);
-                });
-            } else {
-                this.delayedSay(bot, response);
-            }
+            this.delayedSay(bot, response);
         }
     }
 
@@ -2828,45 +2788,6 @@ export default class Player extends PathingEntity {
         memory.repetitions = (memory.repetitions ?? 0) + 1;
 
         return this.applySignals(response, signals, memory, bot);
-    }
-
-    /** Final guard on LLM output — falls back to the static reply if the LLM
-     *  echoes the bot's own name (garbled or otherwise) or returns empty. */
-    sanitizeBotReply(reply: string, bot: Player, fallback: string): string {
-        if (!reply || !reply.trim()) return fallback;
-        const lower = reply.toLowerCase();
-        const names = [bot.username, bot.displayName].filter(Boolean) as string[];
-        for (const name of names) {
-            const parts = name
-                .toLowerCase()
-                .replace(/[_-]/g, ' ')
-                .replace(/\d+/g, '')
-                .split(' ')
-                .filter(p => p.length > 2);
-            for (const part of parts) {
-                if (lower.includes(part)) return fallback;
-            }
-        }
-        return reply;
-    }
-
-    /** Remove the bot's own name from a player message before sending to the LLM.
-     *  "BotName i have a question" → "i have a question" so seed patterns match. */
-    stripBotName(mes: string, bot: Player): string {
-        const names = [bot.username, bot.displayName].filter(Boolean) as string[];
-        let result = mes;
-        for (const name of names) {
-            const parts = name
-                .toLowerCase()
-                .replace(/[_-]/g, ' ')
-                .replace(/\d+/g, '')
-                .split(' ')
-                .filter(p => p.length > 2);
-            for (const part of parts) {
-                result = result.replace(new RegExp(`\\b${part}\\b`, 'gi'), '');
-            }
-        }
-        return result.replace(/\s+/g, ' ').trim();
     }
 
     cleanMessage(msg: string): string {
