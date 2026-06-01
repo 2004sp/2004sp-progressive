@@ -80,10 +80,12 @@ class BunSqliteConnection implements DatabaseConnection {
                     rows: []
                 };
             } catch (err: any) {
-                if (err?.code === 'SQLITE_BUSY') {
+                // node:sqlite uses code='ERR_SQLITE_ERROR' with errcode for the SQLite error number.
+                // SQLITE_BUSY=5, SQLITE_LOCKED=6
+                if (err?.errcode === 5 || err?.errcode === 6) {
                     await sleep(100);
                     continue;
-                } else if (err?.code?.startsWith('SQLITE_')) {
+                } else if (err?.code === 'ERR_SQLITE_ERROR') {
                     console.error(err.message);
                     break;
                 } else {
