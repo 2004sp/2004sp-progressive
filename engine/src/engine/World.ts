@@ -112,9 +112,9 @@ type LogoutRequest = {
 };
 
 class World {
-    private loginThread = new Worker('./src/server/login/LoginThread.ts', { execArgv: ['--import', 'tsx'] });
-    private friendThread = new Worker('./src/server/friend/FriendThread.ts', { execArgv: ['--import', 'tsx'] });
-    private loggerThread = new Worker('./src/server/logger/LoggerThread.ts', { execArgv: ['--import', 'tsx'] });
+    private loginThread = new Worker('./src/server/login/LoginThread.ts');
+    private friendThread = new Worker('./src/server/friend/FriendThread.ts');
+    private loggerThread = new Worker('./src/server/logger/LoggerThread.ts');
     private devThread: Worker | null = null;
 
     private static readonly PLAYERS: number = Environment.NODE_MAX_PLAYERS;

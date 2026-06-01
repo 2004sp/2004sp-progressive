@@ -5,7 +5,6 @@
   "imports": {
     "#3rdparty/*": "./src/3rdparty/*",
     "#/*": "./src/*",
-    "#tools/*.js": "./tools/*.ts",
     "#tools/*": "./tools/*"
   },
   "scripts": {
