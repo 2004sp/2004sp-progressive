@@ -195,7 +195,12 @@ export async function startWeb() {
         });
     });
 
-    const wss = new WebSocketServer({ noServer: true });
+    const wss = new WebSocketServer({
+        noServer: true,
+        // Echo back the 'binary' sub-protocol so Safari (which enforces RFC 6455 §4.1)
+        // advances the WebSocket from CONNECTING to OPEN. Chrome is lenient; Safari is not.
+        handleProtocols: (protocols: Set<string>) => (protocols.has('binary') ? 'binary' : false)
+    });
 
     server.on('upgrade', (req, socket, head) => {
         const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
