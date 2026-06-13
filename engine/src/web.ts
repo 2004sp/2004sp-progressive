@@ -1,6 +1,7 @@
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
+import { DatabaseSync } from 'node:sqlite';
 
 import ejs from 'ejs';
 import { register } from 'prom-client';
@@ -31,6 +32,21 @@ function getIp(req: IncomingMessage): string | null {
     const forwarded = (req.headers['cf-connecting-ip'] ?? req.headers['x-forwarded-for']) as string | undefined;
     if (!forwarded) return null;
     return forwarded.split(',')[0].trim();
+}
+
+let db: DatabaseSync | null = null;
+try {
+    if (fs.existsSync('db.sqlite')) {
+        db = new DatabaseSync('db.sqlite');
+    }
+} catch {
+    // hiscores DB unavailable
+}
+
+function jsonResponse(res: ServerResponse, data: unknown, status = 200) {
+    const body = JSON.stringify(data);
+    res.writeHead(status, { 'Content-Type': 'application/json' });
+    res.end(body);
 }
 
 const MIME_TYPES = new Map<string, string>([
@@ -157,7 +173,79 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
             }
         }
 
-        if (fs.existsSync(`public${url.pathname}`)) {
+        if (url.pathname === '/api/hiscores') {
+            if (!db) {
+                res.writeHead(503, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'HiScores unavailable' }));
+                return;
+            }
+            const skillParam = url.searchParams.get('skill') ?? 'overall';
+            const page = Math.max(0, parseInt(url.searchParams.get('page') ?? '0'));
+            const limit = 25;
+            const offset = page * limit;
+            if (skillParam === 'overall') {
+                const stmt = db.prepare(`
+                    SELECT a.username, hl.level, hl.value AS xp
+                    FROM hiscore_large hl
+                    JOIN account a ON a.id = hl.account_id
+                    WHERE hl.profile = 'main' AND hl.type = 0
+                    ORDER BY hl.level DESC, hl.value DESC
+                    LIMIT ? OFFSET ?
+                `);
+                return jsonResponse(res, stmt.all(limit, offset));
+            } else {
+                const skillType = parseInt(skillParam);
+                if (isNaN(skillType)) {
+                    res.writeHead(400, { 'Content-Type': 'text/plain' });
+                    res.end('Bad skill param');
+                    return;
+                }
+                const stmt = db.prepare(`
+                    SELECT a.username, h.level, h.value AS xp
+                    FROM hiscore h
+                    JOIN account a ON a.id = h.account_id
+                    WHERE h.profile = 'main' AND h.type = ?
+                    ORDER BY h.level DESC, h.value DESC
+                    LIMIT ? OFFSET ?
+                `);
+                return jsonResponse(res, stmt.all(skillType, limit, offset));
+            }
+        } else if (url.pathname.startsWith('/api/player/')) {
+            if (!db) {
+                res.writeHead(503, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'HiScores unavailable' }));
+                return;
+            }
+            const username = decodeURIComponent(url.pathname.split('/').pop()!);
+            const accountStmt = db.prepare('SELECT id, username FROM account WHERE username = ? COLLATE NOCASE');
+            const account = accountStmt.get(username) as { id: number; username: string } | null;
+            if (!account) {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('Not found');
+                return;
+            }
+            const overallStmt = db.prepare(`SELECT level, value FROM hiscore_large WHERE account_id = ? AND profile = 'main' AND type = 0`);
+            const overall = overallStmt.get(account.id) as { level: number; value: number } | null;
+            const skillsStmt = db.prepare(`SELECT type, level, value FROM hiscore WHERE account_id = ? AND profile = 'main' ORDER BY type`);
+            const skills = skillsStmt.all(account.id) as { type: number; level: number; value: number }[];
+            const rankMap: Record<number, number> = {};
+            for (const skill of skills) {
+                const rankStmt = db.prepare(`SELECT COUNT(*) + 1 AS rank FROM hiscore WHERE profile = 'main' AND type = ? AND (level > ? OR (level = ? AND value > ?))`);
+                const r = rankStmt.get(skill.type, skill.level, skill.level, skill.value) as { rank: number };
+                rankMap[skill.type] = r.rank;
+            }
+            let overallRank = 1;
+            if (overall) {
+                const overallRankStmt = db.prepare(`SELECT COUNT(*) + 1 AS rank FROM hiscore_large WHERE profile = 'main' AND type = 0 AND (level > ? OR (level = ? AND value > ?))`);
+                const r = overallRankStmt.get(overall.level, overall.level, overall.value) as { rank: number };
+                overallRank = r.rank;
+            }
+            return jsonResponse(res, {
+                username: account.username,
+                overall: overall ? { level: overall.level, xp: overall.value, rank: overallRank } : null,
+                skills: skills.map(s => ({ ...s, rank: rankMap[s.type] ?? null })),
+            });
+        } else if (fs.existsSync(`public${url.pathname}`)) {
             return serveFile(res, `public${url.pathname}`, MIME_TYPES.get(path.extname(url.pathname)) ?? 'text/plain');
         }
     } else if (req.method === 'PUT') {

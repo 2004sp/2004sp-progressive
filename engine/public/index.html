@@ -414,6 +414,10 @@ async function loadPage() {
 
   const params = new URLSearchParams({ skill: currentSkill, page: currentPage });
   const res = await fetch('/api/hiscores?' + params);
+  if (!res.ok) {
+    tbody.innerHTML = '<tr><td colspan="4" class="state-msg">HiScores are currently unavailable.</td></tr>';
+    return;
+  }
   const data = await res.json();
 
   document.getElementById('page-info').textContent = `Page ${currentPage + 1}`;
