@@ -147,6 +147,8 @@
 [command,last_com]()(component)
 // info: Get the last int (number) that was input
 [command,last_int]()(int)
+// info: Get the last string (name) that was input
+[command,last_string]()(string)
 // info: Get the last item that was selected
 [command,last_item]()(obj) // unconfirmed, inferred from useitem and useslot
 // info: Get the last item's slot
@@ -169,6 +171,8 @@
 [command,p_arrivedelay]
 // info: Requires protected access - open a number input dialog
 [command,p_countdialog]
+// info: Requires protected access - open a name/string input dialog
+[command,p_namedialog]
 // info: Requires protected access - delay this script/the player for $delay cycles
 [command,p_delay](int $delay)
 // info: Requires protected access - delay this script/the secondary player for $delay cycles
@@ -1021,6 +1025,8 @@
 [command,error](string $text)
 // info: Return true if the world is in a production environment
 [command,map_live]()(boolean)
+// info: Return true if an optional content feature is enabled (env NODE_FEATURE_<NAME>, default on)
+[command,map_feature](string $feature)(boolean)
 // info: Start tracking time
 [command,timespent]
 // info: Get the time spent since the timespent command was ran. This can be ^micros or ^millis

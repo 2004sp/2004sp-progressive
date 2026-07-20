@@ -6,6 +6,7 @@ const tsxWorkerHook = new URL('./engine/worker-bootstrap.mjs', import.meta.url).
 import { collectDefaultMetrics, register } from 'prom-client';
 
 import { packAll } from '#tools/pack/PackAll.js';
+import ClanManager from '#/engine/clan/ClanManager.js';
 import World from '#/engine/World.js';
 import TcpServer from '#/server/tcp/TcpServer.js';
 import Environment from '#/util/Environment.js';
@@ -40,6 +41,8 @@ if (Environment.EASY_STARTUP) {
 }
 
 await World.start();
+
+await ClanManager.init();
 
 const tcpServer = new TcpServer();
 tcpServer.start();

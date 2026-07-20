@@ -12,7 +12,7 @@ let dialect: Dialect;
 if (Environment.DB_BACKEND === 'sqlite') {
     const sqliteDb = new DatabaseSync('db.sqlite');
     sqliteDb.exec('PRAGMA journal_mode=WAL');
-    sqliteDb.exec('PRAGMA busy_timeout=5000');
+    sqliteDb.exec('PRAGMA busy_timeout=0');
     dialect = new BunSqliteDialect({
         database: sqliteDb
     });

@@ -1,0 +1,8 @@
+[kq_pet_item]
+name=Prince kalphite
+desc=A miniature Kalphite Queen.
+model=npc_1160
+members=yes
+tradeable=no
+param=follower_id,kalphite_queen_pet
+param=destroy_drop,^true

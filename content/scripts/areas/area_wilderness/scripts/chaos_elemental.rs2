@@ -1,0 +1,235 @@
+[ai_queue1,chaos_elemental] ~npc_default_retaliate_ap;
+
+[ai_queue3,chaos_elemental]
+gosub(npc_death);
+if (npc_findhero = ^false) {
+    return;
+}
+// Schedule respawn 500 ticks (~5 min) from now on the killing player.
+// Not tied to login — logging in/out has no effect on this timer.
+queue(spawn_chaos_elemental, 500, 0);
+// Pet drop: 1/5000
+if (random(5000) = 0) {
+    queue(chaos_elemental_pet_award, 0, 0);
+}
+// Dragon pickaxe: 1/1000
+if (random(1000) = 0) {
+    obj_add(npc_coord, dragon_pickaxe, 1, ^lootdrop_duration);
+}
+// Drop table - similar to KBD without bones/dragonhide, adds dragon pickaxe
+~trail_hardcluedrop(128, npc_coord);
+
+def_int $random = random(128);
+
+if ($random < 10) {
+    obj_add(npc_coord, rune_longsword, 1, ^lootdrop_duration);
+} else if ($random < 19) {
+    obj_add(npc_coord, adamant_platebody, 1, ^lootdrop_duration);
+} else if ($random < 20) {
+    obj_add(npc_coord, dragon_med_helm, 1, ^lootdrop_duration);
+} else if ($random < 21) {
+    obj_add(npc_coord, dragon_pickaxe, 1, ^lootdrop_duration);
+} else if ($random < 31) {
+    obj_add(npc_coord, bronze_arrow, 310, ^lootdrop_duration);
+} else if ($random < 41) {
+    obj_add(npc_coord, iron_arrow, 690, ^lootdrop_duration);
+} else if ($random < 51) {
+    obj_add(npc_coord, airrune, 105, ^lootdrop_duration);
+} else if ($random < 61) {
+    obj_add(npc_coord, firerune, 105, ^lootdrop_duration);
+} else if ($random < 66) {
+    obj_add(npc_coord, bloodrune, 15, ^lootdrop_duration);
+} else if ($random < 71) {
+    obj_add(npc_coord, lawrune, 15, ^lootdrop_duration);
+} else if ($random < 76) {
+    obj_add(npc_coord, deathrune, 7, ^lootdrop_duration);
+} else if ($random < 79) {
+    obj_add(npc_coord, adamant_axe, 1, ^lootdrop_duration);
+} else if ($random < 81) {
+    obj_add(npc_coord, rune_axe, 1, ^lootdrop_duration);
+} else if ($random < 86) {
+    obj_add(npc_coord, adamantite_bar, ~random_range(1,2), ^lootdrop_duration);
+} else if ($random < 89) {
+    obj_add(npc_coord, runite_bar, 1, ^lootdrop_duration);
+} else if ($random < 94) {
+    obj_add(npc_coord, cert_yew_logs, 100, ^lootdrop_duration);
+} else if ($random < 101) {
+    obj_add(npc_coord, amulet_of_strength, 1, ^lootdrop_duration);
+} else if ($random < 105) {
+    obj_add(npc_coord, shark, 4, ^lootdrop_duration);
+} else if ($random < 109) {
+    obj_add(npc_coord, bigoysterpearls, 4, ^lootdrop_duration);
+} else if ($random < 112) {
+    obj_add(npc_coord, mithril_battleaxe, 1, ^lootdrop_duration);
+} else if ($random < 126) {
+    obj_add(npc_coord, ~ultrarare_getitem, ^lootdrop_duration);
+} else {
+    obj_add(npc_coord, ~randomjewel, ^lootdrop_duration);
+}
+
+
+[ai_applayer2,chaos_elemental]
+if (%npc_action_delay > map_clock) {
+    return;
+}
+if (~npc_check_notcombat = false) {
+    npc_setmode(null);
+    return;
+}
+if (~npc_check_notcombat_self = false) {
+    return;
+}
+npc_sethuntmode(aggressive_melee);
+npc_setmode(opplayer2);
+
+
+[ai_opplayer2,chaos_elemental]
+if (%npc_action_delay > map_clock) {
+    return;
+}
+if (~npc_check_notcombat = false) {
+    npc_setmode(null);
+    return;
+}
+if (~npc_check_notcombat_self = false) {
+    return;
+}
+~ce_random_attack;
+npc_sethuntmode(chaos_elemental);
+
+
+// ============================================================
+// Attack selection: ~67% Discord, ~17% Confusion, ~17% Madness
+[proc,ce_random_attack]
+def_int $r = random(6);
+if ($r < 4) {
+    ~ce_discord;
+} else if ($r = 4) {
+    ~ce_confusion;
+} else {
+    ~ce_madness;
+}
+
+
+// ============================================================
+// Discord: three-colour projectile, random damage type
+// Magic most frequent; Protect from Magic halves damage
+[proc,ce_discord]
+if_close;
+spotanim_npc(fireblast_impact, 92, 0);
+spotanim_pl(nezik_flamestrike, 0, 30);
+%npc_action_delay = add(map_clock, 5);
+
+def_int $damage = 0;
+def_int $dtype = random(4); // 0-1 = magic (50%), 2 = ranged (25%), 3 = melee (25%)
+def_int $attack_roll = 0;
+def_int $defence_roll = 0;
+
+if ($dtype < 2) {
+    $attack_roll = ~npc_magic_attack_roll;
+    $defence_roll = ~player_defence_roll_specific(^magic_style);
+    if (randominc($attack_roll) > randominc($defence_roll)) {
+        $damage = randominc(28);
+        if (%prayer12 = ^true) {
+            $damage = calc($damage / 2);
+        }
+    }
+} else if ($dtype = 2) {
+    $attack_roll = ~npc_ranged_attack_roll;
+    $defence_roll = ~player_defence_roll_specific(^ranged_style);
+    if (randominc($attack_roll) > randominc($defence_roll)) {
+        $damage = randominc(28);
+    }
+} else {
+    $attack_roll = ~npc_melee_attack_roll;
+    $defence_roll = ~player_defence_roll_specific(^slash_style);
+    if (randominc($attack_roll) > randominc($defence_roll)) {
+        $damage = randominc(28);
+    }
+}
+queue(combat_damage_player, 1, $damage);
+queue*(playerhit_n_retaliate, 1)(npc_uid);
+~npc_set_attack_vars;
+
+
+// ============================================================
+// Confusion: teleports player a random short distance away
+[proc,ce_confusion]
+if_close;
+spotanim_pl(fireblast_impact, 0, 0);
+%npc_action_delay = add(map_clock, 5);
+queue(ce_confusion_teleport, 0, 0);
+~npc_set_attack_vars;
+
+[queue,ce_confusion_teleport]
+mes("The Chaos Elemental scrambles your mind!");
+def_coord $dest = movecoord(coord, sub(random(15), 7), 0, sub(random(15), 7));
+~player_teleport_normal($dest);
+
+
+// ============================================================
+// Madness: unequips up to 4 worn items; weapon always first
+[proc,ce_madness]
+if_close;
+spotanim_pl(nezik_flamestrike, 0, 0);
+%npc_action_delay = add(map_clock, 5);
+mes("The Chaos Elemental tears at your equipment!");
+queue(ce_madness_unequip, 0, 0);
+~npc_set_attack_vars;
+
+
+[queue,ce_madness_unequip]
+def_int $unequipped = 0;
+// Weapon slot always first priority
+def_obj $wpn = inv_getobj(worn, ^wearpos_rhand);
+if ($wpn ! null & inv_freespace(inv) > 0) {
+    inv_moveitem(worn, inv, $wpn, 1);
+    ~update_all($wpn);
+    $unequipped = add($unequipped, 1);
+}
+// Up to 3 more: hat, torso, legs
+if ($unequipped < 4) {
+    def_obj $hat = inv_getobj(worn, ^wearpos_hat);
+    if ($hat ! null & inv_freespace(inv) > 0) {
+        inv_moveitem(worn, inv, $hat, 1);
+        ~update_all($hat);
+        $unequipped = add($unequipped, 1);
+    }
+}
+if ($unequipped < 4) {
+    def_obj $torso = inv_getobj(worn, ^wearpos_torso);
+    if ($torso ! null & inv_freespace(inv) > 0) {
+        inv_moveitem(worn, inv, $torso, 1);
+        ~update_all($torso);
+        $unequipped = add($unequipped, 1);
+    }
+}
+if ($unequipped < 4) {
+    def_obj $legs = inv_getobj(worn, ^wearpos_legs);
+    if ($legs ! null & inv_freespace(inv) > 0) {
+        inv_moveitem(worn, inv, $legs, 1);
+        ~update_all($legs);
+        $unequipped = add($unequipped, 1);
+    }
+}
+
+
+// ============================================================
+// Respawn: fires on the killing player 500 ticks after CE death
+[queue,spawn_chaos_elemental]
+if (npc_find(0_49_56_1_57, chaos_elemental, 25, 0) = false) {
+    npc_add(0_49_56_1_57, chaos_elemental, ^max_32bit_int);
+}
+
+
+// ============================================================
+// Pet award
+[queue,chaos_elemental_pet_award]
+mes("You have a funny feeling you're being followed.");
+if (npc_finduid(%follower_uid) = true) {
+    if (inv_freespace(inv) > 0) {
+        inv_add(inv, chaos_elemental_pet_item, 1);
+    }
+    return;
+}
+~boss_pet_spawn(chaos_elemental_pet);

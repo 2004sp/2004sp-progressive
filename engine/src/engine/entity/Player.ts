@@ -46,7 +46,9 @@ import ScriptState from '#/engine/script/ScriptState.js';
 import ServerTriggerType from '#/engine/script/ServerTriggerType.js';
 import World from '#/engine/World.js';
 import Packet from '#/io/Packet.js';
+import ClanManager from '#/engine/clan/ClanManager.js';
 import ChatFilterSettings from '#/network/game/server/model/ChatFilterSettings.js';
+import SetClanState from '#/network/game/server/model/SetClanState.js';
 import HintArrow from '#/network/game/server/model/HintArrow.js';
 import IfClose from '#/network/game/server/model/IfClose.js';
 import IfSetTab from '#/network/game/server/model/IfSetTab.js';
@@ -596,6 +598,7 @@ export default class Player extends PathingEntity {
 
         this.buildArea.rebuildNormal();
         this.write(new ChatFilterSettings(this.publicChat, this.privateChat, this.tradeDuel));
+        this.write(new SetClanState(ClanManager.isEnabled()));
 
         // todo: exact order
         if (Environment.FRIEND_SERVER) {
@@ -867,7 +870,7 @@ export default class Player extends PathingEntity {
         this.modalState = ModalState.NONE;
 
         // close any input dialogue suspended scripts.
-        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON) {
+        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON || this.activeScript?.execution === ScriptState.NAMEDIALOG) {
             this.activeScript = null;
             this.resumeButtons = [];
         }
@@ -2110,7 +2113,7 @@ export default class Player extends PathingEntity {
         this.refreshModal = true;
 
         // clear old suspended scripts
-        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON) {
+        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON || this.activeScript?.execution === ScriptState.NAMEDIALOG) {
             this.activeScript = null;
             this.resumeButtons = [];
         }
@@ -2146,7 +2149,7 @@ export default class Player extends PathingEntity {
         this.refreshModal = true;
 
         // clear old suspended scripts
-        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON) {
+        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON || this.activeScript?.execution === ScriptState.NAMEDIALOG) {
             this.activeScript = null;
             this.resumeButtons = [];
         }
@@ -2170,7 +2173,7 @@ export default class Player extends PathingEntity {
         this.refreshModal = true;
 
         // clear old suspended scripts
-        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON) {
+        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON || this.activeScript?.execution === ScriptState.NAMEDIALOG) {
             this.activeScript = null;
             this.resumeButtons = [];
         }
@@ -2196,7 +2199,7 @@ export default class Player extends PathingEntity {
         this.refreshModal = true;
 
         // clear old suspended scripts
-        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON) {
+        if (this.activeScript?.execution === ScriptState.COUNTDIALOG || this.activeScript?.execution === ScriptState.PAUSEBUTTON || this.activeScript?.execution === ScriptState.NAMEDIALOG) {
             this.activeScript = null;
             this.resumeButtons = [];
         }

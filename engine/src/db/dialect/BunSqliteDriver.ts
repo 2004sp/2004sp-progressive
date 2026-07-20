@@ -61,6 +61,8 @@ class BunSqliteConnection implements DatabaseConnection {
     }
 
     async executeQuery<O>(compiledQuery: CompiledQuery): Promise<QueryResult<O>> {
+        let lastError: unknown;
+
         for (let retry = 0; retry < 3; retry++) {
             try {
                 const { sql, parameters } = compiledQuery;
@@ -80,6 +82,7 @@ class BunSqliteConnection implements DatabaseConnection {
                     rows: []
                 };
             } catch (err: any) {
+                lastError = err;
                 // node:sqlite uses code='ERR_SQLITE_ERROR' with errcode for the SQLite error number.
                 // SQLITE_BUSY=5, SQLITE_LOCKED=6
                 if (err?.errcode === 5 || err?.errcode === 6) {
@@ -95,12 +98,7 @@ class BunSqliteConnection implements DatabaseConnection {
             }
         }
 
-        console.warn('executeQuery failed');
-        return {
-            insertId: 0n,
-            numAffectedRows: 0n,
-            rows: []
-        };
+        throw lastError;
     }
 
     async *streamQuery<R>(compiledQuery: CompiledQuery): AsyncIterableIterator<QueryResult<R>> {

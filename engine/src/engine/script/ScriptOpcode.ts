@@ -51,6 +51,7 @@ export const enum ScriptOpcode {
     MAP_FINDSQUARE, // official
     MAP_INDOORS,
     MAP_LIVE,
+    MAP_FEATURE, // custom: runtime toggle for optional content (env NODE_FEATURE_*)
     MAP_LOCADDUNSAFE, // official
     MAP_MEMBERS, // official
     MAP_MULTIWAY, // official
@@ -118,6 +119,7 @@ export const enum ScriptOpcode {
     IF_SETTEXT, // official
     LAST_COM,
     LAST_INT, // official
+    LAST_STRING,
     LAST_ITEM,
     LAST_LOGIN_INFO,
     LAST_SLOT, // official
@@ -136,6 +138,7 @@ export const enum ScriptOpcode {
     P_ARRIVEDELAY, // official
     P_CLEARPENDINGACTION, // official
     P_COUNTDIALOG, // official
+    P_NAMEDIALOG,
     P_DELAY, // official
     P_EXACTMOVE, // official
     P_FINDUID, // official
@@ -498,6 +501,7 @@ export const ScriptOpcodeMap: Map<string, number> = new Map([
     ['MAP_FINDSQUARE', ScriptOpcode.MAP_FINDSQUARE],
     ['MAP_INDOORS', ScriptOpcode.MAP_INDOORS],
     ['MAP_LIVE', ScriptOpcode.MAP_LIVE],
+    ['MAP_FEATURE', ScriptOpcode.MAP_FEATURE],
     ['MAP_LOCADDUNSAFE', ScriptOpcode.MAP_LOCADDUNSAFE],
     ['MAP_MEMBERS', ScriptOpcode.MAP_MEMBERS],
     ['MAP_MULTIWAY', ScriptOpcode.MAP_MULTIWAY],
@@ -564,6 +568,7 @@ export const ScriptOpcodeMap: Map<string, number> = new Map([
     ['IF_SETTEXT', ScriptOpcode.IF_SETTEXT],
     ['LAST_COM', ScriptOpcode.LAST_COM],
     ['LAST_INT', ScriptOpcode.LAST_INT],
+    ['LAST_STRING', ScriptOpcode.LAST_STRING],
     ['LAST_ITEM', ScriptOpcode.LAST_ITEM],
     ['LAST_LOGIN_INFO', ScriptOpcode.LAST_LOGIN_INFO],
     ['LAST_SLOT', ScriptOpcode.LAST_SLOT],
@@ -582,6 +587,7 @@ export const ScriptOpcodeMap: Map<string, number> = new Map([
     ['P_ARRIVEDELAY', ScriptOpcode.P_ARRIVEDELAY],
     ['P_CLEARPENDINGACTION', ScriptOpcode.P_CLEARPENDINGACTION],
     ['P_COUNTDIALOG', ScriptOpcode.P_COUNTDIALOG],
+    ['P_NAMEDIALOG', ScriptOpcode.P_NAMEDIALOG],
     ['P_DELAY', ScriptOpcode.P_DELAY],
     ['P_EXACTMOVE', ScriptOpcode.P_EXACTMOVE],
     ['P_FINDUID', ScriptOpcode.P_FINDUID],

@@ -1,0 +1,167 @@
+// ============================================================
+// Giant Mole — retaliate on hit
+[ai_queue1,giant_mole] ~npc_default_retaliate_ap;
+
+
+// ============================================================
+// Giant Mole — takes damage: apply it, then check burrow
+// npc_queue(2, $damage, delay) is called by player attack scripts; last_int = damage
+[ai_queue2,giant_mole]
+~npc_default_damage(last_int);
+def_int $hp = npc_stat(hitpoints);
+// Burrow between 50% HP (100) and 5% HP (10), 25% chance per hit received
+if ($hp <= 100 & $hp > 10) {
+    if (random(4) = 0) {
+        npc_anim(bear_death, 0);      // play burrow animation this tick
+        %npc_action_delay = add(map_clock, 4); // block attacks while animating
+        npc_setmode(null);            // lose aggression
+        // Delay the actual teleport 2 ticks so the animation plays first
+        if (npc_findhero = ^true) {
+            queue(giant_mole_do_burrow, 2, 0);
+        }
+    }
+}
+
+
+// ============================================================
+// Giant Mole — death handler
+[ai_queue3,giant_mole]
+gosub(npc_death);
+if (npc_findhero = ^false) {
+    return;
+}
+
+// Dragon axe: 1/1000
+if (random(1000) = 0) {
+    obj_add(npc_coord, dragon_axe, 1, ^lootdrop_duration);
+}
+
+// Baby mole pet: 1/5000
+if (random(5000) = 0) {
+    queue(giant_mole_pet_award, 0, 0);
+}
+
+// Hard clue scroll
+~trail_hardcluedrop(128, npc_coord);
+
+// Chaos Elemental drop table (items only, no CE pet)
+def_int $random = random(128);
+
+if ($random < 10) {
+    obj_add(npc_coord, rune_longsword, 1, ^lootdrop_duration);
+} else if ($random < 19) {
+    obj_add(npc_coord, adamant_platebody, 1, ^lootdrop_duration);
+} else if ($random < 20) {
+    obj_add(npc_coord, dragon_med_helm, 1, ^lootdrop_duration);
+} else if ($random < 31) {
+    obj_add(npc_coord, bronze_arrow, 310, ^lootdrop_duration);
+} else if ($random < 41) {
+    obj_add(npc_coord, iron_arrow, 690, ^lootdrop_duration);
+} else if ($random < 51) {
+    obj_add(npc_coord, airrune, 105, ^lootdrop_duration);
+} else if ($random < 61) {
+    obj_add(npc_coord, firerune, 105, ^lootdrop_duration);
+} else if ($random < 66) {
+    obj_add(npc_coord, bloodrune, 15, ^lootdrop_duration);
+} else if ($random < 71) {
+    obj_add(npc_coord, lawrune, 15, ^lootdrop_duration);
+} else if ($random < 76) {
+    obj_add(npc_coord, deathrune, 7, ^lootdrop_duration);
+} else if ($random < 79) {
+    obj_add(npc_coord, adamant_axe, 1, ^lootdrop_duration);
+} else if ($random < 81) {
+    obj_add(npc_coord, rune_axe, 1, ^lootdrop_duration);
+} else if ($random < 86) {
+    obj_add(npc_coord, adamantite_bar, ~random_range(1,2), ^lootdrop_duration);
+} else if ($random < 89) {
+    obj_add(npc_coord, runite_bar, 1, ^lootdrop_duration);
+} else if ($random < 94) {
+    obj_add(npc_coord, cert_yew_logs, 100, ^lootdrop_duration);
+} else if ($random < 101) {
+    obj_add(npc_coord, amulet_of_strength, 1, ^lootdrop_duration);
+} else if ($random < 105) {
+    obj_add(npc_coord, shark, 4, ^lootdrop_duration);
+} else if ($random < 109) {
+    obj_add(npc_coord, bigoysterpearls, 4, ^lootdrop_duration);
+} else if ($random < 112) {
+    obj_add(npc_coord, mithril_battleaxe, 1, ^lootdrop_duration);
+} else if ($random < 126) {
+    obj_add(npc_coord, ~ultrarare_getitem, ^lootdrop_duration);
+} else {
+    obj_add(npc_coord, ~randomjewel, ^lootdrop_duration);
+}
+
+
+// ============================================================
+// Giant Mole — player approaches, begin attacking
+[ai_applayer2,giant_mole]
+if (%npc_action_delay > map_clock) {
+    return;
+}
+if (~npc_check_notcombat = false) {
+    npc_setmode(null);
+    return;
+}
+if (~npc_check_notcombat_self = false) {
+    return;
+}
+npc_sethuntmode(aggressive_melee);
+npc_setmode(opplayer2);
+
+
+// ============================================================
+// Giant Mole — melee attack tick
+[ai_opplayer2,giant_mole]
+if (%npc_action_delay > map_clock) {
+    return;
+}
+if (~npc_check_notcombat = false) {
+    npc_setmode(null);
+    return;
+}
+if (~npc_check_notcombat_self = false) {
+    return;
+}
+~giant_mole_melee;
+npc_sethuntmode(giant_mole);
+
+
+// ============================================================
+// Giant Mole — melee attack proc (max hit 21)
+[proc,giant_mole_melee]
+if_close;
+npc_anim(bear_attack, 0);
+sound_synth(bear_attack, 0, 0);
+%npc_action_delay = add(map_clock, npc_param(attackrate));
+
+def_int $attack_roll = ~npc_melee_attack_roll;
+def_int $defence_roll = ~player_defence_roll_specific(^slash_style);
+if (randominc($attack_roll) > randominc($defence_roll)) {
+    ~playerhit_n_melee(true, randominc(21), npc_param(attackrate));
+    return;
+}
+~playerhit_n_melee(true, 0, npc_param(attackrate));
+
+
+// ============================================================
+// Giant Mole — teleport to a random walkable tile within the lair (no deletion, HP preserved)
+[queue,giant_mole_do_burrow]
+// Only one giant_mole exists in the lair — find it by type near the mapsquare centre
+if (npc_find(0_54_152_32_32, giant_mole, 32, 0) = true) {
+    def_coord $dest = movecoord(0_54_152_2_2, random(60), 0, random(60));
+    npc_tele(map_findsquare($dest, 1, 1, 0));
+    npc_setmode(null);
+}
+
+
+// ============================================================
+// Giant Mole — pet award
+[queue,giant_mole_pet_award]
+mes("You have a funny feeling you're being followed.");
+if (npc_finduid(%follower_uid) = true) {
+    if (inv_freespace(inv) > 0) {
+        inv_add(inv, baby_mole_item, 1);
+    }
+    return;
+}
+~boss_pet_spawn(giant_mole_pet);

@@ -15,6 +15,8 @@ import SpotanimType from '#/cache/config/SpotanimType.js';
 import VarBitType from '#/cache/config/VarBitType.js';
 import VarPlayerType from '#/cache/config/VarPlayerType.js';
 
+import ClanManager from '#/engine/clan/ClanManager.js';
+import ClanMenu from '#/engine/clan/ClanMenu.js';
 import { CoordGrid } from '#/engine/CoordGrid.js';
 import World from '#/engine/World.js';
 import { EntityLifeCycle } from '#/engine/entity/EntityLifeCycle.js';
@@ -132,6 +134,18 @@ export default class ClientCheatHandler extends ClientGameMessageHandler<ClientC
         const cmd: string | undefined = args.shift();
         if (cmd === undefined || cmd.length <= 0) {
             return false;
+        }
+
+        // ── Clan system (opt-in via NODE_FEATURE_CLANS; hidden when disabled) ──
+        if (ClanManager.isEnabled()) {
+            if (cmd === 'clan') {
+                ClanMenu.open(player);
+                return true;
+            }
+            if (cmd === 'clanchat' || cmd === 'cc') {
+                ClanManager.clanChat(player, cheat.substring(cmd.length).trim());
+                return true;
+            }
         }
 
         if (player.staffModLevel >= 2) {

@@ -1,0 +1,14 @@
+[baby_mole_item]
+name=Baby mole
+desc=A miniature mole follows you around.
+model=mole12076_relabelled
+2dzoom=3000
+2dxof=1
+2dyof=115
+2dyan=0
+2dxan=512
+members=yes
+tradeable=no
+iop5=Drop
+param=follower_id,giant_mole_pet
+param=destroy_drop,^true

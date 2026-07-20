@@ -10,6 +10,7 @@ import ScriptState from '#/engine/script/ScriptState.js';
 import { check, CoordValid, LocTypeValid, NumberPositive, SeqTypeValid, SpotAnimTypeValid, FindSquareValid } from '#/engine/script/ScriptValidators.js';
 import World from '#/engine/World.js';
 import Environment from '#/util/Environment.js';
+import { tryParseBoolean } from '#/util/TryParse.js';
 import Midi from '#/cache/midi/Midi.js';
 
 const ServerOps: CommandHandlers = {
@@ -23,6 +24,15 @@ const ServerOps: CommandHandlers = {
 
     [ScriptOpcode.MAP_LIVE]: state => {
         state.pushInt(Environment.NODE_PRODUCTION ? 1 : 0);
+    },
+
+    // custom: runtime toggle for optional content packs.
+    //   map_feature("shops")  -> reads env NODE_FEATURE_SHOPS
+    // Enabled by default; set NODE_FEATURE_<NAME>=false to disable that feature.
+    [ScriptOpcode.MAP_FEATURE]: state => {
+        const name = state.popString();
+        const key = 'NODE_FEATURE_' + name.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+        state.pushInt(tryParseBoolean(process.env[key], true) ? 1 : 0);
     },
 
     [ScriptOpcode.MAP_PLAYERCOUNT]: state => {

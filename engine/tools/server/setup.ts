@@ -1,56 +1,258 @@
 import child_process from 'child_process';
 import fs from 'fs';
+import { DatabaseSync } from 'node:sqlite';
 
 import { confirm, input, number, password, select } from '@inquirer/prompts';
 
 // ----
 
+let previousEnv = '';
+let writtenEnvKeys = new Set<string>();
+let createdEnv = false;
+
+function escapeRegExp(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function resetEnv() {
+    createdEnv = !fs.existsSync('.env');
+    previousEnv = createdEnv ? '' : fs.readFileSync('.env', 'utf8');
+    writtenEnvKeys = new Set();
+
+    if (createdEnv) {
+        fs.copyFileSync('.env.example', '.env');
+    }
+}
+
+function appendEnv(content: string) {
+    const assignments = [...content.matchAll(/^\s*([A-Z0-9_]+)\s*=.*$/gm)];
+
+    if (!assignments.length) {
+        fs.appendFileSync('.env', content);
+        return;
+    }
+
+    let env = fs.existsSync('.env') ? fs.readFileSync('.env', 'utf8') : '';
+
+    for (const match of assignments) {
+        const key = match[1];
+        const line = match[0].trimEnd();
+        const pattern = new RegExp(`^#?\\s*${escapeRegExp(key)}\\s*=.*$`, 'm');
+
+        writtenEnvKeys.add(key);
+
+        if (pattern.test(env)) {
+            env = env.replace(pattern, line);
+        } else {
+            env += `${env.endsWith('\n') || env === '' ? '' : '\n'}${line}\n`;
+        }
+    }
+
+    fs.writeFileSync('.env', env);
+}
+
+function preserveEnv() {
+    if (!createdEnv || !previousEnv) {
+        return;
+    }
+
+    const lines = previousEnv.split(/\r?\n/).filter(line => {
+        const match = line.match(/^\s*([A-Z0-9_]+)\s*=/);
+        return match && !writtenEnvKeys.has(match[1]);
+    });
+
+    if (lines.length) {
+        appendEnv(`\n## PRESERVED .env\n${lines.join('\n')}\n`);
+    }
+}
+
+function migrateSqlite() {
+    if (fs.existsSync('prisma/singleworld/schema.prisma')) {
+        child_process.execSync('npm run sqlite:migrate', {
+            stdio: 'inherit'
+        });
+        return;
+    }
+
+    const db = new DatabaseSync('db.sqlite');
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS account (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL,
+            registration_ip TEXT,
+            registration_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            muted_until TEXT,
+            banned_until TEXT,
+            staffmodlevel INTEGER NOT NULL DEFAULT 0,
+            members INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS account_login (
+            account_id INTEGER NOT NULL,
+            profile TEXT NOT NULL DEFAULT 'main',
+            logged_in INTEGER NOT NULL DEFAULT 0,
+            login_time TEXT,
+            logged_out INTEGER NOT NULL DEFAULT 0,
+            logout_time TEXT,
+            PRIMARY KEY (account_id, profile)
+        );
+
+        CREATE TABLE IF NOT EXISTS friendlist (
+            account_id INTEGER NOT NULL,
+            friend_account_id INTEGER NOT NULL,
+            profile TEXT NOT NULL DEFAULT 'main',
+            created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (account_id, friend_account_id, profile)
+        );
+
+        CREATE TABLE IF NOT EXISTS hiscore (
+            account_id INTEGER NOT NULL,
+            profile TEXT NOT NULL DEFAULT 'main',
+            type INTEGER NOT NULL,
+            level INTEGER NOT NULL,
+            value INTEGER NOT NULL,
+            date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (account_id, profile, type)
+        );
+
+        CREATE TABLE IF NOT EXISTS hiscore_large (
+            account_id INTEGER NOT NULL,
+            profile TEXT NOT NULL DEFAULT 'main',
+            type INTEGER NOT NULL,
+            level INTEGER NOT NULL,
+            value INTEGER NOT NULL,
+            date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (account_id, profile, type)
+        );
+
+        CREATE TABLE IF NOT EXISTS ignorelist (
+            account_id INTEGER NOT NULL,
+            value TEXT NOT NULL,
+            profile TEXT NOT NULL DEFAULT 'main',
+            created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (account_id, value, profile)
+        );
+
+        CREATE TABLE IF NOT EXISTS input_report (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_uuid TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            data BLOB NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS ipban (
+            ip TEXT PRIMARY KEY
+        );
+
+        CREATE TABLE IF NOT EXISTS private_chat (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            profile TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            coord INTEGER NOT NULL,
+            to_account_id INTEGER NOT NULL,
+            message TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS public_chat (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_uuid TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            coord INTEGER NOT NULL,
+            message TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS report (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_uuid TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            coord INTEGER NOT NULL,
+            offender TEXT NOT NULL,
+            reason INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS session (
+            uuid TEXT PRIMARY KEY,
+            account_id INTEGER NOT NULL,
+            profile TEXT NOT NULL,
+            world INTEGER NOT NULL,
+            timestamp TEXT NOT NULL,
+            uid INTEGER NOT NULL,
+            ip TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS session_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_uuid TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            coord INTEGER NOT NULL,
+            event TEXT NOT NULL,
+            event_type INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS session_wealth (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_uuid TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            coord INTEGER NOT NULL,
+            event_type INTEGER NOT NULL DEFAULT 0,
+            account_items TEXT NOT NULL,
+            account_value INTEGER NOT NULL,
+            recipient_session TEXT,
+            recipient_items TEXT,
+            recipient_value INTEGER
+        );
+    `);
+    db.close();
+}
+
 function setWebPort(port: number) {
-    fs.appendFileSync('.env', `WEB_PORT=${port}\n`);
+    appendEnv(`WEB_PORT=${port}\n`);
 }
 
 function setNodeId(id: number) {
-    fs.appendFileSync('.env', `NODE_ID=${id + 9}\n`);
+    appendEnv(`NODE_ID=${id + 9}\n`);
 }
 
 function setNodePort(port: number) {
-    fs.appendFileSync('.env', `NODE_PORT=${port}\n`);
+    appendEnv(`NODE_PORT=${port}\n`);
 }
 
 function setNodeMembers(state: boolean) {
-    fs.appendFileSync('.env', `NODE_MEMBERS=${state}\n`);
+    appendEnv(`NODE_MEMBERS=${state}\n`);
 }
 
 function setNodeXpRate(rate: number) {
-    fs.appendFileSync('.env', `NODE_XPRATE=${rate}\n`);
+    appendEnv(`NODE_XPRATE=${rate}\n`);
 }
 
 function setNodeProduction(state: boolean) {
-    fs.appendFileSync('.env', `NODE_PRODUCTION=${state}\n`);
-    fs.appendFileSync('.env', `NODE_DEBUG=${!state}\n`);
+    appendEnv(`NODE_PRODUCTION=${state}\n`);
+    appendEnv(`NODE_DEBUG=${!state}\n`);
 }
 
 function setLoginServer(state: boolean, host?: string, port?: number) {
     if (host && port) {
-        fs.appendFileSync('.env', `LOGIN_SERVER=${state}\nLOGIN_HOST=${host}\nLOGIN_PORT=${port}\n`);
+        appendEnv(`LOGIN_SERVER=${state}\nLOGIN_HOST=${host}\nLOGIN_PORT=${port}\n`);
     } else {
-        fs.appendFileSync('.env', `LOGIN_SERVER=${state}\n`);
+        appendEnv(`LOGIN_SERVER=${state}\n`);
     }
 }
 
 function setFriendServer(state: boolean, host?: string, port?: number) {
     if (host && port) {
-        fs.appendFileSync('.env', `FRIEND_SERVER=${state}\nFRIEND_HOST=${host}\nFRIEND_PORT=${port}\n`);
+        appendEnv(`FRIEND_SERVER=${state}\nFRIEND_HOST=${host}\nFRIEND_PORT=${port}\n`);
     } else {
-        fs.appendFileSync('.env', `FRIEND_SERVER=${state}\n`);
+        appendEnv(`FRIEND_SERVER=${state}\n`);
     }
 }
 
 function setLoggerServer(state: boolean, host?: string, port?: number) {
     if (host && port) {
-        fs.appendFileSync('.env', `LOGGER_SERVER=${state}\nLOGGER_HOST=${host}\nLOGGER_PORT=${port}\n`);
+        appendEnv(`LOGGER_SERVER=${state}\nLOGGER_HOST=${host}\nLOGGER_PORT=${port}\n`);
     } else {
-        fs.appendFileSync('.env', `LOGGER_SERVER=${state}\n`);
+        appendEnv(`LOGGER_SERVER=${state}\n`);
     }
 }
 
@@ -61,16 +263,16 @@ function setLocalSupportServers() {
 }
 
 function setDbBackend(backend: 'sqlite' | 'mysql') {
-    fs.appendFileSync('.env', `DB_BACKEND=${backend}\n`);
+    appendEnv(`DB_BACKEND=${backend}\n`);
 }
 
 function setDatabase(host: string, port: number, name: string, user: string, pass: string) {
-    fs.appendFileSync('.env', `DATABASE_URL=mysql://${user}:${pass}@${host}:${port}/${name}\n`);
-    fs.appendFileSync('.env', `DB_HOST=${host}\nDB_PORT=${port}\nDB_NAME=${name}\nDB_USER=${user}\nDB_PASS=${pass}\n`);
+    appendEnv(`DATABASE_URL=mysql://${user}:${pass}@${host}:${port}/${name}\n`);
+    appendEnv(`DB_HOST=${host}\nDB_PORT=${port}\nDB_NAME=${name}\nDB_USER=${user}\nDB_PASS=${pass}\n`);
 }
 
 function setWebsiteRegistration(state: boolean) {
-    fs.appendFileSync('.env', `WEBSITE_REGISTRATION=${state}\n`);
+    appendEnv(`WEBSITE_REGISTRATION=${state}\n`);
 }
 
 // ----
@@ -234,6 +436,33 @@ async function promptDatabase() {
     setDatabase(host, port!, name, user, pass);
 }
 
+async function configureDatabase() {
+    const backend = await select<'sqlite' | 'mysql'>({
+        message: 'Choose a database backend',
+        choices: [
+            {
+                name: 'SQLite',
+                value: 'sqlite'
+            },
+            {
+                name: 'MySQL',
+                value: 'mysql'
+            }
+        ]
+    });
+
+    setDbBackend(backend);
+
+    if (backend === 'sqlite') {
+        migrateSqlite();
+    } else {
+        await promptDatabase();
+        child_process.execSync('npm run db:migrate', {
+            stdio: 'inherit'
+        });
+    }
+}
+
 async function promptWebsiteRegistration() {
     const autoregister = await confirm({
         message: 'Do you want to automatically register accounts when they attempt to log in?',
@@ -320,13 +549,14 @@ async function startup() {
 
 async function configureDev() {
     // we don't actually have to do anything because it's good OOTB :)
-    fs.copyFileSync('.env.example', '.env');
+    resetEnv();
+    preserveEnv();
     process.exit(0);
 }
 
 async function configureDevStack() {
-    fs.copyFileSync('.env.example', '.env');
-    fs.appendFileSync('.env', '\n## SETUP SCRIPT\n');
+    resetEnv();
+    appendEnv('\n## SETUP SCRIPT\n');
 
     setWebsiteRegistration(false);
     setNodeProduction(false);
@@ -357,12 +587,11 @@ async function configureDevStack() {
 
     setLocalSupportServers();
 
-    fs.appendFileSync('.env', 'EASY_STARTUP=true\n');
+    appendEnv('EASY_STARTUP=true\n');
+    preserveEnv();
 
     if (backend === 'sqlite') {
-        child_process.execSync('npm run sqlite:migrate', {
-            stdio: 'inherit'
-        });
+        migrateSqlite();
     } else if (backend === 'mysql') {
         child_process.execSync('npm run db:migrate', {
             stdio: 'inherit'
@@ -373,29 +602,28 @@ async function configureDevStack() {
 }
 
 async function configureSingle() {
-    fs.copyFileSync('.env.example', '.env');
-    fs.appendFileSync('.env', '\n## SETUP SCRIPT\n');
+    resetEnv();
+    appendEnv('\n## SETUP SCRIPT\n');
 
     setNodeProduction(true);
 
     await promptNodeId();
     await promptNodeXpRate();
     await promptNodeMembers();
-    fs.appendFileSync('.env', 'DB_BACKEND=sqlite\n');
+    appendEnv('DB_BACKEND=sqlite\n');
     await promptWebsiteRegistration();
 
     setLocalSupportServers();
 
-    fs.appendFileSync('.env', 'EASY_STARTUP=true\n');
-    child_process.execSync('npm run sqlite:migrate', {
-        stdio: 'inherit'
-    });
+    appendEnv('EASY_STARTUP=true\n');
+    preserveEnv();
+    migrateSqlite();
     process.exit(0);
 }
 
 async function configureMulti() {
-    fs.copyFileSync('.env.example', '.env');
-    fs.appendFileSync('.env', '\n## SETUP SCRIPT\n');
+    resetEnv();
+    appendEnv('\n## SETUP SCRIPT\n');
 
     setWebsiteRegistration(true);
     setNodeProduction(true);
@@ -410,6 +638,7 @@ async function configureMulti() {
     await promptFriend();
     await promptLogger();
 
+    preserveEnv();
     child_process.execSync('npm run db:migrate', {
         stdio: 'inherit'
     });
@@ -507,7 +736,7 @@ async function advancedOptions() {
             break;
         }
         case 'database': {
-            await promptDatabase();
+            await configureDatabase();
             break;
         }
     }

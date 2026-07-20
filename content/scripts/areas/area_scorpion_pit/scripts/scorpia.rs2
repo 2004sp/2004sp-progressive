@@ -1,0 +1,170 @@
+// ============================================================
+// Scorpia — retaliate on hit
+[ai_queue1,scorpia] ~npc_default_retaliate;
+
+
+// ============================================================
+// Scorpia — take damage; trigger guardian summon once below 50% HP
+[ai_queue2,scorpia]
+~npc_default_damage(last_int);
+if (%scorpia_guardians_spawned = 0 & npc_stat(hitpoints) <= 100) {
+    %scorpia_guardians_spawned = 1;
+    ~scorpia_summon_guardians;
+    if (npc_findhero = ^true) {
+        queue(scorpia_guardian_heal, 1, 0);
+    }
+}
+
+
+// ============================================================
+// Scorpia — death and drops
+[ai_queue3,scorpia]
+gosub(npc_death);
+if (npc_findhero = ^false) {
+    return;
+}
+
+// Dragon 2h sword: 1/1000
+if (random(1000) = 0) {
+    obj_add(npc_coord, dragon_2h_sword, 1, ^lootdrop_duration);
+}
+
+// Scorpia pet: 1/5000
+if (random(5000) = 0) {
+    queue(scorpia_pet_award, 0, 0);
+}
+
+// Hard clue scroll
+~trail_hardcluedrop(128, npc_coord);
+
+// General drop table (Chaos Elemental table, no dragon pickaxe / CE pet)
+def_int $random = random(128);
+
+if ($random < 10) {
+    obj_add(npc_coord, rune_longsword, 1, ^lootdrop_duration);
+} else if ($random < 19) {
+    obj_add(npc_coord, adamant_platebody, 1, ^lootdrop_duration);
+} else if ($random < 20) {
+    obj_add(npc_coord, dragon_med_helm, 1, ^lootdrop_duration);
+} else if ($random < 31) {
+    obj_add(npc_coord, bronze_arrow, 310, ^lootdrop_duration);
+} else if ($random < 41) {
+    obj_add(npc_coord, iron_arrow, 690, ^lootdrop_duration);
+} else if ($random < 51) {
+    obj_add(npc_coord, airrune, 105, ^lootdrop_duration);
+} else if ($random < 61) {
+    obj_add(npc_coord, firerune, 105, ^lootdrop_duration);
+} else if ($random < 66) {
+    obj_add(npc_coord, bloodrune, 15, ^lootdrop_duration);
+} else if ($random < 71) {
+    obj_add(npc_coord, lawrune, 15, ^lootdrop_duration);
+} else if ($random < 76) {
+    obj_add(npc_coord, deathrune, 7, ^lootdrop_duration);
+} else if ($random < 79) {
+    obj_add(npc_coord, adamant_axe, 1, ^lootdrop_duration);
+} else if ($random < 81) {
+    obj_add(npc_coord, rune_axe, 1, ^lootdrop_duration);
+} else if ($random < 86) {
+    obj_add(npc_coord, adamantite_bar, ~random_range(1,2), ^lootdrop_duration);
+} else if ($random < 89) {
+    obj_add(npc_coord, runite_bar, 1, ^lootdrop_duration);
+} else if ($random < 94) {
+    obj_add(npc_coord, cert_yew_logs, 100, ^lootdrop_duration);
+} else if ($random < 101) {
+    obj_add(npc_coord, amulet_of_strength, 1, ^lootdrop_duration);
+} else if ($random < 105) {
+    obj_add(npc_coord, shark, 4, ^lootdrop_duration);
+} else if ($random < 109) {
+    obj_add(npc_coord, bigoysterpearls, 4, ^lootdrop_duration);
+} else if ($random < 112) {
+    obj_add(npc_coord, mithril_battleaxe, 1, ^lootdrop_duration);
+} else if ($random < 126) {
+    obj_add(npc_coord, ~ultrarare_getitem, ^lootdrop_duration);
+} else {
+    obj_add(npc_coord, ~randomjewel, ^lootdrop_duration);
+}
+
+// Despawn any guardians — npc_find works from player context, harmless if none exist
+if (npc_find(0_34_77_32_32, scorpia_guardian, 32, 0) = true) {
+    npc_del;
+}
+if (npc_find(0_34_77_32_32, scorpia_guardian, 32, 0) = true) {
+    npc_del;
+}
+
+
+// ============================================================
+// Scorpia — player approaches, begin attacking
+[ai_opplayer2,scorpia] npc_setmode(applayer2);
+
+[ai_applayer2,scorpia]
+if (%npc_action_delay > map_clock) {
+    return;
+}
+if (~npc_check_notcombat = false) {
+    npc_setmode(null);
+    return;
+}
+if (~npc_check_notcombat_self = false) {
+    return;
+}
+~scorpia_melee_attack;
+npc_sethuntmode(scorpia);
+
+
+// ============================================================
+// Scorpia — melee attack with prayer drain mechanic
+// Whether the hit lands or not, Protect from Melee drains 2 prayer points.
+[proc,scorpia_melee_attack]
+if_close;
+npc_anim(npc_param(attack_anim), 0);
+sound_synth(npc_param(attack_sound), 0, 0);
+%npc_action_delay = add(map_clock, npc_param(attackrate));
+
+def_int $attack_roll = ~npc_melee_attack_roll;
+def_int $defence_roll = ~player_defence_roll_specific(^crush_style);
+def_int $maxhit = ~npc_melee_maxhit;
+
+if (~check_protect_prayer(^melee_style) = true) {
+    stat_sub(prayer, 2, 0);
+    ~playerhit_n_melee(false, 0, npc_param(attackrate));
+    ~npc_poison_player;
+    return;
+}
+if (randominc($attack_roll) > randominc($defence_roll)) {
+    ~playerhit_n_melee(false, randominc($maxhit), npc_param(attackrate));
+    ~npc_poison_player;
+    return;
+}
+~playerhit_n_melee(false, 0, npc_param(attackrate));
+
+
+// ============================================================
+// Scorpia — spawn two guardian NPCs adjacent to her position
+[proc,scorpia_summon_guardians]
+npc_add(map_findsquare(npc_coord, 1, 1, 0), scorpia_guardian, 500);
+npc_add(map_findsquare(npc_coord, 1, 1, 0), scorpia_guardian, 500);
+
+
+// ============================================================
+// Scorpia — guardian healing loop (player-side queue, runs while any guardian is alive)
+[queue,scorpia_guardian_heal]
+if (npc_find(0_34_77_32_32, scorpia, 32, 0) = true) {
+    npc_statheal(hitpoints, 0, 10);
+}
+if (npc_find(0_34_77_32_32, scorpia_guardian, 32, 0) = true) {
+    queue(scorpia_guardian_heal, 3, 0);
+}
+
+
+// ============================================================
+// Scorpia — pet award queue
+[queue,scorpia_pet_award]
+mes("You have a funny feeling you're being followed.");
+if (npc_finduid(%follower_uid) = true) {
+    if (inv_freespace(inv) > 0) {
+        inv_add(inv, scorpia_pet_item, 1);
+    }
+    return;
+}
+~boss_pet_spawn(scorpia_pet);

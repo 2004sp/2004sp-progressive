@@ -1,0 +1,30 @@
+// Melee
+
+// Ranged
+[opheld2,black_dragon_vambraces] @levelrequire_ranged_lower(70, last_slot);
+[opheld2,black_dragonhide_chaps] @levelrequire_ranged_lower(70, last_slot);
+[opheld2,black_dragonhide_body] @levelrequire_ranged_and_defence(70, 40, last_slot);
+
+// Magic
+
+
+
+[opheld2,agility_skill_cape] @levelrequire_agility(99, last_slot);
+[opheld2,fishing_skill_cape] @levelrequire_fishing(99, last_slot);
+[opheld2,attack_skill_cape] @levelrequire_attack(99, last_slot);
+[opheld2,crafting_skill_cape] @levelrequire_crafting(99, last_slot);
+[opheld2,defence_skill_cape] @levelrequire_defence(99, last_slot);
+[opheld2,fletch_skill_cape] @levelrequire_fletching(99, last_slot);
+[opheld2,herblore_skill_cape] @levelrequire_herblore(99, last_slot);
+[opheld2,hitpoints_skill_cape] @levelrequire_hitpoints(99, last_slot);
+[opheld2,magic_skill_cape] @levelrequire_magic(99, last_slot);
+[opheld2,mining_skill_cape] @levelrequire_mining(99, last_slot);
+[opheld2,prayer_skill_cape] @levelrequire_prayer(99, last_slot);
+[opheld2,ranging_skill_cape] @levelrequire_ranged(99, last_slot);
+[opheld2,runecraft_skill_cape] @levelrequire_runecraft(99, last_slot);
+[opheld2,smithing_skill_cape] @levelrequire_smithing(99, last_slot);
+[opheld2,strength_skill_cape] @levelrequire_strength(99, last_slot);
+[opheld2,thieve_skill_cape] @levelrequire_thieving(99, last_slot);
+[opheld2,cooking_skill_cape] @levelrequire_cooking(99, last_slot);
+[opheld2,firemaking_skill_cape] @levelrequire_firemaking(99, last_slot);
+[opheld2,woodcutting_skill_cape] @levelrequire_woodcutting(99, last_slot);

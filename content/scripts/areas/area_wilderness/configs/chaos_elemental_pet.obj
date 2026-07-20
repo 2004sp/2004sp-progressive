@@ -1,0 +1,12 @@
+[chaos_elemental_pet_item]
+name=Chaos elemental jr
+desc=He's not so big when he's following you around.
+model=chaos_elemental_pet_28256b
+2dxof=-2
+2dyof=400
+2dzoom=1070
+2dyan=1056
+2dxan=224
+members=yes
+cost=1
+iop5=Drop

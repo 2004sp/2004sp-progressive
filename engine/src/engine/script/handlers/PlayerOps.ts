@@ -52,6 +52,7 @@ import IfSetScrollPos from '#/network/game/server/model/IfSetScrollPos.js';
 import IfSetTabActive from '#/network/game/server/model/IfSetTabActive.js';
 import IfSetText from '#/network/game/server/model/IfSetText.js';
 import PCountDialog from '#/network/game/server/model/PCountDialog.js';
+import PNameDialog from '#/network/game/server/model/PNameDialog.js';
 import SetPlayerOp from '#/network/game/server/model/SetPlayerOp.js';
 import SynthSound from '#/network/game/server/model/SynthSound.js';
 import TutFlash from '#/network/game/server/model/TutFlash.js';
@@ -278,6 +279,10 @@ const PlayerOps: CommandHandlers = {
         state.pushInt(state.lastInt);
     },
 
+    [ScriptOpcode.LAST_STRING]: state => {
+        state.pushString(state.lastString);
+    },
+
     [ScriptOpcode.LAST_ITEM]: state => {
         const allowedTriggers = [
             ServerTriggerType.OPHELD1,
@@ -390,6 +395,11 @@ const PlayerOps: CommandHandlers = {
     [ScriptOpcode.P_COUNTDIALOG]: checkedHandler(ProtectedActivePlayer, state => {
         state.activePlayer.write(new PCountDialog());
         state.execution = ScriptState.COUNTDIALOG;
+    }),
+
+    [ScriptOpcode.P_NAMEDIALOG]: checkedHandler(ProtectedActivePlayer, state => {
+        state.activePlayer.write(new PNameDialog());
+        state.execution = ScriptState.NAMEDIALOG;
     }),
 
     // https://x.com/JagexAsh/status/1684478874703343616

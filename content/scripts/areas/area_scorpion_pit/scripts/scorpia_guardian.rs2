@@ -1,0 +1,32 @@
+// ============================================================
+// Scorpia's guardian — retaliate on hit
+[ai_queue1,scorpia_guardian] ~npc_default_retaliate;
+
+
+// ============================================================
+// Scorpia's guardian — take damage
+[ai_queue2,scorpia_guardian] ~npc_default_damage(last_int);
+
+
+// ============================================================
+// Scorpia's guardian — death
+[ai_queue3,scorpia_guardian] gosub(npc_death);
+
+
+// ============================================================
+// Scorpia's guardian — player approaches, begin attacking
+[ai_opplayer2,scorpia_guardian] npc_setmode(applayer2);
+
+[ai_applayer2,scorpia_guardian]
+if (%npc_action_delay > map_clock) {
+    return;
+}
+if (~npc_check_notcombat = false) {
+    npc_setmode(null);
+    return;
+}
+if (~npc_check_notcombat_self = false) {
+    return;
+}
+~npc_meleeattack;
+npc_sethuntmode(scorpia_guardian);

@@ -1,16 +1,40 @@
 #!/usr/bin/env bash
-# 1. Define the NVM directory (default is ~/.nvm)
-export NVM_DIR="$HOME/.nvm"
+set -u
 
-# 2. Source the nvm.sh script to load the nvm function
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo
+echo "========================================"
+echo "  2004Scape Progressive Launcher"
+echo "========================================"
+echo
+
+# Load nvm when available.
+export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# Go into engine directory
-cd "$(dirname "$0")/engine"
+if [ ! -f "$ROOT_DIR/engine/launcher.ts" ]; then
+    echo "Could not find engine/launcher.ts."
+    echo "Make sure you are running this from the server folder."
+    exit 1
+fi
 
-echo "Starting Node Launcher..."
+if ! command -v node >/dev/null 2>&1; then
+    echo "Node.js is not installed or is not on PATH."
+    echo "Install Node.js, then run this file again."
+    exit 1
+fi
 
+if ! command -v npx >/dev/null 2>&1; then
+    echo "npm/npx is not installed or is not on PATH."
+    echo "Reinstall Node.js with npm enabled, then run this file again."
+    exit 1
+fi
+
+cd "$ROOT_DIR/engine"
+echo "Starting launcher..."
+echo
 npx tsx launcher.ts
 
-echo ""
+echo
 echo "Launcher exited."
