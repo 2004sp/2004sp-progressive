@@ -9,6 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ENV_PATH = path.join(__dirname, '.env');
 
 type ScriptMap = Record<string, string[]>;
+type ProgressRange = { from: number; to: number; message: string };
 
 const scripts: ScriptMap = {
     start: ['npm', 'run', 'start'],
@@ -40,6 +41,27 @@ const customContentCategories = [
 
 const runningProcesses: Record<string, ChildProcess> = {};
 let rl: readline.Interface;
+
+function progress(percent: number, message: string) {
+    const filled = Math.round(percent / 10);
+    const bar = `[${'#'.repeat(filled)}${'-'.repeat(10 - filled)}]`;
+    console.log(`${bar} ${percent}% ${message}`);
+}
+
+function startProgressHeartbeat(range?: ProgressRange) {
+    if (!range) {
+        return undefined;
+    }
+
+    let percent = range.from;
+    let frame = 0;
+    const frames = ['|', '/', '-', '\\'];
+    return setInterval(() => {
+        percent = Math.min(percent + 1, range.to);
+        progress(percent, `${frames[frame]} ${range.message}`);
+        frame = (frame + 1) % frames.length;
+    }, 5000);
+}
 
 function createReadline() {
     rl = readline.createInterface({
@@ -75,7 +97,7 @@ function runScript(name: string, detached = false) {
     }
 }
 
-async function runScriptAndWait(name: string) {
+async function runScriptAndWait(name: string, heartbeat?: ProgressRange) {
     if (!scripts[name]) {
         console.log(`Script "${name}" not found`);
         return 1;
@@ -91,56 +113,88 @@ async function runScriptAndWait(name: string) {
 
     runningProcesses[name] = proc;
 
+    const timer = startProgressHeartbeat(heartbeat);
     const code = await new Promise<number | null>(resolve => proc.on('exit', resolve));
+    if (timer) {
+        clearInterval(timer);
+    }
     delete runningProcesses[name];
     return code ?? 0;
 }
 
 async function ensureDependencies() {
-    if (fs.existsSync(path.join(__dirname, 'node_modules'))) {
+    progress(20, 'Checking dependencies');
+    const requiredPackages = ['tsx', 'bcrypt-ts'];
+    const hasRequiredPackages = requiredPackages.every(pkg => fs.existsSync(path.join(__dirname, 'node_modules', pkg)));
+    if (hasRequiredPackages) {
+        progress(40, 'Dependencies ready');
         return true;
     }
 
-    const proc = spawn('npm', ['install'], {
+    progress(30, 'Installing dependencies');
+    const proc = spawn('npm', ['install', '--include=dev'], {
         stdio: 'inherit',
         shell: true,
     });
 
+    const timer = startProgressHeartbeat({ from: 30, to: 39, message: 'Installing dependencies' });
     const code = await new Promise<number | null>(resolve => proc.on('exit', resolve));
-    return (code ?? 0) === 0;
+    clearInterval(timer);
+    const ok = (code ?? 0) === 0;
+    progress(ok ? 40 : 0, ok ? 'Dependencies installed' : 'Dependency install failed');
+    return ok;
 }
 
-async function runServer() {
+async function runServer(showComplete = true) {
+    progress(10, 'Preparing server');
     if (!(await ensureDependencies())) {
         console.log('npm install failed; server not started.');
         return;
     }
 
-    runScript('quickstart');
+    progress(80, 'Starting game server');
+    const code = await runScriptAndWait('quickstart', { from: 80, to: 99, message: 'Starting game server' });
+    if (code !== 0) {
+        console.log('Server stopped with an error.');
+        return;
+    }
+    if (showComplete) {
+        progress(100, 'Server stopped');
+    }
 }
 
 async function runCustomServer() {
+    progress(10, 'Preparing custom server');
     if (!(await ensureDependencies())) {
         console.log('npm install failed; custom server not started.');
         return;
     }
 
+    progress(45, 'Patching .env');
     patchEnv({
         NODE_CLIENT_ROUTEFINDER: 'false',
         BUILD_VERIFY: 'false',
     });
 
-    const code = await runScriptAndWait('build');
+    progress(55, 'Building content');
+    const code = await runScriptAndWait('build', { from: 55, to: 74, message: 'Building content' });
     if (code !== 0) {
         console.log('Build failed; server not started.');
         return;
     }
 
+    progress(75, 'Refreshing packed scripts');
     const scriptDat = path.join(__dirname, 'data', 'pack', 'server', 'script.dat');
     fs.rmSync(scriptDat, { force: true });
     console.log('Deleted data/pack/server/script.dat');
 
-    await runServer();
+    progress(85, 'Starting game server');
+    const serverCode = await runScriptAndWait('quickstart', { from: 85, to: 99, message: 'Starting game server' });
+    if (serverCode !== 0) {
+        console.log('Server stopped with an error.');
+        return;
+    }
+    progress(100, 'Custom server stopped');
 }
 
 // For processes that need full stdin control (interactive prompts).
@@ -241,9 +295,16 @@ async function handleInput(input: string) {
             break;
 
         case '3':
-            await runServer();
+            progress(5, 'Preparing server and hiscores');
+            if (!(await ensureDependencies())) {
+                console.log('npm install failed; server not started.');
+                break;
+            }
+            progress(90, 'Starting hiscores');
             runScript('hiscores', true);
-            break;
+            progress(92, 'Starting game server');
+            await runScriptAndWait('quickstart', { from: 92, to: 99, message: 'Starting game server' });
+            return; // server owns the terminal until it exits
 
         case '4':
             runScript('hiscores', true);
@@ -283,6 +344,12 @@ async function handleInput(input: string) {
             break;
 
         case '12':
+            progress(10, 'Preparing setup');
+            if (!(await ensureDependencies())) {
+                console.log('npm install failed; setup not started.');
+                break;
+            }
+            progress(80, 'Starting setup');
             await runInteractive('setup');
             return; // runInteractive shows the menu after exit
 

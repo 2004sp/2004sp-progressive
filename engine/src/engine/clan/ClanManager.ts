@@ -16,9 +16,11 @@
 import { db, toDbDate } from '#/db/query.js';
 import Player from '#/engine/entity/Player.js';
 import World from '#/engine/World.js';
-import MessageClan from '#/network/game/server/model/MessageClan.js';
+import MessageGame from '#/network/game/server/model/MessageGame.js';
 import Environment from '#/util/Environment.js';
 import { printError, printInfo } from '#/util/Logger.js';
+
+const clanDb = db as any;
 
 // ── Role tiers ────────────────────────────────────────────────────────────────
 
@@ -127,7 +129,7 @@ class ClanManagerImpl {
                 .addPrimaryKeyConstraint('clan_member_pk', ['clan_id', 'username'])
                 .execute();
 
-            const clanRows = await db.selectFrom('clan').selectAll().execute();
+            const clanRows = await clanDb.selectFrom('clan').selectAll().execute();
             for (const row of clanRows) {
                 const clan: Clan = {
                     id: row.id,
@@ -143,7 +145,7 @@ class ClanManagerImpl {
                 this.byName.set(clan.name, clan.id);
             }
 
-            const memberRows = await db.selectFrom('clan_member').selectAll().execute();
+            const memberRows = await clanDb.selectFrom('clan_member').selectAll().execute();
             for (const row of memberRows) {
                 const clan = this.clans.get(row.clan_id);
                 if (!clan) {
@@ -237,7 +239,7 @@ class ClanManagerImpl {
         const owner = norm(player.username);
         const created = toDbDate(new Date());
         try {
-            await db.insertInto('clan').values({
+            await clanDb.insertInto('clan').values({
                 name,
                 display_name: display,
                 owner,
@@ -247,7 +249,7 @@ class ClanManagerImpl {
                 perm_mute: ClanRole.MOD
             }).execute();
 
-            const row = await db.selectFrom('clan').select('id').where('name', '=', name).executeTakeFirst();
+            const row = await clanDb.selectFrom('clan').select('id').where('name', '=', name).executeTakeFirst();
             if (!row) {
                 player.messageGame('Failed to create clan (db).');
                 return;
@@ -427,8 +429,8 @@ class ClanManagerImpl {
         this.clans.delete(clan.id);
         this.byName.delete(clan.name);
         try {
-            await db.deleteFrom('clan_member').where('clan_id', '=', clan.id).execute();
-            await db.deleteFrom('clan').where('id', '=', clan.id).execute();
+            await clanDb.deleteFrom('clan_member').where('clan_id', '=', clan.id).execute();
+            await clanDb.deleteFrom('clan').where('id', '=', clan.id).execute();
         } catch (err) {
             printError('[ClanManager] disband failed: ' + err);
         }
@@ -455,7 +457,7 @@ class ClanManagerImpl {
         // Panel line — the box is clan-specific, so the clan name is implied.
         const line = `[${roleShort(info.member.role)}] ${player.username}: ${msg}`;
         for (const username of info.clan.members.keys()) {
-            World.getPlayerByUsername(username)?.write(new MessageClan(line));
+            World.getPlayerByUsername(username)?.write(new MessageGame(line));
         }
     }
 
@@ -473,7 +475,7 @@ class ClanManagerImpl {
         clan.members.set(username, member);
         this.byPlayer.set(username, clan.id);
         try {
-            await db.insertInto('clan_member').values({
+            await clanDb.insertInto('clan_member').values({
                 clan_id: clan.id,
                 username,
                 role,
@@ -489,7 +491,7 @@ class ClanManagerImpl {
         clan.members.delete(username);
         this.byPlayer.delete(username);
         try {
-            await db.deleteFrom('clan_member').where('clan_id', '=', clan.id).where('username', '=', username).execute();
+            await clanDb.deleteFrom('clan_member').where('clan_id', '=', clan.id).where('username', '=', username).execute();
         } catch (err) {
             printError('[ClanManager] removeMember failed: ' + err);
         }
@@ -500,7 +502,7 @@ class ClanManagerImpl {
             ? null
             : toDbDate(new Date(member.mutedUntil === Number.MAX_SAFE_INTEGER ? 8640000000000000 : member.mutedUntil));
         try {
-            await db.updateTable('clan_member')
+            await clanDb.updateTable('clan_member')
                 .set({ role: member.role, muted_until: mutedUntil })
                 .where('clan_id', '=', clanId)
                 .where('username', '=', member.username)
@@ -512,7 +514,7 @@ class ClanManagerImpl {
 
     private async persistClanPerms(clan: Clan): Promise<void> {
         try {
-            await db.updateTable('clan')
+            await clanDb.updateTable('clan')
                 .set({ perm_delete: clan.permDelete, perm_kick: clan.permKick, perm_mute: clan.permMute })
                 .where('id', '=', clan.id)
                 .execute();

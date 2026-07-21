@@ -548,9 +548,11 @@ async function startup() {
 }
 
 async function configureDev() {
-    // we don't actually have to do anything because it's good OOTB :)
     resetEnv();
+    appendEnv('\n## SETUP SCRIPT\n');
+    setDbBackend('sqlite');
     preserveEnv();
+    migrateSqlite();
     process.exit(0);
 }
 
