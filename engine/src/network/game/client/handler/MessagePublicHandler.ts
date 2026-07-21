@@ -1,7 +1,7 @@
-import { PlayerInfoProt } from '@2004scape/rsbuf';
-
 import WordEnc from '#/cache/wordenc/WordEnc.js';
+import ClanManager from '#/engine/clan/ClanManager.js';
 import Player from '#/engine/entity/Player.js';
+import World from '#/engine/World.js';
 import Packet from '#/io/Packet.js';
 import ClientGameMessageHandler from '#/network/game/client/ClientGameMessageHandler.js';
 import MessagePublic from '#/network/game/client/model/MessagePublic.js';
@@ -9,9 +9,9 @@ import WordPack from '#/wordenc/WordPack.js';
 
 export default class MessagePublicHandler extends ClientGameMessageHandler<MessagePublic> {
     handle(message: MessagePublic, player: Player): boolean {
-        const { colour, effect, input } = message;
+        const { input } = message;
 
-        if (player.socialProtect || colour < 0 || colour > 11 || effect < 0 || effect > 2 || input.length > 100) {
+        if (input.length > 100) {
             return false;
         }
 
@@ -25,24 +25,47 @@ export default class MessagePublicHandler extends ClientGameMessageHandler<Messa
         buf.pos = 0;
         const unpack: string = WordPack.unpack(buf, input.length);
         buf.release();
+        const text = WordEnc.filter(unpack).trim();
+        const lower = text.toLowerCase();
 
-        player.chatColour = colour;
-        player.chatEffect = effect;
-        player.chatRights = Math.min(player.staffModLevel, 2);
-        player.logMessage = unpack;
-
-        const out: Packet = Packet.alloc(0);
-        WordPack.pack(out, WordEnc.filter(unpack));
-        player.chatMessage = new Uint8Array(out.pos);
-        out.pos = 0;
-        out.gdata(player.chatMessage, 0, player.chatMessage.length);
-        out.release();
-        player.masks |= PlayerInfoProt.CHAT;
-        console.log('Player sent public message: ' + player.username + ': ' + unpack + ' (' + player.x + ' : ' + player.z + ')');
-        if(player) {
-            console.log('Messaging nearby bots...');
-            player.sendMessageToNearbyBots(player.username, unpack);
+        if (player.chatChannel === 'clan' && lower !== '/world' && lower !== 'world') {
+            ClanManager.clanChat(player, text);
+            return true;
         }
+
+        if (player.socialProtect) {
+            return false;
+        }
+
+        if (lower === '/clan' || lower === 'clan') {
+            if (!ClanManager.isEnabled()) {
+                player.messageGame('Clan chat is disabled.');
+            } else if (!ClanManager.isReady()) {
+                player.messageGame('Clan system is starting up. Try again in a moment.');
+            } else {
+                ClanManager.enterChat(player);
+            }
+            player.socialProtect = true;
+            return true;
+        }
+
+        if (lower === '/world' || lower === 'world') {
+            player.chatChannel = 'world';
+            player.messageGame('You have entered world chat');
+            player.socialProtect = true;
+            return true;
+        }
+
+        if (text.length === 0) {
+            player.socialProtect = true;
+            return true;
+        }
+
+        for (const target of World.players) {
+            target?.messageGame(`[World] ${player.username}: ${text}`);
+        }
+        player.logMessage = unpack;
+        console.log('Player sent world message: ' + player.username + ': ' + unpack + ' (' + player.x + ' : ' + player.z + ')');
         player.socialProtect = true;
         return true;
     }

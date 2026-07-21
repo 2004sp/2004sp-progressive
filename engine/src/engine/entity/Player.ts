@@ -401,6 +401,7 @@ export default class Player extends PathingEntity {
     publicChat: ChatModePublic = ChatModePublic.ON;
     privateChat: ChatModePrivate = ChatModePrivate.ON;
     tradeDuel: ChatModeTradeDuel = ChatModeTradeDuel.ON;
+    chatChannel: 'world' | 'clan' = 'world';
 
     session: string = 'headless';
     input: InputTracking;

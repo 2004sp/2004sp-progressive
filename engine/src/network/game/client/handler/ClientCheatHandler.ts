@@ -15,7 +15,6 @@ import SpotanimType from '#/cache/config/SpotanimType.js';
 import VarBitType from '#/cache/config/VarBitType.js';
 import VarPlayerType from '#/cache/config/VarPlayerType.js';
 
-import ClanManager from '#/engine/clan/ClanManager.js';
 import { CoordGrid } from '#/engine/CoordGrid.js';
 import World from '#/engine/World.js';
 import { EntityLifeCycle } from '#/engine/entity/EntityLifeCycle.js';
@@ -123,7 +122,7 @@ export default class ClientCheatHandler extends ClientGameMessageHandler<ClientC
     }
 
     handle(message: ClientCheat, player: Player): boolean {
-        if (message.input.length > 80) {
+        if (message.input.length > 120) {
             return false;
         }
 
@@ -135,16 +134,56 @@ export default class ClientCheatHandler extends ClientGameMessageHandler<ClientC
             return false;
         }
 
-        // ── Clan system (opt-in via NODE_FEATURE_CLANS; hidden when disabled) ──
-        if (ClanManager.isEnabled()) {
-            if (cmd === 'clan') {
-                player.messageGame('Clan menu is unavailable.');
-                return true;
-            }
-            if (cmd === 'clanchat' || cmd === 'cc') {
-                ClanManager.clanChat(player, cheat.substring(cmd.length).trim());
-                return true;
-            }
+        // Clan system (opt-in via NODE_FEATURE_CLANS; hidden when disabled).
+        if (cmd === 'clan') {
+            void Promise.all([import('#/engine/clan/ClanManager.js'), import('#/engine/clan/ClanMenu.js')]).then(
+                ([{ default: ClanManager }, { default: ClanMenu }]) => {
+                    if (!ClanManager.isEnabled()) {
+                        return;
+                    }
+                    if (!ClanManager.isReady()) {
+                        player.messageGame('Clan system is starting up. Try again in a moment.');
+                        return;
+                    }
+                    ClanMenu.open(player);
+                }
+            );
+            return true;
+        }
+        if (cmd === 'chatclan') {
+            void import('#/engine/clan/ClanManager.js').then(({ default: ClanManager }) => {
+                if (!ClanManager.isEnabled()) {
+                    return;
+                }
+                if (!ClanManager.isReady()) {
+                    player.messageGame('Clan system is starting up. Try again in a moment.');
+                    return;
+                }
+                ClanManager.enterChat(player);
+            });
+            return true;
+        }
+        if (cmd === 'clanmsg') {
+            void import('#/engine/clan/ClanManager.js').then(({ default: ClanManager }) => {
+                if (!ClanManager.isEnabled()) {
+                    return;
+                }
+                if (!ClanManager.isReady()) {
+                    player.messageGame('Clan system is starting up. Try again in a moment.');
+                    return;
+                }
+                if (player.chatChannel !== 'clan') {
+                    ClanManager.enterChat(player);
+                    return;
+                }
+                ClanManager.clanChat(player, cheat.slice('clanmsg'.length));
+            });
+            return true;
+        }
+        if (cmd === 'chatworld') {
+            player.chatChannel = 'world';
+            player.messageGame('You have entered world chat');
+            return true;
         }
 
         if (player.staffModLevel >= 2) {

@@ -35,6 +35,9 @@ export default {
     NODE_PRODUCTION: tryParseBoolean(process.env.NODE_PRODUCTION, false),
     // optional clan system (::clan menu, clan chat). Off by default = fully hidden.
     NODE_FEATURE_CLANS: tryParseBoolean(process.env.NODE_FEATURE_CLANS, false),
+    // custom QOL browser controls
+    NODE_QOL_MIDDLE_MOUSE_ROTATION: tryParseBoolean(process.env.NODE_QOL_MIDDLE_MOUSE_ROTATION, false),
+    NODE_QOL_COMPASS_RESET: tryParseBoolean(process.env.NODE_QOL_COMPASS_RESET, false),
     NODE_SUBMIT_INPUT: tryParseBoolean(process.env.NODE_SUBMIT_INPUT, false),
     // Maximum approximate number of storage bytes allowed per single input tracking session.
     // It does not seem remotely possible to get near this amount under normal inputs.

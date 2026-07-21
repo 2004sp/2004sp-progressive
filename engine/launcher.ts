@@ -32,6 +32,8 @@ const customContent = [
     ['Skillcapes', 'NODE_FEATURE_SKILLCAPES'],
     ['X-Amount Shop Input', 'NODE_FEATURE_XAMOUNT'],
     ['Make-X Skill Actions', 'NODE_FEATURE_MAKEX'],
+    ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
+    ['Left Click Compass Reset', 'NODE_QOL_COMPASS_RESET'],
 ] as const;
 
 const customContentCategories = [

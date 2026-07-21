@@ -20105,6 +20105,7 @@ class Client extends GameShell {
   chatPublicMode = 0;
   chatPrivateMode = 0;
   chatTradeMode = 0;
+  clanChatActive = false;
   privateMessageIds = new Int32Array(100);
   privateMessageCount = 0;
   socialUserhash = null;
@@ -20114,6 +20115,8 @@ class Client extends GameShell {
   socialInputHeader = "";
   dialogInputOpen = false;
   dialogInput = "";
+  nameInputOpen = false;
+  nameInput = "";
   reportAbuseInput = "";
   reportAbuseMuteOption = false;
   reportAbuseComId = -1;
@@ -22274,18 +22277,10 @@ class Client extends GameShell {
       this.out.p1(this.chatPrivateMode);
       this.out.p1(this.chatTradeMode);
     } else if (this.mouseClickX >= 412 && this.mouseClickX <= 512 && this.mouseClickY >= 467 && this.mouseClickY <= 499) {
-      this.closeModal();
-      this.reportAbuseInput = "";
-      this.reportAbuseMuteOption = false;
-      for (let i2 = 0;i2 < IfType.list.length; i2++) {
-        if (IfType.list[i2] && IfType.list[i2].clientCode === 600 /* CC_REPORT_INPUT */) {
-          this.reportAbuseComId = this.mainModalId = IfType.list[i2].layerId;
-          break;
-        }
-      }
-      if (this.isMobile) {
-        MobileKeyboard_default.show();
-      }
+      this.clanChatActive = !this.clanChatActive;
+      this.sendChatCommand(this.clanChatActive ? "/clan" : "/world");
+      this.redrawPrivacySettings = true;
+      this.redrawChatback = true;
     }
   }
   timeoutChat() {
@@ -22384,6 +22379,24 @@ class Client extends GameShell {
                 userhash = JString.toUserhash(this.socialInput);
                 this.delIgnore(userhash);
               }
+            }
+          } else if (this.nameInputOpen) {
+            if (key >= 32 && key <= 122 && this.nameInput.length < 15) {
+              this.nameInput = this.nameInput + String.fromCharCode(key);
+              this.redrawChatback = true;
+            }
+            if (key === 8 && this.nameInput.length > 0) {
+              this.nameInput = this.nameInput.substring(0, this.nameInput.length - 1);
+              this.redrawChatback = true;
+            }
+            if (key === 13 || key === 10) {
+              if (this.nameInput.trim().length > 0) {
+                this.out.pIsaac(10 /* RESUME_P_NAMEDIALOG */);
+                this.out.p1(this.nameInput.length + 1);
+                this.out.pjstr(this.nameInput);
+              }
+              this.nameInputOpen = false;
+              this.redrawChatback = true;
             }
           } else if (this.dialogInputOpen) {
             if (key >= 48 && key <= 57 && this.dialogInput.length < 10) {
@@ -22531,6 +22544,15 @@ class Client extends GameShell {
         this.reportAbuseInput = this.reportAbuseInput + String.fromCharCode(key);
       }
     }
+  }
+  sendChatCommand(command) {
+    this.out.pIsaac(83 /* MESSAGE_PUBLIC */);
+    this.out.p1(0);
+    const start = this.out.pos;
+    this.out.p1(0);
+    this.out.p1(0);
+    WordPack.pack(this.out, command);
+    this.out.psize1(this.out.pos - start);
   }
   lag() {
     console.log("============");
@@ -23320,7 +23342,8 @@ class Client extends GameShell {
       if (this.chatTradeMode === 2) {
         this.p12?.centreStringTag("Off", 324, 41, 16711680 /* RED */, true);
       }
-      this.p12?.centreStringTag("Report abuse", 458, 33, 16777215 /* WHITE */, true);
+      this.p12?.centreStringTag("Clan chat", 458, 28, 16777215 /* WHITE */, true);
+      this.p12?.centreStringTag(this.clanChatActive ? "On" : "Off", 458, 41, this.clanChatActive ? 65280 /* GREEN */ : 16711680 /* RED */, true);
       this.areaBackbase1?.draw(0, 453);
       this.areaViewport?.setPixels();
     }
@@ -25410,7 +25433,20 @@ class Client extends GameShell {
       if (this.ptype === 5 /* P_COUNTDIALOG */) {
         this.socialInputOpen = false;
         this.dialogInputOpen = true;
+        this.nameInputOpen = false;
         this.dialogInput = "";
+        this.redrawChatback = true;
+        if (this.isMobile) {
+          MobileKeyboard_default.show();
+        }
+        this.ptype = -1;
+        return true;
+      }
+      if (this.ptype === 2 /* P_NAMEDIALOG */) {
+        this.socialInputOpen = false;
+        this.dialogInputOpen = false;
+        this.nameInputOpen = true;
+        this.nameInput = "";
         this.redrawChatback = true;
         if (this.isMobile) {
           MobileKeyboard_default.show();
@@ -28872,6 +28908,7 @@ class Client extends GameShell {
       this.redrawChatback = true;
       this.resumedPauseButton = false;
     }
+    this.nameInputOpen = false;
     this.mainModalId = -1;
   }
   clientButton(com) {
@@ -29023,6 +29060,9 @@ class Client extends GameShell {
     if (this.socialInputOpen) {
       this.b12?.centreString(this.socialInputHeader, 239, 40, 0 /* BLACK */);
       this.b12?.centreString(this.socialInput + "*", 239, 60, 128 /* DARKBLUE */);
+    } else if (this.nameInputOpen) {
+      this.b12?.centreString("Enter clan name:", 239, 40, 0 /* BLACK */);
+      this.b12?.centreString(this.nameInput + "*", 239, 60, 128 /* DARKBLUE */);
     } else if (this.dialogInputOpen) {
       this.b12?.centreString("Enter amount:", 239, 40, 0 /* BLACK */);
       this.b12?.centreString(this.dialogInput + "*", 239, 60, 128 /* DARKBLUE */);

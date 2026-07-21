@@ -3,7 +3,7 @@
  *
  * Fully engine-side clan system. Does NOT depend on the content/ folder — the
  * old RuneScript `clan.rs2` is retired; the clan UI is driven by ClanMenu and
- * clan chat by `::clanchat`.
+ * clan chat by `/clan`.
  *
  * Persistence: `clan` + `clan_member` tables in the engine DB (self-created on
  * startup, like BotDatabase). Kept in an in-memory cache for synchronous reads
@@ -16,7 +16,6 @@
 import { db, toDbDate } from '#/db/query.js';
 import Player from '#/engine/entity/Player.js';
 import World from '#/engine/World.js';
-import MessageGame from '#/network/game/server/model/MessageGame.js';
 import Environment from '#/util/Environment.js';
 import { printError, printInfo } from '#/util/Logger.js';
 
@@ -439,6 +438,16 @@ class ClanManagerImpl {
 
     // ── Clan chat ────────────────────────────────────────────────────────────
 
+    enterChat(player: Player): boolean {
+        if (!this.memberOf(player)) {
+            player.messageGame('You are not in a clan. Open ::clan to create or join one.');
+            return false;
+        }
+        player.chatChannel = 'clan';
+        player.messageGame('You have entered clan chat');
+        return true;
+    }
+
     clanChat(player: Player, message: string): void {
         const info = this.memberOf(player);
         if (!info) {
@@ -447,7 +456,7 @@ class ClanManagerImpl {
         }
         const msg = message.trim();
         if (msg.length === 0) {
-            player.messageGame('Usage: ::clanchat <message>');
+            player.messageGame('Type /world to return to world chat.');
             return;
         }
         if (info.member.mutedUntil > Date.now()) {
@@ -455,9 +464,13 @@ class ClanManagerImpl {
             return;
         }
         // Panel line — the box is clan-specific, so the clan name is implied.
-        const line = `[${roleShort(info.member.role)}] ${player.username}: ${msg}`;
+        const line = `[${info.clan.displayName}][${roleShort(info.member.role)}] ${player.username}: ${msg}`;
+        player.messageGame(line);
         for (const username of info.clan.members.keys()) {
-            World.getPlayerByUsername(username)?.write(new MessageGame(line));
+            const target = World.getPlayerByUsername(username);
+            if (target && target !== player) {
+                target.messageGame(line);
+            }
         }
     }
 

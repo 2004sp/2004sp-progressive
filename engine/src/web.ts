@@ -137,7 +137,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                 : await ejs.renderFile('view/client.ejs', {
                     nodeid: Environment.NODE_ID,
                     lowmem,
-                    members: Environment.NODE_MEMBERS
+                    members: Environment.NODE_MEMBERS,
+                    clansEnabled: Environment.NODE_FEATURE_CLANS,
+                    middleMouseRotationEnabled: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
+                    compassResetEnabled: Environment.NODE_QOL_COMPASS_RESET
                 });
 
             res.writeHead(200, { 'Content-Type': 'text/html' });
