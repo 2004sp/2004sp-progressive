@@ -11,6 +11,11 @@ echo   2004Scape Progressive Launcher
 echo ========================================
 echo.
 
+call :progress 10 "Installing engine dependencies"
+pushd engine
+call npm install
+popd
+
 call :progress 15 "Checking files"
 if not exist "engine\launcher.ts" (
     echo Could not find engine\launcher.ts.

@@ -29,6 +29,9 @@ echo
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
+progress 10 "Installing engine dependencies"
+(cd "$ROOT_DIR/engine" && npm install)
+
 progress 15 "Checking files"
 if [ ! -f "$ROOT_DIR/engine/launcher.ts" ]; then
     echo "Could not find engine/launcher.ts."
