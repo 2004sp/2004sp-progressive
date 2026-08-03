@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="This is a script-driven engine ( @2004scape/rsmod-pathfinder -based, ENGINE_REVISION=254 ): the TypeScript core provides generic primitives — damage/hitmark opcodes, stat-boost opcodes, a script VM — and…">
+  <title>10. Engine systems — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="assets/wiki.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brandlink" href="../wiki.html" aria-label="2004scape Progressive Wiki homepage">
+    <span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span>
+  </a>
+  <nav class="header-links" aria-label="Featured wiki pages">
+    <a href="../wiki.html">Main page</a>
+    <a href="quests.html">Quests</a>
+    <a href="skills.html">Skills</a>
+    <a href="bugs.html">Known bugs</a>
+  </nav>
+  <div class="searchwrap">
+    <span class="searchicon">&#128269;</span>
+    <input type="search" id="wikisearch" placeholder="Search wiki pages&hellip;" aria-label="Search wiki pages">
+  </div>
+  <select class="mobile-page-nav" id="mobilePageNav" aria-label="Go to wiki page">
+    <option value="../wiki.html">Home</option>
+<option value="quests.html">1. Quests</option>
+<option value="skills.html">2. Skills</option>
+<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
+<option value="npcs.html">4. NPCs &amp; dialogue</option>
+<option value="shops.html">5. Shops &amp; economy</option>
+<option value="drops.html">6. Drop tables</option>
+<option value="minigames.html">7. Minigames</option>
+<option value="areas.html">8. World &amp; areas</option>
+<option value="misc.html">9. Tutorial, random events &amp; UI systems</option>
+<option value="engine.html" selected>10. Engine systems</option>
+<option value="anachronism.html">11. Anachronism check</option>
+<option value="progressive.html">12. Progressive-only additions</option>
+<option value="unaudited.html">13. Previously unaudited subsystems</option>
+<option value="bugs.html">14. Known bugs &amp; rough edges</option>
+<option value="plugins.html">15. Plugins</option>
+  </select>
+  <div class="buildbadge">Build 254 &middot; 7 Sep 2004</div>
+</header>
+<div class="shell">
+  <nav class="sidebar" id="sidebarnav" aria-label="Wiki contents">
+    <div class="navlabel">Navigation</div>
+    <ul id="navlist">
+      <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
+<li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
+<li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
+<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
+<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
+<li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
+<li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
+<li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
+<li data-title="8 World &amp; areas"><a class="" href="areas.html">8&ensp;World &amp; areas</a></li>
+<li data-title="9 Tutorial, random events &amp; UI systems"><a class="" href="misc.html">9&ensp;Tutorial, random events &amp; UI systems</a></li>
+<li data-title="10 Engine systems"><a class="active" href="engine.html">10&ensp;Engine systems</a></li>
+<li data-title="11 Anachronism check"><a class="" href="anachronism.html">11&ensp;Anachronism check</a></li>
+<li data-title="12 Progressive-only additions"><a class="" href="progressive.html">12&ensp;Progressive-only additions</a></li>
+<li data-title="13 Previously unaudited subsystems"><a class="" href="unaudited.html">13&ensp;Previously unaudited subsystems</a></li>
+<li data-title="14 Known bugs &amp; rough edges"><a class="" href="bugs.html">14&ensp;Known bugs &amp; rough edges</a></li>
+<li data-title="15 Plugins"><a class="" href="plugins.html">15&ensp;Plugins</a></li>
+    </ul>
+    <div class="navlabel">Quick facts</div>
+    <div class="factbox">
+      <div class="frow"><dt>Target build</dt><dd>254</dd></div>
+      <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
+    </div>
+  </nav>
+  <main class="page">
+    <article class="article-card">
+      
+<p class="breadcrumbs"><a href="../wiki.html">Coverage Wiki</a> &rsaquo; Section 10</p>
+<h1 class="pagetitle">10. Engine systems</h1>
+<p class="byline">A dedicated page from the 2004scape Progressive build 254 coverage audit.</p>
+<section class="standalone-section" id="engine">
+<p class="lede">This is a script-driven engine (<code>@2004scape/rsmod-pathfinder</code>-based, <code>ENGINE_REVISION=254</code>): the TypeScript core provides generic primitives — damage/hitmark opcodes, stat-boost opcodes, a script VM — and almost all RS-specific rules (exact combat formulas, individual spell/prayer effects) are driven by the content scripts audited above, not hardcoded in the engine. So "implemented" below means the engine supplies the real plumbing, not that every formula was independently re-derived and checked against a reference.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>System</th><th>Status</th><th>Evidence</th></tr></thead>
+<tbody>
+<tr><td>Combat</td><td><span class="pill partial">Partial</span></td><td>Hitmark/damage primitives, wilderness multi-combat zone data (<code>multiway.csv</code>), a dedicated <code>SET_MULTIWAY</code> packet. No accuracy/max-hit formulas or special-attack energy tracking found in the engine itself — those are content-side.</td></tr>
+<tr><td>Magic</td><td><span class="pill complete">Present (content-driven)</span></td><td><code>MAGIC</code> is a real trainable stat; no anachronistic Ancient Magicks code anywhere.</td></tr>
+<tr><td>Prayer</td><td><span class="pill complete">Present (content-driven)</span></td><td>Overhead-icon opcode exists engine-side; no "Curses" prayer book code anywhere.</td></tr>
+<tr><td>Trading (P2P)</td><td><span class="pill complete">Implemented</span></td><td>Generic modal/interface system + <code>Inventory.transfer()</code>, including noted-item swaps via <code>certlink</code>/<code>certtemplate</code>. Zero references to a Grand Exchange anywhere in the source.</td></tr>
+<tr><td>Banking</td><td><span class="pill complete">Implemented</span></td><td>Fully generic stackable/non-stackable container with note support. No bank PIN or bank-tab code — correctly absent for 2004 (PIN is 2008, tabs later).</td></tr>
+<tr><td>Wilderness / PvP</td><td><span class="pill partial">Partial</span></td><td>Multi-combat zones and the F2P/members map split (<code>free2play.csv</code>) are real engine-level data. No wilderness-depth/skull-state/risk-on-death logic found in the engine core — likely content-side, not verified here.</td></tr>
+<tr><td>Social (friends/ignore/PM)</td><td><span class="pill complete">Complete</span></td><td>Dedicated <code>FriendServer</code>/<code>FriendThread</code> classes, full add/remove/ignore protocol pairs, real private-message encode/decode.</td></tr>
+<tr><td>Movement / pathfinding</td><td><span class="pill complete">Complete</span></td><td>Native <code>@2004scape/rsmod-pathfinder</code> for collision/clipping. Run energy formula in <code>Player.ts</code> matches period mechanics (agility-based recovery, weight-based drain). Client-side routefinding is explicitly chosen with the code comment <em>"no server routefinding until 2009"</em> — correctly period-accurate.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<nav class="page-navigation" aria-label="Previous and next pages"><a class="prev" href="misc.html">&larr; 9. Tutorial, random events &amp; UI systems</a><a class="next" href="anachronism.html">11. Anachronism check &rarr;</a></nav>
+
+      <p class="pagefooter">Compiled by reading the project's own source — quest scripts, NPC/shop/skill content trees, and the TypeScript engine core — cross-checked against RuneScape's verified quest release chronology and public update history. Not affiliated with Jagex, Lost City, or the Progressive project maintainers. Where a claim couldn't be verified with real evidence in the code, it's marked as such rather than guessed.</p>
+    </article>
+  </main>
+</div>
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Every quest folder was opened and read — not just listed — to identify which real quest it implements (via in-game journal title strings) and whether its dialogue chain, item/level gates, and…">
+  <title>1. Quests — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="assets/wiki.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brandlink" href="../wiki.html" aria-label="2004scape Progressive Wiki homepage">
+    <span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span>
+  </a>
+  <nav class="header-links" aria-label="Featured wiki pages">
+    <a href="../wiki.html">Main page</a>
+    <a href="quests.html">Quests</a>
+    <a href="skills.html">Skills</a>
+    <a href="bugs.html">Known bugs</a>
+  </nav>
+  <div class="searchwrap">
+    <span class="searchicon">&#128269;</span>
+    <input type="search" id="wikisearch" placeholder="Search wiki pages&hellip;" aria-label="Search wiki pages">
+  </div>
+  <select class="mobile-page-nav" id="mobilePageNav" aria-label="Go to wiki page">
+    <option value="../wiki.html">Home</option>
+<option value="quests.html" selected>1. Quests</option>
+<option value="skills.html">2. Skills</option>
+<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
+<option value="npcs.html">4. NPCs &amp; dialogue</option>
+<option value="shops.html">5. Shops &amp; economy</option>
+<option value="drops.html">6. Drop tables</option>
+<option value="minigames.html">7. Minigames</option>
+<option value="areas.html">8. World &amp; areas</option>
+<option value="misc.html">9. Tutorial, random events &amp; UI systems</option>
+<option value="engine.html">10. Engine systems</option>
+<option value="anachronism.html">11. Anachronism check</option>
+<option value="progressive.html">12. Progressive-only additions</option>
+<option value="unaudited.html">13. Previously unaudited subsystems</option>
+<option value="bugs.html">14. Known bugs &amp; rough edges</option>
+<option value="plugins.html">15. Plugins</option>
+  </select>
+  <div class="buildbadge">Build 254 &middot; 7 Sep 2004</div>
+</header>
+<div class="shell">
+  <nav class="sidebar" id="sidebarnav" aria-label="Wiki contents">
+    <div class="navlabel">Navigation</div>
+    <ul id="navlist">
+      <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
+<li data-title="1 Quests"><a class="active" href="quests.html">1&ensp;Quests</a></li>
+<li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
+<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
+<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
+<li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
+<li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
+<li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
+<li data-title="8 World &amp; areas"><a class="" href="areas.html">8&ensp;World &amp; areas</a></li>
+<li data-title="9 Tutorial, random events &amp; UI systems"><a class="" href="misc.html">9&ensp;Tutorial, random events &amp; UI systems</a></li>
+<li data-title="10 Engine systems"><a class="" href="engine.html">10&ensp;Engine systems</a></li>
+<li data-title="11 Anachronism check"><a class="" href="anachronism.html">11&ensp;Anachronism check</a></li>
+<li data-title="12 Progressive-only additions"><a class="" href="progressive.html">12&ensp;Progressive-only additions</a></li>
+<li data-title="13 Previously unaudited subsystems"><a class="" href="unaudited.html">13&ensp;Previously unaudited subsystems</a></li>
+<li data-title="14 Known bugs &amp; rough edges"><a class="" href="bugs.html">14&ensp;Known bugs &amp; rough edges</a></li>
+<li data-title="15 Plugins"><a class="" href="plugins.html">15&ensp;Plugins</a></li>
+    </ul>
+    <div class="navlabel">Quick facts</div>
+    <div class="factbox">
+      <div class="frow"><dt>Target build</dt><dd>254</dd></div>
+      <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
+    </div>
+  </nav>
+  <main class="page">
+    <article class="article-card">
+      
+<p class="breadcrumbs"><a href="../wiki.html">Coverage Wiki</a> &rsaquo; Section 1</p>
+<h1 class="pagetitle">1. Quests</h1>
+<p class="byline">A dedicated page from the 2004scape Progressive build 254 coverage audit.</p>
+<section class="standalone-section" id="quests">
+<p class="lede">Every quest folder was opened and read — not just listed — to identify which real quest it implements (via in-game journal title strings) and whether its dialogue chain, item/level gates, and reward-granting code are actually wired up.</p>
+<div class="callout">
+<p><strong>Headline: all 56 quests that existed in RuneScape by 7 Sept 2004 are implemented and reward-complete.</strong> Nothing is fully missing. Two bonus, non-canonical miniquests are also implemented (Pub Crawl, Witch's Potion). The one quest released just after the cutoff — Tai Bwo Wannai Trio (14 Sept 2004) — correctly does not appear.</p>
+</div>
+<div aria-label="Filter quests by status" class="filters" role="group">
+<button class="active" data-filter="all">All (58)</button>
+<button data-filter="complete">Complete (56)</button>
+<button data-filter="extra">Bonus/non-canonical (2)</button>
+</div>
+<div class="table-wrap">
+<table id="quest-table">
+<thead><tr><th>Repo folder</th><th>Real quest</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody>
+<tr data-status="complete"><td><code>quest_cook</code></td><td>Cook's Assistant</td><td><span class="pill complete">Complete</span></td><td class="evidence">Small, full chain + reward.</td></tr>
+<tr data-status="complete"><td><code>quest_demon</code></td><td>Demon Slayer</td><td><span class="pill complete">Complete</span></td><td class="evidence">Delrith/Silverlight intact. Self-acknowledged <code>todo: this should be instanced per player</code> — a multiplayer-correctness gap, not missing content.</td></tr>
+<tr data-status="complete"><td><code>quest_priest</code></td><td>The Restless Ghost</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full chain + reward.</td></tr>
+<tr data-status="complete"><td><code>quest_romeojuliet</code></td><td>Romeo &amp; Juliet</td><td><span class="pill complete">Complete</span></td><td class="evidence">Dialogue lives in <code>areas/area_varrock/</code>; reward hook in quest folder.</td></tr>
+<tr data-status="complete"><td><code>quest_sheep</code></td><td>Sheep Shearer</td><td><span class="pill complete">Complete</span></td><td class="evidence">Shearing logic in <code>general_use/shear_sheep.rs2</code>.</td></tr>
+<tr data-status="complete"><td><code>quest_blackarmgang</code></td><td>Shield of Arrav</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full Black Arm/Phoenix Gang path, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_haunted</code></td><td>Ernest the Chicken</td><td><span class="pill complete">Complete</span></td><td class="evidence">Manor chain + reward wired, but <code>// todo: This is borked for opening the doors now. Using the lever is fine.</code> — real acknowledged bug, workaround exists.</td></tr>
+<tr data-status="complete"><td><code>quest_vampire</code></td><td>Vampyre Slayer</td><td><span class="pill complete">Complete</span></td><td class="evidence">Count Draynor chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_imp</code></td><td>Imp Catcher</td><td><span class="pill complete">Complete</span></td><td class="evidence">Wizard Mizgog dialogue lives in <code>areas/area_wizard_tower/</code>.</td></tr>
+<tr data-status="complete"><td><code>quest_prince</code></td><td>Prince Ali Rescue</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full Leela/Lady Keli disguise chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_doric</code></td><td>Doric's Quest</td><td><span class="pill complete">Complete</span></td><td class="evidence">Simple quest, fully wired.</td></tr>
+<tr data-status="complete"><td><code>quest_blackknight</code></td><td>Black Knights' Fortress</td><td><span class="pill complete">Complete</span></td><td class="evidence">170-line main script, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_squire</code></td><td>The Knight's Sword</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full smith/squire/cog chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_gobdip</code></td><td>Goblin Diplomacy</td><td><span class="pill complete">Complete</span></td><td class="evidence">Goblin mail sub-chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_hunt</code></td><td>Pirate's Treasure</td><td><span class="pill complete">Complete</span></td><td class="evidence">Redbeard Frank/dig chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_dragon</code></td><td>Dragon Slayer</td><td><span class="pill complete">Complete</span></td><td class="evidence">Melzar's maze → Crandor → Elvarg, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_druid</code></td><td>Druidic Ritual</td><td><span class="pill complete">Complete</span></td><td class="evidence">Small quest, fully wired.</td></tr>
+<tr data-status="complete"><td><code>quest_zanaris</code></td><td>Lost City</td><td><span class="pill complete">Complete</span></td><td class="evidence">Tree spirit/Shamus/Zanaris chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_ball</code></td><td>Witch's House</td><td><span class="pill complete">Complete</span></td><td class="evidence">Witch's diary/experiment scripts present, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_arthur</code></td><td>Merlin's Crystal</td><td><span class="pill complete">Complete</span></td><td class="evidence">Sir Mordred, Morgan Le Faye's keep, 276-line main script.</td></tr>
+<tr data-status="complete"><td><code>quest_hero</code></td><td>Heroes' Quest</td><td><span class="pill complete">Complete</span></td><td class="evidence">Brimhaven HQ/Scarface mansion, dragon battleaxe reward. Some missing out-of-order-interaction dialogue (edge-case polish).</td></tr>
+<tr data-status="complete"><td><code>quest_scorpcatcher</code></td><td>Scorpion Catcher</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_crest</code></td><td>Family Crest</td><td><span class="pill complete">Complete</span></td><td class="evidence">All four Avan brothers scripted. Reward call reuses the <code>^squire_questpoints</code> constant instead of its own — same value, wrong name (cosmetic).</td></tr>
+<tr data-status="complete"><td><code>quest_totem</code></td><td>Tribal Totem</td><td><span class="pill complete">Complete</span></td><td class="evidence">Own interface (<code>tribal_door2.if</code>), full chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_fishingcompo</code></td><td>Fishing Contest</td><td><span class="pill complete">Complete</span></td><td class="evidence">Hemenster chain + reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_drunkmonk</code></td><td>Monk's Friend</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full chain + reward.</td></tr>
+<tr data-status="complete"><td><code>quest_ikov</code></td><td>Temple of Ikov</td><td><span class="pill complete">Complete</span></td><td class="evidence">Both Armadyl and Lucien reward branches wired.</td></tr>
+<tr data-status="complete"><td><code>quest_cog</code></td><td>Clock Tower</td><td><span class="pill complete">Complete</span></td><td class="evidence">Brother Kojo, cog/gate/spindle mechanism, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_grail</code></td><td>Holy Grail</td><td><span class="pill complete">Complete</span></td><td class="evidence">Fisher King/Percival/Titan chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_tree</code></td><td>Tree Gnome Village</td><td><span class="pill complete">Complete</span></td><td class="evidence">Khazard Warlord/tracker gnome battlefield, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_arena</code></td><td>Fight Arena</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full Servil family/Khazard guard roster, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_hazeelcult</code></td><td>Hazeel Cult</td><td><span class="pill complete">Complete</span></td><td class="evidence">Carnillean family + cult chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_sheepherder</code></td><td>Sheep Herder</td><td><span class="pill complete">Complete</span></td><td class="evidence">Diseased sheep/councillor/doctor chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_elena</code></td><td>Plague City</td><td><span class="pill complete">Complete</span></td><td class="evidence">Rehnison/mourner/sewer chain, reward wired. One cosmetic door-lock <code>todo</code>.</td></tr>
+<tr data-status="complete"><td><code>quest_seaslug</code></td><td>Sea Slug</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_waterfall</code></td><td>Waterfall Quest</td><td><span class="pill complete">Complete</span></td><td class="evidence">Baxtorian book/pillar puzzle, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_biohazard</code></td><td>Biohazard</td><td><span class="pill complete">Complete</span></td><td class="evidence">Chemist/Devinci/Guidor/Chancy chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_junglepotion</code></td><td>Jungle Potion</td><td><span class="pill complete">Complete</span></td><td class="evidence">Full chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_grandtree</code></td><td>The Grand Tree</td><td><span class="pill complete">Complete</span></td><td class="evidence">King Narnode (543-line script), Glough, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_zombiequeen</code></td><td>Shilo Village</td><td><span class="pill complete">Complete</span></td><td class="evidence">Rashiliyia/Nazastarool/Mosol Rei, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_upass</code></td><td>Underground Pass</td><td><span class="pill complete">Complete</span></td><td class="evidence">Iban/Kalrag/obstacle course. Sequel hook to "Regicide" (2005) is correctly commented out/inactive.</td></tr>
+<tr data-status="complete"><td><code>quest_itgronigen</code></td><td>Observatory Quest</td><td><span class="pill complete">Complete</span></td><td class="evidence">Professor/telescope chain, intentional item-less reward matches the real quest.</td></tr>
+<tr data-status="complete"><td><code>quest_desertrescue</code></td><td>The Tourist Trap</td><td><span class="pill complete">Complete</span></td><td class="evidence">Ana/Bedabin/mining-camp/dart-weapon chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_itwatchtower</code></td><td>Watchtower</td><td><span class="pill complete">Complete</span></td><td class="evidence">562-line main script + 412-line wizard script, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_mcannon</code></td><td>Dwarf Cannon</td><td><span class="pill complete">Complete</span></td><td class="evidence">Nulodion/cannon assembly, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_murder</code></td><td>Murder Mystery</td><td><span class="pill complete">Complete</span></td><td class="evidence">Every Sinclair scripted individually, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_itexam</code></td><td>The Dig Site</td><td><span class="pill complete">Complete</span></td><td class="evidence">895-line area script + 546-line examiner script.</td></tr>
+<tr data-status="complete"><td><code>quest_fluffs</code></td><td>Gertrude's Cat</td><td><span class="pill complete">Complete</span></td><td class="evidence">Custom quest-scroll interface; intentional no-item reward matches the real quest.</td></tr>
+<tr data-status="complete"><td><code>quest_legends</code></td><td>Legends' Quest</td><td><span class="pill complete">Complete</span></td><td class="evidence">2,100-line main script — the largest quest in the repo.</td></tr>
+<tr data-status="complete"><td><code>quest_runemysteries</code></td><td>Rune Mysteries</td><td><span class="pill complete">Complete</span></td><td class="evidence">Aubury/Sedridor/Duke Horacio, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_chompybird</code></td><td>Big Chompy Bird Hunting</td><td><span class="pill complete">Complete</span></td><td class="evidence">793-line Rantz saga, Ogre bow crafting, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_elemental_workshop</code></td><td>Elemental Workshop I</td><td><span class="pill complete">Complete</span></td><td class="evidence">All 4 guardians + shield book. Correctly scoped to EW1 only (EW2 is 2005).</td></tr>
+<tr data-status="complete"><td><code>quest_priestperil</code></td><td>Priest in Peril</td><td><span class="pill complete">Complete</span></td><td class="evidence">Drezel/vampire coffin chain, own quest-log interface. <a href="magic-prayer.html">Its 3 unlocked prayers aren't implemented</a> — see Magic &amp; Prayer.</td></tr>
+<tr data-status="complete"><td><code>quest_druidspirit</code></td><td>Nature Spirit</td><td><span class="pill complete">Complete</span></td><td class="evidence">Filliman/Ghast/swamp decay, 435-line main script.</td></tr>
+<tr data-status="complete"><td><code>quest_death</code></td><td>Death Plateau</td><td><span class="pill complete">Complete</span></td><td class="evidence">2,058-line NPC config, full IG commander/equipment room chain.</td></tr>
+<tr data-status="complete"><td><code>quest_troll</code></td><td>Troll Stronghold</td><td><span class="pill complete">Complete</span></td><td class="evidence">Eadgar/Godric/champion, 1,465-line NPC config.</td></tr>
+<tr data-status="extra"><td><code>quest_barcrawl</code></td><td><em>Pub Crawl</em> (non-canonical)</td><td><span class="pill extra">Bonus</span></td><td class="evidence">Bartender-visiting achievement activity, no quest points — not one of the 56, implemented anyway.</td></tr>
+<tr data-status="extra"><td><code>quest_hetty</code></td><td><em>Witch's Potion</em> (RSC-era miniquest)</td><td><span class="pill extra">Bonus</span></td><td class="evidence">Demoted to a no-QP miniquest in real RS2, but implemented here as a full 1-QP quest with its own completion scroll.</td></tr>
+</tbody>
+</table>
+</div>
+<p class="evidence" style="margin-top:10px">One more paper-cut: <code>content/scripts/general/configs/quest.enum</code>, a debug/cheat-menu quest list, is stale and omits Nature Spirit, Death Plateau, and Troll Stronghold — the three most recent quests at the cutoff. It doesn't affect the real quest journal, only a dev cheat tool.</p>
+</section>
+<nav class="page-navigation" aria-label="Previous and next pages"><a class="prev" href="../wiki.html">&larr; Homepage</a><a class="next" href="skills.html">2. Skills &rarr;</a></nav>
+
+      <p class="pagefooter">Compiled by reading the project's own source — quest scripts, NPC/shop/skill content trees, and the TypeScript engine core — cross-checked against RuneScape's verified quest release chronology and public update history. Not affiliated with Jagex, Lost City, or the Progressive project maintainers. Where a claim couldn't be verified with real evidence in the code, it's marked as such rather than guessed.</p>
+    </article>
+  </main>
+</div>
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -29,8 +29,8 @@ const MESSAGE_LINE_4 = 378;
 const MESSAGE_LINE_5 = 379;
 const MESSAGE_CONTINUE = 380;
 
-type PendingAction = 'create' | 'join';
-type OpenMenu = 'guest' | 'member' | 'detail' | 'leave';
+type PendingAction = 'create' | 'join' | 'promote' | 'demote';
+type OpenMenu = 'guest' | 'member' | 'membersMenu' | 'detail' | 'leave';
 
 const pending = new WeakMap<Player, PendingAction>();
 const openMenus = new WeakMap<Player, OpenMenu>();
@@ -67,6 +67,20 @@ export default class ClanMenu {
         openMenus.set(player, 'member');
     }
 
+    private static openMembersMenu(player: Player, clanName: string): void {
+        player.write(new IfSetText(CLAN_TITLE, `Clan '${clanName}' members`));
+        player.write(new IfSetText(MEMBERS, 'View Members'));
+        player.write(new IfSetText(ROLES, 'Promote Member'));
+        player.write(new IfSetText(COMMANDS, 'Demote Member'));
+        player.write(new IfSetText(LEAVE, 'Back'));
+        player.write(new IfSetText(CLOSE, 'Close Menu'));
+        player.write(new IfSetHide(CLAN_HIDE_NO_HEADER, true));
+        player.write(new IfSetHide(CLAN_HIDE_HEADER, false));
+        player.openChatModal(MULTI5);
+        player.resumeButtons.push(MEMBERS, ROLES, COMMANDS, LEAVE, CLOSE);
+        openMenus.set(player, 'membersMenu');
+    }
+
     static handleButton(player: Player, component: number): boolean {
         if (component !== CREATE && component !== JOIN) {
             return this.handleClanButton(player, component);
@@ -101,10 +115,21 @@ export default class ClanMenu {
             return this.backToClan(player);
         }
 
-        if (component < MEMBERS || component > CLOSE || openMenus.get(player) !== 'member' || player.modalChat !== MULTI5) {
+        if (component < MEMBERS || component > CLOSE || player.modalChat !== MULTI5) {
             return false;
         }
 
+        const state = openMenus.get(player);
+        if (state === 'member') {
+            return this.handleMainMenuButton(player, component);
+        }
+        if (state === 'membersMenu') {
+            return this.handleMembersMenuButton(player, component);
+        }
+        return false;
+    }
+
+    private static handleMainMenuButton(player: Player, component: number): boolean {
         openMenus.delete(player);
         this.closeClanModal(player);
 
@@ -115,9 +140,7 @@ export default class ClanMenu {
         }
 
         if (component === MEMBERS) {
-            const members = ClanManager.getMemberList(player);
-            const lines = members.slice(0, 4).map(member => `${member.username} - ${roleLong(member.role)}${member.online ? ' (online)' : ''}`);
-            this.openMessage(player, [`Clan '${info.displayName}' members (${members.length})`, ...lines]);
+            this.openMembersMenu(player, info.displayName);
         } else if (component === ROLES) {
             this.openMessage(player, [
                 `Your role: ${roleLong(info.myRole)}`,
@@ -136,6 +159,38 @@ export default class ClanMenu {
             ]);
         } else if (component === LEAVE) {
             this.openLeaveConfirm(player, info.myRole === ClanRole.OWNER);
+        }
+        return true;
+    }
+
+    private static handleMembersMenuButton(player: Player, component: number): boolean {
+        if (component === ROLES || component === COMMANDS) {
+            openMenus.delete(player);
+            pending.set(player, component === ROLES ? 'promote' : 'demote');
+            this.clearClanModalState(player);
+            player.messageGame(component === ROLES ? 'Enter the username to promote:' : 'Enter the username to demote:');
+            player.write(new IfClose());
+            player.write(new PNameDialog());
+            return true;
+        }
+
+        openMenus.delete(player);
+        this.closeClanModal(player);
+
+        const info = ClanManager.getClanInfo(player);
+        if (!info) {
+            player.messageGame('You are not in a clan.');
+            return true;
+        }
+
+        if (component === MEMBERS) {
+            const members = ClanManager.getMemberList(player);
+            const lines = members.slice(0, 4).map(member => `${member.username} - ${roleLong(member.role)}${member.online ? ' (online)' : ''}`);
+            this.openMessage(player, [`Clan '${info.displayName}' members (${members.length})`, ...lines]);
+        } else if (component === LEAVE) {
+            this.openClan(player, info.displayName);
+        } else if (component === CLOSE) {
+            // modal already closed above
         }
         return true;
     }
@@ -203,8 +258,12 @@ export default class ClanMenu {
 
         if (action === 'create') {
             void ClanManager.create(player, input);
-        } else {
+        } else if (action === 'join') {
             void ClanManager.join(player, input);
+        } else if (action === 'promote') {
+            void ClanManager.promote(player, input);
+        } else {
+            void ClanManager.demote(player, input);
         }
         return true;
     }

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="wiki/">
+  <meta name="description" content="Homepage for the 2004scape Progressive build 254 coverage audit.">
+  <title>What&#x27;s really in the 254 cache — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="assets/wiki.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brandlink" href="../wiki.html" aria-label="2004scape Progressive Wiki homepage">
+    <span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span>
+  </a>
+  <nav class="header-links" aria-label="Featured wiki pages">
+    <a href="../wiki.html">Main page</a>
+    <a href="quests.html">Quests</a>
+    <a href="skills.html">Skills</a>
+    <a href="bugs.html">Known bugs</a>
+  </nav>
+  <div class="searchwrap">
+    <span class="searchicon">&#128269;</span>
+    <input type="search" id="wikisearch" placeholder="Search wiki pages&hellip;" aria-label="Search wiki pages">
+  </div>
+  <select class="mobile-page-nav" id="mobilePageNav" aria-label="Go to wiki page">
+    <option value="../wiki.html" selected>Home</option>
+<option value="quests.html">1. Quests</option>
+<option value="skills.html">2. Skills</option>
+<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
+<option value="npcs.html">4. NPCs &amp; dialogue</option>
+<option value="shops.html">5. Shops &amp; economy</option>
+<option value="drops.html">6. Drop tables</option>
+<option value="minigames.html">7. Minigames</option>
+<option value="areas.html">8. World &amp; areas</option>
+<option value="misc.html">9. Tutorial, random events &amp; UI systems</option>
+<option value="engine.html">10. Engine systems</option>
+<option value="anachronism.html">11. Anachronism check</option>
+<option value="progressive.html">12. Progressive-only additions</option>
+<option value="unaudited.html">13. Previously unaudited subsystems</option>
+<option value="bugs.html">14. Known bugs &amp; rough edges</option>
+<option value="plugins.html">15. Plugins</option>
+  </select>
+  <div class="buildbadge">Build 254 &middot; 7 Sep 2004</div>
+</header>
+<div class="shell">
+  <nav class="sidebar" id="sidebarnav" aria-label="Wiki contents">
+    <div class="navlabel">Navigation</div>
+    <ul id="navlist">
+      <li data-title="Overview homepage"><a class="home-item active" href="../wiki.html">Home &amp; overview</a></li>
+<li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
+<li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
+<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
+<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
+<li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
+<li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
+<li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
+<li data-title="8 World &amp; areas"><a class="" href="areas.html">8&ensp;World &amp; areas</a></li>
+<li data-title="9 Tutorial, random events &amp; UI systems"><a class="" href="misc.html">9&ensp;Tutorial, random events &amp; UI systems</a></li>
+<li data-title="10 Engine systems"><a class="" href="engine.html">10&ensp;Engine systems</a></li>
+<li data-title="11 Anachronism check"><a class="" href="anachronism.html">11&ensp;Anachronism check</a></li>
+<li data-title="12 Progressive-only additions"><a class="" href="progressive.html">12&ensp;Progressive-only additions</a></li>
+<li data-title="13 Previously unaudited subsystems"><a class="" href="unaudited.html">13&ensp;Previously unaudited subsystems</a></li>
+<li data-title="14 Known bugs &amp; rough edges"><a class="" href="bugs.html">14&ensp;Known bugs &amp; rough edges</a></li>
+<li data-title="15 Plugins"><a class="" href="plugins.html">15&ensp;Plugins</a></li>
+    </ul>
+    <div class="navlabel">Quick facts</div>
+    <div class="factbox">
+      <div class="frow"><dt>Target build</dt><dd>254</dd></div>
+      <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
+    </div>
+  </nav>
+  <main class="page">
+    <article class="article-card">
+      
+<h1 class="pagetitle">What's really in the 254 cache</h1>
+<p class="byline">From the 2004scape Progressive Coverage Wiki &mdash; a fan-made recreation audit, not affiliated with Jagex.</p>
+<div class="audit-dashboard" aria-label="Coverage summary">
+  <div class="audit-stat"><span class="asset-icon scroll" aria-hidden="true"></span><b>56 / 56</b><span>Cutoff-date quests implemented and reward-complete.</span></div>
+  <div class="audit-stat"><span class="asset-icon skill" aria-hidden="true"></span><b>19 / 19</b><span>Period skills present, with post-2004 slots disabled.</span></div>
+  <div class="audit-stat"><span class="asset-icon prayer" aria-hidden="true"></span><b>15 / 18</b><span>Classic prayers present; three Paterdomus prayers missing.</span></div>
+  <div class="audit-stat"><span class="asset-icon npc" aria-hidden="true"></span><b>~89%</b><span>Talkable NPCs covered by exact or shared dialogue.</span></div>
+  <div class="audit-stat"><span class="asset-icon warn" aria-hidden="true"></span><b>1 flag</b><span>Anachronism called out for a faithful Sept 2004 target.</span></div>
+</div>
+<div class="audit-primer">
+  <div class="callout">
+    <p><strong>Summary:</strong> the build is strongest where scripts matter: quests, skills, shops, drops, minigames, and most world systems are real implementations rather than cache-name placeholders. The remaining notes are more specific: three missing late-2004 prayers, some NPC dialogue dead ends, one anachronism, and a short list of known bugs.</p>
+  </div>
+  <div class="read-first">
+    <h2>Start with</h2>
+    <a href="quests.html">Quest proof</a>
+    <a href="magic-prayer.html">Prayer gap</a>
+    <a href="npcs.html">Dialogue coverage</a>
+    <a href="bugs.html">Known bugs</a>
+  </div>
+</div>
+<div class="home-intro">
+<div class="infobox">
+<div class="ibhead">2004scape Progressive</div>
+<div class="ibsub">Coverage report</div>
+<div class="ibicon">📜</div>
+<div class="row"><dt>Engine</dt><dd>Lost City (TS)</dd></div>
+<div class="row"><dt>Target build</dt><dd>254</dd></div>
+<div class="row"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
+<div class="row"><dt>Quests</dt><dd style="color:var(--complete)">56 / 56</dd></div>
+<div class="row"><dt>Skills</dt><dd style="color:var(--complete)">19 / 19</dd></div>
+<div class="row"><dt>Prayers</dt><dd style="color:var(--partial)">15 / 18</dd></div>
+<div class="row"><dt>Minigames</dt><dd style="color:var(--complete)">7 / 7</dd></div>
+<div class="row"><dt>Stocked shops</dt><dd>~74</dd></div>
+<div class="row"><dt>Attackable drop defs</dt><dd>362</dd></div>
+<div class="row"><dt>NPC dialogue</dt><dd>~89%</dd></div>
+<div class="row"><dt>Anachronisms</dt><dd style="color:var(--flag)">1 flagged</dd></div>
+</div>
+<p><strong>2004scape Progressive</strong> is a Lost City–based recreation of RuneScape 2 as it stood at <strong>revision 254</strong>, dated <strong>7 September 2004</strong> by the project's own setup notes, with a bot-AI and hiscores mod ("Progressive") layered on top. This page audits what's implemented, partial, or missing versus the real game on that date.</p>
+<p><code>content/pack/*.pack</code> (obj/npc/loc/seq/etc.) are text tables extracted wholesale from the real 254 cache — 3,169 items, 1,174 NPC names, 3,855 scenery objects — so the game's <em>definitions</em> are already essentially complete by construction. The meaningful question is <em>behavior</em>: which of those definitions have a script behind them — a quest chain, a dialogue tree, a shop till, a drop table, a working minigame — versus sitting inert. That's what this audit spent its effort on, read directly from the file tree and cross-checked against a verified chronological list of every quest RuneScape had shipped by 7 September 2004.</p>
+<div class="callout">
+<p><strong>On “524”:</strong> the project's own <code>server.json</code> and <code>start.js</code> only support revisions 225, 244, 245.2, <strong>254</strong>, 274, and 377-wip — there's no 524. This wiki assumes 254 was the intended target.</p>
+</div>
+</div>
+<h2 class="home-section-title">Coverage index</h2>
+<p class="lede">Each contents section now has its own dedicated page. Use the cards below, the sidebar, or the search box to move through the audit.</p>
+<div class="no-results" id="noResults">No wiki page matches that search.</div>
+<div class="section-grid">
+
+<a class="section-card" href="quests.html" data-search="1 Quests Every quest folder was opened and read — not just listed — to identify which real quest it implements (via in-game journal title strings) and whether its dialogue chain, item/level gates, and…">
+  <span class="section-number">Section 1</span>
+  <h2>Quests</h2>
+  <p>Every quest folder was opened and read — not just listed — to identify which real quest it implements (via in-game journal title strings) and whether its dialogue chain, item/level gates, and…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="skills.html" data-search="2 Skills All 19 skills that existed by Sept 2004 are present (7 combat + 4 gathering + 6 artisan + 2 misc) — confirmed both by content folder coverage and by the engine&#x27;s PlayerStat enum, which has exactly 21 slots…">
+  <span class="section-number">Section 2</span>
+  <h2>Skills</h2>
+  <p>All 19 skills that existed by Sept 2004 are present (7 combat + 4 gathering + 6 artisan + 2 misc) — confirmed both by content folder coverage and by the engine&#x27;s PlayerStat enum, which has exactly 21 slots…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="magic-prayer.html" data-search="3 Magic &amp; Prayer 21 non-combat spells are defined in magic_spells.dbrow : Enchant levels 1–5, the six teleports available by 2004 (Varrock, Lumbridge, Falador, Camelot, Ardougne, Watchtower), 4 elemental orb-charges,…">
+  <span class="section-number">Section 3</span>
+  <h2>Magic &amp; Prayer</h2>
+  <p>21 non-combat spells are defined in magic_spells.dbrow : Enchant levels 1–5, the six teleports available by 2004 (Varrock, Lumbridge, Falador, Camelot, Ardougne, Watchtower), 4 elemental orb-charges,…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="npcs.html" data-search="4 NPCs &amp; dialogue 988 of the cache&#x27;s 1,174 named NPCs are actually placed somewhere in the world (the other 379 names are reserved for quest-exclusive spawns). Dialogue resolves two ways: an exact-name script ( bob.rs2 ,…">
+  <span class="section-number">Section 4</span>
+  <h2>NPCs &amp; dialogue</h2>
+  <p>988 of the cache&#x27;s 1,174 named NPCs are actually placed somewhere in the world (the other 379 names are reserved for quest-exclusive spawns). Dialogue resolves two ways: an exact-name script ( bob.rs2 ,…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="shops.html" data-search="5 Shops &amp; economy The generic shop engine (dynamic buy/sell pricing, haggle multipliers, stock depletion/restock, member-item gating, even a hardcoded Al Kharid silk-selling exception) is fully implemented in…">
+  <span class="section-number">Section 5</span>
+  <h2>Shops &amp; economy</h2>
+  <p>The generic shop engine (dynamic buy/sell pricing, haggle multipliers, stock depletion/restock, member-item gating, even a hardcoded Al Kharid silk-selling exception) is fully implemented in…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="drops.html" data-search="6 Drop tables Every attackable NPC definition is listed: 105 use scripted drop tables and 257 use generic/default death drops. Default-only rows use the engine's generic death handler.">
+  <span class="section-number">Section 6</span>
+  <h2>Drop tables</h2>
+  <p>Every attackable NPC definition is listed: 105 use scripted drop tables and 257 use generic/default death drops. Default-only rows use the engine's generic death handler.</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="minigames.html" data-search="7 Minigames Duel Arena alone spans 29 files (staking, spectating, forfeiting, scoreboards, five named NPCs). Fishing Trawler has a real flooding/bailing/sinking/winch state machine. Castle Wars (real release: December…">
+  <span class="section-number">Section 7</span>
+  <h2>Minigames</h2>
+  <p>Duel Arena alone spans 29 files (staking, spectating, forfeiting, scoreboards, five named NPCs). Fishing Trawler has a real flooding/bailing/sinking/winch state machine. Castle Wars (real release: December…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="areas.html" data-search="8 World &amp; areas 37 area_* folders cover essentially the full 2004 map. 10 were sampled across regions and file counts scale sensibly with real-world importance: Varrock is the largest at 49 files, Lumbridge has 14 (10…">
+  <span class="section-number">Section 8</span>
+  <h2>World &amp; areas</h2>
+  <p>37 area_* folders cover essentially the full 2004 map. 10 were sampled across regions and file counts scale sensibly with real-world importance: Varrock is the largest at 49 files, Lumbridge has 14 (10…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="misc.html" data-search="9 Tutorial, random events &amp; UI systems Login/logout is only 2 files in content — that&#x27;s expected, since the substantive logic lives in the engine core rather than content scripts.">
+  <span class="section-number">Section 9</span>
+  <h2>Tutorial, random events &amp; UI systems</h2>
+  <p>Login/logout is only 2 files in content — that's expected, since the substantive logic lives in the engine core rather than content scripts.</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="engine.html" data-search="10 Engine systems This is a script-driven engine ( @2004scape/rsmod-pathfinder -based, ENGINE_REVISION=254 ): the TypeScript core provides generic primitives — damage/hitmark opcodes, stat-boost opcodes, a script VM — and…">
+  <span class="section-number">Section 10</span>
+  <h2>Engine systems</h2>
+  <p>This is a script-driven engine ( @2004scape/rsmod-pathfinder -based, ENGINE_REVISION=254 ): the TypeScript core provides generic primitives — damage/hitmark opcodes, stat-boost opcodes, a script VM — and…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="anachronism.html" data-search="11 Anachronism check Systems that shouldn&#x27;t exist yet in a faithful Sept 2004 build — checked explicitly rather than assumed.">
+  <span class="section-number">Section 11</span>
+  <h2>Anachronism check</h2>
+  <p>Systems that shouldn't exist yet in a faithful Sept 2004 build — checked explicitly rather than assumed.</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="progressive.html" data-search="12 Progressive-only additions Everything below is Progressive&#x27;s own layer on top of the Lost City base — none of it existed in real 2004 RuneScape as a player-facing mechanic, though the hiscores concept mirrors a real website feature…">
+  <span class="section-number">Section 12</span>
+  <h2>Progressive-only additions</h2>
+  <p>Everything below is Progressive's own layer on top of the Lost City base — none of it existed in real 2004 RuneScape as a player-facing mechanic, though the hiscores concept mirrors a real website feature…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="unaudited.html" data-search="13 Previously unaudited subsystems The audit above walks content/scripts/quests , skill_* , areas , and minigames against a real quest/feature chronology — a gameplay-content completeness audit. It never opened several other folders that…">
+  <span class="section-number">Section 13</span>
+  <h2>Previously unaudited subsystems</h2>
+  <p>The audit above walks content/scripts/quests , skill_* , areas , and minigames against a real quest/feature chronology — a gameplay-content completeness audit. It never opened several other folders that…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="bugs.html" data-search="14 Known bugs &amp; rough edges Expanded from the original pass with exact file locations, line-level detail, and a few additional findings surfaced while chasing down the originals. Nothing in this section reflects a code change — it&#x27;s…">
+  <span class="section-number">Section 14</span>
+  <h2>Known bugs &amp; rough edges</h2>
+  <p>Expanded from the original pass with exact file locations, line-level detail, and a few additional findings surfaced while chasing down the originals. Nothing in this section reflects a code change — it's…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="plugins.html" data-search="15 Plugins This list mirrors every entry in the launcher&#x27;s Custom Content menu. From the launcher main menu choose 14 , enter a plugin number to toggle it, use A to enable all, D to disable all, and B to return.…">
+  <span class="section-number">Section 15</span>
+  <h2>Plugins</h2>
+  <p>This list mirrors every entry in the launcher's Custom Content menu. From the launcher main menu choose 14 , enter a plugin number to toggle it, use A to enable all, D to disable all, and B to return.…</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+<a class="section-card" href="commands.html" data-search="16 Commands Complete catalogue of player, moderator, administrator, developer, client and scripted debug commands, with access requirements and descriptions.">
+  <span class="section-number">Section 16</span>
+  <h2>Commands</h2>
+  <p>A complete, source-checked catalogue of player, staff, client and developer commands, including access requirements, syntax, aliases, and what each command does.</p>
+  <span class="open-link">Open this page &rarr;</span>
+</a>
+</div>
+
+      <p class="pagefooter">Compiled by reading the project's own source — quest scripts, NPC/shop/skill content trees, and the TypeScript engine core — cross-checked against RuneScape's verified quest release chronology and public update history. Not affiliated with Jagex, Lost City, or the Progressive project maintainers. Where a claim couldn't be verified with real evidence in the code, it's marked as such rather than guessed.</p>
+    </article>
+  </main>
+</div>
+<script src="assets/site.js"></script>
+</body>
+</html>

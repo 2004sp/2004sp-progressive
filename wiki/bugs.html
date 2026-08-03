@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Expanded from the original pass with exact file locations, line-level detail, and a few additional findings surfaced while chasing down the originals. Nothing in this section reflects a code change — it&#x27;s…">
+  <title>14. Known bugs &amp; rough edges — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="assets/wiki.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brandlink" href="../wiki.html" aria-label="2004scape Progressive Wiki homepage">
+    <span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span>
+  </a>
+  <nav class="header-links" aria-label="Featured wiki pages">
+    <a href="../wiki.html">Main page</a>
+    <a href="quests.html">Quests</a>
+    <a href="skills.html">Skills</a>
+    <a href="bugs.html">Known bugs</a>
+  </nav>
+  <div class="searchwrap">
+    <span class="searchicon">&#128269;</span>
+    <input type="search" id="wikisearch" placeholder="Search wiki pages&hellip;" aria-label="Search wiki pages">
+  </div>
+  <select class="mobile-page-nav" id="mobilePageNav" aria-label="Go to wiki page">
+    <option value="../wiki.html">Home</option>
+<option value="quests.html">1. Quests</option>
+<option value="skills.html">2. Skills</option>
+<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
+<option value="npcs.html">4. NPCs &amp; dialogue</option>
+<option value="shops.html">5. Shops &amp; economy</option>
+<option value="drops.html">6. Drop tables</option>
+<option value="minigames.html">7. Minigames</option>
+<option value="areas.html">8. World &amp; areas</option>
+<option value="misc.html">9. Tutorial, random events &amp; UI systems</option>
+<option value="engine.html">10. Engine systems</option>
+<option value="anachronism.html">11. Anachronism check</option>
+<option value="progressive.html">12. Progressive-only additions</option>
+<option value="unaudited.html">13. Previously unaudited subsystems</option>
+<option value="bugs.html" selected>14. Known bugs &amp; rough edges</option>
+<option value="plugins.html">15. Plugins</option>
+  </select>
+  <div class="buildbadge">Build 254 &middot; 7 Sep 2004</div>
+</header>
+<div class="shell">
+  <nav class="sidebar" id="sidebarnav" aria-label="Wiki contents">
+    <div class="navlabel">Navigation</div>
+    <ul id="navlist">
+      <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
+<li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
+<li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
+<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
+<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
+<li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
+<li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
+<li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
+<li data-title="8 World &amp; areas"><a class="" href="areas.html">8&ensp;World &amp; areas</a></li>
+<li data-title="9 Tutorial, random events &amp; UI systems"><a class="" href="misc.html">9&ensp;Tutorial, random events &amp; UI systems</a></li>
+<li data-title="10 Engine systems"><a class="" href="engine.html">10&ensp;Engine systems</a></li>
+<li data-title="11 Anachronism check"><a class="" href="anachronism.html">11&ensp;Anachronism check</a></li>
+<li data-title="12 Progressive-only additions"><a class="" href="progressive.html">12&ensp;Progressive-only additions</a></li>
+<li data-title="13 Previously unaudited subsystems"><a class="" href="unaudited.html">13&ensp;Previously unaudited subsystems</a></li>
+<li data-title="14 Known bugs &amp; rough edges"><a class="active" href="bugs.html">14&ensp;Known bugs &amp; rough edges</a></li>
+<li data-title="15 Plugins"><a class="" href="plugins.html">15&ensp;Plugins</a></li>
+    </ul>
+    <div class="navlabel">Quick facts</div>
+    <div class="factbox">
+      <div class="frow"><dt>Target build</dt><dd>254</dd></div>
+      <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
+    </div>
+  </nav>
+  <main class="page">
+    <article class="article-card">
+      
+<p class="breadcrumbs"><a href="../wiki.html">Coverage Wiki</a> &rsaquo; Section 14</p>
+<h1 class="pagetitle">14. Known bugs &amp; rough edges</h1>
+<p class="byline">A dedicated page from the 2004scape Progressive build 254 coverage audit.</p>
+<section class="standalone-section" id="bugs">
+<p class="lede">Expanded from the original pass with exact file locations, line-level detail, and a few additional findings surfaced while chasing down the originals. Nothing in this section reflects a code change — it's the audit trail for future fix work.</p>
+<h3>Content bugs</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Where</th><th>Issue</th></tr></thead>
+<tbody>
+<tr><td>Priest in Peril</td><td>Quest is complete and its reward is wired, but the 3 prayers it should unlock (Retribution, Redemption, Smite) don't exist anywhere in the repo. Worse than a missing-content gap: <code>prayers.dbrow</code>/<code>prayers.constant</code>/<code>prayer.rs2</code> have <em>no quest-unlock mechanism at all</em> today — every prayer's gate in <code>~prayer_checks</code> is a pure level check (<code>stat_base(prayer) &lt; ...</code>). Adding these 3 prayers means building the unlock plumbing from scratch, not just adding 3 data rows. Prayer effects themselves are hard-coded per-prayer in <code>skill_combat/scripts/player/player_combat_stat.rs2</code> (e.g. <code>check_protect_prayer</code>), which would also need new branches for Smite's prayer-drain-on-hit and Retribution's on-death AoE.</td></tr>
+<tr><td>Demon Slayer</td><td>The <code>todo: this should be instanced per player</code> comment undersells the gap. Concretely: the silverlight key is dropped as a world-visible ground item at a fixed shared coordinate (<code>obj_add(0_50_154_25_41, silverlight_key_3, ...)</code>) — any nearby player can see/loot it. Delrith himself is a single shared world NPC, located via <code>npc_find</code> and mutated in place (<code>npc_changetype</code>, <code>npc_statheal</code>) rather than spawned per player. Most importantly: <strong>there is no instancing infrastructure anywhere in the engine</strong> — an exhaustive search of the zone system (<code>Zone.ts</code>, <code>ZoneGrid.ts</code>, <code>ZoneMap.ts</code>) and the entity model turned up zero per-player zone/area concept. Fixing this properly means building a new engine feature, not patching a quest script.</td></tr>
+<tr><td>Ernest the Chicken</td><td>The broken path is the secret-bookcase door, not the lever. In <code>quest_haunted.rs2</code>, <code>manor_bookcase_door</code> scans for bookcase locs via <code>loc_findallzone</code> and the author's own comment says it plainly: <em>"This is borked for opening the doors now... Gotta think through how to make this work with find all zone."</em> The lever path (<code>hauntedleverup</code>) works because it takes a different, non-<code>loc_findallzone</code> code path to the same destination.</td></tr>
+<tr><td>Family Crest</td><td>Reward call in <code>quest_crest.rs2</code> passes <code>^squire_questpoints</code> instead of its own constant. The correct constant, <code>^crest_questpoints</code>, already exists in <code>general/configs/quest.constant</code> (line 71) and is simply never referenced — both constants currently equal 1, so the bug is silently harmless today, but would misreport if either value ever changes. A one-line fix once someone points at it.</td></tr>
+<tr><td>Plague City</td><td>Genuinely ambiguous, not just unaudited. <code>quest_elena/scripts/doors.rs2</code> hard-locks one of two adjacent plague-house doors (<code>loc_2534</code>) while the other (<code>loc_2535</code>) works. The developer's own comment cites two archived quest-guide sources (RuneHQ, Zybez, both via web.archive.org) trying to determine which physical door should be functional, and ends with <em>"todo probs not right but yolo in 225 seems only 1 door is the correct one."</em> Resolving this needs an external, period-accurate source beyond what's in the repo.</td></tr>
+<tr><td>Debug quest-name list</td><td><code>content/scripts/general/configs/quest.enum</code> (a dev cheat-menu tool, not the player quest journal) stops at index 53 ("Priest In Peril") and is missing exactly 3 entries: Nature Spirit (<code>quest_druidspirit</code>), Death Plateau (<code>quest_death</code>), Troll Stronghold (<code>quest_troll</code>) — all three fully implemented quests, just absent from this one debug list.</td></tr>
+<tr><td>Background NPC dead ends</td><td>Confirmed real, and the mechanism is now concrete: e.g. <code>area_ardougne_west/configs/man.npc</code> defines <code>w_ardougnecitizen1</code> through <code>6</code> with <code>op1=Talk-to</code>, but <code>man.rs2</code> only implements handlers for 2 of them, with a comment reading <em>"TODO: Try to find out if Jagex ever coded any dialogue for these npc"</em> next to the unhandled ones. No master list of all ~27 exists in the repo; this would need a full per-area sweep of <code>op1=Talk-to</code> entries against their matching <code>opnpc1</code> handlers to enumerate exhaustively.</td></tr>
+</tbody>
+</table>
+</div>
+<h3>Engine bugs &amp; stubs</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Where</th><th>Issue</th></tr></thead>
+<tbody>
+<tr><td>Script VM local arrays</td><td><code>DEFINE_ARRAY</code> / <code>PUSH_ARRAY_INT</code> / <code>POP_ARRAY_INT</code> (<code>engine/src/engine/script/handlers/CoreOps.ts</code>) throw <code>"unimplemented"</code> unconditionally, ignoring their operands entirely. This isn't a stub with unused scaffolding sitting nearby — <code>ScriptState</code> has no array-local storage at all today (only flat <code>intLocals</code>/<code>stringLocals</code>). A real fix means adding a new parallel local-array structure to the VM, matching the official opcode encoding, not filling in an existing gap.</td></tr>
+<tr><td><code>P_OPHELD</code></td><td>The protected "operate held item" trigger (<code>engine/src/engine/script/handlers/PlayerOps.ts</code>) throws <code>"unimplemented"</code>. The comparable working trigger, <code>P_OPLOC</code>, resolves against <code>state.activeLoc</code>; no equivalent held-item-context field exists on script state today, so this needs new state threading, not just a function body.</td></tr>
+<tr><td>Friends server world-shutdown gap</td><td>More precise than previously described: individual players <em>do</em> get correctly logged out of the friend server during shutdown (<code>removePlayer()</code> posts <code>player_logout</code> per player). What's actually missing is a world-level disconnect notice — there's no <code>WORLD_DISCONNECT</code>-equivalent opcode anywhere in <code>FriendsClientOpcodes</code>/<code>FriendsServerOpcodes</code>, and <code>FriendServer.ts</code>'s socket close handler is a literal no-op: <code>socket.on('close', () =&gt; {})</code>.</td></tr>
+<tr><td><code>Inventory.shift()</code></td><td>Confirmed fully dead: a repo-wide search for <code>.shift(</code> found zero call sites against an <code>Inventory</code> instance anywhere in <code>engine/src</code> or <code>content/scripts</code>. Its own sort comparator is also broken — it compares <code>Item</code> objects directly (<code>+(a &gt; b) || -(a &lt; b)</code>) rather than a field, which isn't a meaningful ordering. A stronger finding than "flagged for review": this code doesn't work even if called.</td></tr>
+<tr><td>Duplicate bot task base class</td><td>New finding: a full second copy of the bot task base class and <code>BuryBonesTask</code> exists at <code>engine/src/engine/bot/BotTask.ts</code> (792 lines), superseded by <code>tasks/BotTaskBase.ts</code> + <code>tasks/UtilTasks.ts</code> (which is what <code>BotGoalPlanner.ts</code> actually imports) but never removed — dead legacy duplication.</td></tr>
+</tbody>
+</table>
+</div>
+<h3>Progressive bot AI — scope, not bugs</h3>
+<div class="callout">
+<p>Two items from the original audit are re-confirmed here as <strong>accepted scope limitations</strong>, not defects to fix: <strong>bots have zero quest-awareness</strong> — a full search of <code>BotGoalPlanner.ts</code> and every file under <code>tasks/</code> found no quest state tracking, quest triggers, or quest-driven task of any kind, not even scaffolding. And <strong>bone-burying isn't real prayer training</strong> — <code>BuryBonesTask</code> is pure inventory arithmetic (remove bones, grant XP on a cooldown) with a comment admitting it "simulate[s] the outcome" of the real interaction, rather than walking to an altar and using it. Progressive's bot AI is a gathering/combat/economy simulator; teaching it to solve a 56-quest chain would be a separate project on the scale of everything else in this wiki combined.</p>
+</div>
+</section>
+<nav class="page-navigation" aria-label="Previous and next pages"><a class="prev" href="unaudited.html">&larr; 13. Previously unaudited subsystems</a><a class="next" href="plugins.html">15. Plugins &rarr;</a></nav>
+
+      <p class="pagefooter">Compiled by reading the project's own source — quest scripts, NPC/shop/skill content trees, and the TypeScript engine core — cross-checked against RuneScape's verified quest release chronology and public update history. Not affiliated with Jagex, Lost City, or the Progressive project maintainers. Where a claim couldn't be verified with real evidence in the code, it's marked as such rather than guessed.</p>
+    </article>
+  </main>
+</div>
+<script src="assets/site.js"></script>
+</body>
+</html>

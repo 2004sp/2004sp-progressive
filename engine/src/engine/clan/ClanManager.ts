@@ -338,6 +338,42 @@ class ClanManagerImpl {
         World.getPlayerByUsername(target.username)?.messageGame(`You are now ${roleLong(newRole)} in ${actor.clan.displayName}.`);
     }
 
+    async promote(player: Player, targetName: string): Promise<void> {
+        const actor = this.memberOf(player);
+        if (!actor) {
+            player.messageGame('You are not in a clan.');
+            return;
+        }
+        const target = actor.clan.members.get(norm(targetName));
+        if (!target) {
+            player.messageGame(`'${targetName}' is not in your clan.`);
+            return;
+        }
+        if (target.role >= ClanRole.OWNER) {
+            player.messageGame(`${target.username} is already at the highest rank.`);
+            return;
+        }
+        await this.setRole(player, targetName, target.role + 1);
+    }
+
+    async demote(player: Player, targetName: string): Promise<void> {
+        const actor = this.memberOf(player);
+        if (!actor) {
+            player.messageGame('You are not in a clan.');
+            return;
+        }
+        const target = actor.clan.members.get(norm(targetName));
+        if (!target) {
+            player.messageGame(`'${targetName}' is not in your clan.`);
+            return;
+        }
+        if (target.role <= ClanRole.MEMBER) {
+            player.messageGame(`${target.username} is already at the lowest rank.`);
+            return;
+        }
+        await this.setRole(player, targetName, target.role - 1);
+    }
+
     async setPerm(player: Player, action: 'delete' | 'kick' | 'mute', tier: number): Promise<void> {
         const info = this.memberOf(player);
         if (!info || info.member.role < ClanRole.OWNER) {
@@ -464,7 +500,10 @@ class ClanManagerImpl {
             return;
         }
         // Panel line — the box is clan-specific, so the clan name is implied.
-        const line = `[${info.clan.displayName}][${roleShort(info.member.role)}] ${player.username}: ${msg}`;
+        // Colour tags (317-client @xxx@ format): blue clan name, red rank, black username, green chat text.
+        // '@' is stripped from the free-typed portion so players can't inject their own tags.
+        const safeMsg = msg.replace(/@/g, '');
+        const line = `@blu@[${info.clan.displayName}]@red@[${roleShort(info.member.role)}]@bla@ ${player.username}: @gre@${safeMsg}`;
         player.messageGame(line);
         for (const username of info.clan.members.keys()) {
             const target = World.getPlayerByUsername(username);

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The audit above walks content/scripts/quests , skill_* , areas , and minigames against a real quest/feature chronology — a gameplay-content completeness audit. It never opened several other folders that…">
+  <title>13. Previously unaudited subsystems — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="assets/wiki.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brandlink" href="../wiki.html" aria-label="2004scape Progressive Wiki homepage">
+    <span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span>
+  </a>
+  <nav class="header-links" aria-label="Featured wiki pages">
+    <a href="../wiki.html">Main page</a>
+    <a href="quests.html">Quests</a>
+    <a href="skills.html">Skills</a>
+    <a href="bugs.html">Known bugs</a>
+  </nav>
+  <div class="searchwrap">
+    <span class="searchicon">&#128269;</span>
+    <input type="search" id="wikisearch" placeholder="Search wiki pages&hellip;" aria-label="Search wiki pages">
+  </div>
+  <select class="mobile-page-nav" id="mobilePageNav" aria-label="Go to wiki page">
+    <option value="../wiki.html">Home</option>
+<option value="quests.html">1. Quests</option>
+<option value="skills.html">2. Skills</option>
+<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
+<option value="npcs.html">4. NPCs &amp; dialogue</option>
+<option value="shops.html">5. Shops &amp; economy</option>
+<option value="drops.html">6. Drop tables</option>
+<option value="minigames.html">7. Minigames</option>
+<option value="areas.html">8. World &amp; areas</option>
+<option value="misc.html">9. Tutorial, random events &amp; UI systems</option>
+<option value="engine.html">10. Engine systems</option>
+<option value="anachronism.html">11. Anachronism check</option>
+<option value="progressive.html">12. Progressive-only additions</option>
+<option value="unaudited.html" selected>13. Previously unaudited subsystems</option>
+<option value="bugs.html">14. Known bugs &amp; rough edges</option>
+<option value="plugins.html">15. Plugins</option>
+  </select>
+  <div class="buildbadge">Build 254 &middot; 7 Sep 2004</div>
+</header>
+<div class="shell">
+  <nav class="sidebar" id="sidebarnav" aria-label="Wiki contents">
+    <div class="navlabel">Navigation</div>
+    <ul id="navlist">
+      <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
+<li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
+<li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
+<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
+<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
+<li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
+<li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
+<li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
+<li data-title="8 World &amp; areas"><a class="" href="areas.html">8&ensp;World &amp; areas</a></li>
+<li data-title="9 Tutorial, random events &amp; UI systems"><a class="" href="misc.html">9&ensp;Tutorial, random events &amp; UI systems</a></li>
+<li data-title="10 Engine systems"><a class="" href="engine.html">10&ensp;Engine systems</a></li>
+<li data-title="11 Anachronism check"><a class="" href="anachronism.html">11&ensp;Anachronism check</a></li>
+<li data-title="12 Progressive-only additions"><a class="" href="progressive.html">12&ensp;Progressive-only additions</a></li>
+<li data-title="13 Previously unaudited subsystems"><a class="active" href="unaudited.html">13&ensp;Previously unaudited subsystems</a></li>
+<li data-title="14 Known bugs &amp; rough edges"><a class="" href="bugs.html">14&ensp;Known bugs &amp; rough edges</a></li>
+<li data-title="15 Plugins"><a class="" href="plugins.html">15&ensp;Plugins</a></li>
+    </ul>
+    <div class="navlabel">Quick facts</div>
+    <div class="factbox">
+      <div class="frow"><dt>Target build</dt><dd>254</dd></div>
+      <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
+    </div>
+  </nav>
+  <main class="page">
+    <article class="article-card">
+      
+<p class="breadcrumbs"><a href="../wiki.html">Coverage Wiki</a> &rsaquo; Section 13</p>
+<h1 class="pagetitle">13. Previously unaudited subsystems</h1>
+<p class="byline">A dedicated page from the 2004scape Progressive build 254 coverage audit.</p>
+<section class="standalone-section" id="unaudited">
+<p class="lede">The audit above walks <code>content/scripts/quests</code>, <code>skill_*</code>, <code>areas</code>, and <code>minigames</code> against a real quest/feature chronology — a gameplay-content completeness audit. It never opened several other folders that exist in the repo. This section closes that gap: a follow-up pass specifically targeting everything the original methodology would have walked past.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Subsystem</th><th>Where</th><th>Verdict</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Boat travel</td><td><code>interface_boat/</code></td><td><span class="pill complete">Functional</span></td><td class="evidence">Thin and generic — <code>sail.rs2</code> is 29 lines (hide tabs, play jingle, delay, teleport). 8 named routes defined in <code>sail.constant</code> (Port Sarim↔Entrana/Crandor/Karamja, Ardougne↔Brimhaven, Cairn↔Port Khazard/Port Sarim). One cosmetic <code>todo</code> about a hardcoded message string.</td></tr>
+<tr><td>Report Abuse</td><td><code>interface_reportabuse/</code></td><td><span class="pill complete">Functional</span></td><td class="evidence">Not a UI stub — <code>ReportAbuseHandler.ts</code> validates the reason code, applies a 2-day auto-mute for moderator-flagged reports (production only), and calls <code>World.notifyPlayerReport()</code>, which for macroing/bug-abuse reports flips on input-tracking for the reported player and logs it.</td></tr>
+<tr><td>Macro / random events</td><td><code>macro events/</code></td><td><span class="pill complete">Large, functional</span></td><td class="evidence">~5,100 lines: 2 config tables (<code>antimacro.npc</code> 1,738 lines, <code>antimacro.obj</code> 783) plus 25 category scripts (fishing/general/mining/prayer/thieving/woodcutting). Genuine OSRS-era random events (Swarm, Genie, Mysterious Old Man, Maze, Mime, Strange Box, Drunken Dwarf, etc.) with real spawn/area-restriction logic. Comments cite specific YouTube timestamps as behavioral sources. Two explicitly unimplemented triggers noted in-code: anvil use and fletching ("Cant find a video, not implemented").</td></tr>
+<tr><td>Options / Controls / Welcome screen</td><td><code>interface_options/</code>, <code>interface_controls/</code>, <code>interface_welcomescreen/</code></td><td><span class="pill complete">Functional</span></td><td class="evidence">All populated: Options ~1,166 lines (incl. a low-detail variant), Controls ~709 lines, Welcome screen ~1,497 lines of interface but zero <code>.rs2</code> — its logic (last-login info, mismatched-IP warning) is driven from the login flow rather than this folder.</td></tr>
+<tr><td>Chat word filter</td><td><code>content/wordenc/</code> + <code>engine/src/cache/wordenc/</code></td><td><span class="pill complete">Complete</span></td><td class="evidence">~5,357 lines of filter data (bad words, domains, fragments, TLDs) backing a ~993-line runtime filter (<code>WordEnc.ts</code> and friends). Confirmed wired into <code>MessagePublicHandler.ts</code>, which calls <code>WordEnc.filter()</code> before broadcasting public chat.</td></tr>
+<tr><td>Login / network stack</td><td><code>engine/src/server/login/</code>, <code>engine/src/network/</code>, <code>engine/src/io/</code></td><td><span class="pill complete">Actively maintained</span></td><td class="evidence">561-line <code>LoginServer.ts</code>, a 39-handler/39-codec/41-model client protocol layer plus 71 server codecs/models, and a real Isaac-cipher/Packet/Jagfile/compression IO layer. Only 14 minor inline <code>todo</code>s found across all of it (e.g. "can we upsert in kysely?") — this reads as first-party maintained code, not dead inherited scaffolding.</td></tr>
+<tr><td><code>web.ts</code></td><td><code>engine/src/web.ts</code> (373 lines)</td><td><span class="pill complete">Multi-purpose, functional</span></td><td class="evidence">Serves cache assets over HTTP, renders the Java/web client bootstrap page, exposes a JSON hiscores API backed by SQLite, upgrades websocket connections into the game protocol, and runs a separate Prometheus metrics endpoint. Also has debug-gated (<code>NODE_DEBUG</code>-only) file read/write routes and a map editor — correctly fenced off from production.</td></tr>
+<tr><td>Entity / Zone / GameMap / cache layer</td><td><code>engine/src/engine/entity</code>, <code>zone</code>, <code>GameMap.ts</code>, <code>engine/src/cache</code></td><td><span class="pill complete">Mostly clean</span></td><td class="evidence">Zone system (<code>Zone.ts</code> 578 lines + supporting files) has zero TODO/stub markers. Entity model (39 files, ~6,438 lines) has scattered minor todos in <code>Player.ts</code>, including one live runtime stub message for a "vis" (visibility) feature. Cache layer is essentially complete bar minor inline notes.</td></tr>
+<tr><td>Asset request rate limiting</td><td><code>engine/src/engine/OnDemand.ts</code></td><td><span class="pill missing">Gap</span></td><td class="evidence">One real, specific finding: <code>// todo: limit requests per client per cycle</code> — the on-demand cache/asset request protocol has no per-client rate limiting today.</td></tr>
+<tr><td>Security / anti-dupe</td><td>packet + item-container handling, engine-wide</td><td><span class="pill missing">Real gap — flagged</span></td><td class="evidence">See callout below.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout warn" style="margin-top:16px">
+<p><strong>The one substantive finding from this pass:</strong> <code>ClientGameProt.ts</code> declares a full family of "anticheat" wire opcodes (<code>ANTICHEAT_OPLOGIC1–9</code>, <code>ANTICHEAT_CYCLELOGIC1–7</code>) with corresponding model classes (<code>AnticheatOpLogic.ts</code>, <code>AnticheatCycleLogic.ts</code>) — but a repo-wide search found no handler or codec that actually processes them. The wire format exists; nothing decodes or acts on it. Separately, rate limiting exists only for login attempts (<code>World.ts</code>, gated by <code>NODE_RATELIMIT_ADDRESS_LOGIN</code> / <code>NODE_RATELIMIT_DEVICE_LOGIN</code>) — there's no rate limiting on gameplay packets (drops, trades, etc.), and no transactional/locking protection around item-container mutations that would guard against duplication races. This is documentation only: no code was changed to address it. Wiring up real anti-cheat/anti-dupe protection is a deep, high-risk systems change that deserves its own dedicated review rather than a fast pass alongside a documentation audit.</p>
+</div>
+</section>
+<nav class="page-navigation" aria-label="Previous and next pages"><a class="prev" href="progressive.html">&larr; 12. Progressive-only additions</a><a class="next" href="bugs.html">14. Known bugs &amp; rough edges &rarr;</a></nav>
+
+      <p class="pagefooter">Compiled by reading the project's own source — quest scripts, NPC/shop/skill content trees, and the TypeScript engine core — cross-checked against RuneScape's verified quest release chronology and public update history. Not affiliated with Jagex, Lost City, or the Progressive project maintainers. Where a claim couldn't be verified with real evidence in the code, it's marked as such rather than guessed.</p>
+    </article>
+  </main>
+</div>
+<script src="assets/site.js"></script>
+</body>
+</html>

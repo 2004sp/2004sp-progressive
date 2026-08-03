@@ -11483,7 +11483,7 @@ export class Client extends GameShell {
 
                 if (type === 0) {
                     if (y > 0 && y < 110) {
-                        font?.drawString(message, 4, y, Colour.BLACK);
+                        font?.drawStringTag(message, 4, y, Colour.BLACK, false);
                     }
 
                     line++;
