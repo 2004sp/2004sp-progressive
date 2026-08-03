@@ -325,13 +325,10 @@
         import { Client } from './client/client.js?v=public-clan-filter-7';
 
         function resetCompassAndCamera(client) {
-            client.tw = 0;
-            client.ru = 0;
-            client.uu = 0;
             client.uw = 0;
+            client.tw = 128;
             client.ww = 0;
-            client.rw = 0;
-            client.sw = 128;
+            client.xw = 0;
             client.northLock = 20;
             client.bw = true;
             client.Vc[1] = 0;
@@ -437,14 +434,14 @@
                     const dy = event.screenY - previousScreenY;
                     const yawDelta = Math.round(dx * 2);
                     const pitchDelta = Math.round(dy * 0.75);
-                    this.tw = (this.tw - yawDelta) & 2047;
-                    this.sw = Math.max(128, Math.min(383, this.sw + pitchDelta));
+                    this.uw = (this.uw - yawDelta) & 2047;
+                    this.tw = Math.max(128, Math.min(383, this.tw + pitchDelta));
                     this.bw = true;
                     this.northLock = 0;
                 }
 
-                this.uw = 0;
                 this.ww = 0;
+                this.xw = 0;
                 this.Vc[1] = 0;
                 this.Vc[2] = 0;
                 this.Vc[3] = 0;
@@ -461,8 +458,8 @@
             return originalPointerLeave.call(this, event);
         };
 
-        const originalMinimapClick = Client.prototype.UA;
-        Client.prototype.UA = function () {
+        const originalMinimapClick = Client.prototype.WA;
+        Client.prototype.WA = function () {
             if (this.Qc === 1 && isCompassClick(this, this.Rc, this.Sc)) {
                 resetCompassAndCamera(this);
                 return;
@@ -471,17 +468,15 @@
             return originalMinimapClick.call(this);
         };
 
-        const originalCameraUpdate = Client.prototype.tB;
-        Client.prototype.tB = function () {
+        const originalCameraUpdate = Client.prototype.ZA;
+        Client.prototype.ZA = function () {
             const result = originalCameraUpdate.call(this);
 
             if (this.northLock > 0) {
-                this.tw = 0;
-                this.ru = 0;
-                this.uu = 0;
                 this.uw = 0;
+                this.tw = 128;
                 this.ww = 0;
-                this.sw = 128;
+                this.xw = 0;
                 this.northLock--;
             }
 
@@ -506,10 +501,10 @@
                 middleLastX = event.clientX;
                 middleLastY = event.clientY;
 
-                client.tw = (client.tw - yawDelta) & 2047;
-                client.sw = Math.max(128, Math.min(383, client.sw + pitchDelta));
-                client.uw = 0;
+                client.uw = (client.uw - yawDelta) & 2047;
+                client.tw = Math.max(128, Math.min(383, client.tw + pitchDelta));
                 client.ww = 0;
+                client.xw = 0;
                 client.northLock = 0;
                 client.bw = true;
             };
@@ -520,8 +515,8 @@
                 }
 
                 middleRotating = false;
-                client.uw = 0;
                 client.ww = 0;
+                client.xw = 0;
                 event?.preventDefault();
                 event?.stopImmediatePropagation();
             };
@@ -534,8 +529,8 @@
                 middleRotating = true;
                 middleLastX = event.clientX;
                 middleLastY = event.clientY;
-                client.uw = 0;
                 client.ww = 0;
+                client.xw = 0;
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 if (Number.isFinite(event.pointerId)) {

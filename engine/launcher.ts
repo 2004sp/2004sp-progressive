@@ -124,6 +124,68 @@ async function runScriptAndWait(name: string, heartbeat?: ProgressRange) {
     return code ?? 0;
 }
 
+async function runCommandAndWait(cmd: string, args: string[], cwd: string, heartbeat?: ProgressRange) {
+    const key = `${cmd} ${args.join(' ')} (${cwd})`;
+    const proc = spawn(cmd, args, {
+        stdio: 'inherit',
+        shell: true,
+        cwd,
+    });
+
+    runningProcesses[key] = proc;
+
+    const timer = startProgressHeartbeat(heartbeat);
+    const code = await new Promise<number | null>(resolve => {
+        proc.on('error', () => resolve(-1));
+        proc.on('exit', resolve);
+    });
+    if (timer) {
+        clearInterval(timer);
+    }
+    delete runningProcesses[key];
+    return code ?? 0;
+}
+
+async function buildWebClient() {
+    const webclientDir = path.join(__dirname, '..', 'webclient');
+
+    progress(10, 'Checking webclient folder');
+    if (!fs.existsSync(webclientDir)) {
+        console.log(`❌ webclient folder not found at ${webclientDir}`);
+        return;
+    }
+
+    const hasDependencies = fs.existsSync(path.join(webclientDir, 'node_modules', 'terser'));
+    if (!hasDependencies) {
+        progress(30, 'Installing webclient dependencies (bun install)');
+        const installCode = await runCommandAndWait('bun', ['install'], webclientDir, { from: 30, to: 49, message: 'Installing webclient dependencies' });
+        if (installCode !== 0) {
+            console.log('❌ bun install failed. Make sure bun is installed (https://bun.sh) and on PATH, then try again.');
+            return;
+        }
+    }
+
+    progress(55, 'Building webclient (bun run build)');
+    const buildCode = await runCommandAndWait('bun', ['run', 'build'], webclientDir, { from: 55, to: 89, message: 'Building webclient' });
+    if (buildCode !== 0) {
+        console.log('❌ Webclient build failed. Make sure bun is installed (https://bun.sh) and on PATH, then try again.');
+        return;
+    }
+
+    progress(92, 'Copying build output into engine/public/client');
+    const src = path.join(webclientDir, 'out', 'client.js');
+    const dest = path.join(__dirname, 'public', 'client', 'client.js');
+    if (!fs.existsSync(src)) {
+        console.log(`❌ Build output not found at ${src}`);
+        return;
+    }
+
+    fs.copyFileSync(src, dest);
+    console.log(`✅ Copied ${src} -> ${dest}`);
+
+    progress(100, 'Webclient build complete');
+}
+
 async function ensureDependencies() {
     progress(20, 'Checking dependencies');
     const requiredPackages = ['tsx', 'bcrypt-ts'];
@@ -274,10 +336,11 @@ ${kleur.bold().yellow('Setup and Maintenance')}
   ${kleur.yellow('12.')} Setup / Configure Database ${kleur.gray('(first-time setup)')}
   ${kleur.yellow('13.')} Patch .env ${kleur.gray('(disable routefinder + build verify)')}
   ${kleur.yellow('14.')} Custom Content ${kleur.gray('(enable/disable optional content)')}
+  ${kleur.yellow('15.')} Build Web Client ${kleur.gray('(bun install -> bun run build -> copy into engine/public/client)')}
 
 ${kleur.bold().magenta('Accounts')}
-  ${kleur.magenta('15.')} Import Character (.sav -> account)
-  ${kleur.magenta('16.')} Change Password
+  ${kleur.magenta('16.')} Import Character (.sav -> account)
+  ${kleur.magenta('17.')} Change Password
 
 ${kleur.bold().red('Exit')}
   ${kleur.red('0.')}  Exit
@@ -367,10 +430,14 @@ async function handleInput(input: string) {
             return; // customContentMenu shows the menu after finishing
 
         case '15':
+            await buildWebClient();
+            break;
+
+        case '16':
             await importCharacter();
             return; // importCharacter shows the menu after finishing
 
-        case '16':
+        case '17':
             await changePassword();
             return; // changePassword shows the menu after finishing
 
