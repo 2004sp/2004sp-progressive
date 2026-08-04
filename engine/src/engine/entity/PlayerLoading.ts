@@ -150,7 +150,7 @@ export class PlayerLoading {
         // chat modes
         if (version >= 4) {
             const packedChatModes = sav.g1();
-            player.publicChat = (packedChatModes >> 4) & 0b11;
+            player.publicChat = (packedChatModes >> 4) & 0b111;
             player.privateChat = (packedChatModes >> 2) & 0b11;
             player.tradeDuel = packedChatModes & 0b11;
         }

@@ -3114,7 +3114,7 @@ export class Client extends GameShell {
             this.redrawChatback = true;
 
             this.out.pIsaac(ClientProt.CHAT_SETMODE);
-            this.out.p1(Math.min(this.chatPublicMode, 3));
+            this.out.p1(this.chatPublicMode);
             this.out.p1(this.chatPrivateMode);
             this.out.p1(this.chatTradeMode);
         } else if (this.mouseClickX >= 135 && this.mouseClickX <= 235 && this.mouseClickY >= 467 && this.mouseClickY <= 499) {
@@ -3123,7 +3123,7 @@ export class Client extends GameShell {
             this.redrawChatback = true;
 
             this.out.pIsaac(ClientProt.CHAT_SETMODE);
-            this.out.p1(Math.min(this.chatPublicMode, 3));
+            this.out.p1(this.chatPublicMode);
             this.out.p1(this.chatPrivateMode);
             this.out.p1(this.chatTradeMode);
         } else if (this.mouseClickX >= 273 && this.mouseClickX <= 373 && this.mouseClickY >= 467 && this.mouseClickY <= 499) {
@@ -3132,7 +3132,7 @@ export class Client extends GameShell {
             this.redrawChatback = true;
 
             this.out.pIsaac(ClientProt.CHAT_SETMODE);
-            this.out.p1(Math.min(this.chatPublicMode, 3));
+            this.out.p1(this.chatPublicMode);
             this.out.p1(this.chatPrivateMode);
             this.out.p1(this.chatTradeMode);
         } else if (this.mouseClickX >= 412 && this.mouseClickX <= 512 && this.mouseClickY >= 467 && this.mouseClickY <= 499) {
@@ -3257,7 +3257,7 @@ export class Client extends GameShell {
                                     this.redrawPrivacySettings = true;
 
                                     this.out.pIsaac(ClientProt.CHAT_SETMODE);
-            this.out.p1(Math.min(this.chatPublicMode, 3));
+            this.out.p1(this.chatPublicMode);
                                     this.out.p1(this.chatPrivateMode);
                                     this.out.p1(this.chatTradeMode);
                                 }
@@ -8710,7 +8710,7 @@ export class Client extends GameShell {
 
     private shouldShowPublicFilterLine(message: string): boolean {
         const isWorld = message.startsWith('[World] ');
-        const isClan = /^\[[^\]]+\]\[[^\]]+\]\s/.test(message);
+        const isClan = /^@\w+@\[[^\]]+\]@\w+@\[[^\]]+\]@\w+@\s/.test(message);
         if (isClan) {
             return this.chatPublicMode === 0 || this.chatPublicMode === 3;
         }
