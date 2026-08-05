@@ -3,7 +3,7 @@ gosub(npc_death);
 if (npc_findhero = ^false) {
     return;
 }
-if (random(10000) = 0) {
+if (random(10000) = 0 & map_feature("bosspets") = true) {
     queue(kq_pet_award, 0, 0);
 }
 

@@ -9,11 +9,11 @@ if (npc_findhero = ^false) {
 // Not tied to login — logging in/out has no effect on this timer.
 queue(spawn_chaos_elemental, 500, 0);
 // Pet drop: 1/5000
-if (random(5000) = 0) {
+if (random(5000) = 0 & map_feature("bosspets") = true) {
     queue(chaos_elemental_pet_award, 0, 0);
 }
 // Dragon pickaxe: 1/1000
-if (random(1000) = 0) {
+if (random(1000) = 0 & map_feature("customweapons") = true) {
     obj_add(npc_coord, dragon_pickaxe, 1, ^lootdrop_duration);
 }
 // Drop table - similar to KBD without bones/dragonhide, adds dragon pickaxe
@@ -27,7 +27,7 @@ if ($random < 10) {
     obj_add(npc_coord, adamant_platebody, 1, ^lootdrop_duration);
 } else if ($random < 20) {
     obj_add(npc_coord, dragon_med_helm, 1, ^lootdrop_duration);
-} else if ($random < 21) {
+} else if ($random < 21 & map_feature("customweapons") = true) {
     obj_add(npc_coord, dragon_pickaxe, 1, ^lootdrop_duration);
 } else if ($random < 31) {
     obj_add(npc_coord, bronze_arrow, 310, ^lootdrop_duration);

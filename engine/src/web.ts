@@ -15,7 +15,7 @@ import NullClientSocket from '#/server/NullClientSocket.js';
 import WSClientSocket from '#/server/ws/WSClientSocket.js';
 import Environment from '#/util/Environment.js';
 import OnDemand from '#/engine/OnDemand.js';
-import { tryParseInt } from '#/util/TryParse.js';
+import { tryParseBoolean, tryParseInt } from '#/util/TryParse.js';
 
 export type WebSocketData = {
     client: WSClientSocket;
@@ -146,6 +146,21 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(html);
             return;
+        } else if (url.pathname === '/api/features') {
+            // Exposes the current NODE_FEATURE_*/NODE_QOL_* toggles as JSON so external
+            // clients (e.g. the desktop wrapper) can mirror the in-game map_feature() gating
+            // instead of hardcoding their own values.
+            return jsonResponse(res, {
+                clans: Environment.NODE_FEATURE_CLANS,
+                middleMouseRotation: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
+                compassReset: Environment.NODE_QOL_COMPASS_RESET,
+                customshops: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMSHOPS, true),
+                bosspets: tryParseBoolean(process.env.NODE_FEATURE_BOSSPETS, true),
+                customweapons: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMWEAPONS, true),
+                skillcapes: tryParseBoolean(process.env.NODE_FEATURE_SKILLCAPES, true),
+                xamount: tryParseBoolean(process.env.NODE_FEATURE_XAMOUNT, true),
+                makex: tryParseBoolean(process.env.NODE_FEATURE_MAKEX, true)
+            });
         } else if (url.pathname === '/worldmap.jag') {
             if (fs.existsSync('data/pack/mapview/worldmap.jag')) {
                 return serveFile(res, 'data/pack/mapview/worldmap.jag', 'application/octet-stream');

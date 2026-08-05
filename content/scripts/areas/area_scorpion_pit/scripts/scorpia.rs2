@@ -25,12 +25,12 @@ if (npc_findhero = ^false) {
 }
 
 // Dragon 2h sword: 1/1000
-if (random(1000) = 0) {
+if (random(1000) = 0 & map_feature("customweapons") = true) {
     obj_add(npc_coord, dragon_2h_sword, 1, ^lootdrop_duration);
 }
 
 // Scorpia pet: 1/5000
-if (random(5000) = 0) {
+if (random(5000) = 0 & map_feature("bosspets") = true) {
     queue(scorpia_pet_award, 0, 0);
 }
 

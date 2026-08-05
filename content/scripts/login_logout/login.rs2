@@ -63,7 +63,7 @@ queue(macro_event_login, 0, 0);
 ~thieving_stall_timers_login;
 ~stat_boost_login; // f2p boost reset
 ~sa_login; // start timer if low sa energy
-if(npc_find(0_51_52_19_58, callum, 3, 0) = false) {
+if (map_feature("customshops") = true & npc_find(0_51_52_19_58, callum, 3, 0) = false) {
     npc_add(0_51_52_19_58, callum, 2000000);
 }
 // On server startup (keeper absent): spawn the keeper and the CE together.

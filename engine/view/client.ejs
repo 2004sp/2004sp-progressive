@@ -325,10 +325,9 @@
         import { Client } from './client/client.js?v=public-clan-filter-11';
 
         function resetCompassAndCamera(client) {
+            client.tw = 0;
             client.uw = 0;
-            client.tw = 128;
             client.ww = 0;
-            client.xw = 0;
             client.northLock = 20;
             client.bw = true;
             client.Vc[1] = 0;
@@ -434,14 +433,14 @@
                     const dy = event.screenY - previousScreenY;
                     const yawDelta = Math.round(dx * 2);
                     const pitchDelta = Math.round(dy * 0.75);
-                    this.uw = (this.uw - yawDelta) & 2047;
-                    this.tw = Math.max(128, Math.min(383, this.tw + pitchDelta));
+                    this.tw = (this.tw - yawDelta) & 2047;
+                    this.sw = Math.max(128, Math.min(383, this.sw + pitchDelta));
                     this.bw = true;
                     this.northLock = 0;
                 }
 
                 this.ww = 0;
-                this.xw = 0;
+                this.uw = 0;
                 this.Vc[1] = 0;
                 this.Vc[2] = 0;
                 this.Vc[3] = 0;
@@ -473,10 +472,9 @@
             const result = originalCameraUpdate.call(this);
 
             if (this.northLock > 0) {
+                this.tw = 0;
                 this.uw = 0;
-                this.tw = 128;
                 this.ww = 0;
-                this.xw = 0;
                 this.northLock--;
             }
 
@@ -501,10 +499,10 @@
                 middleLastX = event.clientX;
                 middleLastY = event.clientY;
 
-                client.uw = (client.uw - yawDelta) & 2047;
-                client.tw = Math.max(128, Math.min(383, client.tw + pitchDelta));
+                client.tw = (client.tw - yawDelta) & 2047;
+                client.sw = Math.max(128, Math.min(383, client.sw + pitchDelta));
                 client.ww = 0;
-                client.xw = 0;
+                client.uw = 0;
                 client.northLock = 0;
                 client.bw = true;
             };
@@ -516,7 +514,7 @@
 
                 middleRotating = false;
                 client.ww = 0;
-                client.xw = 0;
+                client.uw = 0;
                 event?.preventDefault();
                 event?.stopImmediatePropagation();
             };
@@ -530,7 +528,7 @@
                 middleLastX = event.clientX;
                 middleLastY = event.clientY;
                 client.ww = 0;
-                client.xw = 0;
+                client.uw = 0;
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 if (Number.isFinite(event.pointerId)) {

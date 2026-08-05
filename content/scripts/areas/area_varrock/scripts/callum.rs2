@@ -1,4 +1,8 @@
 [opnpc1,callum]
+if (map_feature("customshops") = false) {
+    ~chatnpc("<p,neutral>Sorry, I'm not currently trading.");
+    return;
+}
 ~chatnpc("<p,happy>Welcome! I sell the finest skill capes and rare items.");
 def_int $option = ~p_choice2("Let me take a look.", 1, "No thanks.", 2);
 if($option = 1) {
@@ -9,4 +13,6 @@ if($option = 1) {
 }
 
 [ai_queue3,callum]
-npc_add(0_51_52_19_58, callum, 2000000);
+if (map_feature("customshops") = true) {
+    npc_add(0_51_52_19_58, callum, 2000000);
+}
