@@ -3,6 +3,22 @@ setlocal
 cd /d "%~dp0"
 title 2004Scape Progressive Launcher
 
+rem Engine-TS revision 254 is Bun-targeted. Make sure Bun is available even if it is not on PATH yet.
+where bun >nul 2>nul
+if errorlevel 1 (
+    if exist "%USERPROFILE%\.bun\bin\bun.exe" (
+        set "PATH=%USERPROFILE%\.bun\bin;%PATH%"
+    )
+)
+where bun >nul 2>nul
+if errorlevel 1 (
+    echo Bun is required to build the engine, but it was not found.
+    echo Expected location: %USERPROFILE%\.bun\bin\bun.exe
+    echo.
+    pause
+    exit /b 1
+)
+
 call :progress 0 "Preparing launcher"
 
 echo.
@@ -19,15 +35,18 @@ popd
 if not exist "engine\.build_complete" (
     call :progress 12 "Building engine (first run only)"
     pushd engine
+    set "BUILD_VERBOSE=true"
     call npm run build
     if errorlevel 1 (
+        set "BUILD_VERBOSE="
         popd
         echo.
-        echo Engine build failed.
+        echo Engine build failed. The full stack trace is shown above.
         echo.
         pause
         exit /b 1
     )
+    set "BUILD_VERBOSE="
     echo. > .build_complete
     popd
 )

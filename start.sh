@@ -29,14 +29,26 @@ echo
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
+# Engine-TS revision 254 is Bun-targeted. Make sure Bun is available even if it is not on PATH yet.
+if ! command -v bun >/dev/null 2>&1; then
+    if [ -x "$HOME/.bun/bin/bun" ]; then
+        export PATH="$HOME/.bun/bin:$PATH"
+    fi
+fi
+if ! command -v bun >/dev/null 2>&1; then
+    echo "Bun is required to build the engine, but it was not found."
+    echo "Expected location: $HOME/.bun/bin/bun"
+    exit 1
+fi
+
 progress 10 "Installing engine dependencies"
 (cd "$ROOT_DIR/engine" && npm install)
 
 if [ ! -f "$ROOT_DIR/engine/.build_complete" ]; then
     progress 12 "Building engine (first run only)"
-    if ! (cd "$ROOT_DIR/engine" && npm run build); then
+    if ! (cd "$ROOT_DIR/engine" && BUILD_VERBOSE=true npm run build); then
         echo
-        echo "Engine build failed."
+        echo "Engine build failed. The full stack trace is shown above."
         exit 1
     fi
     touch "$ROOT_DIR/engine/.build_complete"
