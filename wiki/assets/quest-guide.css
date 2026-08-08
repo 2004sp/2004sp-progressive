@@ -1,0 +1,56 @@
+/* ---------- standalone quest guide pages ---------- */
+.guide-shell{
+  display:block;
+  width:min(920px,calc(100% - 28px));
+  margin:16px auto 38px;
+}
+.guide-topbar{
+  width:min(920px,calc(100% - 28px));
+  min-height:0;
+  margin:14px auto 0;
+  padding:10px 14px;
+}
+.guide-topbar .brandlink{min-width:0;flex:0 0 auto;}
+.guide-topbar .header-links{margin-left:auto;}
+.guide-infobox .row dd{font-weight:700;}
+.guide-meta{margin:2px 0 20px;color:#746b5c;font-size:11px;}
+.quest-steps{margin:0 0 4px;padding-left:23px;}
+.quest-steps li{margin-bottom:9px;line-height:1.55;}
+.quest-steps li::marker{color:#8b6c35;font-weight:700;}
+.guide-footnote{margin-top:22px;padding:10px 12px;background:#eee3cc;border:1px solid #c1ae87;border-left:4px solid var(--olive-3);font-size:11px;color:#5b5344;}
+@media (max-width:700px){
+  .guide-topbar{width:calc(100% - 14px);}
+}
+
+/* ---------- shared skill guide unlock tables ---------- */
+.guide-page .table-wrap{
+  width:100%;
+  max-width:100%;
+  overflow-x:visible;
+}
+.guide-page .skill-unlock-table{
+  width:100%;
+  min-width:0;
+  table-layout:auto;
+}
+.guide-page .skill-unlock-table th,
+.guide-page .skill-unlock-table td{
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.skill-unlock-table th:first-child,
+.skill-unlock-table td:first-child{width:64px;white-space:nowrap;}
+.skill-unlock-table th:last-child,
+.skill-unlock-table td:last-child{width:76px;text-align:center;white-space:nowrap;}
+.skill-unlock-table td.member-yes,
+.skill-unlock-table td.member-no{font-weight:700;}
+.requirement-note{
+  display:block;
+  margin-top:4px;
+  color:#743426;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.35;
+}
+.requirement-note::before{content:"Requires: ";}
+.requirement-note a{color:inherit;text-decoration:underline;}

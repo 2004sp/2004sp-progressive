@@ -16,6 +16,22 @@ pushd engine
 call npm install
 popd
 
+if not exist "engine\.build_complete" (
+    call :progress 12 "Building engine (first run only)"
+    pushd engine
+    call npm run build
+    if errorlevel 1 (
+        popd
+        echo.
+        echo Engine build failed.
+        echo.
+        pause
+        exit /b 1
+    )
+    echo. > .build_complete
+    popd
+)
+
 call :progress 15 "Checking files"
 if not exist "engine\launcher.ts" (
     echo Could not find engine\launcher.ts.

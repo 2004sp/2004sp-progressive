@@ -32,6 +32,16 @@ export NVM_DIR="$HOME/.nvm"
 progress 10 "Installing engine dependencies"
 (cd "$ROOT_DIR/engine" && npm install)
 
+if [ ! -f "$ROOT_DIR/engine/.build_complete" ]; then
+    progress 12 "Building engine (first run only)"
+    if ! (cd "$ROOT_DIR/engine" && npm run build); then
+        echo
+        echo "Engine build failed."
+        exit 1
+    fi
+    touch "$ROOT_DIR/engine/.build_complete"
+fi
+
 progress 15 "Checking files"
 if [ ! -f "$ROOT_DIR/engine/launcher.ts" ]; then
     echo "Could not find engine/launcher.ts."
