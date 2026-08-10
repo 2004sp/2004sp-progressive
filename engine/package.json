@@ -8,8 +8,8 @@
     "#tools/*": "./tools/*"
   },
   "scripts": {
-    "build": "tsx tools/pack/Build.ts",
-    "clean": "tsx tools/pack/Clean.ts",
+    "build": "bun run tools/pack/Build.ts",
+    "clean": "bun run tools/pack/Clean.ts",
     "db:migrate": "prisma migrate deploy --schema prisma/multiworld/schema.prisma",
     "db:reset": "prisma migrate reset --force --schema prisma/multiworld/schema.prisma",
     "db:schema": "prisma migrate dev --schema prisma/multiworld/schema.prisma",

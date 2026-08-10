@@ -263,16 +263,94 @@
     grid.parentNode.replaceChild(groupedWrap, grid);
   }
 
+  function refreshQuestAccessRows(table){
+    if(!table) return;
+    Array.prototype.forEach.call(table.querySelectorAll('.quest-access-row'), function(header){
+      var row = header.nextElementSibling;
+      var hasVisibleQuest = false;
+      while(row && !row.classList.contains('quest-access-row')){
+        if(!row.classList.contains('hidden-by-filter') && !row.classList.contains('hidden-by-search')){
+          hasVisibleQuest = true;
+          break;
+        }
+        row = row.nextElementSibling;
+      }
+      header.classList.toggle('hidden-by-group', !hasVisibleQuest);
+    });
+  }
+
+  function splitQuestRowsByAccess(){
+    if(currentMeta.file !== 'quests.html') return;
+    var table = document.getElementById('quest-table');
+    if(!table) return;
+    var tbody = table.querySelector('tbody');
+    if(!tbody || tbody.querySelector('.quest-access-row')) return;
+
+    var nonMembers = {
+      'cooks-assistant.html':true,
+      'demon-slayer.html':true,
+      'restless-ghost.html':true,
+      'romeo-and-juliet.html':true,
+      'sheep-shearer.html':true,
+      'shield-of-arrav.html':true,
+      'ernest-the-chicken.html':true,
+      'vampyre-slayer.html':true,
+      'imp-catcher.html':true,
+      'prince-ali-rescue.html':true,
+      'dorics-quest.html':true,
+      'black-knights-fortress.html':true,
+      'the-knights-sword.html':true,
+      'goblin-diplomacy.html':true,
+      'pirates-treasure.html':true,
+      'dragon-slayer.html':true,
+      'rune-mysteries.html':true,
+      'witchs-potion.html':true
+    };
+
+    var memberRows = [];
+    var nonMemberRows = [];
+    Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function(row){
+      var questLink = row.querySelector('td:nth-child(2) a[href]');
+      var questFile = questLink ? pageNameFromHref(questLink.getAttribute('href')) : '';
+      var access = nonMembers[questFile] ? 'non-members' : 'members';
+      row.setAttribute('data-access', access);
+      (access === 'members' ? memberRows : nonMemberRows).push(row);
+    });
+
+    function makeAccessRow(label, count, access){
+      var row = makeEl('tr', 'quest-access-row');
+      row.setAttribute('data-access', access);
+      var cell = makeEl('td', 'quest-access-cell');
+      cell.colSpan = 4;
+      cell.appendChild(makeEl('strong', '', label));
+      cell.appendChild(makeEl('span', 'quest-access-count', count + ' quests'));
+      row.appendChild(cell);
+      return row;
+    }
+
+    tbody.innerHTML = '';
+    tbody.appendChild(makeAccessRow('Members', memberRows.length, 'members'));
+    memberRows.forEach(function(row){ tbody.appendChild(row); });
+    tbody.appendChild(makeAccessRow('Non-members', nonMemberRows.length, 'non-members'));
+    nonMemberRows.forEach(function(row){ tbody.appendChild(row); });
+  }
+
   function setupQuestFilter(){
-    var buttons = document.querySelectorAll('.filters button');
-    var rows = document.querySelectorAll('#quest-table tbody tr');
-    Array.prototype.forEach.call(buttons, function(button){
-      button.addEventListener('click', function(){
-        Array.prototype.forEach.call(buttons, function(item){ item.classList.remove('active'); });
-        button.classList.add('active');
-        var filter = button.getAttribute('data-filter');
-        Array.prototype.forEach.call(rows, function(row){
-          row.classList.toggle('hidden-by-filter', filter !== 'all' && row.getAttribute('data-status') !== filter);
+    Array.prototype.forEach.call(document.querySelectorAll('.filters'), function(filterGroup){
+      var table = filterGroup.parentElement && filterGroup.parentElement.querySelector('table');
+      if(!table) return;
+      var buttons = filterGroup.querySelectorAll('button');
+      var rows = table.querySelectorAll('tbody tr');
+      Array.prototype.forEach.call(buttons, function(button){
+        button.addEventListener('click', function(){
+          Array.prototype.forEach.call(buttons, function(item){ item.classList.remove('active'); });
+          button.classList.add('active');
+          var filter = button.getAttribute('data-filter');
+          Array.prototype.forEach.call(rows, function(row){
+            if(row.classList.contains('quest-access-row')) return;
+            row.classList.toggle('hidden-by-filter', filter !== 'all' && row.getAttribute('data-status') !== filter);
+          });
+          refreshQuestAccessRows(table);
         });
       });
     });
@@ -316,11 +394,13 @@
         var query = search.value.trim().toLowerCase();
         var riskyOnly = toolbar.querySelector('.risk-toggle.active');
         Array.prototype.forEach.call(table.querySelectorAll('tbody tr'), function(row){
+          if(row.classList.contains('quest-access-row')) return;
           var text = row.textContent.toLowerCase();
           var matchesSearch = !query || text.indexOf(query) !== -1;
           var matchesRisk = !riskyOnly || /clear|reset|delete|ban|mute|kick|reboot|damage|kill|poison|drop|teleother|giveother|permanent/.test(text);
           row.classList.toggle('hidden-by-search', !matchesSearch || !matchesRisk);
         });
+        refreshQuestAccessRows(table);
       }
 
       search.addEventListener('input', filterTable);
@@ -376,6 +456,7 @@
   injectPageSummary();
   injectStatusLegend();
   groupHomepageCards();
+  splitQuestRowsByAccess();
   setupQuestFilter();
   setupTableTools();
   setupGlobalSearch();

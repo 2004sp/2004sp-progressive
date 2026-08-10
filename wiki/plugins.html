@@ -84,6 +84,79 @@
 <div class="callout">
 <p><strong>Admin commands used below:</strong> item spawning requires administrator level 3 or higher and uses <code>::give &lt;item_debug_name&gt; [amount]</code>. Commands and item names are case-insensitive.</p>
 </div>
+
+<h3 id="how-it-works">How plugin toggles work (start here)</h3>
+<div class="callout">
+<p><strong>New to this? Read this first.</strong> A "plugin" on this page isn't a separate add-on file — it's just optional code that's already sitting inside the server, wrapped in a check like <em>"is this switch turned on?"</em>. That switch is an <strong>environment variable</strong>: a named setting (e.g. <code>NODE_FEATURE_CLANS</code>) stored in a plain-text file called <code>.env</code> inside the <code>engine</code> folder. Set it to <code>true</code> and the feature runs; set it to <code>false</code> (or delete/comment out the line) and the server behaves as if that code doesn't exist. Nothing needs to be recompiled to flip a switch — only the server needs a restart to pick up the new value.</p>
+</div>
+<div class="grid2">
+<div class="card">
+<h4>A. Toggle an existing plugin (easy way)</h4>
+<p>Use the launcher menu — no file editing required.</p>
+<ol class="tight">
+<li>Run the launcher (<code>node launcher.ts</code>, or your platform's start script) from the <code>engine</code> folder.</li>
+<li>At the main menu, enter <code>14</code> for <strong>Custom Content</strong>.</li>
+<li>Each line shows a number, a plugin name, its flag in brackets, and whether it's <span style="color:#2f7a3d">enabled</span> or <span style="color:#a1352c">disabled</span>.</li>
+<li>Type the number of the plugin you want to flip and press Enter. Repeat for as many as you like.</li>
+<li>Type <code>A</code> to turn everything on, <code>D</code> to turn everything off, or <code>B</code> to go back to the main menu when you're done.</li>
+<li>Start (or restart) the server — option <code>1</code> or <code>3</code> from the main menu — so it reads the updated <code>.env</code>.</li>
+</ol>
+<p>Under the hood this just rewrites the matching line in <code>engine/.env</code> for you — see option B if you'd rather do that by hand.</p>
+</div>
+<div class="card">
+<h4>B. Toggle it by hand (advanced)</h4>
+<p>Open <code>engine/.env</code> in a text editor. If it doesn't exist yet, copy <code>engine/.env.example</code> to <code>engine/.env</code> first.</p>
+<p>Find (or add) the line for the flag you want and set it explicitly:</p>
+<p class="mono">NODE_FEATURE_CLANS=true</p>
+<p>Save the file and restart the server. That's the entire mechanism — the launcher's menu in option A is just a friendlier way of editing the same line.</p>
+</div>
+</div>
+
+<div class="callout">
+<p><strong>Two kinds of switch, one habit to remember:</strong> most flags below default to <strong>off</strong> until you set them to <code>true</code> (e.g. <code>NODE_FEATURE_CLANS</code>). A few interface-level ones read live from a script and default to <strong>on</strong> until set to <code>false</code> — those are called out individually in the catalogue below. When in doubt, check the plugin's card.</p>
+</div>
+
+<h3>Adding a brand-new plugin toggle (for scripters)</h3>
+<div class="card" style="margin-bottom:14px">
+<p>Everything above assumes the plugin already exists. This section is for anyone writing new content who wants it to be optional. There are two ways to gate code behind a flag, depending on where that code lives. Both are demonstrated here with a made-up example: a <strong>"Double Drops"</strong> weekend toggle.</p>
+</div>
+<div class="grid2">
+<div class="card">
+<h4>Gating a content script (most common)</h4>
+<p>If the code you're adding lives in a <code>.rs2</code> content script, use the built-in <code>map_feature(name)</code> command. It reads <code>NODE_FEATURE_&lt;NAME&gt;</code> from the environment every time it's called — no engine changes and no restart-to-edit-a-script needed, and it defaults to <strong>enabled</strong> if the variable is unset.</p>
+<ol class="tight">
+<li>Pick a short lowercase name, e.g. <code>doubledrops</code>.</li>
+<li>Wrap the new behaviour in an <code>if</code> check inside your script:</li>
+</ol>
+<p class="mono">if (map_feature("doubledrops") = true) {<br>&nbsp;&nbsp;&nbsp;&nbsp;// double the roll here<br>}</p>
+<ol class="tight" start="3">
+<li>Add a documented, disabled-by-default line to <code>engine/.env.example</code>:</li>
+</ol>
+<p class="mono">## NODE_FEATURE_DOUBLEDROPS=false</p>
+<ol class="tight" start="4">
+<li>Done. Server owners flip it on with <code>NODE_FEATURE_DOUBLEDROPS=true</code> in their own <code>.env</code> — the change takes effect on next login/action, no rebuild required.</li>
+</ol>
+<p class="evidence">Real example: <code>content/scripts/login_logout/login.rs2</code> gates the Custom Shops NPC spawn with <code>map_feature("customshops")</code>.</p>
+</div>
+<div class="card">
+<h4>Gating engine (TypeScript) code</h4>
+<p>If the feature touches core server systems instead of a script — a new manager, a background loop, a database table — wire it through <code>engine/src/util/Environment.ts</code> instead. This is read once at startup, so toggling it does need a restart.</p>
+<ol class="tight">
+<li>Add a line to <code>Environment.ts</code>, defaulting to <strong>disabled</strong>:</li>
+</ol>
+<p class="mono">NODE_FEATURE_DOUBLEDROPS:<br>&nbsp;&nbsp;tryParseBoolean(process.env.NODE_FEATURE_DOUBLEDROPS, false),</p>
+<ol class="tight" start="2">
+<li>Check it wherever the subsystem starts up or runs:</li>
+</ol>
+<p class="mono">if (!Environment.NODE_FEATURE_DOUBLEDROPS) {<br>&nbsp;&nbsp;&nbsp;&nbsp;return; // feature disabled, stay fully hidden<br>}</p>
+<ol class="tight" start="3">
+<li>(Optional) Add it to the launcher's menu so it's toggleable from option <code>14</code> — append an entry to the <code>customContent</code> list near the top of <code>engine/launcher.ts</code>:</li>
+</ol>
+<p class="mono">['Double Drops', 'NODE_FEATURE_DOUBLEDROPS'],</p>
+<p class="evidence">Real example: the clan system (<code>engine/src/engine/clan/ClanManager.ts</code>) is gated this way behind <code>NODE_FEATURE_CLANS</code>.</p>
+</div>
+</div>
+
 <h3>Gameplay plugins</h3>
 <div class="grid2">
 <div class="card">
