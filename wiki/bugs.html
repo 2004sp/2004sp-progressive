@@ -26,8 +26,6 @@
     <option value="../wiki.html">Home</option>
 <option value="quests.html">1. Quests</option>
 <option value="skills.html">2. Skills</option>
-<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
-<option value="npcs.html">4. NPCs &amp; dialogue</option>
 <option value="shops.html">5. Shops &amp; economy</option>
 <option value="drops.html">6. Drop tables</option>
 <option value="minigames.html">7. Minigames</option>
@@ -49,8 +47,6 @@
       <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
 <li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
 <li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
-<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
-<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
 <li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
 <li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
 <li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
@@ -67,9 +63,9 @@
     <div class="factbox">
       <div class="frow"><dt>Target build</dt><dd>254</dd></div>
       <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
-      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>57 / 57</dd></div>
       <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
-      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 15</dd></div>
       <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
     </div>
   </nav>
@@ -86,7 +82,6 @@
 <table>
 <thead><tr><th>Where</th><th>Issue</th></tr></thead>
 <tbody>
-<tr><td>Priest in Peril</td><td>Quest is complete and its reward is wired, but the 3 prayers it should unlock (Retribution, Redemption, Smite) don't exist anywhere in the repo. Worse than a missing-content gap: <code>prayers.dbrow</code>/<code>prayers.constant</code>/<code>prayer.rs2</code> have <em>no quest-unlock mechanism at all</em> today — every prayer's gate in <code>~prayer_checks</code> is a pure level check (<code>stat_base(prayer) &lt; ...</code>). Adding these 3 prayers means building the unlock plumbing from scratch, not just adding 3 data rows. Prayer effects themselves are hard-coded per-prayer in <code>skill_combat/scripts/player/player_combat_stat.rs2</code> (e.g. <code>check_protect_prayer</code>), which would also need new branches for Smite's prayer-drain-on-hit and Retribution's on-death AoE.</td></tr>
 <tr><td>Demon Slayer</td><td>The <code>todo: this should be instanced per player</code> comment undersells the gap. Concretely: the silverlight key is dropped as a world-visible ground item at a fixed shared coordinate (<code>obj_add(0_50_154_25_41, silverlight_key_3, ...)</code>) — any nearby player can see/loot it. Delrith himself is a single shared world NPC, located via <code>npc_find</code> and mutated in place (<code>npc_changetype</code>, <code>npc_statheal</code>) rather than spawned per player. Most importantly: <strong>there is no instancing infrastructure anywhere in the engine</strong> — an exhaustive search of the zone system (<code>Zone.ts</code>, <code>ZoneGrid.ts</code>, <code>ZoneMap.ts</code>) and the entity model turned up zero per-player zone/area concept. Fixing this properly means building a new engine feature, not patching a quest script.</td></tr>
 <tr><td>Ernest the Chicken</td><td>The broken path is the secret-bookcase door, not the lever. In <code>quest_haunted.rs2</code>, <code>manor_bookcase_door</code> scans for bookcase locs via <code>loc_findallzone</code> and the author's own comment says it plainly: <em>"This is borked for opening the doors now... Gotta think through how to make this work with find all zone."</em> The lever path (<code>hauntedleverup</code>) works because it takes a different, non-<code>loc_findallzone</code> code path to the same destination.</td></tr>
 <tr><td>Family Crest</td><td>Reward call in <code>quest_crest.rs2</code> passes <code>^squire_questpoints</code> instead of its own constant. The correct constant, <code>^crest_questpoints</code>, already exists in <code>general/configs/quest.constant</code> (line 71) and is simply never referenced — both constants currently equal 1, so the bug is silently harmless today, but would misreport if either value ever changes. A one-line fix once someone points at it.</td></tr>

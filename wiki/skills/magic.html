@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Magic skill guide for 2004scape Progressive build 254, including spell unlocks and membership requirements.">
+  <meta name="description" content="Historically audited Magic skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering the standard spellbook, rune costs, spell XP, combat XP, quest-gated spells, teleports, training, and implementation details.">
   <title>Magic — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,63 +16,171 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Magic</p>
   <h1 class="pagetitle">Magic</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Magic</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Combat / utility</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 80</dd></div></div>
-  <p class="lede">Magic covers combat spells, teleports, enchantments, alchemy, orb charging, binding spells, and utility magic. The milestones below follow the build's own level-up unlock script.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>3</td><td>Cast Confuse.</td><td class="member-no">No</td></tr>
-    <tr><td>5</td><td>Cast Water Strike.</td><td class="member-no">No</td></tr>
-    <tr><td>7</td><td>Enchant Sapphire Jewellery.</td><td class="member-no">No</td></tr>
-    <tr><td>9</td><td>Cast Earth Strike.</td><td class="member-no">No</td></tr>
-    <tr><td>11</td><td>Cast Weaken.</td><td class="member-no">No</td></tr>
-    <tr><td>13</td><td>Cast Fire Strike.</td><td class="member-no">No</td></tr>
-    <tr><td>15</td><td>Cast Bones to Bananas.</td><td class="member-no">No</td></tr>
-    <tr><td>17</td><td>Cast Wind Bolt.</td><td class="member-no">No</td></tr>
-    <tr><td>19</td><td>Cast Curse.</td><td class="member-no">No</td></tr>
-    <tr><td>20</td><td>Cast Bind.</td><td class="member-no">No</td></tr>
-    <tr><td>21</td><td>Cast Low Level Alchemy.</td><td class="member-no">No</td></tr>
-    <tr><td>23</td><td>Cast Water Bolt.</td><td class="member-no">No</td></tr>
-    <tr><td>25</td><td>Teleport to Varrock.</td><td class="member-no">No</td></tr>
-    <tr><td>27</td><td>Enchant Emerald Jewellery.</td><td class="member-no">No</td></tr>
-    <tr><td>29</td><td>Cast Earth Bolt.</td><td class="member-no">No</td></tr>
-    <tr><td>31</td><td>Teleport to Lumbridge.</td><td class="member-no">No</td></tr>
-    <tr><td>33</td><td>Cast Telekinetic Grab.</td><td class="member-no">No</td></tr>
-    <tr><td>35</td><td>Cast Fire Bolt.</td><td class="member-no">No</td></tr>
-    <tr><td>37</td><td>Teleport to Falador.</td><td class="member-no">No</td></tr>
-    <tr><td>39</td><td>Cast Crumble Undead.</td><td class="member-no">No</td></tr>
-    <tr><td>41</td><td>Cast Wind Blast.</td><td class="member-no">No</td></tr>
-    <tr><td>43</td><td>Cast Superheat Item.</td><td class="member-no">No</td></tr>
-    <tr><td>45</td><td>Teleport to Camelot.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>47</td><td>Cast Water Blast.</td><td class="member-no">No</td></tr>
-    <tr><td>49</td><td>Enchant Ruby Jewellery.</td><td class="member-no">No</td></tr>
-    <tr><td>50</td><td>Cast Snare.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>51</td><td>Teleport to Ardougne.<span class="requirement-note"><a href="../quests/plague-city.html">Plague City</a> completion and reading the Ardougne teleport scroll.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>53</td><td>Cast Earth Blast.</td><td class="member-no">No</td></tr>
-    <tr><td>55</td><td>Cast High Level Alchemy.</td><td class="member-no">No</td></tr>
-    <tr><td>56</td><td>Charge Water Orbs.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>57</td><td>Enchant Diamond Jewellery.</td><td class="member-no">No</td></tr>
-    <tr><td>58</td><td>Teleport to the Watchtower.<span class="requirement-note"><a href="../quests/watchtower.html">Watchtower</a> completion and reading the Watchtower teleport scroll.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>59</td><td>Cast Fire Blast.</td><td class="member-no">No</td></tr>
-    <tr><td>60</td><td>Charge Earth Orbs.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>61</td><td>Teleport to Trollheim.<span class="requirement-note">Eadgar's Ruse completion.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>62</td><td>Cast Wind Wave.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>63</td><td>Charge Fire Orbs.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>65</td><td>Cast Water Wave.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>66</td><td>Cast Vulnerability.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>66</td><td>Charge Air Orbs.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>66</td><td>Enter the Wizards' Guild.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>68</td><td>Enchant Dragonstone Jewellery.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>70</td><td>Cast Earth Wave.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>73</td><td>Cast Enfeeble.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>75</td><td>Cast Fire Wave.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>79</td><td>Cast Entangle.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>80</td><td>Cast Stun.</td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Magic</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Combat / utility</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Spellbook</dt><dd>Standard spellbook</dd></div>
+    <div class="row"><dt>Non-combat spells</dt><dd>21 in build 254</dd></div>
+    <div class="row"><dt>Highest spell requirement</dt><dd>Level 80</dd></div>
+  </div>
+
+  <p class="lede">Magic is a free-to-play combat and utility skill built around rune-powered spells. At the 7 September 2004 cutoff, the standard spellbook already covered elemental combat, stat reduction, binding, alchemy, enchanting, teleports, orb charging, Telekinetic Grab, Iban Blast, the three god spells and Charge. Members gain the higher combat waves and several utility/special spells, while much of the core spellbook remains free-to-play.</p>
+
+  <div class="callout warn"><p><strong>Correction from the old page:</strong> build 254 contains only the six ordinary teleports to <strong>Varrock, Lumbridge, Falador, Camelot, Ardougne and the Watchtower</strong>. There is no level-61 Magic unlock and no Trollheim Teleport entry in the ref-254 spell database. The previous Magic guide's Trollheim row has therefore been removed.</p></div>
+
+  <h3>How Magic experience works</h3>
+  <div class="callout"><p><strong>Combat spells give two kinds of Magic XP.</strong> Casting first awards the spell's fixed base XP from the spell database. If a damaging spell lands, build 254 then awards additional combat XP from the damage: normally <strong>2 Magic XP per point of credited damage</strong>. When the build treats the cast as defensive Magic, damage instead gives about <strong>1.33 Magic XP + 1 Defence XP per point</strong>. Ordinary damaging Magic also awards <strong>1.33 Hitpoints XP per point of credited damage</strong>.</p></div>
+  <ul>
+    <li><strong>Fixed spell XP:</strong> every spell row has a configured base experience value. The project stores experience internally in tenths, so a value such as <code>55</code> is displayed here as <strong>5.5 Magic XP</strong>.</li>
+    <li><strong>Damage XP:</strong> successful damaging combat spells call the general combat-XP routine after damage is capped to the target's remaining Hitpoints. Target-specific combat-XP multipliers can therefore alter the damage-derived portion.</li>
+    <li><strong>Splashing:</strong> the fixed spell XP and runes are handled when the spell is cast, before the hit roll; damage-derived Magic and Hitpoints XP require credited damage.</li>
+    <li><strong>Membership and level checks:</strong> build 254 checks the spell's members flag and required Magic level before casting.</li>
+    <li><strong>Rune checks:</strong> the spell database supplies up to three rune requirements. The shared Magic handler accounts for an equipped staff that supplies a matching elemental rune before it checks or deletes runes.</li>
+    <li><strong>Worn-item gates:</strong> special spells can require a specific equipped staff. Iban Blast and each of the three god spells use this mechanism in build 254.</li>
+  </ul>
+
+  <h3>Elemental combat spells</h3>
+  <p>These are the ordinary Strike, Bolt, Blast and Wave progression spells in ref 254. The XP column is the fixed casting XP; successful damage adds the combat XP described above.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Spell</th><th>Runes</th><th>Base Magic XP</th><th>Max hit</th><th>Members</th></tr></thead><tbody>
+    <tr><td>1</td><td><strong>Wind Strike</strong></td><td>1 air, 1 mind</td><td>5.5</td><td>2</td><td class="member-no">No</td></tr>
+    <tr><td>5</td><td><strong>Water Strike</strong></td><td>1 air, 1 water, 1 mind</td><td>7.5</td><td>4</td><td class="member-no">No</td></tr>
+    <tr><td>9</td><td><strong>Earth Strike</strong></td><td>1 air, 2 earth, 1 mind</td><td>9.5</td><td>6</td><td class="member-no">No</td></tr>
+    <tr><td>13</td><td><strong>Fire Strike</strong></td><td>2 air, 3 fire, 1 mind</td><td>11.5</td><td>8</td><td class="member-no">No</td></tr>
+    <tr><td>17</td><td><strong>Wind Bolt</strong></td><td>2 air, 1 chaos</td><td>13.5</td><td>9</td><td class="member-no">No</td></tr>
+    <tr><td>23</td><td><strong>Water Bolt</strong></td><td>2 air, 2 water, 1 chaos</td><td>16.5</td><td>10</td><td class="member-no">No</td></tr>
+    <tr><td>29</td><td><strong>Earth Bolt</strong></td><td>2 air, 3 earth, 1 chaos</td><td>19.5</td><td>11</td><td class="member-no">No</td></tr>
+    <tr><td>35</td><td><strong>Fire Bolt</strong></td><td>3 air, 4 fire, 1 chaos</td><td>22.5</td><td>12</td><td class="member-no">No</td></tr>
+    <tr><td>41</td><td><strong>Wind Blast</strong></td><td>3 air, 1 death</td><td>25.5</td><td>13</td><td class="member-no">No</td></tr>
+    <tr><td>47</td><td><strong>Water Blast</strong></td><td>3 air, 3 water, 1 death</td><td>28.5</td><td>14</td><td class="member-no">No</td></tr>
+    <tr><td>53</td><td><strong>Earth Blast</strong></td><td>3 air, 4 earth, 1 death</td><td>31.5</td><td>15</td><td class="member-no">No</td></tr>
+    <tr><td>59</td><td><strong>Fire Blast</strong></td><td>4 air, 5 fire, 1 death</td><td>34.5</td><td>16</td><td class="member-no">No</td></tr>
+    <tr><td>62</td><td><strong>Wind Wave</strong></td><td>5 air, 1 blood</td><td>36</td><td>17</td><td class="member-yes">Yes</td></tr>
+    <tr><td>65</td><td><strong>Water Wave</strong></td><td>5 air, 7 water, 1 blood</td><td>37.5</td><td>18</td><td class="member-yes">Yes</td></tr>
+    <tr><td>70</td><td><strong>Earth Wave</strong></td><td>5 air, 7 earth, 1 blood</td><td>40</td><td>19</td><td class="member-yes">Yes</td></tr>
+    <tr><td>75</td><td><strong>Fire Wave</strong></td><td>5 air, 7 fire, 1 blood</td><td>42.5</td><td>20</td><td class="member-yes">Yes</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>Only levels with a new spell or Magic-related access unlock are shown. See <a href="../magic-prayer.html">Magic &amp; Prayer</a> for the spellbook audit. Unlocks are taken from <code>levelup_unlocks_magic.rs2</code>.</p></div>
+
+  <h3>Binding, weakening and specialised combat spells</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Spell</th><th>Runes</th><th>Base Magic XP</th><th>Effect in build 254</th><th>Members</th></tr></thead><tbody>
+    <tr><td>3</td><td><strong>Confuse</strong></td><td>2 earth, 3 water, 1 body</td><td>13</td><td>Lowers Attack.</td><td class="member-no">No</td></tr>
+    <tr><td>11</td><td><strong>Weaken</strong></td><td>2 earth, 3 water, 1 body</td><td>21</td><td>Lowers Strength.</td><td class="member-no">No</td></tr>
+    <tr><td>19</td><td><strong>Curse</strong></td><td>3 earth, 2 water, 1 body</td><td>29</td><td>Lowers Defence.</td><td class="member-no">No</td></tr>
+    <tr><td>20</td><td><strong>Bind</strong></td><td>3 earth, 3 water, 2 nature</td><td>30</td><td>Prevents movement for the build's shortest binding duration.</td><td class="member-no">No</td></tr>
+    <tr><td>39</td><td><strong>Crumble Undead</strong></td><td>2 air, 2 earth, 1 chaos</td><td>49</td><td>Undead-target combat spell; max hit 8 in ref 254.</td><td class="member-no">No</td></tr>
+    <tr><td>50</td><td><strong>Snare</strong></td><td>4 earth, 4 water, 3 nature</td><td>60</td><td>Longer binding spell; max hit 2 in ref 254.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>66</td><td><strong>Vulnerability</strong></td><td>5 earth, 5 water, 1 soul</td><td>76</td><td>Lowers Defence more strongly than Curse.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>73</td><td><strong>Enfeeble</strong></td><td>8 earth, 8 water, 1 soul</td><td>83</td><td>Lowers Strength more strongly than Weaken.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>79</td><td><strong>Entangle</strong></td><td>5 earth, 5 water, 4 nature</td><td>89</td><td>Longest of the three binding spells; max hit 5 in ref 254.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>80</td><td><strong>Stun</strong></td><td>12 earth, 12 water, 1 soul</td><td>90</td><td>Lowers Attack more strongly than Confuse.</td><td class="member-yes">Yes</td></tr>
+  </tbody></table></div>
+
+  <h3>Quest-gated and god combat spells</h3>
+  <p>The old unlock-only guide missed these spells even though they are present in the ref-254 combat-spell database. Their Magic level is not the only requirement: the build also checks the required equipped staff.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Spell</th><th>Runes</th><th>Base Magic XP</th><th>Max hit</th><th>Other requirement</th></tr></thead><tbody>
+    <tr><td>50</td><td><strong>Iban Blast</strong></td><td>5 fire, 1 death</td><td>30</td><td>25</td><td>Members; wield Iban's staff, obtained through <a href="../quests/underground-pass.html">Underground Pass</a>.</td></tr>
+    <tr><td>60</td><td><strong>Saradomin Strike</strong></td><td>4 air, 2 fire, 2 blood</td><td>35</td><td>20</td><td>Members; wield the Staff of Saradomin.</td></tr>
+    <tr><td>60</td><td><strong>Claws of Guthix</strong></td><td>4 air, 1 fire, 2 blood</td><td>35</td><td>20</td><td>Members; wield the Staff of Guthix.</td></tr>
+    <tr><td>60</td><td><strong>Flames of Zamorak</strong></td><td>1 air, 4 fire, 2 blood</td><td>35</td><td>20</td><td>Members; wield the Staff of Zamorak.</td></tr>
+  </tbody></table></div>
+
+  <h3>Utility, teleport, enchantment and orb spells</h3>
+  <p>Ref 254 defines <strong>21 non-combat spell rows</strong>. Rune costs below are the database requirements before an equipped elemental staff supplies a matching rune.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Spell</th><th>Runes</th><th>Magic XP</th><th>Members</th><th>Other requirements / notes</th></tr></thead><tbody>
+    <tr><td>7</td><td><strong>Enchant Level 1 Jewellery</strong></td><td>1 water, 1 cosmic</td><td>17.5</td><td class="member-no">No</td><td>Sapphire rings and strung sapphire amulets.</td></tr>
+    <tr><td>15</td><td><strong>Bones to Bananas</strong></td><td>2 earth, 2 water, 1 nature</td><td>25</td><td class="member-no">No</td><td>Converts eligible bones in the inventory to bananas.</td></tr>
+    <tr><td>21</td><td><strong>Low Level Alchemy</strong></td><td>3 fire, 1 nature</td><td>31</td><td class="member-no">No</td><td>Converts an eligible item into coins.</td></tr>
+    <tr><td>25</td><td><strong>Varrock Teleport</strong></td><td>3 air, 1 fire, 1 law</td><td>35</td><td class="member-no">No</td><td>Standard Varrock destination.</td></tr>
+    <tr><td>27</td><td><strong>Enchant Level 2 Jewellery</strong></td><td>3 air, 1 cosmic</td><td>37</td><td class="member-no">No</td><td>Emerald rings and strung emerald amulets.</td></tr>
+    <tr><td>31</td><td><strong>Lumbridge Teleport</strong></td><td>3 air, 1 earth, 1 law</td><td>41</td><td class="member-no">No</td><td>Standard Lumbridge destination.</td></tr>
+    <tr><td>33</td><td><strong>Telekinetic Grab</strong></td><td>1 air, 1 law</td><td>43</td><td class="member-no">No</td><td>Pulls a valid ground item to the player.</td></tr>
+    <tr><td>37</td><td><strong>Falador Teleport</strong></td><td>3 air, 1 water, 1 law</td><td>48</td><td class="member-no">No</td><td>Standard Falador destination.</td></tr>
+    <tr><td>43</td><td><strong>Superheat Item</strong></td><td>4 fire, 1 nature</td><td>53</td><td class="member-no">No</td><td>Smelts a valid ore combination through Magic.</td></tr>
+    <tr><td>45</td><td><strong>Camelot Teleport</strong></td><td>5 air, 1 law</td><td>55.5</td><td class="member-yes">Yes</td><td>Members teleport.</td></tr>
+    <tr><td>49</td><td><strong>Enchant Level 3 Jewellery</strong></td><td>5 fire, 1 cosmic</td><td>59</td><td class="member-no">No</td><td>Ruby rings and strung ruby amulets.</td></tr>
+    <tr><td>51</td><td><strong>Ardougne Teleport</strong></td><td>2 water, 2 law</td><td>61</td><td class="member-yes">Yes</td><td>Complete <a href="../quests/plague-city.html">Plague City</a> and read the Ardougne teleport scroll.</td></tr>
+    <tr><td>55</td><td><strong>High Level Alchemy</strong></td><td>5 fire, 1 nature</td><td>65</td><td class="member-no">No</td><td>Higher-value alchemy spell.</td></tr>
+    <tr><td>56</td><td><strong>Charge Water Orb</strong></td><td>30 water, 3 cosmic</td><td>66</td><td class="member-yes">Yes</td><td>Requires an unpowered orb and the Water Obelisk. At this minimum level it is also the spell used for the Magic gate in <a href="../quests/legends-quest.html">Legends' Quest</a>.</td></tr>
+    <tr><td>57</td><td><strong>Enchant Level 4 Jewellery</strong></td><td>10 earth, 1 cosmic</td><td>67</td><td class="member-no">No</td><td>Diamond rings and strung diamond amulets.</td></tr>
+    <tr><td>58</td><td><strong>Watchtower Teleport</strong></td><td>2 earth, 2 law</td><td>68</td><td class="member-yes">Yes</td><td>Complete <a href="../quests/watchtower.html">Watchtower</a> and read the Watchtower teleport scroll.</td></tr>
+    <tr><td>60</td><td><strong>Charge Earth Orb</strong></td><td>30 earth, 3 cosmic</td><td>70</td><td class="member-yes">Yes</td><td>Requires an unpowered orb and the Earth Obelisk.</td></tr>
+    <tr><td>63</td><td><strong>Charge Fire Orb</strong></td><td>30 fire, 3 cosmic</td><td>73</td><td class="member-yes">Yes</td><td>Requires an unpowered orb and the Fire Obelisk.</td></tr>
+    <tr><td>66</td><td><strong>Charge Air Orb</strong></td><td>30 air, 3 cosmic</td><td>76</td><td class="member-yes">Yes</td><td>Requires an unpowered orb and the Air Obelisk.</td></tr>
+    <tr><td>68</td><td><strong>Enchant Level 5 Jewellery</strong></td><td>15 earth, 15 water, 1 cosmic</td><td>78</td><td class="member-yes">Yes</td><td>Dragonstone rings and strung dragonstone amulets.</td></tr>
+    <tr><td>80</td><td><strong>Charge</strong></td><td>3 air, 3 fire, 3 blood</td><td>180</td><td class="member-yes">Yes</td><td>God-spell enhancement spell; distinct from the elemental orb-charging spells.</td></tr>
+  </tbody></table></div>
+
+  <h3>Teleport and quest gates</h3>
+  <p>Reaching the numerical Magic level is not enough for every spell. The two scroll teleports and the special combat spells below have additional progression checks.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Spell</th><th>Magic</th><th>Members</th><th>Additional gate</th></tr></thead><tbody>
+    <tr><td>Ardougne Teleport</td><td>51</td><td class="member-yes">Yes</td><td><a href="../quests/plague-city.html">Plague City</a> completion and the Ardougne teleport scroll.</td></tr>
+    <tr><td>Iban Blast</td><td>50</td><td class="member-yes">Yes</td><td>Wield Iban's staff from <a href="../quests/underground-pass.html">Underground Pass</a>.</td></tr>
+    <tr><td>Watchtower Teleport</td><td>58</td><td class="member-yes">Yes</td><td><a href="../quests/watchtower.html">Watchtower</a> completion and the Watchtower teleport scroll.</td></tr>
+    <tr><td>Saradomin Strike</td><td>60</td><td class="member-yes">Yes</td><td>Wield the Staff of Saradomin.</td></tr>
+    <tr><td>Claws of Guthix</td><td>60</td><td class="member-yes">Yes</td><td>Wield the Staff of Guthix.</td></tr>
+    <tr><td>Flames of Zamorak</td><td>60</td><td class="member-yes">Yes</td><td>Wield the Staff of Zamorak.</td></tr>
+  </tbody></table></div>
+
+  <h3>Training methods</h3>
+  <p class="lede">Magic can be trained through combat or through repeatable utility spells. This guide records exact per-cast and per-damage rules from build 254 instead of importing modern XP/hour routes whose rates depend on supplies, targets, travel and player behaviour.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Verified XP</th><th>Requirements and practical notes</th></tr></thead><tbody>
+    <tr><td>1+</td><td><strong>Normal combat Magic</strong></td><td>Spell base XP + 2 Magic XP per credited damage</td><td>Wind Strike is available from level 1. Damaging casts also award 1.33 Hitpoints XP per credited damage. Rune costs and maximum hits rise with the spell used.</td></tr>
+    <tr><td>When defensive casting applies</td><td><strong>Defensive combat Magic</strong></td><td>Spell base XP + about 1.33 Magic XP and 1 Defence XP per credited damage</td><td>Build 254 maps defensive Magic damage into a shared Magic/Defence style while still awarding normal Hitpoints XP from damage.</td></tr>
+    <tr><td>3+</td><td><strong>Weakening / binding spells</strong></td><td>13&ndash;90 fixed Magic XP per cast in the ref-254 spell rows</td><td>Useful where the spell's combat effect is wanted. Repeated debuffs can be restricted when the target is already weakened; do not assume every cast can be spammed on the same target indefinitely.</td></tr>
+    <tr><td>7+</td><td><strong>Enchant jewellery</strong></td><td>17.5&ndash;78 Magic XP per cast</td><td>Levels 1&ndash;4 enchantments are free-to-play in the build; level 5 Dragonstone enchantment is members-only.</td></tr>
+    <tr><td>21+</td><td><strong>Alchemy</strong></td><td>31 XP Low Alchemy; 65 XP High Alchemy</td><td>Free-to-play. Requires nature and fire runes; a suitable staff can supply matching elemental runes through the shared staff-rune system.</td></tr>
+    <tr><td>25+</td><td><strong>Teleport spells</strong></td><td>35&ndash;68 Magic XP per cast</td><td>Varrock, Lumbridge and Falador are F2P. Camelot, Ardougne and Watchtower are members-only; the latter two also require their quest-scroll unlocks.</td></tr>
+    <tr><td>56+</td><td><strong>Charge elemental orbs</strong></td><td>66&ndash;76 Magic XP per cast</td><td>Members-only. Requires an unpowered orb, 3 cosmic runes, 30 elemental runes and the matching obelisk.</td></tr>
+    <tr><td>Quest-dependent</td><td><strong>Quest reward XP</strong></td><td>325&ndash;30,600 Magic XP in the verified examples below</td><td>One-time or choice-based rewards. Historical and build-254 reward differences are shown explicitly instead of being silently merged.</td></tr>
+  </tbody></table></div>
+
+  <h3>Verified Magic XP quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Magic relevance</th></tr></thead><tbody>
+    <tr><td><a href="../quests/witchs-potion.html">Witch's Potion</a></td><td>Free-to-play</td><td><strong>325 Magic XP.</strong> The audited quest guide records agreement between the target-period reward and build 254.</td></tr>
+    <tr><td><a href="../quests/imp-catcher.html">Imp Catcher</a></td><td>Free-to-play</td><td><strong>375 Magic XP historically at the September-2004 target.</strong> Progressive build 254 instead awards <strong>875 Magic XP</strong>; this is a documented implementation deviation, not a historical replacement.</td></tr>
+    <tr><td><a href="../quests/the-grand-tree.html">The Grand Tree</a></td><td>Members</td><td><strong>2,150 Magic XP.</strong></td></tr>
+    <tr><td><a href="../quests/watchtower.html">Watchtower</a></td><td>Members</td><td><strong>12,000 Magic XP in the target-proximate August-2004 guide; 15,300 Magic XP in build 254.</strong> The quest also supplies the Watchtower teleport scroll.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>Members</td><td>Magic is one of the <strong>7,650-XP training choices</strong>. Build 254 gives four selections, so assigning all four to Magic yields up to <strong>30,600 Magic XP</strong>.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <ul>
+    <li><strong>Two spell databases:</strong> ordinary utility/enchant/teleport/orb spells are in <code>scripts/skill_magic/configs/magic_spells.dbrow</code>; combat spells are in <code>scripts/skill_combat/configs/magic/magic_combat_spells.dbrow</code>.</li>
+    <li><strong>Complete non-combat set:</strong> the ref-254 utility database contains 21 entries: five enchantments, six teleports, four orb charges, Low and High Alchemy, Superheat Item, Bones to Bananas, Telekinetic Grab and Charge.</li>
+    <li><strong>No Trollheim spell in ref 254:</strong> the six teleport entries stop at Watchtower. The level-up enum also has no level-61 Magic unlock.</li>
+    <li><strong>Wind Strike starts at level 1:</strong> it is present in the combat-spell database but is not listed as a later level-up milestone because a new character can cast it from the starting Magic level.</li>
+    <li><strong>Special combat spells are real build content:</strong> Iban Blast, Saradomin Strike, Claws of Guthix and Flames of Zamorak are explicit ref-254 combat-spell rows with staff requirements. The previous local Magic page omitted them.</li>
+    <li><strong>Fixed XP is explicit:</strong> the shared Magic procedure advances the Magic skill by the spell row's configured <code>experience</code> value when a spell is cast.</li>
+    <li><strong>Damage XP is separate:</strong> successful damaging spells then call the general combat-XP procedure. Normal Magic gets 2 Magic XP per credited damage; defensive Magic gets about 1.33 Magic XP plus 1 Defence XP, with Hitpoints XP awarded separately.</li>
+    <li><strong>Staff rune substitution is implemented:</strong> the shared requirement routine looks up the equipped staff and zeroes matching rune counts before inventory checks and rune deletion.</li>
+  </ul>
+
+  <h3>Cutoff and scope notes</h3>
+  <div class="callout warn"><p><strong>Do not extend this spellbook with later content.</strong> The guide describes the standard spell set implemented at ref 254 and the 7 September 2004 snapshot. Trollheim Teleport and later alternative spellbook content are not presented as target-period Magic unlocks.</p></div>
+  <ul>
+    <li><strong>Quest requirements stay beside the spell:</strong> Ardougne and Watchtower Teleports are not advertised as level-only unlocks, and Iban Blast / god spells retain their staff gates.</li>
+    <li><strong>Members status is per spell:</strong> the Strike/Bolt/Blast lines are F2P while Wave spells are members-only; utility membership is likewise taken from each ref-254 spell row rather than inferred from level.</li>
+    <li><strong>Project deviations are labelled:</strong> the Imp Catcher and Watchtower reward differences are intentionally separated into historical-target and Progressive-build values.</li>
+    <li><strong>No invented XP/hour:</strong> combat target multipliers, hit chance, damage, rune supply, travel and casting rhythm all affect practical rates, so this page gives exact build XP rules rather than unsupported hourly estimates.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Ref-254 utility spell data:</strong> <code>Content/scripts/skill_magic/configs/magic_spells.dbrow</code> supplies the 21 non-combat spells, levels, membership flags, rune requirements, fixed XP, teleport destinations and orb/enchantment conversions.</li>
+    <li><strong>Ref-254 combat spell data:</strong> <code>Content/scripts/skill_combat/configs/magic/magic_combat_spells.dbrow</code> supplies the elemental combat progression, binding/debuff spells, Crumble Undead, Iban Blast, god spells, rune costs, base XP and maximum hits.</li>
+    <li><strong>Ref-254 level-up list:</strong> <code>Content/scripts/levelup/configs/levelup_unlocks.enum</code> supplies the Magic milestone levels and confirms there is no level-61 Magic unlock.</li>
+    <li><strong>Ref-254 Magic requirements/XP:</strong> <code>Content/scripts/skill_magic/scripts/magic.rs2</code> checks membership, level, runes and worn-item requirements, applies staff rune substitution and awards the configured base spell XP.</li>
+    <li><strong>Ref-254 combat casting:</strong> <code>Content/scripts/skill_combat/scripts/player/player_magic.rs2</code> consumes runes and awards base spell XP before the hit roll, then routes successful damaging spells through the combat-XP procedure.</li>
+    <li><strong>Ref-254 damage-derived XP:</strong> <code>Content/scripts/skill_combat/scripts/combat.rs2</code> defines normal and defensive Magic's damage-XP splits and the separate Hitpoints award.</li>
+    <li><strong>Local quest cross-checks:</strong> the already-audited Witch's Potion, Imp Catcher, The Grand Tree, Watchtower, Underground Pass and Legends' Quest guides provide the quest rewards, scroll/staff gates and documented build deviations used here.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="prayer.html">&larr; Prayer</a><a class="next" href="cooking.html">Cooking &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's ref-254 Magic, combat, level-up and quest evidence. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>
