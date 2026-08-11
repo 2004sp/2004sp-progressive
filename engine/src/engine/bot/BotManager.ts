@@ -35,6 +35,7 @@ import { PlayerLoading } from '#/engine/entity/PlayerLoading.js';
 import Packet from '#/io/Packet.js';
 import { Locations } from '#/engine/bot/BotKnowledge.js';
 import { isMapBlocked, isZoneAllocated } from '#/engine/GameMap.js';
+import { BotCollisionMap } from '#/engine/bot/BotCollisionMap.js';
 import { BotAppearance } from '#/engine/bot/BotAppearance.js';
 import InvType from '#/cache/config/InvType.js';
 import Environment from '#/util/Environment.js';
@@ -129,6 +130,7 @@ class BotManagerClass {
         this.spawned = true;
         this.world = world;
         setWorld(world); // makes World available to BotAction/BotTask without import cycle
+        BotCollisionMap.init('data/bot/unwalkable_tiles.csv');
         console.log(`[BotManager] Spawning ${BOT_CONFIGS.length} bots from Lumbridge...`);
         for (const cfg of BOT_CONFIGS) this._spawnBot(cfg);
     }

@@ -57,13 +57,18 @@ export class WoodcuttingTask extends BotTask {
     private readonly watchdog = new ProgressWatchdog();
 
     constructor(step: SkillStep) {
-        super('Woodcut');
+        // Include the log type so the rescan name-comparison in BotPlayer
+        // can distinguish "cut trees for LOGS" from "cut willows for WILLOW_LOGS"
+        // and force a task switch when the planner needs a different log type.
+        super(`Woodcut:${step.itemGained}`);
         this.step = step;
         this.watchdog.destination = step.location;
     }
 
     shouldRun(player: Player): boolean {
-        if (!this.step.toolItemIds.every(id => hasItem(player, id))) return false;
+        const hasHatchetInv  = this.step.toolItemIds.some(id => hasItem(player, id));
+        const hasHatchetBank = !hasHatchetInv && this._hatchetInBank(player);
+        if (!hasHatchetInv && !hasHatchetBank) return false;
 
         // Draynor village has aggressive Dark Wizards — require combat level 16
         const [sx, sz, sl] = this.step.location;
@@ -71,6 +76,17 @@ export class WoodcuttingTask extends BotTask {
         if (isDraynor && getCombatLevel(player) < 16) return false;
 
         return true;
+    }
+
+    private _hatchetInBank(player: Player): boolean {
+        const bid = bankInvId();
+        if (bid === -1) return false;
+        const bank = player.getInventory(bid);
+        if (!bank) return false;
+        for (let i = 0; i < bank.capacity; i++) {
+            if (this.step.toolItemIds.includes(bank.get(i)?.id ?? -1)) return true;
+        }
+        return false;
     }
 
     tick(player: Player): void {
@@ -90,6 +106,12 @@ export class WoodcuttingTask extends BotTask {
         }
         if (this.cooldown > 0) { this.cooldown--; return; }
 
+        // ── Hatchet recovery ─────────────────────────────────────────────────
+        // If the hatchet was banked by another task, go retrieve it before chopping.
+        if (!this.step.toolItemIds.some(id => hasItem(player, id)) && this._hatchetInBank(player)) {
+            this.state = 'bank_walk';
+        }
+
         // ── Aggressor detection ───────────────────────────────────────────────
         if (this.state !== 'bank_walk' && this.state !== 'bank_done' && this.state !== 'flee') {
             const aggressor = findAggressorNpc(player, 8);
@@ -104,13 +126,18 @@ export class WoodcuttingTask extends BotTask {
             }
         }
 
-        // Upgrade step when level-up unlocks a better tree tier
+        // Upgrade step when level-up unlocks a better tree tier.
+        // Skip Draynor steps for low-combat bots — Dark Wizards are aggressive there.
         const level   = getBaseLevel(player, PlayerStat.WOODCUTTING);
         const newStep = getProgressionStep('WOODCUTTING', level);
         if (newStep && newStep.minLevel > this.step.minLevel) {
-            this.step         = newStep;
-            this.state        = 'walk';
-            this.currentTree  = null;
+            const [sx, sz, sl] = newStep.location;
+            const isNewDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
+            if (!isNewDraynor || getCombatLevel(player) >= 16) {
+                this.step         = newStep;
+                this.state        = 'walk';
+                this.currentTree  = null;
+            }
         }
 
         // ── Bank logs ─────────────────────────────────────────────────────────
@@ -281,9 +308,10 @@ export class WoodcuttingTask extends BotTask {
     private _treePrefix(): string {
         switch (this.step.itemGained) {
             case Items.OAK_LOGS:    return 'oaktree';
-            case Items.WILLOW_LOGS: return 'willow_tree';
-            case Items.MAPLE_LOGS:  return 'maple_tree';
-            case Items.YEW_LOGS:    return 'yew_tree';
+            case Items.WILLOW_LOGS: return 'willowtree';
+            case Items.MAPLE_LOGS:  return 'mapletree';
+            case Items.YEW_LOGS:    return 'yewtree';
+            case Items.MAGIC_LOGS:  return 'magictree';
             default:                return 'tree';
         }
     }
@@ -317,13 +345,18 @@ export class WoodcuttingTask extends BotTask {
     /** Pick a fresh random step matching the bot's current level and owned tools. */
     private _rerollStep(player: Player): void {
         const level = getBaseLevel(player, PlayerStat.WOODCUTTING);
+        const combatLvl = getCombatLevel(player);
         const newStep = getProgressionStep(
             'WOODCUTTING', level,
-            ids => ids.every(id => hasItem(player, id)),
+            ids => ids.some(id => hasItem(player, id)),
         );
         if (newStep) {
-            this.step = newStep;
-            this.currentTree = null;
+            const [sx, sz, sl] = newStep.location;
+            const isDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
+            if (!isDraynor || combatLvl >= 16) {
+                this.step = newStep;
+                this.currentTree = null;
+            }
         }
     }
 
@@ -338,10 +371,22 @@ export class WoodcuttingTask extends BotTask {
             if (!item) continue;
             if (this.step.toolItemIds.includes(item.id)) continue;
             if (item.id === Items.COINS) continue;
+            if (item.id === Items.KNIFE) continue;
+            if (item.id === Items.TINDERBOX) continue;
             const moved = inv.remove(item.id, item.count);
             if (moved.completed > 0) bank.add(item.id, moved.completed);
         }
-            console.log(`[WC:${player.username}] Deposited logs into the bank.`);
+        // Withdraw hatchet if it was banked by another task (e.g. FletchingTask)
+        if (!this.step.toolItemIds.some(id => hasItem(player, id))) {
+            for (const id of this.step.toolItemIds) {
+                const removed = bank.remove(id, 1);
+                if (removed.completed > 0) {
+                    addItem(player, id, 1);
+                    break;
+                }
+            }
+        }
+        console.log(`[WC:${player.username}] Deposited logs into the bank.`);
     }
 
 

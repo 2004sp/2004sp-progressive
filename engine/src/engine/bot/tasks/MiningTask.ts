@@ -59,7 +59,7 @@ export class MiningTask extends BotTask {
     }
 
     shouldRun(player: Player): boolean {
-        return this.step.toolItemIds.every(id => hasItem(player, id));
+        return this.step.toolItemIds.some(id => hasItem(player, id));
     }
 
     tick(player: Player): void {

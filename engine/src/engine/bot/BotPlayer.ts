@@ -13,6 +13,7 @@ import { BotGoalPlanner } from '#/engine/bot/BotGoalPlanner.js';
 import { addXp, getBaseLevel, PlayerStat, openNearbyGate } from '#/engine/bot/BotAction.js';
 import { PlayerStatNameMap } from '#/engine/entity/PlayerStat.js';
 import ScriptState from '#/engine/script/ScriptState.js';
+import { BotMovementMonitor } from '#/engine/bot/BotNavigation.js';
 
 const RESCAN_TICKS = 600;
 
@@ -53,6 +54,15 @@ export class BotPlayer {
     /** Counts ticks between universal gate sweeps (fires every 5 ticks). */
     private gateCheckTimer = 0;
 
+    // ── Movement monitoring ───────────────────────────────────────────────────
+    readonly movementMonitor = new BotMovementMonitor();
+    /** Position at the end of the previous tick (set by engine movement before bot.tick). */
+    private lastX = -1;
+    private lastZ = -1;
+    private lastLevel = -1;
+    /** Whether the bot had waypoints queued at the end of the previous tick. */
+    private lastHadWaypoints = false;
+
     // ── Sub-task system (for bury bones, eating, etc.) ───────────────────────
     private subTask: BotTask | null = null;
 
@@ -86,6 +96,39 @@ export class BotPlayer {
     tick(): void {
         this.ticksAlive++;
         this.player.afkEventReady = false;
+
+        // ── MOVEMENT MONITORING ──────────────────────────────────────────────
+        // Compare current position (already updated by engine movement this tick)
+        // against the position saved at the end of the previous tick to determine
+        // if the bot actually moved.  Only evaluate when the bot was trying to walk
+        // (had waypoints at the end of last tick) — avoid false stuck alerts while
+        // skilling, banking, or waiting on scripts.
+        const curX = this.player.x;
+        const curZ = this.player.z;
+        const curLevel = this.player.level;
+
+        if (this.lastX !== -1) {
+            const moved = curX !== this.lastX || curZ !== this.lastZ || curLevel !== this.lastLevel;
+            this.movementMonitor.update(curX, curZ, this.lastHadWaypoints, moved);
+
+            if (this.lastHadWaypoints && this.movementMonitor.isStuck()) {
+                this.log(
+                    `[Navigation] stuck at (${curX},${curZ},${curLevel}) — clearing waypoints for repath`
+                );
+                this.player.clearWaypoints();
+                this.movementMonitor.resetStuck();
+            } else if (this.movementMonitor.isOscillating()) {
+                this.log(
+                    `[Navigation] oscillating at (${curX},${curZ},${curLevel}) — clearing waypoints`
+                );
+                this.player.clearWaypoints();
+                this.movementMonitor.resetOscillation();
+            }
+        }
+
+        this.lastX = curX;
+        this.lastZ = curZ;
+        this.lastLevel = curLevel;
 
         // Always refresh appearance
         this.player.buildAppearance(InvType.WORN);
@@ -217,6 +260,9 @@ export class BotPlayer {
             console.error(`[Bot:${this.name}] Task error in ${activeTask.name}:`, err);
             this.currentTask = null;
         }
+
+        // Record waypoint state at end of this tick so next tick can detect stuck/oscillation
+        this.lastHadWaypoints = this.player.hasWaypoints();
     }
 
     onLevelUp(stat: PlayerStat, newLevel: number): void {
@@ -281,6 +327,7 @@ export class BotPlayer {
             this.currentTask.reset(); // allow outgoing task to clean up (e.g. CombatTask unequips armor)
         }
         this.currentTask = next;
+        this.movementMonitor.reset(); // clear stuck/oscillation state between tasks
     }
 
     private _recordComplete(): void {

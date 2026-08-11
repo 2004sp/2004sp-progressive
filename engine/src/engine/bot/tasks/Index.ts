@@ -22,3 +22,4 @@ export { SocialTask } from '#/engine/bot/tasks/SocialTask.js';
 export { VendorTask } from '#/engine/bot/tasks/VendorTask.js';
 export { PKerTask } from '#/engine/bot/tasks/PKerTask.js';
 export { AgilityTask } from '#/engine/bot/tasks/AgilityTask.js';
+export { PickupSpawnTask } from '#/engine/bot/tasks/PickupSpawnTask.js';

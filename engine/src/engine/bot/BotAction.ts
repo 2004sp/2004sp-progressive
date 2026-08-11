@@ -49,6 +49,8 @@ import LocType from '#/cache/config/LocType.js';
 import InvType from '#/cache/config/InvType.js';
 import { getWorld } from '#/engine/bot/BotWorld.js';
 import { botWalkPath, botFindPath } from '#/engine/GameMap.js';
+import { BotCollisionMap } from '#/engine/bot/BotCollisionMap.js';
+import { trimPathAtCsvBlock, findNearestWalkableTile } from '#/engine/bot/BotNavigation.js';
 import { MoveSpeed } from '#/engine/entity/MoveSpeed.js';
 import VarPlayerType from '#/cache/config/VarPlayerType.js';
 import Obj from '#/engine/entity/Obj.js';
@@ -496,8 +498,11 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
         let path = botWalkPath(player.level, player.x, player.z, destX, destZ);
         if (path.length === 0) path = botFindPath(player.level, player.x, player.z, destX, destZ);
         if (path.length > 0) {
-            player.queueWaypoints(path);
-            return;
+            const safe = trimPathAtCsvBlock(player.level, path);
+            if (safe.length > 0) {
+                player.queueWaypoints(safe);
+                return;
+            }
         }
         // Path is completely blocked — a door or gate is likely in the way.
         // Try opening one within 8 tiles before falling back to the compass sweep.
@@ -512,11 +517,15 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
             const angle = baseAngle + (deg * Math.PI) / 180;
             const midX = Math.round(player.x + Math.cos(angle) * segDist);
             const midZ = Math.round(player.z + Math.sin(angle) * segDist);
+            if (BotCollisionMap.isCsvBlocked(player.level, midX, midZ)) continue;
             let path = botWalkPath(player.level, player.x, player.z, midX, midZ);
             if (path.length === 0) path = botFindPath(player.level, player.x, player.z, midX, midZ);
             if (path.length > 0) {
-                player.queueWaypoints(path);
-                return;
+                const safe = trimPathAtCsvBlock(player.level, path);
+                if (safe.length > 0) {
+                    player.queueWaypoints(safe);
+                    return;
+                }
             }
         }
         // Retry with shorter segments in case the 90-tile target is unreachable
@@ -524,11 +533,15 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
             const angle = baseAngle + (deg * Math.PI) / 180;
             const midX = Math.round(player.x + Math.cos(angle) * 60);
             const midZ = Math.round(player.z + Math.sin(angle) * 60);
+            if (BotCollisionMap.isCsvBlocked(player.level, midX, midZ)) continue;
             let path = botWalkPath(player.level, player.x, player.z, midX, midZ);
             if (path.length === 0) path = botFindPath(player.level, player.x, player.z, midX, midZ);
             if (path.length > 0) {
-                player.queueWaypoints(path);
-                return;
+                const safe = trimPathAtCsvBlock(player.level, path);
+                if (safe.length > 0) {
+                    player.queueWaypoints(safe);
+                    return;
+                }
             }
         }
     }
@@ -540,17 +553,25 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
             const angle = baseAngle + (deg * Math.PI) / 180;
             const midX = Math.round(player.x + Math.cos(angle) * step);
             const midZ = Math.round(player.z + Math.sin(angle) * step);
+            if (BotCollisionMap.isCsvBlocked(player.level, midX, midZ)) continue;
             let path = botWalkPath(player.level, player.x, player.z, midX, midZ);
             if (path.length === 0) path = botFindPath(player.level, player.x, player.z, midX, midZ);
             if (path.length > 0) {
-                player.queueWaypoints(path);
-                return;
+                const safe = trimPathAtCsvBlock(player.level, path);
+                if (safe.length > 0) {
+                    player.queueWaypoints(safe);
+                    return;
+                }
             }
         }
     }
 
-    // Absolute last resort: 1-tile naive step
-    player.queueWaypoint(player.x + Math.sign(dx), player.z + Math.sign(dz));
+    // Absolute last resort: 1-tile naive step (skip if CSV-blocked)
+    const naiveX = player.x + Math.sign(dx);
+    const naiveZ = player.z + Math.sign(dz);
+    if (!BotCollisionMap.isCsvBlocked(player.level, naiveX, naiveZ)) {
+        player.queueWaypoint(naiveX, naiveZ);
+    }
 }
 
 /**
@@ -603,6 +624,16 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
     player.moveSpeed = MoveSpeed.WALK; // guard against INSTANT; processMovement overrides via defaultMoveSpeed()
 
     if (Math.abs(player.x - destX) < 1 && Math.abs(player.z - destZ) < 1) return;
+
+    // ── Destination validation ───────────────────────────────────────────────
+    // If the requested destination is CSV-blocked or WALK_BLOCKED, find the
+    // nearest walkable tile before engaging gateway/corridor/path logic.
+    if (BotCollisionMap.isCsvBlocked(player.level, destX, destZ)) {
+        const alt = findNearestWalkableTile(player.level, destX, destZ, 5);
+        if (!alt) return; // nowhere reachable near this destination
+        destX = alt.x;
+        destZ = alt.z;
+    }
 
     // ── Gateway routing ─────────────────────────────────────────────────────
     // If the destination is inside a gated region and the bot is outside,

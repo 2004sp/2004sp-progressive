@@ -568,7 +568,26 @@ export const GRIMY_HERB_MAP: Record<number, [number, number]> = {
 };
 
 export const Objects = {
-    FIRE: 2732
+    FIRE: 2732,
+    FURNACE: 2781,
+    ANVIL: 2783,
+    SPINNING_WHEEL: 2644,
+    BANK_BOOTH: 2213,
+    FLAX_PLANT: 2646,
+    RANGE: 2772,
+    POTTERY_OVEN: 2643,
+    // Thieving stalls (match stallId values inline in SkillProgression.THIEVING)
+    STALL_SILK: 2560,
+    STALL_BAKER: 2561,
+    STALL_SILVER: 2562,
+    STALL_FUR: 2563,
+    STALL_SPICE: 2564,
+    STALL_GEM: 2565
+} as const;
+
+export const Npcs = {
+    // All known banker NPC IDs in revision 254 (source: 2004sp-IDs npc data)
+    BANKER_IDS: [494, 495, 496, 497, 498, 499, 902, 953, 166, 1036] as number[]
 } as const;
 
 export interface AgilityObstacle {
@@ -661,11 +680,17 @@ export const Locations = {
     TAVERLEY_HERBS: [2893, 3448, 0] as [number, number, number], // ⛩ Jatix
     TAVERLEY_SWORDS: [2886, 3441, 0] as [number, number, number], // ⛩ Gaius
 
+    // ── Item spawns ───────────────────────────────────────────────────────────
+    KNIFE_SPAWN_LUMBRIDGE: [3224, 3200, 0] as [number, number, number],
+    KNIFE_SPAWN_CATHERBY:  [2817, 3450, 0] as [number, number, number],
+    KNIFE_SPAWN_SEERS:     [2702, 3476, 0] as [number, number, number],
+
     // ── Woodcutting ───────────────────────────────────────────────────────────
     TREES_LUMBRIDGE: [3194, 3226, 0] as [number, number, number], // ✅ behind Lumbridge castle
     TREES_DRAYNOR: [3091, 3271, 0] as [number, number, number], // ✅ normal trees near Draynor
     OAKS_VARROCK: [3166, 3417, 0] as [number, number, number], // ✅ oaks south of Draynor bank
-    WILLOWS_DRAYNOR: [3180, 3270, 0] as [number, number, number], // ✅ willows east of Draynor
+    WILLOWS_DRAYNOR: [3086, 3234, 0] as [number, number, number], // ✅ willows east of Draynor
+    WILLOWS_PORTSARIM: [2990, 3183, 0] as [number, number, number], // ✅ willows port sarim jail
     WILLOWS_BARBARIAN: [3048, 3422, 0] as [number, number, number], // ✅ willows along River Lum — gate-free
     WILLOWS_BARBARIAN_VIA: [3045, 3340, 0] as [number, number, number], // ↗ waypoint west of Draynor Mansion (3110,3329)
     YEWS_VARROCK: [3204, 3499, 0] as [number, number, number], // ⛩ north Varrock — VarrockNorth gateway
@@ -741,6 +766,8 @@ export const Locations = {
     AL_KHARID_FURNACE: [3275, 3186, 0] as [number, number, number], // ⛩ inside Al Kharid
     FALADOR_FURNACE: [2975, 3369, 0] as [number, number, number], // ✅ near Falador east bank
     VARROCK_ANVIL: [3188, 3422, 0] as [number, number, number], // ✅
+    SEERS_FURNACE: [2833, 3351, 0] as [number, number, number], // ✅ near Seers bank (source: 2004sp-IDs)
+    CAMELOT_ANVIL: [2713, 3493, 0] as [number, number, number], // ✅ Camelot smithing area (source: 2004sp-IDs)
     LUMBRIDGE_ALTAR: [3243, 3210, 0] as [number, number, number], // ✅
     BARBARIAN_VILLAGE_POTTERY: [3085, 3408, 0] as [number, number, number], // ✅ Barbarian Village pottery wheel
 
@@ -819,7 +846,6 @@ export const Shops: Record<string, { location: [number, number, number]; stock: 
     LUMBRIDGE_GENERAL: {
         location: Locations.LUMBRIDGE_GENERAL,
         stock: [
-            { itemId: Items.KNIFE,     cost: 6  },
             { itemId: Items.TINDERBOX, cost: 13 },
             { itemId: Items.SHEARS,    cost: 1  }
         ]
@@ -1155,31 +1181,34 @@ export interface SkillStep {
     };
 }
 
+// Ordered best→worst so the bank-deposit exclusion (.includes) protects every
+// axe/pickaxe the bot might carry.  shouldRun checks use .some() — any entry
+// present in the bot's inventory satisfies the tool requirement.
+const AXE_TOOL_IDS: number[] = [
+    Items.RUNE_AXE, Items.ADAMANT_AXE, Items.MITHRIL_AXE,
+    Items.BLACK_AXE, Items.STEEL_AXE, Items.IRON_AXE, Items.BRONZE_AXE
+];
+const PICKAXE_TOOL_IDS: number[] = [
+    Items.RUNE_PICKAXE, Items.ADAMANT_PICKAXE, Items.MITHRIL_PICKAXE,
+    Items.STEEL_PICKAXE, Items.IRON_PICKAXE, Items.BRONZE_PICKAXE
+];
+
 export const SkillProgression: Record<string, SkillStep[]> = {
     // ── Woodcutting ──────────────────────────────────────────────────────────
     // XP from trees.dbrow productexp, levels from levelrequired.
-    // Level 30-59: two willow spots (Draynor + Barbarian Village) for variety.
+    // Level 30-59: three willow spots for variety.
+    //   Draynor (aggressive Dark Wizards nearby — WoodcuttingTask blocks combat < 16).
+    //   Port Sarim + Barbarian Village are safe for any combat level.
     // Level 60+:   two yew spots (north Varrock via gateway, Falador south open).
     WOODCUTTING: [
-        { minLevel: 1, maxLevel: 14, action: 'woodcut', location: Locations.TREES_LUMBRIDGE, toolItemIds: [Items.BRONZE_AXE], xpPerAction: 250, ticksPerAction: 5, successRate: 0.65, itemGained: Items.LOGS },
-        { minLevel: 15, maxLevel: 29, action: 'woodcut', location: Locations.OAKS_VARROCK, toolItemIds: [Items.IRON_AXE], xpPerAction: 375, ticksPerAction: 5, successRate: 0.6, itemGained: Items.OAK_LOGS },
-        { minLevel: 30, maxLevel: 59, action: 'woodcut', location: Locations.WILLOWS_DRAYNOR, toolItemIds: [Items.STEEL_AXE], xpPerAction: 675, ticksPerAction: 4, successRate: 0.65, itemGained: Items.WILLOW_LOGS },
-        {
-            minLevel: 30,
-            maxLevel: 59,
-            action: 'woodcut',
-            location: Locations.WILLOWS_BARBARIAN,
-            via: Locations.WILLOWS_BARBARIAN_VIA,
-            toolItemIds: [Items.STEEL_AXE],
-            xpPerAction: 675,
-            ticksPerAction: 4,
-            successRate: 0.65,
-            itemGained: Items.WILLOW_LOGS
-        },
-        { minLevel: 45, maxLevel: 59, action: 'woodcut', location: Locations.MAPLES_SEERS, toolItemIds: [Items.STEEL_AXE], xpPerAction: 1000, ticksPerAction: 5, successRate: 0.5, itemGained: Items.MAPLE_LOGS },
-        { minLevel: 60, maxLevel: 99, action: 'woodcut', location: Locations.YEWS_VARROCK, toolItemIds: [Items.STEEL_AXE], xpPerAction: 1750, ticksPerAction: 7, successRate: 0.4, itemGained: Items.YEW_LOGS },
-        { minLevel: 60, maxLevel: 99, action: 'woodcut', location: Locations.YEWS_FALADOR, toolItemIds: [Items.STEEL_AXE], xpPerAction: 1750, ticksPerAction: 7, successRate: 0.4, itemGained: Items.YEW_LOGS },
-        { minLevel: 75, maxLevel: 99, action: 'woodcut', location: Locations.MAGICS_SEERS, toolItemIds: [Items.STEEL_AXE], xpPerAction: 2500, ticksPerAction: 10, successRate: 0.3, itemGained: Items.MAGIC_LOGS }
+        { minLevel: 1, maxLevel: 99, action: 'woodcut', location: Locations.TREES_LUMBRIDGE, toolItemIds: AXE_TOOL_IDS, xpPerAction: 250, ticksPerAction: 5, successRate: 0.65, itemGained: Items.LOGS },
+        { minLevel: 15, maxLevel: 99, action: 'woodcut', location: Locations.OAKS_VARROCK, toolItemIds: AXE_TOOL_IDS, xpPerAction: 375, ticksPerAction: 5, successRate: 0.6, itemGained: Items.OAK_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'woodcut', location: Locations.WILLOWS_DRAYNOR, toolItemIds: AXE_TOOL_IDS, xpPerAction: 675, ticksPerAction: 4, successRate: 0.65, itemGained: Items.WILLOW_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'woodcut', location: Locations.WILLOWS_PORTSARIM, toolItemIds: AXE_TOOL_IDS, xpPerAction: 675, ticksPerAction: 4, successRate: 0.65, itemGained: Items.WILLOW_LOGS },
+        { minLevel: 45, maxLevel: 99, action: 'woodcut', location: Locations.MAPLES_SEERS, toolItemIds: AXE_TOOL_IDS, xpPerAction: 1000, ticksPerAction: 5, successRate: 0.5, itemGained: Items.MAPLE_LOGS },
+        { minLevel: 60, maxLevel: 99, action: 'woodcut', location: Locations.YEWS_VARROCK, toolItemIds: AXE_TOOL_IDS, xpPerAction: 1750, ticksPerAction: 7, successRate: 0.4, itemGained: Items.YEW_LOGS },
+        { minLevel: 60, maxLevel: 99, action: 'woodcut', location: Locations.YEWS_FALADOR, toolItemIds: AXE_TOOL_IDS, xpPerAction: 1750, ticksPerAction: 7, successRate: 0.4, itemGained: Items.YEW_LOGS },
+        { minLevel: 75, maxLevel: 99, action: 'woodcut', location: Locations.MAGICS_SEERS, toolItemIds: AXE_TOOL_IDS, xpPerAction: 2500, ticksPerAction: 10, successRate: 0.3, itemGained: Items.MAGIC_LOGS }
     ],
 
     // ── Fishing ──────────────────────────────────────────────────────────────
@@ -1189,11 +1218,11 @@ export const SkillProgression: Record<string, SkillStep[]> = {
     // Banking: Draynor Bank (nearest) after the boat ride back to Port Sarim.
     FISHING: [
         // Level 1-19: net fishing — shrimp at Al Kharid shore
-        { minLevel: 1, maxLevel: 19, action: 'fish', location: Locations.FISH_ALKHARID, toolItemIds: [Items.SMALL_FISHING_NET], xpPerAction: 100, ticksPerAction: 5, successRate: 0.6, itemGained: Items.RAW_SHRIMP },
+        { minLevel: 1, maxLevel: 40, action: 'fish', location: Locations.FISH_ALKHARID, toolItemIds: [Items.SMALL_FISHING_NET], xpPerAction: 100, ticksPerAction: 5, successRate: 0.6, itemGained: Items.RAW_SHRIMP },
         // Level 20-29: fly rod — trout at Barbarian Village
         {
             minLevel: 20,
-            maxLevel: 29,
+            maxLevel: 99,
             action: 'fish',
             location: Locations.FISH_BARBARIAN,
             via: Locations.WILLOWS_BARBARIAN_VIA,
@@ -1207,7 +1236,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         // Level 30-39: fly rod — salmon at Barbarian Village
         {
             minLevel: 30,
-            maxLevel: 39,
+            maxLevel: 99,
             action: 'fish',
             location: Locations.FISH_BARBARIAN,
             via: Locations.WILLOWS_BARBARIAN_VIA,
@@ -1218,9 +1247,9 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.RAW_SALMON,
             itemConsumed: Items.FEATHER
         },
-        { minLevel: 1, maxLevel: 19, action: 'fish', location: Locations.FISH_KARAMJA, toolItemIds: [Items.SMALL_FISHING_NET], xpPerAction: 100, ticksPerAction: 5, successRate: 0.6, itemGained: Items.RAW_SHRIMP },
+        { minLevel: 1, maxLevel: 40, action: 'fish', location: Locations.FISH_KARAMJA, toolItemIds: [Items.SMALL_FISHING_NET], xpPerAction: 100, ticksPerAction: 5, successRate: 0.6, itemGained: Items.RAW_SHRIMP },
         // Level 40-49: cage — lobster at Karamja (boat-routed via Port Sarim)
-        { minLevel: 40, maxLevel: 49, action: 'fish', location: Locations.FISH_KARAMJA, toolItemIds: [Items.LOBSTER_POT], xpPerAction: 900, ticksPerAction: 5, successRate: 0.5, itemGained: Items.RAW_LOBSTER },
+        { minLevel: 40, maxLevel: 99, action: 'fish', location: Locations.FISH_KARAMJA, toolItemIds: [Items.LOBSTER_POT], xpPerAction: 900, ticksPerAction: 5, successRate: 0.5, itemGained: Items.RAW_LOBSTER },
         // Level 50-99: harpoon — swordfish at Karamja (boat-routed via Port Sarim)
         { minLevel: 50, maxLevel: 99, action: 'fish', location: Locations.FISH_KARAMJA, toolItemIds: [Items.HARPOON], xpPerAction: 1000, ticksPerAction: 5, successRate: 0.45, itemGained: Items.RAW_SWORDFISH },
         // Level 76-99: harpoon — shark at Catherby
@@ -1238,15 +1267,15 @@ export const SkillProgression: Record<string, SkillStep[]> = {
     // Varrock East [3285, 3365] added as iron variety (open area, near east bank).
     MINING: [
         // Level 1-14: copper & tin at Varrock West mine (open area, no gates)
-        { minLevel: 1, maxLevel: 14, action: 'mine', location: Locations.MINE_VARROCK_WEST, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 175, ticksPerAction: 4, successRate: 0.65, itemGained: Items.COPPER_ORE },
-        { minLevel: 1, maxLevel: 14, action: 'mine', location: Locations.MINE_VARROCK_WEST, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 175, ticksPerAction: 4, successRate: 0.65, itemGained: Items.TIN_ORE },
+        { minLevel: 1, maxLevel: 40, action: 'mine', location: Locations.MINE_VARROCK_WEST, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 175, ticksPerAction: 4, successRate: 0.65, itemGained: Items.COPPER_ORE },
+        { minLevel: 1, maxLevel: 40, action: 'mine', location: Locations.MINE_VARROCK_WEST, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 175, ticksPerAction: 4, successRate: 0.65, itemGained: Items.TIN_ORE },
         {
             minLevel: 1,
             maxLevel: 40,
             action: 'mine',
             location: Locations.MINE_VARROCK_EAST,
             via: Locations.MINE_VARROCK_EAST_VIA,
-            toolItemIds: [Items.BRONZE_PICKAXE],
+            toolItemIds: PICKAXE_TOOL_IDS,
             xpPerAction: 175,
             ticksPerAction: 4,
             successRate: 0.65,
@@ -1258,21 +1287,21 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             action: 'mine',
             location: Locations.MINE_VARROCK_EAST,
             via: Locations.MINE_VARROCK_EAST_VIA,
-            toolItemIds: [Items.BRONZE_PICKAXE],
+            toolItemIds: PICKAXE_TOOL_IDS,
             xpPerAction: 175,
             ticksPerAction: 4,
             successRate: 0.65,
             itemGained: Items.TIN_ORE
         },
         // Level 15-29: iron — Barbarian Village (primary) or Varrock East (variety)
-        { minLevel: 15, maxLevel: 99, action: 'mine', location: Locations.MINE_VARROCK_WEST, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 350, ticksPerAction: 5, successRate: 0.55, itemGained: Items.IRON_ORE },
+        { minLevel: 15, maxLevel: 99, action: 'mine', location: Locations.MINE_VARROCK_WEST, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 350, ticksPerAction: 5, successRate: 0.55, itemGained: Items.IRON_ORE },
         {
             minLevel: 15,
-            maxLevel: 29,
+            maxLevel: 99,
             action: 'mine',
             location: Locations.MINE_VARROCK_EAST,
             via: Locations.MINE_VARROCK_EAST_VIA,
-            toolItemIds: [Items.BRONZE_PICKAXE],
+            toolItemIds: PICKAXE_TOOL_IDS,
             xpPerAction: 350,
             ticksPerAction: 5,
             successRate: 0.55,
@@ -1280,22 +1309,22 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         // Level 30+: coal at Barbarian Village mine (surface accessible, no gates)
                 // Level 30+: coal at Barbarian Village mine (surface accessible!)
-        { minLevel: 30, maxLevel: 99, action: 'mine', location: Locations.MINE_DWARVEN, via: Locations.WILLOWS_BARBARIAN_VIA, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 500, ticksPerAction: 6, successRate: 0.45, itemGained: Items.COAL },
-        { minLevel: 40, maxLevel: 99, action: 'mine', location: Locations.MINE_KARAMJA, via: Locations.WILLOWS_BARBARIAN_VIA, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 650, ticksPerAction: 6, successRate: 0.45, itemGained: Items.GOLD_ORE },
-        { minLevel: 1, maxLevel: 99, action: 'mine', location: Locations.MINE_RIMMINGTON, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 50, ticksPerAction: 4, successRate: 0.8, itemGained: Items.CLAY },
-        { minLevel: 55, maxLevel: 99, action: 'mine', location: Locations.MINE_MITHRIL, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 800, ticksPerAction: 8, successRate: 0.4, itemGained: Items.MITHRIL_ORE },
-        { minLevel: 70, maxLevel: 99, action: 'mine', location: Locations.MINE_ADAMANT, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 950, ticksPerAction: 10, successRate: 0.35, itemGained: Items.ADAMANTITE_ORE },
-        { minLevel: 85, maxLevel: 99, action: 'mine', location: Locations.MINE_RUNITE, toolItemIds: [Items.BRONZE_PICKAXE], xpPerAction: 1250, ticksPerAction: 15, successRate: 0.25, itemGained: Items.RUNITE_ORE }
+        { minLevel: 30, maxLevel: 99, action: 'mine', location: Locations.MINE_DWARVEN, via: Locations.WILLOWS_BARBARIAN_VIA, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 500, ticksPerAction: 6, successRate: 0.45, itemGained: Items.COAL },
+        { minLevel: 40, maxLevel: 99, action: 'mine', location: Locations.MINE_KARAMJA, via: Locations.WILLOWS_BARBARIAN_VIA, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 650, ticksPerAction: 6, successRate: 0.45, itemGained: Items.GOLD_ORE },
+        { minLevel: 1, maxLevel: 99, action: 'mine', location: Locations.MINE_RIMMINGTON, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 50, ticksPerAction: 4, successRate: 0.8, itemGained: Items.CLAY },
+        { minLevel: 55, maxLevel: 99, action: 'mine', location: Locations.MINE_MITHRIL, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 800, ticksPerAction: 8, successRate: 0.4, itemGained: Items.MITHRIL_ORE },
+        { minLevel: 70, maxLevel: 99, action: 'mine', location: Locations.MINE_ADAMANT, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 950, ticksPerAction: 10, successRate: 0.35, itemGained: Items.ADAMANTITE_ORE },
+        { minLevel: 85, maxLevel: 99, action: 'mine', location: Locations.MINE_RUNITE, toolItemIds: PICKAXE_TOOL_IDS, xpPerAction: 1250, ticksPerAction: 15, successRate: 0.25, itemGained: Items.RUNITE_ORE }
     ],
 
     // ── Firemaking ───────────────────────────────────────────────────────────
     // XP from firemaking.obj productexp, levels from levelrequire.
     // Location: Lumbridge road — wide, flat, no obstacles.
     FIREMAKING: [
-        { minLevel: 1, maxLevel: 14, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
-        { minLevel: 15, maxLevel: 29, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
-        { minLevel: 30, maxLevel: 44, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
-        { minLevel: 45, maxLevel: 59, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
+        { minLevel: 1, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
+        { minLevel: 15, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
+        { minLevel: 45, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
         { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS }
     ],
 
@@ -2359,7 +2388,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         // Furnace: Level 1-14, copper + tin → bronze bar
         {
             minLevel: 1,
-            maxLevel: 14,
+            maxLevel: 99,
             action: 'smelt',
             location: Locations.AL_KHARID_FURNACE,
             toolItemIds: [],
@@ -2372,7 +2401,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 1,
-            maxLevel: 14,
+            maxLevel: 99,
             action: 'smelt',
             location: Locations.FALADOR_FURNACE,
             toolItemIds: [],
@@ -2384,10 +2413,10 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             extra: { alsoConsumes: Items.TIN_ORE }
         },
         // Furnace: Level 15-29, iron ore → iron bar
-        { minLevel: 15, maxLevel: 29, action: 'smelt', location: Locations.AL_KHARID_FURNACE, toolItemIds: [], xpPerAction: 13, ticksPerAction: 5, successRate: 0.5, itemConsumed: Items.IRON_ORE, itemGained: Items.IRON_BAR },
+        { minLevel: 15, maxLevel: 99, action: 'smelt', location: Locations.AL_KHARID_FURNACE, toolItemIds: [], xpPerAction: 13, ticksPerAction: 5, successRate: 0.5, itemConsumed: Items.IRON_ORE, itemGained: Items.IRON_BAR },
         {
             minLevel: 15,
-            maxLevel: 29,
+            maxLevel: 99,
             action: 'smelt',
             location: Locations.FALADOR_FURNACE,
             toolItemIds: [],
@@ -2429,7 +2458,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         // Anvil: Level 18-32, 5 bronze bars → bronze platebody
         {
             minLevel: 18,
-            maxLevel: 32,
+            maxLevel: 99,
             action: 'smith',
             location: Locations.VARROCK_ANVIL,
             toolItemIds: [Items.HAMMER],
@@ -2443,7 +2472,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         // Anvil: Level 33-47, 5 iron bars → iron platebody
         {
             minLevel: 33,
-            maxLevel: 47,
+            maxLevel: 99,
             action: 'smith',
             location: Locations.VARROCK_ANVIL,
             toolItemIds: [Items.HAMMER],
@@ -2457,7 +2486,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         // Anvil: Level 48+, 5 steel bars → steel platebody
         {
             minLevel: 48,
-            maxLevel: 82,
+            maxLevel: 99,
             action: 'smith',
             location: Locations.VARROCK_ANVIL,
             toolItemIds: [Items.HAMMER],
@@ -2470,7 +2499,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 83,
-            maxLevel: 97,
+            maxLevel: 99,
             action: 'smith',
             location: Locations.VARROCK_ANVIL,
             toolItemIds: [Items.HAMMER],
@@ -2498,16 +2527,16 @@ export const SkillProgression: Record<string, SkillStep[]> = {
 
     // ── Thieving ─────────────────────────────────────────────────────────────
     THIEVING: [
-        { minLevel: 1, maxLevel: 9, action: 'thieve', location: Locations.THIEVE_LUMBRIDGE_MAN, toolItemIds: [], xpPerAction: 80, ticksPerAction: 4, successRate: 0.85, itemGained: Items.COINS, extra: { npcName: 'man' } },
-        { minLevel: 5, maxLevel: 19, action: 'thieve_stall', location: Locations.BAKER_STALL, toolItemIds: [], xpPerAction: 160, ticksPerAction: 4, successRate: 1.0, itemGained: Items.CAKE, extra: { stallId: 2561, npcType: 'Baker' } },
-        { minLevel: 20, maxLevel: 41, action: 'thieve_stall', location: Locations.SILK_STALL, toolItemIds: [], xpPerAction: 240, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SILK, extra: { stallId: 2560, npcType: 'Silk merchant' } },
-        { minLevel: 25, maxLevel: 39, action: 'thieve', location: Locations.THIEVE_ALKHARID_WARRIOR, toolItemIds: [], xpPerAction: 260, ticksPerAction: 4, successRate: 0.7, itemGained: Items.COINS, extra: { npcName: 'warrior' } },
-        { minLevel: 35, maxLevel: 41, action: 'thieve_stall', location: Locations.FUR_STALL, toolItemIds: [], xpPerAction: 360, ticksPerAction: 4, successRate: 1.0, itemGained: Items.GREY_WOLF_FUR, extra: { stallId: 2563, npcType: 'Fur merchant' } },
-        { minLevel: 40, maxLevel: 54, action: 'thieve', location: Locations.THIEVE_VARROCK_GUARD, toolItemIds: [], xpPerAction: 468, ticksPerAction: 4, successRate: 0.65, itemGained: Items.COINS, extra: { npcName: 'guard' } },
-        { minLevel: 42, maxLevel: 64, action: 'thieve_stall', location: Locations.SILVER_STALL, toolItemIds: [], xpPerAction: 540, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SILVER_ORE, extra: { stallId: 2562, npcType: 'Silver merchant' } },
+        { minLevel: 1, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_LUMBRIDGE_MAN, toolItemIds: [], xpPerAction: 80, ticksPerAction: 4, successRate: 0.85, itemGained: Items.COINS, extra: { npcName: 'man' } },
+        { minLevel: 5, maxLevel: 99, action: 'thieve_stall', location: Locations.BAKER_STALL, toolItemIds: [], xpPerAction: 160, ticksPerAction: 4, successRate: 1.0, itemGained: Items.CAKE, extra: { stallId: 2561, npcType: 'Baker' } },
+        { minLevel: 20, maxLevel: 99, action: 'thieve_stall', location: Locations.SILK_STALL, toolItemIds: [], xpPerAction: 240, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SILK, extra: { stallId: 2560, npcType: 'Silk merchant' } },
+        { minLevel: 25, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_ALKHARID_WARRIOR, toolItemIds: [], xpPerAction: 260, ticksPerAction: 4, successRate: 0.7, itemGained: Items.COINS, extra: { npcName: 'warrior' } },
+        { minLevel: 35, maxLevel: 99, action: 'thieve_stall', location: Locations.FUR_STALL, toolItemIds: [], xpPerAction: 360, ticksPerAction: 4, successRate: 1.0, itemGained: Items.GREY_WOLF_FUR, extra: { stallId: 2563, npcType: 'Fur merchant' } },
+        { minLevel: 40, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_VARROCK_GUARD, toolItemIds: [], xpPerAction: 468, ticksPerAction: 4, successRate: 0.65, itemGained: Items.COINS, extra: { npcName: 'guard' } },
+        { minLevel: 42, maxLevel: 99, action: 'thieve_stall', location: Locations.SILVER_STALL, toolItemIds: [], xpPerAction: 540, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SILVER_ORE, extra: { stallId: 2562, npcType: 'Silver merchant' } },
         { minLevel: 55, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_ARDY_KNIGHT, toolItemIds: [], xpPerAction: 843, ticksPerAction: 4, successRate: 0.6, itemGained: Items.COINS, extra: { npcName: 'knight' } },
-        { minLevel: 65, maxLevel: 74, action: 'thieve_stall', location: Locations.SPICE_STALL, toolItemIds: [], xpPerAction: 810, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SPICE, extra: { stallId: 2564, npcType: 'Spice seller' } },
-        { minLevel: 70, maxLevel: 79, action: 'thieve', location: Locations.THIEVE_PALADIN, toolItemIds: [], xpPerAction: 1518, ticksPerAction: 4, successRate: 0.5, itemGained: Items.COINS, extra: { npcName: 'paladin' } },
+        { minLevel: 65, maxLevel: 99, action: 'thieve_stall', location: Locations.SPICE_STALL, toolItemIds: [], xpPerAction: 810, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SPICE, extra: { stallId: 2564, npcType: 'Spice seller' } },
+        { minLevel: 70, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_PALADIN, toolItemIds: [], xpPerAction: 1518, ticksPerAction: 4, successRate: 0.5, itemGained: Items.COINS, extra: { npcName: 'paladin' } },
         { minLevel: 75, maxLevel: 99, action: 'thieve_stall', location: Locations.GEM_STALL, toolItemIds: [], xpPerAction: 1600, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNCUT_SAPPHIRE, extra: { stallId: 2565, npcType: 'Gem merchant' } },
         { minLevel: 80, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_HERO, toolItemIds: [], xpPerAction: 2733, ticksPerAction: 4, successRate: 0.4, itemGained: Items.COINS, extra: { npcName: 'hero' } }
     ],
@@ -2528,7 +2557,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
     CRAFTING: [
         {
             minLevel: 1,
-            maxLevel: 39,
+            maxLevel: 99,
             action: 'craft_wool',
             location: Locations.LUMBRIDGE_POTTERS_WHEEL, // level 1 — task teleJumps up from LUMBRIDGE_CASTLE_APPROACH
             toolItemIds: [Items.SHEARS],
@@ -2709,7 +2738,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
     HERBLORE: [
         {
             minLevel: 1,
-            maxLevel: 4,
+            maxLevel: 99,
             action: 'herblore_attack',
             location: Locations.AEMAD_SUPPLIES,
             toolItemIds: [],
@@ -2721,7 +2750,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 5,
-            maxLevel: 11,
+            maxLevel: 99,
             action: 'herblore_antipoison',
             location: Locations.AEMAD_SUPPLIES,
             toolItemIds: [],
@@ -2733,7 +2762,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 12,
-            maxLevel: 21,
+            maxLevel: 99,
             action: 'herblore_strength',
             location: Locations.AEMAD_SUPPLIES,
             toolItemIds: [],
@@ -2745,7 +2774,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 22,
-            maxLevel: 37,
+            maxLevel: 99,
             action: 'herblore_restore',
             location: Locations.AEMAD_SUPPLIES,
             toolItemIds: [],
@@ -2771,8 +2800,8 @@ export const SkillProgression: Record<string, SkillStep[]> = {
 
     // ── Agility ────────────────────────────────────────────────────────────────
     AGILITY: [
-        { minLevel: 1, maxLevel: 34, action: 'agility', location: Locations.GNOME_AGILITY, toolItemIds: [], xpPerAction: 865, ticksPerAction: 45, successRate: 1.0, extra: { course: 'GNOME' } },
-        { minLevel: 35, maxLevel: 51, action: 'agility', location: Locations.BARBARIAN_AGILITY, toolItemIds: [], xpPerAction: 1533, ticksPerAction: 60, successRate: 0.9, extra: { course: 'BARBARIAN' } },
+        { minLevel: 1, maxLevel: 99, action: 'agility', location: Locations.GNOME_AGILITY, toolItemIds: [], xpPerAction: 865, ticksPerAction: 45, successRate: 1.0, extra: { course: 'GNOME' } },
+        { minLevel: 35, maxLevel: 99, action: 'agility', location: Locations.BARBARIAN_AGILITY, toolItemIds: [], xpPerAction: 1533, ticksPerAction: 60, successRate: 0.9, extra: { course: 'BARBARIAN' } },
         { minLevel: 52, maxLevel: 99, action: 'agility', location: Locations.WILDERNESS_AGILITY, toolItemIds: [], xpPerAction: 5714, ticksPerAction: 80, successRate: 0.8, extra: { course: 'WILDERNESS' } }
     ],
 
@@ -2793,7 +2822,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             extra: { productCount: 15 }
         },
         { minLevel: 5, maxLevel: 9, action: 'fletch_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [Items.KNIFE], xpPerAction: 500, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNSTRUNG_SHORTBOW, itemConsumed: Items.LOGS },
-        { minLevel: 10, maxLevel: 19, action: 'fletch_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [Items.KNIFE], xpPerAction: 1000, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNSTRUNG_LONGBOW, itemConsumed: Items.LOGS },
+        { minLevel: 10, maxLevel: 99, action: 'fletch_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [Items.KNIFE], xpPerAction: 1000, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNSTRUNG_LONGBOW, itemConsumed: Items.LOGS },
         {
             minLevel: 20,
             maxLevel: 24,
@@ -2808,7 +2837,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 25,
-            maxLevel: 34,
+            maxLevel: 99,
             action: 'fletch_oak_longbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
@@ -2832,7 +2861,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 40,
-            maxLevel: 49,
+            maxLevel: 99,
             action: 'fletch_willow_longbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
@@ -2856,7 +2885,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 55,
-            maxLevel: 69,
+            maxLevel: 99,
             action: 'fletch_maple_longbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
@@ -2880,7 +2909,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 75,
-            maxLevel: 84,
+            maxLevel: 99,
             action: 'fletch_yew_longbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
@@ -2915,17 +2944,17 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.MAGIC_LOGS
         },
         // Stringing
-        { minLevel: 5, maxLevel: 9, action: 'string_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 50, ticksPerAction: 3, successRate: 1.0, itemGained: Items.SHORTBOW, itemConsumed: Items.UNSTRUNG_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 10, maxLevel: 19, action: 'string_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 100, ticksPerAction: 3, successRate: 1.0, itemGained: Items.LONGBOW, itemConsumed: Items.UNSTRUNG_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 20, maxLevel: 24, action: 'string_oak_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 165, ticksPerAction: 3, successRate: 1.0, itemGained: Items.OAK_SHORTBOW, itemConsumed: Items.UNSTRUNG_OAK_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 25, maxLevel: 34, action: 'string_oak_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 250, ticksPerAction: 3, successRate: 1.0, itemGained: Items.OAK_LONGBOW, itemConsumed: Items.UNSTRUNG_OAK_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 35, maxLevel: 39, action: 'string_willow_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 333, ticksPerAction: 3, successRate: 1.0, itemGained: Items.WILLOW_SHORTBOW, itemConsumed: Items.UNSTRUNG_WILLOW_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 40, maxLevel: 49, action: 'string_willow_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 415, ticksPerAction: 3, successRate: 1.0, itemGained: Items.WILLOW_LONGBOW, itemConsumed: Items.UNSTRUNG_WILLOW_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 50, maxLevel: 54, action: 'string_maple_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 500, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAPLE_SHORTBOW, itemConsumed: Items.UNSTRUNG_MAPLE_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 55, maxLevel: 69, action: 'string_maple_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 583, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAPLE_LONGBOW, itemConsumed: Items.UNSTRUNG_MAPLE_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 70, maxLevel: 74, action: 'string_yew_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 675, ticksPerAction: 3, successRate: 1.0, itemGained: Items.YEW_SHORTBOW, itemConsumed: Items.UNSTRUNG_YEW_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 75, maxLevel: 84, action: 'string_yew_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 750, ticksPerAction: 3, successRate: 1.0, itemGained: Items.YEW_LONGBOW, itemConsumed: Items.UNSTRUNG_YEW_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 80, maxLevel: 84, action: 'string_magic_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 833, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAGIC_SHORTBOW, itemConsumed: Items.UNSTRUNG_MAGIC_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 5, maxLevel: 99, action: 'string_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 50, ticksPerAction: 3, successRate: 1.0, itemGained: Items.SHORTBOW, itemConsumed: Items.UNSTRUNG_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 10, maxLevel: 99, action: 'string_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 100, ticksPerAction: 3, successRate: 1.0, itemGained: Items.LONGBOW, itemConsumed: Items.UNSTRUNG_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 20, maxLevel: 99, action: 'string_oak_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 165, ticksPerAction: 3, successRate: 1.0, itemGained: Items.OAK_SHORTBOW, itemConsumed: Items.UNSTRUNG_OAK_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 25, maxLevel: 99, action: 'string_oak_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 250, ticksPerAction: 3, successRate: 1.0, itemGained: Items.OAK_LONGBOW, itemConsumed: Items.UNSTRUNG_OAK_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 35, maxLevel: 99, action: 'string_willow_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 333, ticksPerAction: 3, successRate: 1.0, itemGained: Items.WILLOW_SHORTBOW, itemConsumed: Items.UNSTRUNG_WILLOW_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 40, maxLevel: 99, action: 'string_willow_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 415, ticksPerAction: 3, successRate: 1.0, itemGained: Items.WILLOW_LONGBOW, itemConsumed: Items.UNSTRUNG_WILLOW_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 50, maxLevel: 99, action: 'string_maple_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 500, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAPLE_SHORTBOW, itemConsumed: Items.UNSTRUNG_MAPLE_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 55, maxLevel: 99, action: 'string_maple_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 583, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAPLE_LONGBOW, itemConsumed: Items.UNSTRUNG_MAPLE_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 70, maxLevel: 99, action: 'string_yew_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 675, ticksPerAction: 3, successRate: 1.0, itemGained: Items.YEW_SHORTBOW, itemConsumed: Items.UNSTRUNG_YEW_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 75, maxLevel: 99, action: 'string_yew_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 750, ticksPerAction: 3, successRate: 1.0, itemGained: Items.YEW_LONGBOW, itemConsumed: Items.UNSTRUNG_YEW_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 80, maxLevel: 99, action: 'string_magic_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 833, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAGIC_SHORTBOW, itemConsumed: Items.UNSTRUNG_MAGIC_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
         { minLevel: 85, maxLevel: 99, action: 'string_magic_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 915, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAGIC_LONGBOW, itemConsumed: Items.UNSTRUNG_MAGIC_LONGBOW, extra: { stringItem: Items.BOW_STRING } }
     ],
 
@@ -2990,6 +3019,19 @@ export function findClosest(
  *                  Use this at bank-cycle re-rolls so bots never choose a location
  *                  they lack the required weapon/tool for.
  */
+/**
+ * Woodcutting step that produces a specific log type at the given WC level.
+ * Returns null if the bot's WC level is too low to cut those logs yet.
+ * Used by the planner to send a bot to gather the exact logs it needs for
+ * Firemaking or Fletching before it can do those skills.
+ */
+export function getWoodcuttingStepForLog(logId: number, wcLevel: number): SkillStep | null {
+    const steps = SkillProgression['WOODCUTTING'] ?? [];
+    const matching = steps.filter(s => s.itemGained === logId && wcLevel >= s.minLevel && wcLevel <= s.maxLevel);
+    if (matching.length === 0) return null;
+    return matching[Math.floor(Math.random() * matching.length)];
+}
+
 export function getProgressionStep(skill: string, level: number, hasItems?: (toolItemIds: number[]) => boolean): SkillStep | null {
     const steps = SkillProgression[skill];
     if (!steps || steps.length === 0) return null;

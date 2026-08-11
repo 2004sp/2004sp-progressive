@@ -3,6 +3,7 @@ import {
     Player,
     walkTo,
     removeItem,
+    hasItem,
     isNear,
     getBaseLevel,
     getProgressionStep,
@@ -43,47 +44,46 @@ export class FiremakingTask extends BotTask {
         this.watchdog.destination = step.location;
     }
 
-    shouldRun(): boolean {
+    shouldRun(player: Player): boolean {
+        const logId = this.step.itemConsumed;
+        if (!logId || logId === -1) return false;
+        if (!hasItem(player, logId) && !this._inBank(player, logId)) return false;
+        if (!hasItem(player, Items.TINDERBOX) && !this._inBank(player, Items.TINDERBOX)) return false;
         return true;
     }
 
     // ───────────────── LOG HELPERS ─────────────────
-        private getItemSlot(player: Player, itemId: number): number | null {
+
+    private getItemSlot(player: Player, itemId: number): number | null {
         const inv = player.getInventory(InvType.INV);
         if (!inv) return null;
-
         for (let i = 0; i < inv.capacity; i++) {
             const item = inv.get(i);
             if (item && item.id === itemId) return i;
         }
-
         return null;
     }
 
-    private isLog(id: number): boolean {
-        return (
-            id === Items.LOGS ||
-            id === Items.OAK_LOGS ||
-            id === Items.WILLOW_LOGS ||
-            id === Items.MAPLE_LOGS ||
-            id === Items.YEW_LOGS
-        );
-    }
-
+    /** Returns the step's required log ID if the bot has one in inventory, else null. */
     private getFirstLog(player: Player): number | null {
-        const inv = player.getInventory(InvType.INV);
-        if (!inv) return null;
-
-        for (let i = 0; i < inv.capacity; i++) {
-            const item = inv.get(i);
-            if (item && this.isLog(item.id)) return item.id;
-        }
-
-        return null;
+        const logId = this.step.itemConsumed;
+        if (!logId || logId === -1) return null;
+        return this.getItemSlot(player, logId) !== null ? logId : null;
     }
 
     private hasLogs(player: Player): boolean {
         return this.getFirstLog(player) !== null;
+    }
+
+    private _inBank(player: Player, itemId: number): boolean {
+        const bid = bankInvId();
+        if (bid === -1) return false;
+        const bank = player.getInventory(bid);
+        if (!bank) return false;
+        for (let i = 0; i < bank.capacity; i++) {
+            if (bank.get(i)?.id === itemId) return true;
+        }
+        return false;
     }
 
     private static FIRE_ID = 2732;
@@ -166,34 +166,60 @@ private spawnFire(player: Player): void {
         // ───────────────── BANK ─────────────────
 
         if (this.state === 'bank') {
-            const bank = player.getInventory(bankInvId());
+            const bid = bankInvId();
+            const bank = bid !== -1 ? player.getInventory(bid) : null;
             const inv = player.getInventory(InvType.INV);
-
             if (!bank || !inv) return;
 
-            let withdrew = false;
+            const logId = this.step.itemConsumed;
+            if (!logId || logId === -1) { this.interrupt(); return; }
 
-            for (let i = 0; i < bank.capacity; i++) {
-                const item = bank.get(i);
+            // 1. Deposit everything that isn't the correct log or tinderbox.
+            for (let i = 0; i < inv.capacity; i++) {
+                const item = inv.get(i);
+                if (!item) continue;
+                if (item.id === logId || item.id === Items.TINDERBOX) continue;
+                const moved = inv.remove(item.id, item.count);
+                if (moved.completed > 0) bank.add(item.id, moved.completed);
+            }
 
-                if (item && this.isLog(item.id)) {
-                    console.log(`[Firemaking] 📤 Withdrawing logs`);
-                    bank.remove(item.id, item.count);
-                    inv.add(item.id, item.count);
-                    withdrew = true;
+            // 2. Ensure tinderbox is in inventory; withdraw from bank if needed.
+            if (!hasItem(player, Items.TINDERBOX)) {
+                for (let i = 0; i < bank.capacity; i++) {
+                    const it = bank.get(i);
+                    if (it?.id !== Items.TINDERBOX) continue;
+                    const removed = bank.remove(Items.TINDERBOX, 1);
+                    if (removed.completed > 0) inv.add(Items.TINDERBOX, 1);
                     break;
+                }
+                if (!hasItem(player, Items.TINDERBOX)) {
+                    console.log(`[Firemaking] ❌ No tinderbox anywhere → STOP`);
+                    this.interrupt();
+                    return;
                 }
             }
 
-            if (!withdrew) {
-                console.log(`[Firemaking] ❌ NO LOGS IN BANK → STOP`);
-                this.interrupt();
-                return;
+            // 3. Withdraw correct logs (fill remaining inventory space).
+            if (!hasItem(player, logId)) {
+                let withdrew = false;
+                for (let i = 0; i < bank.capacity; i++) {
+                    const item = bank.get(i);
+                    if (!item || item.id !== logId) continue;
+                    const moved = bank.remove(logId, item.count);
+                    if (moved.completed > 0) {
+                        inv.add(logId, moved.completed);
+                        withdrew = true;
+                    }
+                    break;
+                }
+                if (!withdrew) {
+                    console.log(`[Firemaking] ❌ No correct logs in bank → STOP`);
+                    this.interrupt();
+                    return;
+                }
             }
 
-            // 🔥 FIX: DO NOT LOCK FOREVER
             this.bankLocked = false;
-
             this.state = 'walk';
             return;
         }
@@ -228,9 +254,9 @@ private spawnFire(player: Player): void {
             }
             const before = player.stats[PlayerStat.FIREMAKING];
             const slot = this.getItemSlot(player, logId);
-            if(!slot) return;
+            if (slot === null) return;
             const o_slot = this.getItemSlot(player, Items.TINDERBOX);
-            if(!o_slot) return;
+            if (o_slot === null) return;
             const success: boolean = interactHeldOpU(player, inv, logId, slot, Items.TINDERBOX, o_slot); //Simulate a real use item on item action
             if(success) {
                 const xp = this.getXp(logId);
