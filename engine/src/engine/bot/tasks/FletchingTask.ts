@@ -22,8 +22,9 @@
  * names (see _dialogComponent). The bot reads the same env flag at runtime
  * (_makexEnabled) so it always predicts the interface actually opened.
  *
- * Bow stringing is omitted — it is a separate workflow that does not involve
- * log acquisition and should be its own task if needed later.
+ * Bow stringing (unstrung bow + bow string → finished bow) is a separate
+ * workflow that doesn't involve log acquisition — see BowStringingTask.ts,
+ * routed to by BotGoalPlanner._findStringingTask().
  */
 
 import LocType from '#/cache/config/LocType.js';
@@ -38,7 +39,7 @@ import {
     INTERACT_TIMEOUT, StuckDetector, ProgressWatchdog, botJitter,
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/BotKnowledge.js';
-import { getWoodcuttingStepForLog } from '#/engine/bot/BotKnowledge.js';
+import { getWoodcuttingStepForLog, bestLogForWoodcutting, getBestFletchStepForLog } from '#/engine/bot/BotKnowledge.js';
 import { interactHeldOpU, interactIfButtonByName } from '#/engine/bot/BotAction.js';
 import { tryParseBoolean } from '#/util/TryParse.js';
 
@@ -55,7 +56,7 @@ type FletchState =
     | 'bank_deposit';
 
 export class FletchingTask extends BotTask {
-    private readonly step: SkillStep;
+    private step: SkillStep;
 
     private state: FletchState = 'woodcut_walk';
 
@@ -126,6 +127,7 @@ export class FletchingTask extends BotTask {
                     this.state = 'fletch';
                     return;
                 }
+                this._reconcileStep(player);
                 const wcLevel = getBaseLevel(player, PlayerStat.WOODCUTTING);
                 this.wcStep = getWoodcuttingStepForLog(this.step.itemConsumed!, wcLevel);
                 if (!this.wcStep) {
@@ -307,6 +309,32 @@ export class FletchingTask extends BotTask {
     }
 
     // ── Woodcut helpers ──────────────────────────────────────────────────────────
+
+    /**
+     * The planner assigns this.step purely by Fletching level, but the log it
+     * consumes also needs a matching Woodcutting level the bot may not have
+     * yet (e.g. Fletching 90 qualifies for magic logs, but Woodcutting 20 can
+     * only chop oak). Left alone, woodcut_walk would stall forever waiting
+     * for a log the bot can't cut. Instead, re-target onto the best fletch_
+     * step for the highest log tier the bot's Woodcutting can currently
+     * obtain — still capped by Fletching level, so this never jumps ahead to
+     * a bow tier the bot can't actually fletch yet. Also re-upgrades once
+     * Woodcutting catches back up, mirroring WoodcuttingTask's own
+     * level-up step reroll. No-op (and cheap) when nothing needs to change.
+     */
+    private _reconcileStep(player: Player): void {
+        const wcLevel = getBaseLevel(player, PlayerStat.WOODCUTTING);
+        const bestLog = bestLogForWoodcutting(wcLevel);
+        if (bestLog === this.step.itemConsumed) return;
+
+        const fletchLevel = getBaseLevel(player, PlayerStat.FLETCHING);
+        const better = getBestFletchStepForLog(bestLog, fletchLevel);
+        if (!better || better.action === this.step.action) return;
+
+        console.log(`[Fletch:${player.username}] retargeting ${this.step.action} -> ${better.action} (wc=${wcLevel}, fletch=${fletchLevel})`);
+        this.step = better;
+        this._resetWcState();
+    }
 
     private _hasLogsInInv(player: Player): boolean {
         return countItem(player, this.step.itemConsumed!) > 0;

@@ -34,6 +34,7 @@ import { CraftingTask } from '#/engine/bot/tasks/CraftingTask.js';
 import { RangedMagicTask, MIN_COINS_TO_SHOP as RM_MIN_COINS } from '#/engine/bot/tasks/RangedMagicTask.js';
 import { RunecraftingTask } from '#/engine/bot/tasks/RunecraftingTask.js';
 import { FletchingTask } from '#/engine/bot/tasks/FletchingTask.js';
+import { BowStringingTask } from '#/engine/bot/tasks/BowStringingTask.js';
 import { PickupSpawnTask } from '#/engine/bot/tasks/PickupSpawnTask.js';
 import type { SpawnEntry } from '#/engine/bot/tasks/PickupSpawnTask.js';
 import { HerbloreTask } from '#/engine/bot/tasks/HerbloreTask.js';
@@ -47,6 +48,9 @@ import { EdgevillePKerTask } from '#/engine/bot/tasks/EdgevillePKerTask.js';
 import { AgilityTask } from '#/engine/bot/tasks/AgilityTask.js';
 import { BotDebugService } from '#/engine/bot/debug/BotDebugService.js';
 import type { BotPlannerCandidate } from '#/engine/bot/debug/BotDebugTypes.js';
+
+/** Combined bank+inventory flax count required to switch from gathering to spinning. */
+const FLAX_SPIN_MIN = 25;
 
 const KNIFE_SPAWNS: SpawnEntry[] = [
     // Lumbridge knife is south of the castle — route east of the walls first.
@@ -292,6 +296,16 @@ export class BotGoalPlanner {
             if (logsTask) return logsTask;
         }
 
+        // ── STRINGING priority: string bows whenever both materials are banked ──
+        // Unstrung bows come from FletchingTask's log cutting, bow strings from
+        // CraftingTask's spin_flax — both are gathering loops with no reason to
+        // stop on their own, so stringing needs to actively claim priority
+        // whenever it has something to consume, same reasoning as cooking/smithing.
+        if ((this.personality.weights['FLETCHING'] ?? 0) > 0) {
+            const stringTask = this._findStringingTask(player);
+            if (stringTask) return stringTask;
+        }
+
         // ── CRAFTING priority (Phase 2 only) ─────────────────────────────────
         // Only runs when Mining >= 40 AND Smithing >= 40 — i.e. the gold pipeline
         // is active and the bot should prioritise ringing gold bars into rings.
@@ -371,7 +385,11 @@ export class BotGoalPlanner {
                         return new PickupSpawnTask(Items.KNIFE, KNIFE_SPAWNS);
                     }
                 } else if (skillName === 'FLETCHING' && step.action.startsWith('string_')) {
-                    // Bow stringing does not fit the woodcut→fletch loop — skip for now.
+                    // Stringing is handled by the dedicated STRINGING priority
+                    // check above (_findStringingTask), which scans every
+                    // string_ step for one with materials available rather than
+                    // relying on whichever random step getProgressionStep handed
+                    // to this loop. Nothing to do with that random pick here.
                     continue;
                 } else {
                     toolOk = (step.action === 'woodcut' || step.action === 'mine')
@@ -587,16 +605,23 @@ export class BotGoalPlanner {
     }
 
     /**
-     * Returns the appropriate CraftingTask for the player's current state:
+     * Returns the appropriate CraftingTask (or a supporting task) for the
+     * player's current state.  Priority order:
      *
-     *   Phase 1 (craft_wool): while Mining < 40 OR Smithing < 40.
-     *     Requires shears in inventory.  If missing, returns a ShopTripTask.
+     *   1. Flax: consumer (spin_flax) beats producer (pick_flax) — only gather
+     *      more flax when the bank+inventory supply is running low, so a bot
+     *      that already has flax banked spins it into bow strings instead of
+     *      picking forever. See FLAX_SPIN_MIN below.
+     *   2. Leather crafting / gem cutting: independent of the gold pipeline —
+     *      hides come from combat, gems from thieving/drops — so these run
+     *      whenever the crafting level and materials line up, regardless of
+     *      Mining/Smithing.
+     *   3. Phase 2 (craft_ring): once Mining >= 40 AND Smithing >= 40.
+     *      Requires ring_mould in inventory and gold bars in bank/inv.
+     *   4. Phase 1 (craft_wool): universal fallback — no materials besides
+     *      shears required, so this always has something to do.
      *
-     *   Phase 2 (craft_ring): once Mining >= 40 AND Smithing >= 40.
-     *     Requires ring_mould in inventory and gold bars in bank/inv.
-     *     If ring_mould missing, returns a ShopTripTask.
-     *
-     * Returns null when neither phase can run right now.
+     * Returns null when nothing above can run right now.
      */
     private _findCraftingTask(player: Player): BotTask | null {
         const mineLevel = getBaseLevel(player, PlayerStat.MINING);
@@ -608,10 +633,22 @@ export class BotGoalPlanner {
 
         const craftLevel = getBaseLevel(player, PlayerStat.CRAFTING);
 
-        // ── Flax picking: runs when crafting level qualifies ──────────────────
-        const flaxStep = steps.find(s => s.action === 'pick_flax' && craftLevel >= Math.max(s.minLevel, 10) && craftLevel <= s.maxLevel);
-        if (flaxStep) {
-            return new FlaxPickingTask(flaxStep);
+        // ── Flax: spin (consumer) takes priority over picking (producer) ──────
+        // pick_flax has no in-game level requirement, but spinning needs 10, so
+        // there's no point gathering before that. Once spinnable, only send the
+        // bot back to the field when supply is low — otherwise keep spinning
+        // down what's already banked. This is what makes FlaxPickingTask
+        // terminate each cycle (see its bankedOnce flag) rather than run forever.
+        const spinStep = steps.find(s => s.action === 'spin_flax' && craftLevel >= s.minLevel && craftLevel <= s.maxLevel);
+        if (spinStep) {
+            const flaxSupply = countItem(player, Items.FLAX) + this._bankCount(player, Items.FLAX);
+            if (flaxSupply >= FLAX_SPIN_MIN) {
+                return new CraftingTask(spinStep);
+            }
+            const flaxStep = steps.find(s => s.action === 'pick_flax' && craftLevel >= s.minLevel && craftLevel <= s.maxLevel);
+            if (flaxStep) {
+                return new FlaxPickingTask(flaxStep);
+            }
         }
 
         // ── Soften clay: if bot has buckets but no bucket-of-water ────────────
@@ -620,51 +657,107 @@ export class BotGoalPlanner {
             return new WaterFillingTask(Items.BUCKET, Items.BUCKET_OF_WATER);
         }
 
-        if (!phase2Unlocked) {
-            // ── Phase 1: wool spinning ────────────────────────────────────────
-            const step = steps.find(s => s.action === 'craft_wool');
-            if (!step) return null;
-
-            if (!hasItem(player, Items.SHEARS)) {
-                // Shears are given as a starter item, but if somehow lost, buy from
-                // the Lumbridge General Store (1gp, always in NEARBY_SHOPS).
-                return new ShopTripTask('LUMBRIDGE_GENERAL', Items.SHEARS, 1, 1);
-            }
-
-            return new CraftingTask(step);
-        }
-
-        // ── Phase 2: gold rings ───────────────────────────────────────────────
-        const step = steps.find(s => s.action === 'craft_ring');
-        if (!step) return null;
-
-        if (!hasItem(player, Items.RING_MOULD)) {
-            // Buy ring mould from Al Kharid crafting shop if affordable
-            if (canAffordStep(player, step) && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
-                return new ShopTripTask('AL_KHARID_CRAFTING', Items.RING_MOULD, 1, 25);
-            }
-            return null;
-        }
-
-        // Need gold bars to be available
-        const bid = bankInvId();
-        const hasGoldInInv = countItem(player, Items.GOLD_BAR) > 0;
-        let hasGoldInBank = false;
-        if (bid !== -1) {
-            const bank = player.getInventory(bid);
-            if (bank) {
-                for (let i = 0; i < bank.capacity; i++) {
-                    if (bank.get(i)?.id === Items.GOLD_BAR) {
-                        hasGoldInBank = true;
-                        break;
-                    }
+        // ── Leather crafting: needle + thread + (leather or cowhide anywhere) ──
+        const leatherStep = steps.find(s => (s.action.startsWith('craft_leather_') || s.action === 'craft_hard_leather_body') && craftLevel >= s.minLevel && craftLevel <= s.maxLevel);
+        if (leatherStep) {
+            const leatherId = leatherStep.itemConsumed!;
+            const hasMaterial = this._bankCount(player, leatherId) > 0 || countItem(player, leatherId) > 0 || this._bankCount(player, Items.COW_HIDE) > 0 || countItem(player, Items.COW_HIDE) > 0;
+            if (hasMaterial) {
+                const hasNeedle = hasItem(player, Items.NEEDLE) || this._bankCount(player, Items.NEEDLE) > 0;
+                const hasThread = hasItem(player, Items.THREAD) || this._bankCount(player, Items.THREAD) > 0;
+                if (!hasNeedle && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.NEEDLE, 1, 1);
+                }
+                if (!hasThread && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.THREAD, 5, 1);
+                }
+                if (hasNeedle && hasThread) {
+                    return new CraftingTask(leatherStep);
                 }
             }
         }
 
-        if (!hasGoldInInv && !hasGoldInBank) return null;
+        // ── Gem cutting: chisel + uncut gems in bank/inv ───────────────────────
+        const gemStep = steps.find(s => s.action.startsWith('cut_') && craftLevel >= s.minLevel && craftLevel <= s.maxLevel);
+        if (gemStep) {
+            const uncutId = gemStep.itemConsumed!;
+            const hasMaterial = this._bankCount(player, uncutId) > 0 || countItem(player, uncutId) > 0;
+            if (hasMaterial) {
+                const hasChisel = hasItem(player, Items.CHISEL) || this._bankCount(player, Items.CHISEL) > 0;
+                if (!hasChisel && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.CHISEL, 1, 1);
+                }
+                if (hasChisel) {
+                    return new CraftingTask(gemStep);
+                }
+            }
+        }
 
-        return new CraftingTask(step);
+        if (phase2Unlocked) {
+            // ── Phase 2: gold rings ─────────────────────────────────────────────
+            const step = steps.find(s => s.action === 'craft_ring');
+            if (step) {
+                if (!hasItem(player, Items.RING_MOULD)) {
+                    // Buy ring mould from Al Kharid crafting shop if affordable
+                    if (canAffordStep(player, step) && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
+                        return new ShopTripTask('AL_KHARID_CRAFTING', Items.RING_MOULD, 1, 25);
+                    }
+                } else if (countItem(player, Items.GOLD_BAR) > 0 || this._bankCount(player, Items.GOLD_BAR) > 0) {
+                    return new CraftingTask(step);
+                }
+            }
+        }
+
+        // ── Phase 1: wool spinning — universal fallback ────────────────────────
+        const woolStep = steps.find(s => s.action === 'craft_wool');
+        if (!woolStep) return null;
+
+        if (!hasItem(player, Items.SHEARS)) {
+            // Shears are given as a starter item, but if somehow lost, buy from
+            // the Lumbridge General Store (1gp, always in NEARBY_SHOPS).
+            return new ShopTripTask('LUMBRIDGE_GENERAL', Items.SHEARS, 1, 1);
+        }
+
+        return new CraftingTask(woolStep);
+    }
+
+    /** Counts how many of an item are sitting in the bank (0 if bank not loaded). */
+    private _bankCount(player: Player, itemId: number): number {
+        const bid = bankInvId();
+        if (bid === -1) return 0;
+        const bank = player.getInventory(bid);
+        if (!bank) return 0;
+        let count = 0;
+        for (let i = 0; i < bank.capacity; i++) {
+            const item = bank.get(i);
+            if (item?.id === itemId) count += item.count;
+        }
+        return count;
+    }
+
+    /**
+     * Scans every string_ step (unstrung bow + bow string → finished bow) for
+     * one whose level requirement is met and whose materials are available in
+     * bank or inventory. Unlike the other FLETCHING steps, getProgressionStep()
+     * can't be trusted to hand back a matching string_ step here — it picks
+     * randomly among all steps at the bot's level, so a bot could be sitting on
+     * a full set of, say, willow materials while the random pick keeps landing
+     * on maple. Returns null when no string_ step has both materials ready.
+     */
+    private _findStringingTask(player: Player): BowStringingTask | null {
+        const level = getBaseLevel(player, PlayerStat.FLETCHING);
+        const steps = SkillProgression['FLETCHING'].filter(s => s.action.startsWith('string_') && level >= s.minLevel && level <= s.maxLevel);
+
+        for (const step of steps) {
+            const unstrungId = step.itemConsumed!;
+            const stringId = (step.extra?.stringItem as number | undefined) ?? Items.BOW_STRING;
+            const hasUnstrung = countItem(player, unstrungId) > 0 || this._bankCount(player, unstrungId) > 0;
+            const hasString = countItem(player, stringId) > 0 || this._bankCount(player, stringId) > 0;
+            if (hasUnstrung && hasString) {
+                return new BowStringingTask(step);
+            }
+        }
+        return null;
     }
 
     /**

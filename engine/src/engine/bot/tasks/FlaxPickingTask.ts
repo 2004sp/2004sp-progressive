@@ -41,14 +41,25 @@ export class FlaxPickingTask extends BotTask {
     private readonly stuck = new StuckDetector(30, 4, 2);
     private readonly watchdog = new ProgressWatchdog();
 
+    /**
+     * Completes after a single gather-and-bank cycle so the planner is
+     * re-consulted rather than gathering flax forever. Without this, the
+     * planner would keep re-selecting FlaxPickingTask indefinitely (same
+     * task name never changes candidate.name at rescan), starving
+     * CraftingTask of the chance to spin the flax that's already banked.
+     * See _findCraftingTask() in BotGoalPlanner for the producer/consumer
+     * threshold that decides whether to gather more or switch to spinning.
+     */
+    private bankedOnce = false;
+
     constructor(step: SkillStep) {
         super('Pick Flax');
         this.step = step;
         this.watchdog.destination = step.location;
     }
 
-    shouldRun(player: Player): boolean {
-        return true;
+    shouldRun(_player: Player): boolean {
+        return !this.bankedOnce;
     }
 
     tick(player: Player): void {
@@ -123,6 +134,7 @@ export class FlaxPickingTask extends BotTask {
 
             case 'bank_done': {
                 this._depositFlax(player);
+                this.bankedOnce = true;
                 this.state = 'walk';
                 this.cooldown = 2;
                 return;
@@ -131,13 +143,14 @@ export class FlaxPickingTask extends BotTask {
     }
 
     isComplete(_player: Player): boolean {
-        return false;
+        return this.bankedOnce;
     }
 
     override reset(): void {
         super.reset();
         this.state = 'walk';
         this.lastFlaxCount = 0;
+        this.bankedOnce = false;
         this.stuck.reset();
         this.watchdog.reset();
     }

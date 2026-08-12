@@ -17,6 +17,7 @@ export { SmithingTask } from '#/engine/bot/tasks/SmithingTask.js';
 export { CraftingTask } from '#/engine/bot/tasks/CraftingTask.js';
 export { RunecraftingTask } from '#/engine/bot/tasks/RunecraftingTask.js';
 export { FletchingTask } from '#/engine/bot/tasks/FletchingTask.js';
+export { BowStringingTask } from '#/engine/bot/tasks/BowStringingTask.js';
 export { HerbloreTask } from '#/engine/bot/tasks/HerbloreTask.js';
 export { SocialTask } from '#/engine/bot/tasks/SocialTask.js';
 export { VendorTask } from '#/engine/bot/tasks/VendorTask.js';

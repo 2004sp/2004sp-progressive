@@ -1413,15 +1413,23 @@ export function setCombatStyle(player: Player, style: 0 | 1 | 2 | 3): void {
 }
 
 /**
- * Enables autocast wind strike for bots in magic mode.
- * Sets autocast_spell = 51 (^wind_strike) and attackstyle_magic = 3 (autocast toggle on).
+ * Enables autocast for an arbitrary combat spell.
+ * Sets autocast_spell = the spell's varp value (see
+ * content/scripts/skill_combat/configs/magic/spells.constant, e.g. 51 =
+ * ^wind_strike, 4 = ^wind_bolt, 8 = ^wind_blast, 12 = ^wind_wave) and
+ * attackstyle_magic = 3 (autocast toggle on).
  */
-export function setAutocastWindStrike(player: Player): void {
+export function setAutocastSpell(player: Player, autocastVarp: number): void {
     const spellVarp = VarPlayerType.getByName('autocast_spell');
-    if (spellVarp) player.setVar(spellVarp.id, 51); // 51 = ^wind_strike
+    if (spellVarp) player.setVar(spellVarp.id, autocastVarp);
 
     const styleVarp = VarPlayerType.getByName('attackstyle_magic');
     if (styleVarp) player.setVar(styleVarp.id, 3); // 3 = spell chosen + autocast enabled
+}
+
+/** Enables autocast wind strike specifically — kept for callers that only ever need the base spell. */
+export function setAutocastWindStrike(player: Player): void {
+    setAutocastSpell(player, 51); // 51 = ^wind_strike
 }
 
 // ── Inventory ─────────────────────────────────────────────────────────────────

@@ -37,6 +37,7 @@ import {
     addXp,
     setCombatStyle,
     setAutocastWindStrike,
+    setAutocastSpell,
     openNearbyGate,
     isAdjacentToLoc,
     botTeleport
@@ -255,6 +256,7 @@ export {
     addXp,
     setCombatStyle,
     setAutocastWindStrike,
+    setAutocastSpell,
     Items,
     Shops,
     Locations,
@@ -269,6 +271,8 @@ export {
     findNpcByNameExcluding,
     botTeleport
 };
+export type { WindSpellTier, ToolRequirement } from '#/engine/bot/BotKnowledge.js';
+export { WIND_SPELLS, pickBestWindSpell, RangedBowsByLevel, bestRangedBow, RangedArrowsByCost, bestAffordableArrow } from '#/engine/bot/BotKnowledge.js';
 
 // ── Shared banking helper ─────────────────────────────────────────────────────
 

@@ -747,7 +747,19 @@ export const Locations = {
     DARK_WIZARDS_VARROCK:    [3227, 3368, 0] as [number, number, number], // ✅ dark wizards south of Varrock
     HILL_GIANTS_EDGEVILLE:   [3114, 9840, 0] as [number, number, number], // 🚪 hill giants in Edgeville dungeon (underground)
     MOSS_GIANTS_WEST:        [2576, 3401, 0] as [number, number, number], // ✅ moss giants west of Falador
-    SCORPIONS_ALKHRAID:      [3299, 3286, 0] as [number, number, number], // ✅ moss giants
+    SCORPIONS_ALKHRAID:      [3299, 3286, 0] as [number, number, number], // ✅ Al Kharid scorpions — comment was wrongly "moss giants", coordinate itself is unused/unverified, kept as-is
+    // ── Combat additions — sourced from npc_locations_common.csv (revision 254) ──
+    // Each coordinate is the centre of a real spawn cluster, not a single NPC.
+    // See BotKnowledge combat-progression comments below for spawn counts/sources.
+    GIANT_RATS_LUMBRIDGE:    [3205, 3188, 0] as [number, number, number], // ✅ Lumbridge Swamp — 11 giantrat/giantrat1 spawns, open ground
+    SPIDERS_LUMBRIDGE:       [3172, 3245, 0] as [number, number, number], // ✅ Lumbridge Swamp east — spider + giantspider1 spawns clustered together, open ground
+    HOBGOBLINS_CRAFTING_GUILD: [2885, 3284, 0] as [number, number, number], // ✅ hobgoblin peninsula on the coast west of the Crafting Guild — 14 hobgoblin_unarmed/armed spawns, open ground
+    HOBGOBLINS_WILDERNESS:   [3088, 3761, 0] as [number, number, number], // ⚠ Wilderness (~level 30) — dense hobgoblin camp, 26 spawns; same risk class as existing MINE_RUNITE/WILDERNESS_AGILITY
+    MOSS_GIANTS_PORT_SARIM:  [2695, 3210, 0] as [number, number, number], // ✅ moss giants on the coast near Port Sarim/Falador — distinct cluster ~120 tiles from MOSS_GIANTS_WEST, 5 spawns, open ground
+    ICE_GIANTS_ICE_MOUNTAIN: [2814, 3509, 0] as [number, number, number], // ✅ ice giants at Ice Mountain, north of Falador — 4 spawns, open ground, just south of the Wilderness ditch
+    ICE_GIANTS_ASGARNIA_DUNGEON: [2884, 9950, 0] as [number, number, number], // 🚪 Asgarnian Ice Dungeon — 7 spawns; NOT in active progression, CombatTask's dungeon routing is hardcoded to the Taverley entrance only
+    ICE_GIANTS_WILDERNESS:   [2954, 3915, 0] as [number, number, number], // ⚠ deep Wilderness (~level 50) — 9 spawns; NOT in active progression, too dangerous for unsupervised bot combat
+    FIRE_GIANTS_WATERFALL_DUNGEON: [3049, 10342, 0] as [number, number, number], // 🚪 Waterfall Dungeon — 5 spawns; NOT in active progression, same Taverley-only dungeon routing limitation
     // ── Taverley Dungeon — chaos druids ──────────────────────────────────────
     // Entrance: surface trapdoor at (2884,3450); underground floor at (2884,9848).
     // Chaos druids spawn in the open corridor east of the entrance (parsed from
@@ -893,27 +905,32 @@ export const Shops: Record<string, { location: [number, number, number]; stock: 
     },
 
     // Lowe's Archery Emporium — Varrock
+    // Prices verified against [archeryshop] in the same varrock.inv file.
     VARROCK_ARCHERY: {
         location: Locations.VARROCK_ARCHERY,
         stock: [
             { itemId: Items.SHORTBOW, cost: 100 },
             { itemId: Items.OAK_SHORTBOW, cost: 200 },
-            { itemId: Items.BRONZE_ARROW, cost: 7 },
+            { itemId: Items.BRONZE_ARROW, cost: 10 },
             { itemId: Items.IRON_ARROW, cost: 15 },
             { itemId: Items.STEEL_ARROW, cost: 20 }
         ]
     },
 
-    // Aubury's Rune Shop — Varrock
+    // Aubury's Rune Shop — Varrock. Prices verified against
+    // content/scripts/areas/area_varrock/configs/varrock.inv [runeshop]
+    // (previous prices here were all wrong — flat 4gp guesses).
     VARROCK_RUNES: {
         location: Locations.VARROCK_RUNES,
         stock: [
-            { itemId: Items.AIR_RUNE, cost: 4 },
-            { itemId: Items.MIND_RUNE, cost: 4 },
-            { itemId: Items.WATER_RUNE, cost: 4 },
-            { itemId: Items.EARTH_RUNE, cost: 4 },
-            { itemId: Items.FIRE_RUNE, cost: 4 },
-            { itemId: Items.BODY_RUNE, cost: 4 }
+            { itemId: Items.AIR_RUNE, cost: 10 },
+            { itemId: Items.MIND_RUNE, cost: 10 },
+            { itemId: Items.WATER_RUNE, cost: 10 },
+            { itemId: Items.EARTH_RUNE, cost: 10 },
+            { itemId: Items.FIRE_RUNE, cost: 10 },
+            { itemId: Items.BODY_RUNE, cost: 10 },
+            { itemId: Items.CHAOS_RUNE, cost: 100 },
+            { itemId: Items.DEATH_RUNE, cost: 150 }
         ]
     },
 
@@ -1400,7 +1417,11 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BONES,
-            extra: { npcTypes: ['goblin', 'giant spider', 'man'], hitsToKill: 3 }
+            // 'giant spider' (with a space) never matched anything — the real
+            // debugnames are giantspider1/giantspider2 (npcMatchesName's prefix
+            // fallback needs an exact prefix, and NpcType.getId('giant spider')
+            // has no such config). Fixed to 'giantspider' so the prefix match works.
+            extra: { npcTypes: ['goblin', 'giantspider', 'man'], hitsToKill: 3 }
         },
         {
             minLevel: 3,
@@ -1451,6 +1472,33 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'monk', hitsToKill: 4 }
         },
+        // ── Level 1-20: giant rats + spiders (Lumbridge Swamp) ────────────────
+        {
+            minLevel: 1,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.GIANT_RATS_LUMBRIDGE,
+            toolItemIds: [],
+            xpPerAction: 120,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            extra: { npcType: 'giantrat', hitsToKill: 3 }
+        },
+        {
+            minLevel: 1,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.SPIDERS_LUMBRIDGE,
+            toolItemIds: [],
+            xpPerAction: 100,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            // 'spider' + 'giantspider' — both real debugnames confirmed in
+            // npc_locations_common.csv (plain 'spider' and 'giantspider1'/'2').
+            extra: { npcTypes: ['spider', 'giantspider'], hitsToKill: 2 }
+        },
         // ── Level 10-19: cows ─────────────────────────────────────────────────
         // ── Level 15+: guards (Falador, Varrock, Ardougne) ───────────────────
         {
@@ -1477,18 +1525,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'guard', hitsToKill: 7 }
         },
-        {
-            minLevel: 15,
-            maxLevel: 99,
-            action: 'combat',
-            location: Locations.GUARDS_ARDOUGNE,
-            toolItemIds: [Items.IRON_SCIMITAR],
-            xpPerAction: 280,
-            ticksPerAction: 4,
-            successRate: 1.0,
-            itemGained: Items.BONES,
-            extra: { npcType: 'guard', hitsToKill: 7 }
-        },
+
         // ── Level 20+: dark wizards + barbarians + chaos druids ───────────────
         {
             minLevel: 20,
@@ -1539,6 +1576,33 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'chaos_druid', hitsToKill: 4, dungeon: true }
         },
+        // ── Level 22-60: hobgoblins (Crafting Guild coast + Wilderness) ───────
+        {
+            minLevel: 22,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.HOBGOBLINS_CRAFTING_GUILD,
+            toolItemIds: [Items.IRON_SCIMITAR],
+            xpPerAction: 220,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            // No generic 'hobgoblin' NpcType config exists — real debugnames are
+            // hobgoblin_unarmed/hobgoblin_armed (confirmed in npc_locations_common.csv).
+            extra: { npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'], hitsToKill: 6 }
+        },
+        {
+            minLevel: 25,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.HOBGOBLINS_WILDERNESS,
+            toolItemIds: [Items.IRON_SCIMITAR],
+            xpPerAction: 220,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            extra: { npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'], hitsToKill: 6 }
+        },
         // ── Level 20+: hill giants (Edgeville dungeon, big bones) ────────────
         {
             minLevel: 30,
@@ -1563,7 +1627,23 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BIG_BONES,
-            extra: { npcType: 'moss_giant', hitsToKill: 15 }
+            // Real debugname is 'mossgiant' (no underscore) — 'moss_giant' matched
+            // nothing via NpcType.getId() (no such exact config) or the debugname
+            // prefix fallback, so this spot could never find a target. Confirmed
+            // against npc_locations_common.csv and content's NPC pack (mossgiant).
+            extra: { npcType: 'mossgiant', hitsToKill: 15 }
+        },
+        {
+            minLevel: 35,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.MOSS_GIANTS_PORT_SARIM,
+            toolItemIds: [Items.STEEL_SCIMITAR],
+            xpPerAction: 600,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BIG_BONES,
+            extra: { npcType: 'mossgiant', hitsToKill: 15 }
         },
         // ── Level 40+: Al Kharid warriors ─────────────────────────────────────
         {
@@ -1576,7 +1656,23 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BONES,
-            extra: { npcType: 'warrior', hitsToKill: 8 }
+            // Real debugname is 'al_kharid_warrior' (confirmed in content's
+            // area_alkharid/configs/alkharid.npc) — plain 'warrior' matched
+            // nothing, so this spot could never find a target either.
+            extra: { npcType: 'al_kharid_warrior', hitsToKill: 8 }
+        },
+        // ── Level 50+: ice giants (Ice Mountain, north of Falador) ────────────
+        {
+            minLevel: 50,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.ICE_GIANTS_ICE_MOUNTAIN,
+            toolItemIds: [Items.STEEL_SCIMITAR],
+            xpPerAction: 720,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BIG_BONES,
+            extra: { npcType: 'icegiant', hitsToKill: 18 }
         }
     ],
 
@@ -1617,7 +1713,11 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BONES,
-            extra: { npcTypes: ['goblin', 'giant spider', 'man'], hitsToKill: 3 }
+            // 'giant spider' (with a space) never matched anything — the real
+            // debugnames are giantspider1/giantspider2 (npcMatchesName's prefix
+            // fallback needs an exact prefix, and NpcType.getId('giant spider')
+            // has no such config). Fixed to 'giantspider' so the prefix match works.
+            extra: { npcTypes: ['goblin', 'giantspider', 'man'], hitsToKill: 3 }
         },
         {
             minLevel: 3,
@@ -1668,6 +1768,33 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'monk', hitsToKill: 4 }
         },
+        // ── Level 1-20: giant rats + spiders (Lumbridge Swamp) ────────────────
+        {
+            minLevel: 1,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.GIANT_RATS_LUMBRIDGE,
+            toolItemIds: [],
+            xpPerAction: 120,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            extra: { npcType: 'giantrat', hitsToKill: 3 }
+        },
+        {
+            minLevel: 1,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.SPIDERS_LUMBRIDGE,
+            toolItemIds: [],
+            xpPerAction: 100,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            // 'spider' + 'giantspider' — both real debugnames confirmed in
+            // npc_locations_common.csv (plain 'spider' and 'giantspider1'/'2').
+            extra: { npcTypes: ['spider', 'giantspider'], hitsToKill: 2 }
+        },
         // ── Level 10-19: cows ─────────────────────────────────────────────────
         // ── Level 15+: guards ────────────────────────────────────────────────
         {
@@ -1694,18 +1821,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'guard', hitsToKill: 7 }
         },
-        {
-            minLevel: 15,
-            maxLevel: 99,
-            action: 'combat',
-            location: Locations.GUARDS_ARDOUGNE,
-            toolItemIds: [Items.IRON_SCIMITAR],
-            xpPerAction: 280,
-            ticksPerAction: 4,
-            successRate: 1.0,
-            itemGained: Items.BONES,
-            extra: { npcType: 'guard', hitsToKill: 7 }
-        },
+
         // ── Level 20+: dark wizards + barbarians + chaos druids ───────────────
         {
             minLevel: 20,
@@ -1756,6 +1872,33 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'chaos_druid', hitsToKill: 4, dungeon: true }
         },
+        // ── Level 22-60: hobgoblins (Crafting Guild coast + Wilderness) ───────
+        {
+            minLevel: 22,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.HOBGOBLINS_CRAFTING_GUILD,
+            toolItemIds: [Items.IRON_SCIMITAR],
+            xpPerAction: 220,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            // No generic 'hobgoblin' NpcType config exists — real debugnames are
+            // hobgoblin_unarmed/hobgoblin_armed (confirmed in npc_locations_common.csv).
+            extra: { npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'], hitsToKill: 6 }
+        },
+        {
+            minLevel: 25,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.HOBGOBLINS_WILDERNESS,
+            toolItemIds: [Items.IRON_SCIMITAR],
+            xpPerAction: 220,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            extra: { npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'], hitsToKill: 6 }
+        },
         // ── Level 20+: hill giants ────────────────────────────────────────────
         {
             minLevel: 30,
@@ -1780,7 +1923,23 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BIG_BONES,
-            extra: { npcType: 'moss_giant', hitsToKill: 15 }
+            // Real debugname is 'mossgiant' (no underscore) — 'moss_giant' matched
+            // nothing via NpcType.getId() (no such exact config) or the debugname
+            // prefix fallback, so this spot could never find a target. Confirmed
+            // against npc_locations_common.csv and content's NPC pack (mossgiant).
+            extra: { npcType: 'mossgiant', hitsToKill: 15 }
+        },
+        {
+            minLevel: 35,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.MOSS_GIANTS_PORT_SARIM,
+            toolItemIds: [Items.STEEL_SCIMITAR],
+            xpPerAction: 600,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BIG_BONES,
+            extra: { npcType: 'mossgiant', hitsToKill: 15 }
         },
         // ── Level 40+: Al Kharid warriors ─────────────────────────────────────
         {
@@ -1793,7 +1952,23 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BONES,
-            extra: { npcType: 'warrior', hitsToKill: 8 }
+            // Real debugname is 'al_kharid_warrior' (confirmed in content's
+            // area_alkharid/configs/alkharid.npc) — plain 'warrior' matched
+            // nothing, so this spot could never find a target either.
+            extra: { npcType: 'al_kharid_warrior', hitsToKill: 8 }
+        },
+        // ── Level 50+: ice giants (Ice Mountain, north of Falador) ────────────
+        {
+            minLevel: 50,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.ICE_GIANTS_ICE_MOUNTAIN,
+            toolItemIds: [Items.STEEL_SCIMITAR],
+            xpPerAction: 720,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BIG_BONES,
+            extra: { npcType: 'icegiant', hitsToKill: 18 }
         }
     ],
 
@@ -1834,7 +2009,11 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BONES,
-            extra: { npcTypes: ['goblin', 'giant spider', 'man'], hitsToKill: 3 }
+            // 'giant spider' (with a space) never matched anything — the real
+            // debugnames are giantspider1/giantspider2 (npcMatchesName's prefix
+            // fallback needs an exact prefix, and NpcType.getId('giant spider')
+            // has no such config). Fixed to 'giantspider' so the prefix match works.
+            extra: { npcTypes: ['goblin', 'giantspider', 'man'], hitsToKill: 3 }
         },
         {
             minLevel: 3,
@@ -1885,6 +2064,33 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'monk', hitsToKill: 4 }
         },
+        // ── Level 1-20: giant rats + spiders (Lumbridge Swamp) ────────────────
+        {
+            minLevel: 1,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.GIANT_RATS_LUMBRIDGE,
+            toolItemIds: [],
+            xpPerAction: 120,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            extra: { npcType: 'giantrat', hitsToKill: 3 }
+        },
+        {
+            minLevel: 1,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.SPIDERS_LUMBRIDGE,
+            toolItemIds: [],
+            xpPerAction: 100,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            // 'spider' + 'giantspider' — both real debugnames confirmed in
+            // npc_locations_common.csv (plain 'spider' and 'giantspider1'/'2').
+            extra: { npcTypes: ['spider', 'giantspider'], hitsToKill: 2 }
+        },
         // ── Level 10-19: cows ─────────────────────────────────────────────────
         // ── Level 15+: guards ────────────────────────────────────────────────
         {
@@ -1911,18 +2117,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'guard', hitsToKill: 7 }
         },
-        {
-            minLevel: 15,
-            maxLevel: 99,
-            action: 'combat',
-            location: Locations.GUARDS_ARDOUGNE,
-            toolItemIds: [Items.IRON_SCIMITAR],
-            xpPerAction: 280,
-            ticksPerAction: 4,
-            successRate: 1.0,
-            itemGained: Items.BONES,
-            extra: { npcType: 'guard', hitsToKill: 7 }
-        },
+
         // ── Level 20+: dark wizards + barbarians + chaos druids ───────────────
         {
             minLevel: 20,
@@ -1973,6 +2168,33 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemGained: Items.BONES,
             extra: { npcType: 'chaos_druid', hitsToKill: 4, dungeon: true }
         },
+        // ── Level 22-60: hobgoblins (Crafting Guild coast + Wilderness) ───────
+        {
+            minLevel: 22,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.HOBGOBLINS_CRAFTING_GUILD,
+            toolItemIds: [Items.IRON_SCIMITAR],
+            xpPerAction: 220,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            // No generic 'hobgoblin' NpcType config exists — real debugnames are
+            // hobgoblin_unarmed/hobgoblin_armed (confirmed in npc_locations_common.csv).
+            extra: { npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'], hitsToKill: 6 }
+        },
+        {
+            minLevel: 25,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.HOBGOBLINS_WILDERNESS,
+            toolItemIds: [Items.IRON_SCIMITAR],
+            xpPerAction: 220,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BONES,
+            extra: { npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'], hitsToKill: 6 }
+        },
         // ── Level 20+: hill giants ────────────────────────────────────────────
         {
             minLevel: 30,
@@ -1997,7 +2219,23 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BIG_BONES,
-            extra: { npcType: 'moss_giant', hitsToKill: 15 }
+            // Real debugname is 'mossgiant' (no underscore) — 'moss_giant' matched
+            // nothing via NpcType.getId() (no such exact config) or the debugname
+            // prefix fallback, so this spot could never find a target. Confirmed
+            // against npc_locations_common.csv and content's NPC pack (mossgiant).
+            extra: { npcType: 'mossgiant', hitsToKill: 15 }
+        },
+        {
+            minLevel: 35,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.MOSS_GIANTS_PORT_SARIM,
+            toolItemIds: [Items.STEEL_SCIMITAR],
+            xpPerAction: 600,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BIG_BONES,
+            extra: { npcType: 'mossgiant', hitsToKill: 15 }
         },
         // ── Level 40+: Al Kharid warriors ─────────────────────────────────────
         {
@@ -2010,7 +2248,23 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.BONES,
-            extra: { npcType: 'warrior', hitsToKill: 8 }
+            // Real debugname is 'al_kharid_warrior' (confirmed in content's
+            // area_alkharid/configs/alkharid.npc) — plain 'warrior' matched
+            // nothing, so this spot could never find a target either.
+            extra: { npcType: 'al_kharid_warrior', hitsToKill: 8 }
+        },
+        // ── Level 50+: ice giants (Ice Mountain, north of Falador) ────────────
+        {
+            minLevel: 50,
+            maxLevel: 99,
+            action: 'combat',
+            location: Locations.ICE_GIANTS_ICE_MOUNTAIN,
+            toolItemIds: [Items.STEEL_SCIMITAR],
+            xpPerAction: 720,
+            ticksPerAction: 4,
+            successRate: 1.0,
+            itemGained: Items.BIG_BONES,
+            extra: { npcType: 'icegiant', hitsToKill: 18 }
         }
     ],
 
@@ -2029,7 +2283,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         // Level 1+: goblins + chickens + men + monks (wind strike, no req)
         {
             minLevel: 1,
-            maxLevel: 99,
+            maxLevel: 18,
             action: 'magic',
             location: Locations.GOBLINS_LUMBRIDGE,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2041,7 +2295,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 1,
-            maxLevel: 99,
+            maxLevel: 15,
             action: 'magic',
             location: Locations.CHICKENS_LUMBRIDGE,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2053,7 +2307,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 1,
-            maxLevel: 99,
+            maxLevel: 20,
             action: 'magic',
             location: Locations.MEN_EDGEVILLE,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2065,7 +2319,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 1,
-            maxLevel: 99,
+            maxLevel: 30,
             action: 'magic',
             location: Locations.MONKS_MONASTERY,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2075,10 +2329,35 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.MIND_RUNE,
             extra: { spell: 'wind_strike', npcType: 'monk' }
         },
+        // Level 1-20: giant rats + spiders (Lumbridge Swamp — weak, low HP)
+        {
+            minLevel: 1,
+            maxLevel: 20,
+            action: 'magic',
+            location: Locations.GIANT_RATS_LUMBRIDGE,
+            toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
+            xpPerAction: 55,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.MIND_RUNE,
+            extra: { spell: 'wind_strike', npcType: 'giantrat' }
+        },
+        {
+            minLevel: 1,
+            maxLevel: 18,
+            action: 'magic',
+            location: Locations.SPIDERS_LUMBRIDGE,
+            toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
+            xpPerAction: 55,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.MIND_RUNE,
+            extra: { spell: 'wind_strike', npcTypes: ['spider', 'giantspider'] }
+        },
         // Level 20+: guards + dark wizards + barbarians + chaos druids
         {
             minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'magic',
             location: Locations.GUARDS_FALADOR,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2090,7 +2369,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'magic',
             location: Locations.GUARDS_VARROCK_SOUTH,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2102,19 +2381,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 20,
-            maxLevel: 99,
-            action: 'magic',
-            location: Locations.GUARDS_ARDOUGNE,
-            toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
-            xpPerAction: 55,
-            ticksPerAction: 5,
-            successRate: 0.85,
-            itemConsumed: Items.MIND_RUNE,
-            extra: { spell: 'wind_strike', npcType: 'guard' }
-        },
-        {
-            minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'magic',
             location: Locations.DARK_WIZARDS_DRAYNOR,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2126,7 +2393,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'magic',
             location: Locations.DARK_WIZARDS_VARROCK,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2138,7 +2405,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 50,
             action: 'magic',
             location: Locations.BARBARIANS_VILLAGE,
             via: Locations.WILLOWS_BARBARIAN_VIA,
@@ -2151,7 +2418,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'magic',
             location: Locations.CHAOS_DRUIDS_TAVERLY,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2161,9 +2428,34 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.MIND_RUNE,
             extra: { spell: 'wind_strike', npcType: 'chaos_druid', dungeon: true }
         },
+        // Level 22-60: hobgoblins (coast + Wilderness variant)
+        {
+            minLevel: 22,
+            maxLevel: 55,
+            action: 'magic',
+            location: Locations.HOBGOBLINS_CRAFTING_GUILD,
+            toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
+            xpPerAction: 55,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.MIND_RUNE,
+            extra: { spell: 'wind_strike', npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'] }
+        },
+        {
+            minLevel: 25,
+            maxLevel: 60,
+            action: 'magic',
+            location: Locations.HOBGOBLINS_WILDERNESS,
+            toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
+            xpPerAction: 55,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.MIND_RUNE,
+            extra: { spell: 'wind_strike', npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'] }
+        },
         {
             minLevel: 30,
-            maxLevel: 99,
+            maxLevel: 70,
             action: 'magic',
             location: Locations.HILL_GIANTS_EDGEVILLE,
             toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
@@ -2173,7 +2465,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.MIND_RUNE,
             extra: { spell: 'wind_strike', npcType: 'giant', dungeon: true }
         },
-        // Level 40+: moss giants + warriors
+        // Level 35-99: moss giants (two coastal areas) + Al Kharid warriors
         {
             minLevel: 40,
             maxLevel: 99,
@@ -2184,7 +2476,19 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 5,
             successRate: 0.85,
             itemConsumed: Items.MIND_RUNE,
-            extra: { spell: 'wind_strike', npcType: 'moss_giant' }
+            extra: { spell: 'wind_strike', npcType: 'mossgiant' } // see ATTACK npcType fix comment — real debugname has no underscore
+        },
+        {
+            minLevel: 35,
+            maxLevel: 99,
+            action: 'magic',
+            location: Locations.MOSS_GIANTS_PORT_SARIM,
+            toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
+            xpPerAction: 55,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.MIND_RUNE,
+            extra: { spell: 'wind_strike', npcType: 'mossgiant' }
         },
         {
             minLevel: 40,
@@ -2196,7 +2500,21 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 5,
             successRate: 0.85,
             itemConsumed: Items.MIND_RUNE,
-            extra: { spell: 'wind_strike', npcType: 'warrior' }
+            extra: { spell: 'wind_strike', npcType: 'al_kharid_warrior' } // see ATTACK npcType fix comment
+        },
+        // Level 50+: ice giants (Ice Mountain, surface — see Locations for the
+        // dungeon/Wilderness ice giant clusters that are NOT wired in here)
+        {
+            minLevel: 50,
+            maxLevel: 99,
+            action: 'magic',
+            location: Locations.ICE_GIANTS_ICE_MOUNTAIN,
+            toolItemIds: [Items.STAFF_OF_AIR, Items.MIND_RUNE],
+            xpPerAction: 55,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.MIND_RUNE,
+            extra: { spell: 'wind_strike', npcType: 'icegiant' }
         }
     ],
 
@@ -2207,7 +2525,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         // Level 1+: chickens + goblins + men + monks (shortbow + bronze arrows)
         {
             minLevel: 1,
-            maxLevel: 99,
+            maxLevel: 15,
             action: 'ranged',
             location: Locations.CHICKENS_LUMBRIDGE,
             toolItemIds: [Items.SHORTBOW, Items.BRONZE_ARROW],
@@ -2219,7 +2537,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 1,
-            maxLevel: 99,
+            maxLevel: 18,
             action: 'ranged',
             location: Locations.GOBLINS_LUMBRIDGE,
             toolItemIds: [Items.SHORTBOW, Items.BRONZE_ARROW],
@@ -2231,7 +2549,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 1,
-            maxLevel: 99,
+            maxLevel: 20,
             action: 'ranged',
             location: Locations.MEN_EDGEVILLE,
             toolItemIds: [Items.SHORTBOW, Items.BRONZE_ARROW],
@@ -2243,7 +2561,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 1,
-            maxLevel: 99,
+            maxLevel: 30,
             action: 'ranged',
             location: Locations.MONKS_MONASTERY,
             toolItemIds: [Items.SHORTBOW, Items.BRONZE_ARROW],
@@ -2253,10 +2571,35 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.BRONZE_ARROW,
             extra: { npcType: 'monk' }
         },
+        // Level 1-20: giant rats + spiders (Lumbridge Swamp — weak, low HP)
+        {
+            minLevel: 1,
+            maxLevel: 20,
+            action: 'ranged',
+            location: Locations.GIANT_RATS_LUMBRIDGE,
+            toolItemIds: [Items.SHORTBOW, Items.BRONZE_ARROW],
+            xpPerAction: 160,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.BRONZE_ARROW,
+            extra: { npcType: 'giantrat' }
+        },
+        {
+            minLevel: 1,
+            maxLevel: 18,
+            action: 'ranged',
+            location: Locations.SPIDERS_LUMBRIDGE,
+            toolItemIds: [Items.SHORTBOW, Items.BRONZE_ARROW],
+            xpPerAction: 160,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.BRONZE_ARROW,
+            extra: { npcTypes: ['spider', 'giantspider'] }
+        },
         // Level 15+: guards (oak shortbow + bronze arrows)
         {
             minLevel: 15,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'ranged',
             location: Locations.GUARDS_FALADOR,
             toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
@@ -2268,7 +2611,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 15,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'ranged',
             location: Locations.GUARDS_VARROCK_SOUTH,
             toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
@@ -2278,22 +2621,10 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.BRONZE_ARROW,
             extra: { npcType: 'guard' }
         },
-        {
-            minLevel: 15,
-            maxLevel: 99,
-            action: 'ranged',
-            location: Locations.GUARDS_ARDOUGNE,
-            toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
-            xpPerAction: 200,
-            ticksPerAction: 5,
-            successRate: 0.85,
-            itemConsumed: Items.BRONZE_ARROW,
-            extra: { npcType: 'guard' }
-        },
         // Level 20+: dark wizards + barbarians + chaos druids + hill giants
         {
-            minLevel: 30,
-            maxLevel: 99,
+            minLevel: 20,
+            maxLevel: 45,
             action: 'ranged',
             location: Locations.DARK_WIZARDS_DRAYNOR,
             toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
@@ -2301,11 +2632,11 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 5,
             successRate: 0.85,
             itemConsumed: Items.BRONZE_ARROW,
-            extra: { npcType: 'dark_wizard' }
+            extra: { npcType: 'dark_wizard' } // minLevel was inconsistently 30 here vs 20 for the Varrock entry — aligned
         },
         {
             minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'ranged',
             location: Locations.DARK_WIZARDS_VARROCK,
             toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
@@ -2317,7 +2648,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 50,
             action: 'ranged',
             location: Locations.BARBARIANS_VILLAGE,
             via: Locations.WILLOWS_BARBARIAN_VIA,
@@ -2330,7 +2661,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 20,
-            maxLevel: 99,
+            maxLevel: 45,
             action: 'ranged',
             location: Locations.CHAOS_DRUIDS_TAVERLY,
             toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
@@ -2340,9 +2671,34 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.BRONZE_ARROW,
             extra: { npcType: 'chaos_druid', dungeon: true }
         },
+        // Level 22-60: hobgoblins (coast + Wilderness variant)
+        {
+            minLevel: 22,
+            maxLevel: 55,
+            action: 'ranged',
+            location: Locations.HOBGOBLINS_CRAFTING_GUILD,
+            toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
+            xpPerAction: 200,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.BRONZE_ARROW,
+            extra: { npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'] }
+        },
+        {
+            minLevel: 25,
+            maxLevel: 60,
+            action: 'ranged',
+            location: Locations.HOBGOBLINS_WILDERNESS,
+            toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
+            xpPerAction: 200,
+            ticksPerAction: 5,
+            successRate: 0.85,
+            itemConsumed: Items.BRONZE_ARROW,
+            extra: { npcTypes: ['hobgoblin_unarmed', 'hobgoblin_armed'] }
+        },
         {
             minLevel: 30,
-            maxLevel: 99,
+            maxLevel: 70,
             action: 'ranged',
             location: Locations.HILL_GIANTS_EDGEVILLE,
             toolItemIds: [Items.OAK_SHORTBOW, Items.BRONZE_ARROW],
@@ -2352,7 +2708,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.BRONZE_ARROW,
             extra: { npcType: 'giant', dungeon: true }
         },
-        // Level 35+: moss giants (oak shortbow + iron arrows)
+        // Level 35-99: moss giants (two coastal areas) — oak shortbow + iron arrows
         {
             minLevel: 35,
             maxLevel: 99,
@@ -2363,7 +2719,19 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 5,
             successRate: 0.9,
             itemConsumed: Items.IRON_ARROW,
-            extra: { npcType: 'moss_giant' }
+            extra: { npcType: 'mossgiant' } // see ATTACK npcType fix comment — real debugname has no underscore
+        },
+        {
+            minLevel: 35,
+            maxLevel: 99,
+            action: 'ranged',
+            location: Locations.MOSS_GIANTS_PORT_SARIM,
+            toolItemIds: [Items.OAK_SHORTBOW, Items.IRON_ARROW],
+            xpPerAction: 220,
+            ticksPerAction: 5,
+            successRate: 0.9,
+            itemConsumed: Items.IRON_ARROW,
+            extra: { npcType: 'mossgiant' }
         },
         // Level 40+: Al Kharid warriors (oak shortbow + iron arrows)
         {
@@ -2376,7 +2744,20 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             ticksPerAction: 5,
             successRate: 0.9,
             itemConsumed: Items.IRON_ARROW,
-            extra: { npcType: 'warrior' }
+            extra: { npcType: 'al_kharid_warrior' } // see ATTACK npcType fix comment
+        },
+        // Level 50+: ice giants (Ice Mountain, surface)
+        {
+            minLevel: 50,
+            maxLevel: 99,
+            action: 'ranged',
+            location: Locations.ICE_GIANTS_ICE_MOUNTAIN,
+            toolItemIds: [Items.OAK_SHORTBOW, Items.IRON_ARROW],
+            xpPerAction: 240,
+            ticksPerAction: 5,
+            successRate: 0.9,
+            itemConsumed: Items.IRON_ARROW,
+            extra: { npcType: 'icegiant' }
         }
     ],
 
@@ -2564,8 +2945,8 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             xpPerAction: 25, // 2.5 XP × 10
             ticksPerAction: 4,
             successRate: 1.0,
-            itemGained: Items.WOOL,
-            itemConsumed: Items.BALL_WOOL,
+            itemGained: Items.BALL_WOOL,
+            itemConsumed: Items.WOOL,
             extra: { sheepLocation: Locations.LUMBRIDGE_SHEEP }
         },
         {
@@ -2806,7 +3187,13 @@ export const SkillProgression: Record<string, SkillStep[]> = {
     ],
 
     // Fletching — use knife on logs near bank
-    // XP from cut_logs.dbrow (productexp field × 10)
+    // XP values are the raw fletch_bow_table:shortbow/longbow experience field
+    // from cut_logs.dbrow, used as-is — that field is already in the engine's
+    // internal ×10 XP format (e.g. 165 = 16.5 displayed XP), matching how
+    // string_* below sources its XP from bows.dbrow with no further scaling.
+    // Do not re-multiply by 10 (that was the source of a prior 10x XP bug in
+    // several of these entries — verify any new numbers against the dbrow
+    // directly rather than assuming a conversion factor).
     FLETCHING: [
         {
             minLevel: 1,
@@ -2821,15 +3208,15 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.LOGS,
             extra: { productCount: 15 }
         },
-        { minLevel: 5, maxLevel: 9, action: 'fletch_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [Items.KNIFE], xpPerAction: 500, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNSTRUNG_SHORTBOW, itemConsumed: Items.LOGS },
-        { minLevel: 10, maxLevel: 99, action: 'fletch_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [Items.KNIFE], xpPerAction: 1000, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNSTRUNG_LONGBOW, itemConsumed: Items.LOGS },
+        { minLevel: 5, maxLevel: 9, action: 'fletch_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [Items.KNIFE], xpPerAction: 50, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNSTRUNG_SHORTBOW, itemConsumed: Items.LOGS },
+        { minLevel: 10, maxLevel: 19, action: 'fletch_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [Items.KNIFE], xpPerAction: 100, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNSTRUNG_LONGBOW, itemConsumed: Items.LOGS },
         {
             minLevel: 20,
             maxLevel: 24,
             action: 'fletch_oak_shortbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
-            xpPerAction: 1650,
+            xpPerAction: 165,
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.UNSTRUNG_OAK_SHORTBOW,
@@ -2837,11 +3224,11 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 25,
-            maxLevel: 99,
+            maxLevel: 34,
             action: 'fletch_oak_longbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
-            xpPerAction: 2500,
+            xpPerAction: 250,
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.UNSTRUNG_OAK_LONGBOW,
@@ -2853,7 +3240,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             action: 'fletch_willow_shortbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
-            xpPerAction: 3330,
+            xpPerAction: 332,
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.UNSTRUNG_WILLOW_SHORTBOW,
@@ -2861,11 +3248,11 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 40,
-            maxLevel: 99,
+            maxLevel: 49,
             action: 'fletch_willow_longbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
-            xpPerAction: 4150,
+            xpPerAction: 415,
             ticksPerAction: 4,
             successRate: 1.0,
             itemGained: Items.UNSTRUNG_WILLOW_LONGBOW,
@@ -2885,7 +3272,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         },
         {
             minLevel: 55,
-            maxLevel: 99,
+            maxLevel: 64,
             action: 'fletch_maple_longbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
@@ -2896,8 +3283,8 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.MAPLE_LOGS
         },
         {
-            minLevel: 70,
-            maxLevel: 74,
+            minLevel: 65,
+            maxLevel: 69,
             action: 'fletch_yew_shortbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
@@ -2908,8 +3295,8 @@ export const SkillProgression: Record<string, SkillStep[]> = {
             itemConsumed: Items.YEW_LOGS
         },
         {
-            minLevel: 75,
-            maxLevel: 99,
+            minLevel: 70,
+            maxLevel: 79,
             action: 'fletch_yew_longbow',
             location: Locations.DRAYNOR_BANK,
             toolItemIds: [Items.KNIFE],
@@ -2952,8 +3339,8 @@ export const SkillProgression: Record<string, SkillStep[]> = {
         { minLevel: 40, maxLevel: 99, action: 'string_willow_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 415, ticksPerAction: 3, successRate: 1.0, itemGained: Items.WILLOW_LONGBOW, itemConsumed: Items.UNSTRUNG_WILLOW_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
         { minLevel: 50, maxLevel: 99, action: 'string_maple_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 500, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAPLE_SHORTBOW, itemConsumed: Items.UNSTRUNG_MAPLE_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
         { minLevel: 55, maxLevel: 99, action: 'string_maple_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 583, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAPLE_LONGBOW, itemConsumed: Items.UNSTRUNG_MAPLE_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 70, maxLevel: 99, action: 'string_yew_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 675, ticksPerAction: 3, successRate: 1.0, itemGained: Items.YEW_SHORTBOW, itemConsumed: Items.UNSTRUNG_YEW_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
-        { minLevel: 75, maxLevel: 99, action: 'string_yew_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 750, ticksPerAction: 3, successRate: 1.0, itemGained: Items.YEW_LONGBOW, itemConsumed: Items.UNSTRUNG_YEW_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 65, maxLevel: 99, action: 'string_yew_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 675, ticksPerAction: 3, successRate: 1.0, itemGained: Items.YEW_SHORTBOW, itemConsumed: Items.UNSTRUNG_YEW_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
+        { minLevel: 70, maxLevel: 99, action: 'string_yew_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 750, ticksPerAction: 3, successRate: 1.0, itemGained: Items.YEW_LONGBOW, itemConsumed: Items.UNSTRUNG_YEW_LONGBOW, extra: { stringItem: Items.BOW_STRING } },
         { minLevel: 80, maxLevel: 99, action: 'string_magic_shortbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 833, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAGIC_SHORTBOW, itemConsumed: Items.UNSTRUNG_MAGIC_SHORTBOW, extra: { stringItem: Items.BOW_STRING } },
         { minLevel: 85, maxLevel: 99, action: 'string_magic_longbow', location: Locations.DRAYNOR_BANK, toolItemIds: [], xpPerAction: 915, ticksPerAction: 3, successRate: 1.0, itemGained: Items.MAGIC_LONGBOW, itemConsumed: Items.UNSTRUNG_MAGIC_LONGBOW, extra: { stringItem: Items.BOW_STRING } }
     ],
@@ -3032,6 +3419,33 @@ export function getWoodcuttingStepForLog(logId: number, wcLevel: number): SkillS
     return matching[Math.floor(Math.random() * matching.length)];
 }
 
+/**
+ * Highest-tier log the bot's Woodcutting level can actually chop, regardless
+ * of what any other skill (e.g. Fletching) might otherwise be eligible for.
+ * Falls back to regular Items.LOGS (always choppable from level 1) if no
+ * WOODCUTTING step data is found.
+ */
+export function bestLogForWoodcutting(wcLevel: number): number {
+    const steps = SkillProgression['WOODCUTTING'] ?? [];
+    const matching = steps.filter(s => wcLevel >= s.minLevel && s.itemGained !== undefined);
+    if (matching.length === 0) return Items.LOGS;
+    return matching.reduce((best, s) => (s.minLevel > best.minLevel ? s : best)).itemGained!;
+}
+
+/**
+ * Best fletch_ step (highest minLevel, i.e. shortbow < longbow of the same
+ * log) that consumes a specific log type and is reachable at the given
+ * Fletching level. Used to re-target FletchingTask onto the best log tier
+ * the bot's Woodcutting can actually supply — see bestLogForWoodcutting()
+ * and FletchingTask._reconcileStep().
+ */
+export function getBestFletchStepForLog(logId: number, fletchLevel: number): SkillStep | null {
+    const steps = SkillProgression['FLETCHING'] ?? [];
+    const matching = steps.filter(s => s.itemConsumed === logId && s.action.startsWith('fletch_') && fletchLevel >= s.minLevel);
+    if (matching.length === 0) return null;
+    return matching.reduce((best, s) => (s.minLevel > best.minLevel ? s : best));
+}
+
 export function getProgressionStep(skill: string, level: number, hasItems?: (toolItemIds: number[]) => boolean): SkillStep | null {
     const steps = SkillProgression[skill];
     if (!steps || steps.length === 0) return null;
@@ -3049,4 +3463,121 @@ export function bestAxe(wcLevel: number): ToolRequirement {
 /** Best pickaxe available at a given mining level. */
 export function bestPickaxe(miningLevel: number): ToolRequirement {
     return [...PickaxesByLevel].reverse().find(t => miningLevel >= t.levelReq) ?? PickaxesByLevel[0];
+}
+
+// ── Magic combat spells (autocast) ─────────────────────────────────────────────
+//
+// Data sourced from content/scripts/skill_combat/configs/magic/magic_combat_spells.dbrow
+// (levels, rune costs, XP) and .../magic/spells.constant (autocast_spell varp values).
+//
+// Restricted to the wind line deliberately: casting with a staff_of_air supplies
+// the air runes for free, so the only ongoing cost is the catalyst rune (mind →
+// chaos → death → blood). That's the same "free elemental, buy the catalyst"
+// economy the bot already leans on via setAutocastWindStrike/STAFF_OF_AIR — this
+// just extends it up the strike → bolt → blast → wave ladder instead of stopping
+// at wind_strike forever. Water/earth/fire lines would additionally require
+// buying the elemental rune every cast (no staff covers them for free) — that's
+// a materially different economy and out of scope here.
+export interface WindSpellTier {
+    action: string;
+    /** Value for the autocast_spell varp — see setAutocastSpell() in BotAction.ts. */
+    autocastVarp: number;
+    levelRequired: number;
+    catalystRune: number;
+    /** Shop price per rune, or -1 if not sold in any shop (must already be owned). */
+    catalystCost: number;
+    xpPerAction: number;
+    /** True if this spell requires NODE_MEMBERS (wind_wave is members-only). */
+    members: boolean;
+}
+
+export const WIND_SPELLS: WindSpellTier[] = [
+    { action: 'wind_strike', autocastVarp: 51, levelRequired: 1, catalystRune: Items.MIND_RUNE, catalystCost: 10, xpPerAction: 55, members: false },
+    { action: 'wind_bolt', autocastVarp: 4, levelRequired: 17, catalystRune: Items.CHAOS_RUNE, catalystCost: 100, xpPerAction: 135, members: false },
+    { action: 'wind_blast', autocastVarp: 8, levelRequired: 41, catalystRune: Items.DEATH_RUNE, catalystCost: 150, xpPerAction: 255, members: false },
+    // Blood runes aren't stocked by Aubury (or any shop in this revision) — a bot
+    // can only reach wind_wave by already owning blood runes (e.g. from drops).
+    { action: 'wind_wave', autocastVarp: 12, levelRequired: 62, catalystRune: Items.BLOOD_RUNE, catalystCost: -1, xpPerAction: 360, members: true }
+];
+
+/**
+ * Picks the best wind-line spell the bot can actually sustain right now:
+ * highest level tier where the bot either already holds minCastBatch worth of
+ * the catalyst rune, or can afford to buy that many at the shop price. Falls
+ * back down the ladder (blast → bolt → strike) when death/chaos runes aren't
+ * affordable, exactly like a player would conserve gold — and always finds a
+ * usable answer since wind_strike (mind runes, 10gp) is level-1 and cheap.
+ */
+export function pickBestWindSpell(
+    magicLevel: number,
+    coinBudget: number,
+    ownedCatalystCount: (runeId: number) => number,
+    membersEnabled: boolean,
+    minCastBatch = 250
+): WindSpellTier {
+    for (let i = WIND_SPELLS.length - 1; i >= 0; i--) {
+        const tier = WIND_SPELLS[i];
+        if (tier.members && !membersEnabled) continue;
+        if (magicLevel < tier.levelRequired) continue;
+        if (ownedCatalystCount(tier.catalystRune) >= minCastBatch) return tier;
+        if (tier.catalystCost >= 0 && coinBudget >= tier.catalystCost * minCastBatch) return tier;
+    }
+    return WIND_SPELLS[0];
+}
+
+// ── Ranged gear tiers ───────────────────────────────────────────────────────────
+//
+// Bow levelrequire values sourced from content/scripts/skill_combat/configs/ranged/bows.obj.
+// Only shortbow/oak_shortbow are sold by Lowe's Archery (varrock.inv [archeryshop]) —
+// willow and above must come from Fletching (see FletchingTask/BowStringingTask),
+// so bestRangedBow() prefers whatever the bot already owns at its level before
+// falling back to the best it can buy.
+export const RangedBowsByLevel: ToolRequirement[] = [
+    { itemId: Items.SHORTBOW, levelReq: 1, shopKey: 'VARROCK_ARCHERY' },
+    { itemId: Items.OAK_SHORTBOW, levelReq: 5, shopKey: 'VARROCK_ARCHERY' },
+    { itemId: Items.WILLOW_SHORTBOW, levelReq: 20, shopKey: '' },
+    { itemId: Items.MAPLE_SHORTBOW, levelReq: 30, shopKey: '' },
+    { itemId: Items.YEW_SHORTBOW, levelReq: 40, shopKey: '' },
+    { itemId: Items.MAGIC_SHORTBOW, levelReq: 50, shopKey: '' }
+];
+
+/**
+ * Best bow the bot's Ranged level allows: the better of (a) the best tier it
+ * can buy right now (shortbow/oak_shortbow — the only shop-sold tiers) and
+ * (b) the best tier it already owns (willow+ come only from Fletching, so an
+ * owned willow bow should win over buying an oak one). Comparing both means
+ * a bot that only owns a plain shortbow still gets suggested the oak
+ * upgrade instead of being stuck on whatever it happened to start with.
+ */
+export function bestRangedBow(rangedLevel: number, ownsItem: (itemId: number) => boolean): ToolRequirement {
+    const eligible = RangedBowsByLevel.filter(t => rangedLevel >= t.levelReq);
+    if (eligible.length === 0) return RangedBowsByLevel[0];
+    const buyable = [...eligible].reverse().find(t => t.shopKey !== '') ?? eligible[0];
+    const owned = [...eligible].reverse().find(t => ownsItem(t.itemId));
+    if (!owned) return buyable;
+    return RangedBowsByLevel.indexOf(owned) >= RangedBowsByLevel.indexOf(buyable) ? owned : buyable;
+}
+
+// Arrows have no wield-level requirement in this revision — they're purely a
+// coin-budget choice (better arrows = more damage/XP per shot, same shop).
+// Prices verified against varrock.inv [archeryshop].
+export const RangedArrowsByCost: Array<{ itemId: number; cost: number }> = [
+    { itemId: Items.BRONZE_ARROW, cost: 10 },
+    { itemId: Items.IRON_ARROW, cost: 15 },
+    { itemId: Items.STEEL_ARROW, cost: 20 }
+];
+
+/**
+ * Best arrow tier the bot can sustain: prefers a tier it already has a full
+ * batch of, else the best tier it can afford to buy minCastBatch of.
+ */
+export function bestAffordableArrow(
+    coinBudget: number,
+    ownedCount: (itemId: number) => number,
+    minCastBatch = 250
+): { itemId: number; cost: number } {
+    const owned = [...RangedArrowsByCost].reverse().find(a => ownedCount(a.itemId) >= minCastBatch);
+    if (owned) return owned;
+    const affordable = [...RangedArrowsByCost].reverse().find(a => coinBudget >= a.cost * minCastBatch);
+    return affordable ?? RangedArrowsByCost[0];
 }
