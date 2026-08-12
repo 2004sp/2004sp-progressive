@@ -707,10 +707,10 @@ export class BotGoalPlanner {
                 const hasNeedle = hasItem(player, Items.NEEDLE) || this._bankCount(player, Items.NEEDLE) > 0;
                 const hasThread = hasItem(player, Items.THREAD) || this._bankCount(player, Items.THREAD) > 0;
                 if (!hasNeedle && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
-                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.NEEDLE, 1, 1);
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.NEEDLE, 1, 100);
                 }
                 if (!hasThread && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
-                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.THREAD, 5, 1);
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.THREAD, 5, 5);
                 }
                 if (hasNeedle && hasThread) {
                     return new CraftingTask(leatherStep);
@@ -726,7 +726,7 @@ export class BotGoalPlanner {
             if (hasMaterial) {
                 const hasChisel = hasItem(player, Items.CHISEL) || this._bankCount(player, Items.CHISEL) > 0;
                 if (!hasChisel && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
-                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.CHISEL, 1, 1);
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.CHISEL, 1, 100);
                 }
                 if (hasChisel) {
                     return new CraftingTask(gemStep);
@@ -741,7 +741,7 @@ export class BotGoalPlanner {
                 if (!hasItem(player, Items.RING_MOULD)) {
                     // Buy ring mould from Al Kharid crafting shop if affordable
                     if (canAffordStep(player, step) && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
-                        return new ShopTripTask('AL_KHARID_CRAFTING', Items.RING_MOULD, 1, 25);
+                        return new ShopTripTask('AL_KHARID_CRAFTING', Items.RING_MOULD, 1, 100);
                     }
                 } else if (countItem(player, Items.GOLD_BAR) > 0 || this._bankCount(player, Items.GOLD_BAR) > 0) {
                     return new CraftingTask(step);

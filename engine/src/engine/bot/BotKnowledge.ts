@@ -788,15 +788,15 @@ export const Locations = {
     LUMBRIDGE_CASTLE_STAIRS: [3206, 3207, 0] as [number, number, number], // ✅ foot of castle stairs (ground floor)
     LUMBRIDGE_CASTLE_APPROACH: [3215, 3218, 0] as [number, number, number], // ✅ outside south castle entrance — no doors blocking
     LUMBRIDGE_POTTERS_WHEEL: [3209, 3213, 1] as [number, number, number], // ✅ 1 tile north of spinning wheel (3209,3212) — cardinally adjacent, reachedLoc passes immediately
-    AL_KHARID_CRAFTING_SHOP: [3285, 3183, 0] as [number, number, number], // ⛩ mould seller, inside Al Kharid
+    AL_KHARID_CRAFTING_SHOP: [3320, 3194, 0] as [number, number, number], // ⛩ mould seller, inside Al Kharid
     TANNER_AL_KHARID: [3274, 3191, 0] as [number, number, number], // ✅ Ellis the tanner in Al Kharid
 
     // ── Crafting fields ───────────────────────────────────────────────────────
     FLAX_FIELD: [2743, 3444, 0] as [number, number, number], // ✅
 
     // Thieving - NPC pickpocket targets
-    THIEVE_LUMBRIDGE_MAN: [3192, 3248, 0] as [number, number, number], // ✅ Lumbridge man
-    THIEVE_LUMBRIDGE_WOMAN: [3194, 3250, 0] as [number, number, number], // ✅ Lumbridge woman
+    THIEVE_LUMBRIDGE_MAN: [3223, 3238, 0] as [number, number, number], // ✅ Lumbridge man
+    THIEVE_LUMBRIDGE_WOMAN: [3223, 3238, 0] as [number, number, number], // ✅ Lumbridge woman
     THIEVE_VARROCK_MAN: [3212, 3435, 0] as [number, number, number], // ✅ Varrock man
     THIEVE_VARROCK_WOMAN: [3214, 3437, 0] as [number, number, number], // ✅ Varrock woman
     THIEVE_ALKHARID_WARRIOR: [3294, 3172, 0] as [number, number, number], // ✅ Al Kharid warrior
@@ -934,18 +934,22 @@ export const Shops: Record<string, { location: [number, number, number]; stock: 
         ]
     },
 
-    // Al Kharid Crafting Shop — shears + ring mould + tools
+    // Dommik's Crafting Store — Al Kharid. Prices verified against
+    // content/scripts/areas/area_alkharid/configs/alkharid.inv [craftingshop2]
+    // (previous prices here were all wrong guesses — mostly 1-25gp vs the real
+    // 100gp/5gp). SHEARS removed: Dommik doesn't stock them (they're bought
+    // from LUMBRIDGE_GENERAL) — leaving a wrong entry here risked
+    // getMissingPurchases() routing a shears purchase to Al Kharid instead.
     AL_KHARID_CRAFTING: {
         location: Locations.AL_KHARID_CRAFTING_SHOP,
         stock: [
-            { itemId: Items.SHEARS, cost: 1 },
-            { itemId: Items.RING_MOULD, cost: 25 },
-            { itemId: Items.NECKLACE_MOULD, cost: 25 },
-            { itemId: Items.AMULET_MOULD, cost: 25 },
-            { itemId: Items.HOLY_SYMBOL_MOULD, cost: 25 },
-            { itemId: Items.CHISEL, cost: 1 },
-            { itemId: Items.NEEDLE, cost: 1 },
-            { itemId: Items.THREAD, cost: 1 }
+            { itemId: Items.RING_MOULD, cost: 100 },
+            { itemId: Items.NECKLACE_MOULD, cost: 100 },
+            { itemId: Items.AMULET_MOULD, cost: 100 },
+            { itemId: Items.HOLY_SYMBOL_MOULD, cost: 100 },
+            { itemId: Items.CHISEL, cost: 100 },
+            { itemId: Items.NEEDLE, cost: 100 },
+            { itemId: Items.THREAD, cost: 5 }
         ]
     },
 
@@ -2909,16 +2913,29 @@ export const SkillProgression: Record<string, SkillStep[]> = {
     // ── Thieving ─────────────────────────────────────────────────────────────
     THIEVING: [
         { minLevel: 1, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_LUMBRIDGE_MAN, toolItemIds: [], xpPerAction: 80, ticksPerAction: 4, successRate: 0.85, itemGained: Items.COINS, extra: { npcName: 'man' } },
-        { minLevel: 5, maxLevel: 99, action: 'thieve_stall', location: Locations.BAKER_STALL, toolItemIds: [], xpPerAction: 160, ticksPerAction: 4, successRate: 1.0, itemGained: Items.CAKE, extra: { stallId: 2561, npcType: 'Baker' } },
-        { minLevel: 20, maxLevel: 99, action: 'thieve_stall', location: Locations.SILK_STALL, toolItemIds: [], xpPerAction: 240, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SILK, extra: { stallId: 2560, npcType: 'Silk merchant' } },
-        { minLevel: 25, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_ALKHARID_WARRIOR, toolItemIds: [], xpPerAction: 260, ticksPerAction: 4, successRate: 0.7, itemGained: Items.COINS, extra: { npcName: 'warrior' } },
-        { minLevel: 35, maxLevel: 99, action: 'thieve_stall', location: Locations.FUR_STALL, toolItemIds: [], xpPerAction: 360, ticksPerAction: 4, successRate: 1.0, itemGained: Items.GREY_WOLF_FUR, extra: { stallId: 2563, npcType: 'Fur merchant' } },
+        // locName = real stall loc debugname (content/scripts/skill_thieving/configs/stalls/stealing.dbrow
+        // and .../scripts/stalls/stealing.rs2, which triggers on [oploc2,<locName>]).
+        // owner/guards = NPC debugnames stealing.rs2 checks for nearby before allowing
+        // the theft — informational only, ThievingTask doesn't pre-check them, it just
+        // retries like pickpocketing and relies on the existing aggressor-flee logic
+        // if an owner/guard retaliates.
+        { minLevel: 5, maxLevel: 99, action: 'thieve_stall', location: Locations.BAKER_STALL, toolItemIds: [], xpPerAction: 160, ticksPerAction: 4, successRate: 1.0, itemGained: Items.CAKE, extra: { locName: 'bakers_stall_stealing', owner: 'baker_merchant', guards: ['ardougne_guard'] } },
+        { minLevel: 20, maxLevel: 99, action: 'thieve_stall', location: Locations.SILK_STALL, toolItemIds: [], xpPerAction: 240, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SILK, extra: { locName: 'silk_stall_stealing', owner: 'silk_merchant', guards: ['ardougne_guard', 'knight_of_ardougne', 'knight_of_ardougne2'] } },
+        // 'warrior' matched nothing — the real debugname is al_kharid_warrior,
+        // which doesn't start with "warrior" (the other pickpocket_warrior NPC,
+        // warrior_woman, isn't the one spawned at this Al Kharid location).
+        // See content/scripts/skill_thieving/configs/pickpocking/pickpocket.dbrow.
+        { minLevel: 25, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_ALKHARID_WARRIOR, toolItemIds: [], xpPerAction: 260, ticksPerAction: 4, successRate: 0.7, itemGained: Items.COINS, extra: { npcName: 'al_kharid_warrior' } },
+        { minLevel: 35, maxLevel: 99, action: 'thieve_stall', location: Locations.FUR_STALL, toolItemIds: [], xpPerAction: 360, ticksPerAction: 4, successRate: 1.0, itemGained: Items.GREY_WOLF_FUR, extra: { locName: 'fur_stall_stealing', owner: 'fur_merchant', guards: ['ardougne_guard', 'knight_of_ardougne', 'knight_of_ardougne2'] } },
         { minLevel: 40, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_VARROCK_GUARD, toolItemIds: [], xpPerAction: 468, ticksPerAction: 4, successRate: 0.65, itemGained: Items.COINS, extra: { npcName: 'guard' } },
-        { minLevel: 42, maxLevel: 99, action: 'thieve_stall', location: Locations.SILVER_STALL, toolItemIds: [], xpPerAction: 540, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SILVER_ORE, extra: { stallId: 2562, npcType: 'Silver merchant' } },
+        // Real level requirement is 50, not 42 — see stealing_silver_stall in stealing.dbrow.
+        { minLevel: 50, maxLevel: 99, action: 'thieve_stall', location: Locations.SILVER_STALL, toolItemIds: [], xpPerAction: 540, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SILVER_ORE, extra: { locName: 'silver_stall_stealing', owner: 'silver_merchant', guards: ['ardougne_guard', 'knight_of_ardougne', 'knight_of_ardougne2', 'paladin', 'ardougne_paladin2'] } },
         { minLevel: 55, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_ARDY_KNIGHT, toolItemIds: [], xpPerAction: 843, ticksPerAction: 4, successRate: 0.6, itemGained: Items.COINS, extra: { npcName: 'knight' } },
-        { minLevel: 65, maxLevel: 99, action: 'thieve_stall', location: Locations.SPICE_STALL, toolItemIds: [], xpPerAction: 810, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SPICE, extra: { stallId: 2564, npcType: 'Spice seller' } },
+        { minLevel: 65, maxLevel: 99, action: 'thieve_stall', location: Locations.SPICE_STALL, toolItemIds: [], xpPerAction: 810, ticksPerAction: 4, successRate: 1.0, itemGained: Items.SPICE, extra: { locName: 'spice_stall_stealing', owner: 'spice_merchant', guards: ['ardougne_guard', 'knight_of_ardougne', 'knight_of_ardougne2', 'paladin', 'ardougne_paladin2'] } },
         { minLevel: 70, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_PALADIN, toolItemIds: [], xpPerAction: 1518, ticksPerAction: 4, successRate: 0.5, itemGained: Items.COINS, extra: { npcName: 'paladin' } },
-        { minLevel: 75, maxLevel: 99, action: 'thieve_stall', location: Locations.GEM_STALL, toolItemIds: [], xpPerAction: 1600, ticksPerAction: 4, successRate: 1.0, itemGained: Items.UNCUT_SAPPHIRE, extra: { stallId: 2565, npcType: 'Gem merchant' } },
+        // Real XP is 160, not 1600 — stealing.dbrow's experience field is already
+        // in the engine's internal ×10 format (16.0 displayed XP), same convention
+        // as everywhere else in this file; this entry had an extra stray ×10 applied.
         { minLevel: 80, maxLevel: 99, action: 'thieve', location: Locations.THIEVE_HERO, toolItemIds: [], xpPerAction: 2733, ticksPerAction: 4, successRate: 0.4, itemGained: Items.COINS, extra: { npcName: 'hero' } }
     ],
 
