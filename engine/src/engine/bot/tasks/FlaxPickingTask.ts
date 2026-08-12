@@ -22,7 +22,8 @@ import {
     openNearbyGate,
     teleportNear,
     advanceBankWalk,
-    randInt
+    randInt,
+    hasStrayItems
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 
@@ -79,6 +80,12 @@ export class FlaxPickingTask extends BotTask {
         }
 
         if (isInventoryFull(player) && this.state !== 'bank_walk' && this.state !== 'bank_done') {
+            this.state = 'bank_walk';
+        }
+
+        // Carrying leftovers from a previous task — bank them before heading
+        // out to the flax field so the trip starts with a clean slate.
+        if (this.state === 'walk' && hasStrayItems(player, [...this.step.toolItemIds, Items.COINS])) {
             this.state = 'bank_walk';
         }
 

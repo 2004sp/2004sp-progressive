@@ -11,7 +11,7 @@ import {
     Items, Locations, getProgressionStep,
     teleportToSafety, teleportNear, randInt, bankInvId, INTERACT_TIMEOUT,
     StuckDetector, ProgressWatchdog,
-    openNearbyGate, botJitter, advanceBankWalk,
+    openNearbyGate, botJitter, advanceBankWalk, hasStrayItems,
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getCombatLevel, getNpcCombatLevel, findAggressorNpc } from '#/engine/bot/BotAction.js';
@@ -124,6 +124,19 @@ export class FishingTask extends BotTask {
         if (isInventoryFull(player)) {
             this.state = 'bank_walk';
             return;
+        }
+
+        // Carrying leftovers from a previous task — bank them before heading
+        // out to the fishing spot so the trip starts with a clean slate.
+        // (step.itemConsumed — bait/feathers — is kept; it's needed for this
+        // very trip, not a stray item.)
+        if (this.state === 'walk') {
+            const keepIds = [...this.step.toolItemIds, Items.COINS];
+            if (this.step.itemConsumed) keepIds.push(this.step.itemConsumed);
+            if (hasStrayItems(player, keepIds)) {
+                this.state = 'bank_walk';
+                return;
+            }
         }
 
         // ── Flee ──────────────────────────────────────────────────────────────

@@ -28,7 +28,8 @@ import {
     ProgressWatchdog,
     openNearbyGate,
     botJitter,
-    advanceBankWalk
+    advanceBankWalk,
+    hasStrayItems
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getNpcCombatLevel, findAggressorNpc } from '#/engine/bot/BotAction.js';
@@ -128,6 +129,13 @@ export class MiningTask extends BotTask {
         }
 
         if (isInventoryFull(player)) {
+            this.state = 'bank_walk';
+            return;
+        }
+
+        // Carrying leftovers from a previous task — bank them before heading
+        // out to the rock so the trip starts with a clean slate.
+        if (this.state === 'walk' && hasStrayItems(player, [...this.step.toolItemIds, Items.COINS])) {
             this.state = 'bank_walk';
             return;
         }

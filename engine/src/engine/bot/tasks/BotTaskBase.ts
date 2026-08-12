@@ -498,7 +498,7 @@ export class ProgressWatchdog {
      *                        Short enough to rescue stuck bots quickly, but long enough
      *                        to cover legitimate bank trips and mid-walk delays.
      */
-    constructor(stallTickLimit = 100) {
+    constructor(stallTickLimit = 300) {
         this.limit = stallTickLimit;
     }
 
@@ -550,4 +550,24 @@ export function cleanGrimyHerbs(player: Player): void {
             addXp(player, PlayerStat.HERBLORE, xp * removed.completed);
         }
     }
+}
+
+/**
+ * True if the inventory holds anything other than coins or an item in
+ * keepIds (tools, an in-flight consumable). Used by gathering tasks to spot
+ * leftover junk from a previous task — a leftover pickaxe, ore, loot, etc. —
+ * before heading out to a fresh location, so the bot banks it first instead
+ * of carrying dead weight around for an entire trip.
+ */
+export function hasStrayItems(player: Player, keepIds: number[]): boolean {
+    const inv = player.getInventory(InvType.INV);
+    if (!inv) return false;
+    for (let slot = 0; slot < inv.capacity; slot++) {
+        const item = inv.get(slot);
+        if (!item) continue;
+        if (item.id === Items.COINS) continue;
+        if (keepIds.includes(item.id)) continue;
+        return true;
+    }
+    return false;
 }

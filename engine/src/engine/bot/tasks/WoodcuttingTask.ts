@@ -24,7 +24,7 @@ import {
     getBaseLevel, PlayerStat,
     Items, Locations, getProgressionStep,
     teleportToSafety, teleportNear, randInt, bankInvId, INTERACT_TIMEOUT, StuckDetector, ProgressWatchdog,
-    isAdjacentToLoc, openNearbyGate, botJitter, advanceBankWalk,
+    isAdjacentToLoc, openNearbyGate, botJitter, advanceBankWalk, hasStrayItems,
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getCombatLevel, getNpcCombatLevel, findAggressorNpc } from '#/engine/bot/BotAction.js';
@@ -158,6 +158,13 @@ export class WoodcuttingTask extends BotTask {
         }
 
         if (isInventoryFull(player)) { this.state = 'bank_walk'; return; }
+
+        // Carrying leftovers from a previous task (e.g. ore, loot) — bank them
+        // before heading out to the tree so the trip starts with a clean slate.
+        if (this.state === 'walk' && hasStrayItems(player, [...this.step.toolItemIds, Items.COINS, Items.KNIFE, Items.TINDERBOX])) {
+            this.state = 'bank_walk';
+            return;
+        }
 
         // ── Flee ──────────────────────────────────────────────────────────────
         if (this.state === 'flee') {

@@ -41,7 +41,8 @@ import {
     INTERACT_TIMEOUT,
     StuckDetector,
     ProgressWatchdog,
-    advanceBankWalk
+    advanceBankWalk,
+    hasStrayItems
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getNpcCombatLevel, findAggressorNpc, interactHeldOp } from '#/engine/bot/BotAction.js';
@@ -161,6 +162,14 @@ export class ThievingTask extends BotTask {
                 this.currentLoc = null;
                 return;
             }
+        }
+
+        // Carrying leftovers from a previous task — bank them before heading
+        // out so the trip starts with a clean slate.
+        if (this.state === 'walk' && hasStrayItems(player, [])) {
+            this.debug(player, 'stray items from a previous task; banking first');
+            this.state = 'bank_walk';
+            return;
         }
 
         // ── Soft HP check: stop pickpocketing and bank/heal if HP is low ────
