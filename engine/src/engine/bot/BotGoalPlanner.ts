@@ -70,52 +70,93 @@ export const Personalities: Record<string, BotPersonality> = {
     SKILLER: {
         name: 'Skiller',
         weights: {
+            // Combat — low priority, but still trainable
+            ATTACK: 2,
+            STRENGTH: 2,
+            DEFENCE: 2,
+            RANGED: 2,
+            MAGIC: 2,
+            PRAYER: 6,
+
+            // Gathering — high priority
             WOODCUTTING: 15,
             FISHING: 20,
             MINING: 15,
+
+            // Production — high priority
             COOKING: 15,
             SMITHING: 15,
-            THIEVING: 15,
-            PRAYER: 10,
-            FIREMAKING: 9,   // 35% share of the fletch/FM pair (9:17 ≈ 35:65)
+            FIREMAKING: 9,
             CRAFTING: 12,
-            FLETCHING: 17,   // 65% share of the fletch/FM pair
-            RUNECRAFT: 5,    // unlocks once a talisman drops
-            HERBLORE: 8,     // requires guams (chaos druid drops) + coins for vials/newts
-            AGILITY: 10,
+            FLETCHING: 17,
+
+            // Support / utility skills
+            RUNECRAFT: 5,
+            HERBLORE: 8,
+            THIEVING: 15,
+            AGILITY: 10
         }
     },
+
     FIGHTER: {
         name: 'Fighter',
         weights: {
+            // Combat — primary focus
             ATTACK: 30,
             STRENGTH: 30,
             DEFENCE: 20,
-            RANGED: 10,
-            MAGIC: 5,
-            PRAYER: 5
+            RANGED: 12,
+            MAGIC: 8,
+            PRAYER: 8,
+
+            // Gathering — low priority
+            WOODCUTTING: 3,
+            FISHING: 4,
+            MINING: 4,
+
+            // Production — low priority
+            COOKING: 5,
+            SMITHING: 5,
+            FIREMAKING: 2,
+            CRAFTING: 3,
+            FLETCHING: 3,
+
+            // Support / utility skills
+            RUNECRAFT: 3,
+            HERBLORE: 4,
+            THIEVING: 3,
+            AGILITY: 4
         }
     },
+
     BALANCED: {
         name: 'Balanced',
         weights: {
+            // Combat
             ATTACK: 10,
             STRENGTH: 10,
             DEFENCE: 8,
-            WOODCUTTING: 12,
+            RANGED: 6,
+            MAGIC: 6,
+            PRAYER: 6,
+
+            // Gathering
+            WOODCUTTING: 10,
             FISHING: 10,
             MINING: 8,
+
+            // Production
             COOKING: 8,
-            SMITHING: 5,
-            PRAYER: 5,
-            RANGED: 4,
-            MAGIC: 4,
-            FIREMAKING: 13,  // 35% share of the fletch/FM pair (13:24 ≈ 35:65)
-            CRAFTING: 6,
-            FLETCHING: 24,   // 65% share of the fletch/FM pair
-            RUNECRAFT: 8,    // unlocks once a talisman drops
-            HERBLORE: 6,     // requires guams (chaos druid drops) + coins
-            AGILITY: 8,
+            SMITHING: 7,
+            FIREMAKING: 7,
+            CRAFTING: 7,
+            FLETCHING: 9,
+
+            // Support / utility
+            RUNECRAFT: 6,
+            HERBLORE: 6,
+            THIEVING: 8,
+            AGILITY: 8
         }
     }
 };
