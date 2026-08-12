@@ -46,6 +46,8 @@ import { isMapBlocked, isZoneAllocated } from '#/engine/GameMap.js';
 import type { SkillStep } from '#/engine/bot/BotKnowledge.js';
 import { getMissingPurchases, STARTING_COINS } from '#/engine/bot/BotNeeds.js';
 import type { Purchase } from '#/engine/bot/BotNeeds.js';
+import type { BotTaskDebugInfo } from '#/engine/bot/debug/BotDebugTypes.js';
+import { BotDebugService } from '#/engine/bot/debug/BotDebugService.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -202,6 +204,16 @@ export abstract class BotTask {
     abstract tick(player: Player): void;
     abstract isComplete(player: Player): boolean;
 
+    /**
+     * Optional structured diagnostics for the bot debugger. Tasks are not
+     * required to implement this — BotDebugService falls back to reading a
+     * `.state` field off the instance when it's absent. Override this on
+     * tasks where richer diagnostics (target, destination, extra details)
+     * are worth exposing. Never called from gameplay code, only from the
+     * debug snapshot builder, and always wrapped in try/catch by the caller.
+     */
+    getDebugInfo?(player: Player): BotTaskDebugInfo;
+
     interrupt(): void {
         this.interrupted = true;
     }
@@ -297,6 +309,12 @@ export function advanceBankWalk(
         } else if (stuckDetector.desperatelyStuck) {
             teleportNear(player, bx, bz, bl);
             stuckDetector.reset();
+            try {
+                const bot = (player as any)._bot;
+                if (bot?.name) BotDebugService.noteRecovery(bot.name, 'teleport');
+            } catch {
+                /* debug hook must never affect gameplay */
+            }
         } else {
             // Clear existing (bad) waypoints so the hasWaypoints guard in
             // walkTo() doesn't block the detour recalculation.
@@ -417,6 +435,19 @@ export class StuckDetector {
     /** True after escapeLimit+ failed escapes — teleport rather than detour. */
     get desperatelyStuck(): boolean {
         return this.escapeCount >= this.escapeLimit;
+    }
+
+    /** Read-only diagnostic snapshot for the bot debugger — never used by gameplay logic. */
+    getDebugSnapshot(): { ticks: number; window: number; minProgress: number; snapshotDist: number; escapeCount: number; escapeLimit: number; desperatelyStuck: boolean } {
+        return {
+            ticks: this.ticks,
+            window: this.window,
+            minProgress: this.minProgress,
+            snapshotDist: this.snapshotDist,
+            escapeCount: this.escapeCount,
+            escapeLimit: this.escapeLimit,
+            desperatelyStuck: this.desperatelyStuck
+        };
     }
 
     reset(): void {

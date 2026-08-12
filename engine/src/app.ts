@@ -13,6 +13,7 @@ import Environment from '#/util/Environment.js';
 import { printError, printInfo } from '#/util/Logger.js';
 import { startManagementWeb, startWeb } from '#/web.js';
 import OnDemand from '#/engine/OnDemand.js';
+import { BotDebugService } from '#/engine/bot/debug/BotDebugService.js';
 
 if (
     OnDemand.cache.count(0) !== 9 ||
@@ -60,6 +61,15 @@ function safeExit() {
     }
 
     exiting = true;
+
+    if (BotDebugService.enabled) {
+        try {
+            console.log('\n' + BotDebugService.sessionSummary() + '\n');
+        } catch {
+            // never block shutdown on a debug summary failure
+        }
+    }
+
     World.rebootTimer(0);
 }
 

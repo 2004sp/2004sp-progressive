@@ -250,6 +250,11 @@ export class BotMovementMonitor {
         return this.stuckTicks >= STUCK_THRESHOLD;
     }
 
+    /** Consecutive ticks the bot has had waypoints but hasn't moved — for debug/observability only. */
+    getStuckTicks(): number {
+        return this.stuckTicks;
+    }
+
     /**
      * True if the recent position history shows a repeating cycle.
      * Detects A→B→A→B (period 2) and A→B→C→A→B→C (period 3) patterns.

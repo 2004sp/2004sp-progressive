@@ -16,6 +16,7 @@ import WSClientSocket from '#/server/ws/WSClientSocket.js';
 import Environment from '#/util/Environment.js';
 import OnDemand from '#/engine/OnDemand.js';
 import { tryParseBoolean, tryParseInt } from '#/util/TryParse.js';
+import { handleBotDebugHttp, tryHandleBotDebugUpgrade } from '#/engine/bot/debug/BotDebugServer.js';
 
 export type WebSocketData = {
     client: WSClientSocket;
@@ -90,6 +91,10 @@ function sendBuffer(res: ServerResponse, buf: Buffer | Uint8Array) {
 
 async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: WebSocketServer): Promise<void> {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+
+    if (Environment.BOT_DEBUG_ENABLED && (url.pathname === '/debug/bots' || url.pathname.startsWith('/debug/api/'))) {
+        if (await handleBotDebugHttp(req, res, url)) return;
+    }
 
     if (req.method === 'GET') {
         if (url.pathname === '/') {
@@ -310,6 +315,11 @@ export async function startWeb() {
 
     server.on('upgrade', (req, socket, head) => {
         const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+
+        if (Environment.BOT_DEBUG_ENABLED && tryHandleBotDebugUpgrade(req, socket, head, url.pathname)) {
+            return;
+        }
+
         if (url.pathname !== '/') {
             socket.destroy();
             return;

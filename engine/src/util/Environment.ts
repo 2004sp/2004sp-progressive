@@ -98,6 +98,16 @@ export default {
     /// kysely
     KYSELY_VERBOSE: tryParseBoolean(process.env.KYSELY_VERBOSE, false),
 
+    /// bot debugger — live web dashboard for observing bot AI (see engine/src/engine/bot/debug/)
+    // master switch. when false: no dashboard route, no server-side tracking allocated, zero tick overhead.
+    BOT_DEBUG_ENABLED: tryParseBoolean(process.env.BOT_DEBUG_ENABLED, false),
+    // off | basic | detailed | trace — trace includes high-frequency movement/interaction events
+    BOT_DEBUG_LEVEL: tryParseString(process.env.BOT_DEBUG_LEVEL, 'detailed'),
+    // max ring-buffer events retained per bot, and globally
+    BOT_DEBUG_EVENT_HISTORY: tryParseInt(process.env.BOT_DEBUG_EVENT_HISTORY, 500),
+    // how often (ms) the REST snapshot endpoints + WS broadcast recompute the cached JSON snapshot
+    BOT_DEBUG_SNAPSHOT_INTERVAL: tryParseInt(process.env.BOT_DEBUG_SNAPSHOT_INTERVAL, 750),
+
     /// development
     BUILD_VERBOSE: tryParseBoolean(process.env.BUILD_VERBOSE, false),
     // auto-build on startup

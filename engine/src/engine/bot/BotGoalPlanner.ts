@@ -45,6 +45,8 @@ import { VendorTask } from '#/engine/bot/tasks/VendorTask.js';
 import { PKerTask } from '#/engine/bot/tasks/PKerTask.js';
 import { EdgevillePKerTask } from '#/engine/bot/tasks/EdgevillePKerTask.js';
 import { AgilityTask } from '#/engine/bot/tasks/AgilityTask.js';
+import { BotDebugService } from '#/engine/bot/debug/BotDebugService.js';
+import type { BotPlannerCandidate } from '#/engine/bot/debug/BotDebugTypes.js';
 
 const KNIFE_SPAWNS: SpawnEntry[] = [
     // Lumbridge knife is south of the castle — route east of the walls first.
@@ -163,6 +165,18 @@ export class BotGoalPlanner {
     }
 
     pickTask(player: Player): BotTask | null {
+        const task = this._pickTaskInternal(player);
+        if (BotDebugService.enabled) {
+            try {
+                this._recordDecision(player, task);
+            } catch {
+                // debug hook must never affect gameplay
+            }
+        }
+        return task;
+    }
+
+    private _pickTaskInternal(player: Player): BotTask | null {
         // ── 1. Init ───────────────────────────────────────────────────────────
         if (!this.initialised) {
             this.initialised = true;
@@ -178,6 +192,45 @@ export class BotGoalPlanner {
 
         // ── 3 + 4. Pick skill, handle affordability ───────────────────────────
         return this._pickBestTask(player);
+    }
+
+    /**
+     * Debug-only: reconstructs a human-readable summary of this decision for
+     * the dashboard's Planner tab. Deliberately re-derives shouldRun/reason
+     * from the same public helpers _pickBestTask uses, rather than threading
+     * reasoning state through every branch above — keeps the actual decision
+     * logic completely untouched.
+     */
+    private _recordDecision(player: Player, chosen: BotTask | null): void {
+        const botName = (player as any)._bot?.name;
+        if (!botName) return;
+
+        const candidates: BotPlannerCandidate[] = [];
+        for (const [skill, weight] of Object.entries(this.personality.weights)) {
+            if (!weight || weight <= 0 || !SKILLS_WITH_CONTENT.has(skill)) continue;
+            const stat = SKILL_STAT[skill];
+            if (stat === undefined) continue;
+            const level = getBaseLevel(player, stat);
+            if (level >= 99) {
+                candidates.push({ name: skill, weight, shouldRun: false, reason: 'already 99' });
+                continue;
+            }
+            const step = getProgressionStep(skill, level);
+            if (!step) {
+                candidates.push({ name: skill, weight, shouldRun: false, reason: 'no progression step for level' });
+                continue;
+            }
+            const missing = getMissingPurchases(player, step);
+            if (missing.length > 0) {
+                const afford = canAffordStep(player, step);
+                candidates.push({ name: skill, weight, shouldRun: false, reason: afford ? `needs shop trip: ${missing[0].shopKey}` : 'cannot afford required tools' });
+            } else {
+                candidates.push({ name: skill, weight, shouldRun: true });
+            }
+        }
+
+        const reason = chosen ? `selected ${chosen.name}` : 'no runnable task found — idling';
+        BotDebugService.recordPlannerDecision(botName, chosen?.name ?? null, reason, candidates);
     }
 
     // ── Internal ──────────────────────────────────────────────────────────────

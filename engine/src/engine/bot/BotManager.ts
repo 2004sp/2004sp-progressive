@@ -41,6 +41,7 @@ import InvType from '#/cache/config/InvType.js';
 import Environment from '#/util/Environment.js';
 import { toBase37, fromBase37 } from '#/util/JString.js';
 import { ChatModePrivate } from '#/engine/entity/ChatModes.js';
+import { BotDebugService } from '#/engine/bot/debug/BotDebugService.js';
 
 /** Normalize a bot username the same way PlayerLoading does.
  *  RS2 base37 maps underscores → spaces and strips unsupported chars,
@@ -131,6 +132,12 @@ class BotManagerClass {
         this.world = world;
         setWorld(world); // makes World available to BotAction/BotTask without import cycle
         BotCollisionMap.init('data/bot/unwalkable_tiles.csv');
+
+        BotDebugService.configure();
+        if (BotDebugService.enabled) {
+            console.log(`[BotManager] Bot debugger ENABLED — dashboard at http://localhost:${Environment.WEB_PORT}/debug/bots (level=${BotDebugService.level})`);
+        }
+
         console.log(`[BotManager] Spawning ${BOT_CONFIGS.length} bots from Lumbridge...`);
         for (const cfg of BOT_CONFIGS) this._spawnBot(cfg);
     }
@@ -150,14 +157,33 @@ class BotManagerClass {
 
         this.tickCount++;
 
+        const debugOn = BotDebugService.enabled;
+        if (debugOn) BotDebugService.setTick(this.tickCount);
+        const tickStart = debugOn ? Date.now() : 0;
+
         for (const bot of this.bots.values()) {
             if (bot.player.slot === -1) continue;
 
-            bot.tick();
+            if (debugOn) {
+                const botTickStart = Date.now();
+                bot.tick();
+                BotDebugService.recordBotTickDuration(bot.name, Date.now() - botTickStart);
+            } else {
+                bot.tick();
+            }
         }
 
+        if (debugOn) BotDebugService.recordGlobalTickDuration(Date.now() - tickStart);
+
         if (this.tickCount % STATUS_EVERY_TICKS === 0) {
-            this._printStatus();
+            // The web dashboard (see BotDebugService) is the primary debugger when
+            // enabled — keep the terminal to a single summary line instead of the
+            // full per-bot ASCII status boxes to cut noise (spec section 25).
+            if (debugOn) {
+                this._printCompactStatus();
+            } else {
+                this._printStatus();
+            }
         }
     }
 
@@ -301,6 +327,14 @@ class BotManagerClass {
     }
 
     private static readonly STAT_LABELS: string[] = ['Atk', 'Str', 'Def', 'HP', 'Rng', 'Pray', 'Mag', 'Cook', 'WC', 'Flet', 'Fish', 'FM', 'Craft', 'Smith', 'Mine', 'Herb', 'Agi', 'Thiev', 'Slay', 'Farm', 'RC'];
+
+    private _printCompactStatus(): void {
+        const activeBots = [...this.bots.values()].filter(bot => bot.player.slot !== -1);
+        const metrics = BotDebugService.getMetrics();
+        console.log(
+            `[BotManager] ${activeBots.length}/${this.bots.size} active | stuck=${metrics.stuckBots} warn=${metrics.warningBots} err=${metrics.errorBots} | avgTick=${metrics.avgTickDurationMs}ms maxTick=${metrics.maxTickDurationMs}ms | dashboard clients=${metrics.dashboardClients}`
+        );
+    }
 
     private _printStatus(): void {
         const activeBots = [...this.bots.values()].filter(bot => bot.player.slot !== -1);

@@ -32,6 +32,8 @@ import {
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getNpcCombatLevel, findAggressorNpc } from '#/engine/bot/BotAction.js';
+import type { BotTaskDebugInfo } from '#/engine/bot/debug/BotDebugTypes.js';
+import LocType from '#/cache/config/LocType.js';
 
 export class MiningTask extends BotTask {
     private step: SkillStep;
@@ -271,6 +273,24 @@ export class MiningTask extends BotTask {
         this.viaLocation = this.step.via;
         this.stuck.reset();
         this.watchdog.reset();
+    }
+
+    override getDebugInfo(_player: Player): BotTaskDebugInfo {
+        const [lx, lz, ll] = this.step.location;
+        return {
+            task: this.name,
+            state: this.state,
+            target: this.currentRock ? `${LocType.get(this.currentRock.type).debugname ?? 'rock'}@(${this.currentRock.x},${this.currentRock.z})` : undefined,
+            destination: { x: lx, z: lz, level: ll },
+            details: {
+                itemGained: this.step.itemGained,
+                interactTicks: this.interactTicks,
+                scanFailTicks: this.scanFailTicks,
+                approachTicks: this.approachTicks,
+                fleeTicks: this.fleeTicks,
+                stuck: this.stuck.getDebugSnapshot()
+            }
+        };
     }
 
     // ── Step re-roll ────────────────────────────────────────────────────────

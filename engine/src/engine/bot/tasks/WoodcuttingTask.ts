@@ -28,6 +28,7 @@ import {
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getCombatLevel, getNpcCombatLevel, findAggressorNpc } from '#/engine/bot/BotAction.js';
+import type { BotTaskDebugInfo } from '#/engine/bot/debug/BotDebugTypes.js';
 
 /** Draynor village woodcutting spots — aggressive Dark Wizards patrol here, minimum combat 16. */
 const DRAYNOR_WC_LOCATIONS: Array<[number, number, number]> = [
@@ -274,6 +275,24 @@ export class WoodcuttingTask extends BotTask {
     }
 
     isComplete(_p: Player): boolean { return false; }
+
+    override getDebugInfo(_player: Player): BotTaskDebugInfo {
+        const [lx, lz, ll] = this.step.location;
+        return {
+            task: this.name,
+            state: this.state,
+            target: this.currentTree ? `${LocType.get(this.currentTree.type).debugname ?? 'tree'}@(${this.currentTree.x},${this.currentTree.z})` : undefined,
+            destination: { x: lx, z: lz, level: ll },
+            details: {
+                itemGained: this.step.itemGained,
+                interactTicks: this.interactTicks,
+                scanFailTicks: this.scanFailTicks,
+                approachTicks: this.approachTicks,
+                fleeTicks: this.fleeTicks,
+                stuck: this.stuck.getDebugSnapshot()
+            }
+        };
+    }
 
     override reset(): void {
         super.reset();

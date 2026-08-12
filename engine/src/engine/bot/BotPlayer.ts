@@ -14,6 +14,7 @@ import { addXp, getBaseLevel, PlayerStat, openNearbyGate } from '#/engine/bot/Bo
 import { PlayerStatNameMap } from '#/engine/entity/PlayerStat.js';
 import ScriptState from '#/engine/script/ScriptState.js';
 import { BotMovementMonitor } from '#/engine/bot/BotNavigation.js';
+import { BotDebugService } from '#/engine/bot/debug/BotDebugService.js';
 
 const RESCAN_TICKS = 600;
 
@@ -80,6 +81,90 @@ export class BotPlayer {
 
         // link player → bot (so tasks/BotAction can access this)
         (player as any)._bot = this;
+
+        BotDebugService.registerBot(this);
+    }
+
+    // ── Bot debugger accessors (see engine/bot/debug/) ────────────────────────
+    // Structural shape consumed by BotDebugService.DebuggableBot. Read-only,
+    // no gameplay effect — purely so the debugger can build snapshots without
+    // reaching into private fields via reflection.
+    get ticksAliveValue(): number {
+        return this.ticksAlive;
+    }
+    get plannerRescanCountdown(): number {
+        return Math.max(0, RESCAN_TICKS - this.rescanTimer);
+    }
+    get plannerFailCount(): number {
+        return this.planFailCount;
+    }
+    movementMonitorInfo(): { isStuck: boolean; isOscillating: boolean; stuckTicks: number } {
+        return {
+            isStuck: this.movementMonitor.isStuck(),
+            isOscillating: this.movementMonitor.isOscillating(),
+            stuckTicks: this.movementMonitor.getStuckTicks()
+        };
+    }
+
+    // ── Debug-only per-tick observation state ─────────────────────────────────
+    private _debugPrevStats: Int32Array | null = null;
+    private _debugPrevInvTotal = -1;
+
+    /**
+     * Observes real evidence of progress (XP gains, inventory changes) once per
+     * tick and feeds it to BotDebugService so the dashboard can tell "an
+     * interaction was clicked" apart from "the interaction actually worked" —
+     * without every task needing to report this itself. Also closes out
+     * stale in-flight actions via a tick-based timeout. No-op when the
+     * debugger is disabled; any failure here must never affect the bot.
+     */
+    private _debugTick(): void {
+        if (!BotDebugService.enabled) return;
+
+        const p = this.player;
+
+        BotDebugService.noteTaskChange(this.name, this.currentTask?.name ?? null);
+        if (this.currentTask) {
+            const state = (this.currentTask as unknown as Record<string, unknown>).state;
+            BotDebugService.noteStateChange(this.name, typeof state === 'string' ? state : null);
+        } else {
+            BotDebugService.noteStateChange(this.name, null);
+        }
+
+        if (!this._debugPrevStats || this._debugPrevStats.length !== p.stats.length) {
+            this._debugPrevStats = Int32Array.from(p.stats);
+        } else {
+            for (let stat = 0; stat < p.stats.length; stat++) {
+                const cur = p.stats[stat];
+                const prev = this._debugPrevStats[stat];
+                if (cur > prev) {
+                    const gained = (cur - prev) / 10;
+                    BotDebugService.noteXpGain(this.name, stat, cur);
+                    const statName = PlayerStatNameMap.get(stat) ?? `stat${stat}`;
+                    BotDebugService.event(this.name, 'xp', `+${gained} ${statName}`, { stat, gained });
+                    BotDebugService.resolveActionSuccess(this.name, `+${gained} ${statName}`);
+                    this._debugPrevStats[stat] = cur;
+                }
+            }
+        }
+
+        const inv = p.getInventory(InvType.INV);
+        if (inv) {
+            let total = 0;
+            for (let i = 0; i < inv.capacity; i++) {
+                const item = inv.get(i);
+                if (item) total += item.count;
+            }
+            if (this._debugPrevInvTotal === -1) {
+                this._debugPrevInvTotal = total;
+            } else if (total !== this._debugPrevInvTotal) {
+                BotDebugService.event(this.name, 'inventory', `inventory count ${this._debugPrevInvTotal} -> ${total}`);
+                BotDebugService.resolveActionSuccess(this.name, 'inventory changed');
+                this._debugPrevInvTotal = total;
+            }
+        }
+
+        BotDebugService.resolveStaleAction(this.name);
     }
 
     /** Called by botTeleport() to queue a deferred position jump. */
@@ -96,6 +181,12 @@ export class BotPlayer {
     tick(): void {
         this.ticksAlive++;
         this.player.afkEventReady = false;
+
+        try {
+            this._debugTick();
+        } catch {
+            // debugger failure must never affect bot ticking
+        }
 
         // ── MOVEMENT MONITORING ──────────────────────────────────────────────
         // Compare current position (already updated by engine movement this tick)

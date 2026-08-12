@@ -15,6 +15,8 @@ import {
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getCombatLevel, getNpcCombatLevel, findAggressorNpc } from '#/engine/bot/BotAction.js';
+import type { BotTaskDebugInfo } from '#/engine/bot/debug/BotDebugTypes.js';
+import NpcType from '#/cache/config/NpcType.js';
 
 /** Draynor village fishing spots — aggressive Dark Wizards patrol here, minimum combat 16. */
 const DRAYNOR_FISH_LOCATIONS: Array<[number, number, number]> = [
@@ -266,6 +268,24 @@ export class FishingTask extends BotTask {
         this.currentSpot = null;
         this.stuck.reset();
         this.watchdog.reset();
+    }
+
+    override getDebugInfo(_player: Player): BotTaskDebugInfo {
+        const [lx, lz, ll] = this.step.location;
+        return {
+            task: this.name,
+            state: this.state,
+            target: this.currentSpot ? `${NpcType.get(this.currentSpot.type).debugname ?? 'spot'}@(${this.currentSpot.x},${this.currentSpot.z})` : undefined,
+            destination: { x: lx, z: lz, level: ll },
+            details: {
+                itemGained: this.step.itemGained,
+                interactTicks: this.interactTicks,
+                scanFailTicks: this.scanFailTicks,
+                approachTicks: this.approachTicks,
+                fleeTicks: this.fleeTicks,
+                stuck: this.stuck.getDebugSnapshot()
+            }
+        };
     }
 
     // ── Step re-roll ─────────────────────────────────────────────────────────
