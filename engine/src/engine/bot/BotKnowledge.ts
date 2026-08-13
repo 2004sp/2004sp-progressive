@@ -783,6 +783,15 @@ export const Locations = {
     LUMBRIDGE_ALTAR: [3243, 3210, 0] as [number, number, number], // ✅
     BARBARIAN_VILLAGE_POTTERY: [3085, 3408, 0] as [number, number, number], // ✅ Barbarian Village pottery wheel
 
+
+    // firemaking
+    FIRE_VARROCKWEST: [3205, 3429, 0] as [number, number, number],
+    FIRE_VARROCKEAST: [3263, 3429, 0] as [number, number, number],
+    FIRE_FALADORWEST: [3026, 3359, 0] as [number, number, number],
+    FIRE_EDGEVILLE: [3122, 3503, 0] as [number, number, number],
+    FIRE_CATHERBY: [2832, 3438, 0] as [number, number, number],
+    FIRE_SEERS: [2732, 3485, 0] as [number, number, number],
+
     // ── Crafting ──────────────────────────────────────────────────────────────
     LUMBRIDGE_SHEEP: [3200, 3266, 0] as [number, number, number], // ✅ inside sheep pen — triggers SheepPen GATEWAY_REGION (destInRegion) so bots enter via east gate
     LUMBRIDGE_CASTLE_STAIRS: [3206, 3207, 0] as [number, number, number], // ✅ foot of castle stairs (ground floor)
@@ -1342,11 +1351,48 @@ export const SkillProgression: Record<string, SkillStep[]> = {
     // XP from firemaking.obj productexp, levels from levelrequire.
     // Location: Lumbridge road — wide, flat, no obstacles.
     FIREMAKING: [
+        //lumbridge
         { minLevel: 1, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
         { minLevel: 15, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
         { minLevel: 30, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
         { minLevel: 45, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
-        { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS }
+        { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_LUMBRIDGE_ROAD, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS },
+        //varrockWEST
+        { minLevel: 1, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
+        { minLevel: 15, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
+        { minLevel: 45, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
+        { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS },
+        //varrockEAST
+        { minLevel: 1, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKEAST, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
+        { minLevel: 15, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKEAST, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKEAST, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
+        { minLevel: 45, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKEAST, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
+        { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_VARROCKEAST, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS },
+        //seers
+        { minLevel: 1, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_SEERS, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
+        { minLevel: 15, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_SEERS, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_SEERS, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
+        { minLevel: 45, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_SEERS, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
+        { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_SEERS, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS },
+        //catherby
+        { minLevel: 1, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_CATHERBY, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
+        { minLevel: 15, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_CATHERBY, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_CATHERBY, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
+        { minLevel: 45, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_CATHERBY, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
+        { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_CATHERBY, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS },
+        //faladorwest
+        { minLevel: 1, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_FALADORWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
+        { minLevel: 15, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_FALADORWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_FALADORWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
+        { minLevel: 45, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_FALADORWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
+        { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_FALADORWEST, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS },
+        //edgeville
+        { minLevel: 1, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_EDGEVILLE, toolItemIds: [Items.TINDERBOX], xpPerAction: 400, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.LOGS },
+        { minLevel: 15, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_EDGEVILLE, toolItemIds: [Items.TINDERBOX], xpPerAction: 600, ticksPerAction: 4, successRate: 0.9, itemConsumed: Items.OAK_LOGS },
+        { minLevel: 30, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_EDGEVILLE, toolItemIds: [Items.TINDERBOX], xpPerAction: 900, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.WILLOW_LOGS },
+        { minLevel: 45, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_EDGEVILLE, toolItemIds: [Items.TINDERBOX], xpPerAction: 1350, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.MAPLE_LOGS },
+        { minLevel: 60, maxLevel: 99, action: 'firemaking', location: Locations.FIRE_EDGEVILLE, toolItemIds: [Items.TINDERBOX], xpPerAction: 2025, ticksPerAction: 4, successRate: 0.95, itemConsumed: Items.YEW_LOGS }
     ],
 
     // ── Cooking ──────────────────────────────────────────────────────────────
