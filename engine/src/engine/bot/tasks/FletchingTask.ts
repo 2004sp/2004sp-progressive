@@ -30,7 +30,8 @@
 import LocType from '#/cache/config/LocType.js';
 import {
     BotTask, Player, Loc, InvType,
-    walkTo, interactLoc, findLocByPrefix,
+    walkTo, interactLoc, findLocByPrefix, findLocByPrefixWhere,
+    claimLoc, releaseLoc, isLocClaimed,
     hasItem, countItem, addItem, removeItem, addXp,
     isInventoryFull, isNear, isAdjacentToLoc,
     getBaseLevel, PlayerStat,
@@ -153,6 +154,7 @@ export class FletchingTask extends BotTask {
                     return;
                 }
                 if (this.currentTree && !this._isTreeValid(this.currentTree)) {
+                    releaseLoc(this.currentTree);
                     this.currentTree   = null;
                     this.approachTicks = 0;
                 }
@@ -171,6 +173,7 @@ export class FletchingTask extends BotTask {
                 }
                 this.scanFailTicks = 0;
                 this.currentTree   = tree;
+                claimLoc(tree);
 
                 if (isAdjacentToLoc(player, tree)) {
                     interactLoc(player, tree);
@@ -185,6 +188,7 @@ export class FletchingTask extends BotTask {
                     this.approachTicks++;
                     if (this.approachTicks > 30) {
                         console.log(`[Fletch:${player.username}] Can't reach tree at (${tree.x},${tree.z}), retrying`);
+                        releaseLoc(this.currentTree);
                         this.currentTree   = null;
                         this.approachTicks = 0;
                     }
@@ -200,6 +204,7 @@ export class FletchingTask extends BotTask {
                 }
                 if (this.currentTree && !this._isTreeValid(this.currentTree)) {
                     this.state        = 'woodcut_approach';
+                    releaseLoc(this.currentTree);
                     this.currentTree  = null;
                     this.woodcutTicks = 0;
                     return;
@@ -214,6 +219,7 @@ export class FletchingTask extends BotTask {
                 }
                 if (this.woodcutTicks >= INTERACT_TIMEOUT) {
                     this.state        = 'woodcut_approach';
+                    releaseLoc(this.currentTree);
                     this.currentTree  = null;
                     this.woodcutTicks = 0;
                 }
@@ -341,6 +347,13 @@ export class FletchingTask extends BotTask {
     }
 
     private _findTree(player: Player): Loc | null {
+        // Prefer a tree nobody else is on, so nearby bots spread across the
+        // grove instead of all converging on the single nearest tree. But if
+        // every tree in range is already claimed (small grove, lots of bots),
+        // fall back to the closest one regardless — better to share a tree
+        // than to sit scanning forever finding nothing.
+        const unclaimed = findLocByPrefixWhere(player.x, player.z, player.level, this._treePrefix(), 15, loc => !isLocClaimed(loc), 'stump');
+        if (unclaimed) return unclaimed;
         return findLocByPrefix(player.x, player.z, player.level, this._treePrefix(), 15, 'stump');
     }
 
@@ -372,6 +385,7 @@ export class FletchingTask extends BotTask {
     }
 
     private _resetWcState(): void {
+        releaseLoc(this.currentTree);
         this.currentTree   = null;
         this.approachTicks = 0;
         this.woodcutTicks  = 0;

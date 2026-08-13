@@ -24,6 +24,7 @@ import {
     findNpcByPrefix,
     findNpcBySuffix,
     findLocByPrefix,
+    findLocByPrefixWhere,
     findLocByName,
     findLocByNameWhere,
     hasItem,
@@ -243,6 +244,7 @@ export {
     findNpcByPrefix,
     findNpcBySuffix,
     findLocByPrefix,
+    findLocByPrefixWhere,
     findLocByName,
     findLocByNameWhere,
     hasItem,
@@ -570,4 +572,35 @@ export function hasStrayItems(player: Player, keepIds: number[]): boolean {
         return true;
     }
     return false;
+}
+
+// ── Loc claim registry ───────────────────────────────────────────────────────
+//
+// Trees/rocks have no per-bot "target" field the way NPCs do (CombatTask uses
+// npc.target to detect an NPC already being fought), so without this, every
+// bot searching from roughly the same spot deterministically finds the exact
+// same nearest tree/rock — findLocByPrefix always returns the single closest
+// match. Multiple bots then converge on one resource, block each other from
+// the one reachable adjacent tile, and cycle approach-timeout/retry forever,
+// which from the outside looks like bots "stuck" standing next to a tree.
+//
+// Mirrors CombatTask's CLAIMED_NPCS pattern, but for Locs.
+const CLAIMED_LOCS = new Set<string>();
+
+function _locKey(loc: Loc): string {
+    return `${loc.level}:${loc.x}:${loc.z}:${loc.type}`;
+}
+
+/** Register a Loc as claimed so other bots' searches skip it. */
+export function claimLoc(loc: Loc): void {
+    CLAIMED_LOCS.add(_locKey(loc));
+}
+
+/** Release a previously-claimed Loc (felled/depleted, task reset, moved on). */
+export function releaseLoc(loc: Loc | null): void {
+    if (loc) CLAIMED_LOCS.delete(_locKey(loc));
+}
+
+export function isLocClaimed(loc: Loc): boolean {
+    return CLAIMED_LOCS.has(_locKey(loc));
 }

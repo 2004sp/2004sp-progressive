@@ -1301,6 +1301,21 @@ export function findLocByPrefix(cx: number, cz: number, level: number, prefix: s
 }
 
 /**
+ * Same as findLocByPrefix, but also requires a caller predicate to pass —
+ * e.g. "not already claimed by another bot" (see claimLoc/isLocClaimed in
+ * BotTaskBase.ts) so multiple bots searching from nearby tiles don't all
+ * deterministically land on the exact same nearest resource node.
+ */
+export function findLocByPrefixWhere(cx: number, cz: number, level: number, prefix: string, radius: number, predicate: (loc: Loc) => boolean, exclude?: string): Loc | null {
+    return _findLoc(cx, cz, level, radius, loc => {
+        const name = LocType.get(loc.type).debugname;
+        if (!name?.startsWith(prefix)) return false;
+        if (exclude && name.includes(exclude)) return false;
+        return predicate(loc);
+    });
+}
+
+/**
  * Search for any NPC whose type name starts with a prefix.
  */
 export function findNpcByPrefix(cx: number, cz: number, level: number, prefix: string, radius = 20): Npc | null {

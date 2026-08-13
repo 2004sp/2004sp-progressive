@@ -19,7 +19,8 @@ import LocType from '#/cache/config/LocType.js';
 import {
     BotTask, Player, Loc, InvType,
     walkTo, interactLoc,
-    findLocByPrefix, findNpcByName,
+    findLocByPrefix, findLocByPrefixWhere, findNpcByName,
+    claimLoc, releaseLoc, isLocClaimed,
     hasItem, addItem, isInventoryFull, isNear,
     getBaseLevel, PlayerStat,
     Items, Locations, getProgressionStep,
@@ -98,7 +99,7 @@ export class WoodcuttingTask extends BotTask {
             player.clearPendingAction();
             this.stuck.reset();
             this.state = 'approach';
-            this.currentTree = null;
+            this._releaseTree();
             this.interactTicks = 0;
             this.scanFailTicks = 0;
             this.approachTicks = 0;
@@ -121,7 +122,7 @@ export class WoodcuttingTask extends BotTask {
                 if (npcLvl > player.combatLevel) {
                     this.state = 'flee';
                     this.fleeTicks = 0;
-                    this.currentTree = null;
+                    this._releaseTree();
                     return;
                 }
             }
@@ -137,7 +138,7 @@ export class WoodcuttingTask extends BotTask {
             if (!isNewDraynor || getCombatLevel(player) >= 16) {
                 this.step         = newStep;
                 this.state        = 'walk';
-                this.currentTree  = null;
+                this._releaseTree();
             }
         }
 
@@ -207,7 +208,7 @@ export class WoodcuttingTask extends BotTask {
 
             // Drop stale reference if another player felled the tree
             if (this.currentTree && !this._isTreeStillValid(this.currentTree)) {
-                this.currentTree   = null;
+                this._releaseTree();
                 this.approachTicks = 0;
             }
 
@@ -227,6 +228,7 @@ export class WoodcuttingTask extends BotTask {
             }
             this.scanFailTicks = 0;
             this.currentTree   = tree;
+            claimLoc(tree);
 
             if (isAdjacentToLoc(player, tree)) {
                 // Already adjacent — interact immediately
@@ -244,7 +246,7 @@ export class WoodcuttingTask extends BotTask {
                 if (this.approachTicks > 30) {
                     // Can't reach this tree — try another
                     console.log(`[WC:${player.username}] Can't reach tree at (${tree.x},${tree.z}), retrying`);
-                    this.currentTree   = null;
+                    this._releaseTree();
                     this.approachTicks = 0;
                 }
             }
@@ -256,7 +258,7 @@ export class WoodcuttingTask extends BotTask {
             // Tree was felled mid-chop by another player — rescan immediately
             if (this.currentTree && !this._isTreeStillValid(this.currentTree)) {
                 this.state        = 'approach';
-                this.currentTree  = null;
+                this._releaseTree();
                 this.interactTicks = 0;
                 return;
             }
@@ -275,7 +277,7 @@ export class WoodcuttingTask extends BotTask {
                 // Tree depleted or interaction was cleared — find another
                 console.log(`[WC:${player.username}] Interact timeout, rescanning`);
                 this.state        = 'approach';
-                this.currentTree  = null;
+                this._releaseTree();
                 this.interactTicks = 0;
             }
         }
@@ -309,7 +311,7 @@ export class WoodcuttingTask extends BotTask {
         this.approachTicks = 0;
         this.lastXp        = 0;
         this.fleeTicks     = 0;
-        this.currentTree   = null;
+        this._releaseTree();
         this.stuck.reset();
         this.watchdog.reset();
     }
@@ -319,7 +321,21 @@ export class WoodcuttingTask extends BotTask {
     private _findTree(player: Player): Loc | null {
         // 'treestump'.startsWith('tree') = true — must exclude stumps.
         // Stumps have no [oploc1] script so the woodcutting script silently fails.
+        // Prefer a tree nobody else is on, so nearby bots spread across the
+        // grove instead of all converging on the single nearest tree
+        // (findLocByPrefix alone always returns the exact same closest match
+        // for bots standing in roughly the same spot). But if every tree in
+        // range is already claimed, fall back to the closest one regardless —
+        // better to share a tree than to sit scanning forever finding nothing.
+        const unclaimed = findLocByPrefixWhere(player.x, player.z, player.level, this._treePrefix(), 15, loc => !isLocClaimed(loc), 'stump');
+        if (unclaimed) return unclaimed;
         return findLocByPrefix(player.x, player.z, player.level, this._treePrefix(), 15, 'stump');
+    }
+
+    /** Release the currently claimed tree (if any) so other bots can target it. */
+    private _releaseTree(): void {
+        releaseLoc(this.currentTree);
+        this.currentTree = null;
     }
 
     /**
@@ -381,7 +397,7 @@ export class WoodcuttingTask extends BotTask {
             const isDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
             if (!isDraynor || combatLvl >= 16) {
                 this.step = newStep;
-                this.currentTree = null;
+                this._releaseTree();
             }
         }
     }
