@@ -160,6 +160,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                 middleMouseRotation: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
                 compassReset: Environment.NODE_QOL_COMPASS_RESET,
                 customshops: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMSHOPS, true),
+                custombosses: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMBOSSES, true),
                 bosspets: tryParseBoolean(process.env.NODE_FEATURE_BOSSPETS, true),
                 customweapons: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMWEAPONS, true),
                 skillcapes: tryParseBoolean(process.env.NODE_FEATURE_SKILLCAPES, true),

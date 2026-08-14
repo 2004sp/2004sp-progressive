@@ -27,6 +27,7 @@ const scripts: ScriptMap = {
 const customContent = [
     ['Clans', 'NODE_FEATURE_CLANS'],
     ['Custom Shops', 'NODE_FEATURE_CUSTOMSHOPS'],
+    ['Custom Bosses', 'NODE_FEATURE_CUSTOMBOSSES'],
     ['Boss Pets', 'NODE_FEATURE_BOSSPETS'],
     ['Custom Weapons', 'NODE_FEATURE_CUSTOMWEAPONS'],
     ['Skillcapes', 'NODE_FEATURE_SKILLCAPES'],
@@ -37,8 +38,8 @@ const customContent = [
 ] as const;
 
 const customContentCategories = [
-    ['Custom', customContent.slice(0, 5)],
-    ['QOL (Quality of Life)', customContent.slice(5)],
+    ['Custom', customContent.slice(0, 6)],
+    ['QOL (Quality of Life)', customContent.slice(6)],
 ] as const;
 
 const runningProcesses: Record<string, ChildProcess> = {};

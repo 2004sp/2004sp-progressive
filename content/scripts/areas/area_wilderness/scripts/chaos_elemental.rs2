@@ -217,6 +217,9 @@ if ($unequipped < 4) {
 // ============================================================
 // Respawn: fires on the killing player 500 ticks after CE death
 [queue,spawn_chaos_elemental]
+if (map_feature("custombosses") = false) {
+    return;
+}
 if (npc_find(0_49_56_1_57, chaos_elemental, 25, 0) = false) {
     npc_add(0_49_56_1_57, chaos_elemental, ^max_32bit_int);
 }
