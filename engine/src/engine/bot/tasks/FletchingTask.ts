@@ -83,11 +83,26 @@ export class FletchingTask extends BotTask {
     }
 
     shouldRun(player: Player): boolean {
+        const hasHatchetInv  = this.step.toolItemIds.some(id => hasItem(player, id));
+        const hasHatchetBank = !hasHatchetInv && this._hatchetInBank(player);
+        if (!hasHatchetInv && !hasHatchetBank) return false;
+
         if (!hasItem(player, Items.KNIFE) && !this._knifeInBank(player)) {
             console.log(`[Fletch:${player.username}] shouldRun=false: no knife`);
             return false;
         }
         return true;
+    }
+
+    private _hatchetInBank(player: Player): boolean {
+        const bid = bankInvId();
+        if (bid === -1) return false;
+        const bank = player.getInventory(bid);
+        if (!bank) return false;
+        for (let i = 0; i < bank.capacity; i++) {
+            if (this.step.toolItemIds.includes(bank.get(i)?.id ?? -1)) return true;
+        }
+        return false;
     }
 
     isComplete(_player: Player): boolean {
@@ -115,6 +130,13 @@ export class FletchingTask extends BotTask {
         }
 
         if (this.cooldown > 0) { this.cooldown--; return; }
+
+        // ── Hatchet recovery ─────────────────────────────────────────────────
+        // If the hatchet was banked by another task, go retrieve it before chopping.
+        if (!this.step.toolItemIds.some(id => hasItem(player, id)) && this._hatchetInBank(player)) {
+            this.state = 'bank_walk';
+        }
+
         this._tick(player);
     }
 
@@ -414,6 +436,16 @@ export class FletchingTask extends BotTask {
             if (!item || keepIds.has(item.id)) continue;
             const moved = inv.remove(item.id, item.count);
             if (moved.completed > 0) bank.add(item.id, moved.completed);
+        }
+        // Withdraw hatchet if it was banked by another task
+        if (!this.step.toolItemIds.some(id => hasItem(player, id))) {
+            for (const id of this.step.toolItemIds) {
+                const removed = bank.remove(id, 1);
+                if (removed.completed > 0) {
+                    addItem(player, id, 1);
+                    break;
+                }
+            }
         }
     }
 
