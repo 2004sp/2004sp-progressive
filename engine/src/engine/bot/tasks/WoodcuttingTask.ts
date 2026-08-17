@@ -31,7 +31,7 @@ import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getCombatLevel, getNpcCombatLevel, findAggressorNpc } from '#/engine/bot/BotAction.js';
 import type { BotTaskDebugInfo } from '#/engine/bot/debug/BotDebugTypes.js';
 
-/** Draynor village woodcutting spots — aggressive Dark Wizards patrol here, minimum combat 16. */
+/** Draynor village woodcutting spots — aggressive Dark Wizards patrol here, minimum combat 15. */
 const DRAYNOR_WC_LOCATIONS: Array<[number, number, number]> = [
     Locations.WILLOWS_DRAYNOR,
 ];
@@ -72,10 +72,10 @@ export class WoodcuttingTask extends BotTask {
         const hasHatchetBank = !hasHatchetInv && this._hatchetInBank(player);
         if (!hasHatchetInv && !hasHatchetBank) return false;
 
-        // Draynor village has aggressive Dark Wizards — require combat level 16
+        // Draynor village has aggressive Dark Wizards — require combat level 15
         const [sx, sz, sl] = this.step.location;
         const isDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
-        if (isDraynor && getCombatLevel(player) < 16) return false;
+        if (isDraynor && getCombatLevel(player) < 15) return false;
 
         return true;
     }
@@ -135,7 +135,7 @@ export class WoodcuttingTask extends BotTask {
         if (newStep && newStep.minLevel > this.step.minLevel) {
             const [sx, sz, sl] = newStep.location;
             const isNewDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
-            if (!isNewDraynor || getCombatLevel(player) >= 16) {
+            if (!isNewDraynor || getCombatLevel(player) >= 15) {
                 this.step         = newStep;
                 this.state        = 'walk';
                 this._releaseTree();
@@ -248,6 +248,8 @@ export class WoodcuttingTask extends BotTask {
                     console.log(`[WC:${player.username}] Can't reach tree at (${tree.x},${tree.z}), retrying`);
                     this._releaseTree();
                     this.approachTicks = 0;
+                    const [lx, lz] = this.step.location;
+                    walkTo(player, lx + randInt(-5, 5), lz + randInt(-5, 5));
                 }
             }
             return;
@@ -395,7 +397,7 @@ export class WoodcuttingTask extends BotTask {
         if (newStep) {
             const [sx, sz, sl] = newStep.location;
             const isDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
-            if (!isDraynor || combatLvl >= 16) {
+            if (!isDraynor || combatLvl >= 15) {
                 this.step = newStep;
                 this._releaseTree();
             }

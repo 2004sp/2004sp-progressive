@@ -35,17 +35,21 @@ import {
     hasItem, countItem, addItem, removeItem, addXp,
     isInventoryFull, isNear, isAdjacentToLoc,
     getBaseLevel, PlayerStat,
-    Items, randInt,
+    Items, Locations, randInt,
     bankInvId, teleportNear, advanceBankWalk,
-    INTERACT_TIMEOUT, StuckDetector, ProgressWatchdog, botJitter,
+    INTERACT_TIMEOUT, StuckDetector, ProgressWatchdog, botJitter, hasStrayItems,
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/BotKnowledge.js';
 import { getWoodcuttingStepForLog, bestLogForWoodcutting, getBestFletchStepForLog } from '#/engine/bot/BotKnowledge.js';
-import { interactHeldOpU, interactIfButtonByName } from '#/engine/bot/BotAction.js';
+import { getCombatLevel, getNpcCombatLevel, findAggressorNpc, interactHeldOpU, interactIfButtonByName } from '#/engine/bot/BotAction.js';
 import { tryParseBoolean } from '#/util/TryParse.js';
 
 const FAIL_LIMIT = 6;
-const AXE_IDS = [Items.BRONZE_AXE, Items.IRON_AXE, Items.STEEL_AXE, Items.BLACK_AXE];
+
+/** Draynor village woodcutting spots — aggressive Dark Wizards patrol here, minimum combat 15. */
+const DRAYNOR_WC_LOCATIONS: Array<[number, number, number]> = [
+    Locations.WILLOWS_DRAYNOR,
+];
 
 type FletchState =
     | 'woodcut_walk'
@@ -68,6 +72,8 @@ export class FletchingTask extends BotTask {
     private woodcutTicks = 0;
     private lastWcXp = 0;
     private scanFailTicks = 0;
+    private fleeTicks      = 0;
+    private readonly FLEE_TICKS = 12;
 
     // fletch sub-state
     private dialogWaitTicks = 0;
@@ -91,6 +97,12 @@ export class FletchingTask extends BotTask {
             console.log(`[Fletch:${player.username}] shouldRun=false: no knife`);
             return false;
         }
+
+        // Draynor village has aggressive Dark Wizards — require combat level 15
+        const [sx, sz, sl] = this.step.location;
+        const isDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
+        if (isDraynor && getCombatLevel(player) < 15) return false;
+
         return true;
     }
 
@@ -137,6 +149,20 @@ export class FletchingTask extends BotTask {
             this.state = 'bank_walk';
         }
 
+        // ── Aggressor detection ───────────────────────────────────────────────
+        if (this.state !== 'bank_walk' && this.state !== 'bank_deposit' && this.state !== 'flee') {
+            const aggressor = findAggressorNpc(player, 8);
+            if (aggressor) {
+                const npcLvl = getNpcCombatLevel(aggressor);
+                if (npcLvl > player.combatLevel) {
+                    this.state = 'flee';
+                    this.fleeTicks = 0;
+                    this._releaseTree();
+                    return;
+                }
+            }
+        }
+
         this._tick(player);
     }
 
@@ -148,6 +174,12 @@ export class FletchingTask extends BotTask {
             case 'woodcut_walk': {
                 if (this._hasLogsInInv(player)) {
                     this.state = 'fletch';
+                    return;
+                }
+                // Carrying leftovers from a previous task (e.g. ore, loot) — bank them
+                // before heading out to the tree so the trip starts with a clean slate.
+                if (hasStrayItems(player, [...this.step.toolItemIds, Items.COINS, Items.KNIFE])) {
+                    this.state = 'bank_walk';
                     return;
                 }
                 this._reconcileStep(player);
@@ -176,8 +208,7 @@ export class FletchingTask extends BotTask {
                     return;
                 }
                 if (this.currentTree && !this._isTreeValid(this.currentTree)) {
-                    releaseLoc(this.currentTree);
-                    this.currentTree   = null;
+                    this._releaseTree();
                     this.approachTicks = 0;
                 }
                 const tree = this.currentTree ?? this._findTree(player);
@@ -210,9 +241,10 @@ export class FletchingTask extends BotTask {
                     this.approachTicks++;
                     if (this.approachTicks > 30) {
                         console.log(`[Fletch:${player.username}] Can't reach tree at (${tree.x},${tree.z}), retrying`);
-                        releaseLoc(this.currentTree);
-                        this.currentTree   = null;
+                        this._releaseTree();
                         this.approachTicks = 0;
+                        const [lx, lz] = this.wcStep!.location;
+                        walkTo(player, lx + randInt(-5, 5), lz + randInt(-5, 5));
                     }
                 }
                 return;
@@ -226,8 +258,7 @@ export class FletchingTask extends BotTask {
                 }
                 if (this.currentTree && !this._isTreeValid(this.currentTree)) {
                     this.state        = 'woodcut_approach';
-                    releaseLoc(this.currentTree);
-                    this.currentTree  = null;
+                    this._releaseTree();
                     this.woodcutTicks = 0;
                     return;
                 }
@@ -241,8 +272,7 @@ export class FletchingTask extends BotTask {
                 }
                 if (this.woodcutTicks >= INTERACT_TIMEOUT) {
                     this.state        = 'woodcut_approach';
-                    releaseLoc(this.currentTree);
-                    this.currentTree  = null;
+                    this._releaseTree();
                     this.woodcutTicks = 0;
                 }
                 return;
@@ -333,6 +363,18 @@ export class FletchingTask extends BotTask {
                 this.state = 'woodcut_walk';
                 return;
             }
+
+            // ── Flee ──────────────────────────────────────────────────────────────
+            case 'flee': {
+                this.fleeTicks++;
+                const [lx, lz] = this.step.location;
+                this._stuckWalk(player, lx, lz);
+                if (this.fleeTicks >= this.FLEE_TICKS || isNear(player, lx, lz, 12)) {
+                    this.state = 'woodcut_walk';
+                    this.fleeTicks = 0;
+                }
+                return;
+            }
         }
     }
 
@@ -379,6 +421,12 @@ export class FletchingTask extends BotTask {
         return findLocByPrefix(player.x, player.z, player.level, this._treePrefix(), 15, 'stump');
     }
 
+    /** Release the currently claimed tree (if any) so other bots can target it. */
+    private _releaseTree(): void {
+        releaseLoc(this.currentTree);
+        this.currentTree = null;
+    }
+
     private _isTreeValid(tree: Loc): boolean {
         const name = LocType.get(tree.type).debugname ?? '';
         return name.startsWith(this._treePrefix()) && !name.includes('stump');
@@ -407,12 +455,12 @@ export class FletchingTask extends BotTask {
     }
 
     private _resetWcState(): void {
-        releaseLoc(this.currentTree);
-        this.currentTree   = null;
+        this._releaseTree();
         this.approachTicks = 0;
         this.woodcutTicks  = 0;
         this.lastWcXp      = 0;
         this.scanFailTicks = 0;
+        this.fleeTicks     = 0;
         this.wcStep        = null;
     }
 
@@ -428,7 +476,7 @@ export class FletchingTask extends BotTask {
         // Keep knife, hatchet, and any unprocessed logs — deposit everything else.
         const keepIds = new Set<number>([
             Items.COINS, Items.KNIFE,
-            ...AXE_IDS,
+            ...this.step.toolItemIds,
             this.step.itemConsumed!,
         ]);
         for (let slot = 0; slot < inv.capacity; slot++) {

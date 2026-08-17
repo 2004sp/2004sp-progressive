@@ -1227,7 +1227,7 @@ export const SkillProgression: Record<string, SkillStep[]> = {
     // ── Woodcutting ──────────────────────────────────────────────────────────
     // XP from trees.dbrow productexp, levels from levelrequired.
     // Level 30-59: three willow spots for variety.
-    //   Draynor (aggressive Dark Wizards nearby — WoodcuttingTask blocks combat < 16).
+    //   Draynor (aggressive Dark Wizards nearby — WoodcuttingTask blocks combat < 15).
     //   Port Sarim + Barbarian Village are safe for any combat level.
     // Level 60+:   two yew spots (north Varrock via gateway, Falador south open).
     WOODCUTTING: [

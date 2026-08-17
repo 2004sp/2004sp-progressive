@@ -588,7 +588,7 @@ export function hasStrayItems(player: Player, keepIds: number[]): boolean {
 const CLAIMED_LOCS = new Set<string>();
 
 function _locKey(loc: Loc): string {
-    return `${loc.level}:${loc.x}:${loc.z}:${loc.type}`;
+    return `${loc.level}:${loc.x}:${loc.z}`;
 }
 
 /** Register a Loc as claimed so other bots' searches skip it. */
