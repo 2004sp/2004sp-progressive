@@ -248,6 +248,8 @@ export class WoodcuttingTask extends BotTask {
                     console.log(`[WC:${player.username}] Can't reach tree at (${tree.x},${tree.z}), retrying`);
                     this._releaseTree();
                     this.approachTicks = 0;
+                    const [lx, lz] = this.step.location;
+                    walkTo(player, lx + randInt(-5, 5), lz + randInt(-5, 5));
                 }
             }
             return;
