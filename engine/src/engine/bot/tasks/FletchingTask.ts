@@ -55,6 +55,7 @@ type FletchState =
     | 'woodcut_walk'
     | 'woodcut_approach'
     | 'woodcut_chop'
+    | 'flee'
     | 'fletch'
     | 'fletch_dialog'
     | 'bank_walk'
