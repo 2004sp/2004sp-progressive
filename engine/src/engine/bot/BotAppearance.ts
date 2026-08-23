@@ -1,8 +1,7 @@
 import IdkType from '#/cache/config/IdkType.js';
 import InvType from '#/cache/config/InvType.js';
-import { PlayerStat, setVarp } from '#/engine/bot/BotAction.js';
 import { Items, randInt } from '#/engine/bot/tasks/BotTaskBase.js';
-import Player, { getExpByLevel } from '#/engine/entity/Player.js';
+import Player from '#/engine/entity/Player.js';
 import { check, IDKTypeValid, GenderValid } from '#/engine/script/ScriptValidators.js';
 
 const SKIN_TONES = [0, 1, 2, 3, 4, 5];
@@ -154,20 +153,6 @@ export class BotAppearance {
         player.walkanim_l = 821; // human_walk_l
         player.walkanim_r = 822; // human_walk_r
         player.runanim    = 824; // human_running
-
-        // Set Herblore to 3 (requires Druidic Ritual quest)
-        player.baseLevels[PlayerStat.HERBLORE] = 3;
-        player.stats[PlayerStat.HERBLORE] = getExpByLevel(3);
-        //Essential quest varps (completions)
-        setVarp(player, 'cook_progress', 29, 2);
-        setVarp(player, 'runemysteries_progress', 63, 6);
-        setVarp(player, 'druid_progress', 80, 4);
-        setVarp(player, 'tree_progress', 111, 9);
-        setVarp(player, 'legends_progress', 139, 75);
-        setVarp(player, 'zanaris_progress', 147, 6);
-        setVarp(player, 'grandtree_progres', 150, 160);
-        setVarp(player, 'dragon_progress', 176, 10);
-        setVarp(player, 'hero_progress', 188, 15);
 
         player.buildAppearance(InvType.WORN);
     }

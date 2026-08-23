@@ -25,8 +25,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-import Player from '#/engine/entity/Player.js';
-import { PlayerStat, getBaseLevel } from '#/engine/bot/BotAction.js';
+import Player, { getExpByLevel } from '#/engine/entity/Player.js';
+import { PlayerStat, getBaseLevel, setVarp } from '#/engine/bot/BotAction.js';
 import { BotPlayer } from '#/engine/bot/BotPlayer.js';
 import { setWorld, BotWorldHandle } from '#/engine/bot/BotWorld.js';
 import { ensureBotAccount } from '#/engine/bot/BotDatabase.js';
@@ -291,6 +291,75 @@ class BotManagerClass {
                 console.error(`[BotManager] BotAppearance refresh failed for ${normalizedUsername}:`, err);
             }
         }
+
+        // Set Herblore to 3 (requires Druidic Ritual quest)
+        player.baseLevels[PlayerStat.HERBLORE] = 3;
+        player.stats[PlayerStat.HERBLORE] = getExpByLevel(3);
+        // Complete Alfred Grimhand's Barcrawl.
+        setVarp(player, 'barcrawl', 77, 2);
+        // Remove Wilderness lever warning so it can be used without dialog.
+        setVarp(player, 'warning_wilderness_teleport_lever', 81, 1);
+        // Allow usage of the gate to the Tree Gnome Stronghold.
+        setVarp(player, 'femi_help', 152, 2);
+        // Mark all quests as completed, ordered by release date.
+        // No rewards given, they just unlock access to content.
+        setVarp(player, 'cookquest', 29, 2);
+        setVarp(player, 'demonstart', 222, 30);
+        setVarp(player, 'prieststart', 107, 5);
+        setVarp(player, 'rjquest', 144, 100);
+        setVarp(player, 'sheep', 179, 22);
+        setVarp(player, 'blackarmgang', 145, 4);
+        setVarp(player, 'haunted', 32, 3);
+        setVarp(player, 'vampire', 178, 3);
+        setVarp(player, 'imp', 160, 2);
+        setVarp(player, 'princequest', 273, 110);
+        setVarp(player, 'doricquest', 31, 100);
+        setVarp(player, 'spy', 130, 4);
+        setVarp(player, 'hetty', 67, 3);
+        setVarp(player, 'squire', 122, 7);
+        setVarp(player, 'goblinquest', 62, 6);
+        setVarp(player, 'hunt', 71, 4);
+        setVarp(player, 'dragonquest', 176, 10);
+        setVarp(player, 'druidquest', 80, 4);
+        setVarp(player, 'zanaris', 147, 6);
+        setVarp(player, 'ballquest', 226, 7);
+        setVarp(player, 'arthur', 14, 7);
+        setVarp(player, 'heroquest', 188, 15);
+        setVarp(player, 'scorpcatcher', 76, 6);
+        setVarp(player, 'crestquest', 148, 11);
+        setVarp(player, 'totemquest', 200, 5);
+        setVarp(player, 'fishingcompo', 11, 5);
+        setVarp(player, 'drunkmonkquest', 30, 80);
+        setVarp(player, 'ikov', 26, 80);
+        setVarp(player, 'cogquest', 10, 8);
+        setVarp(player, 'grail', 5, 10);
+        setVarp(player, 'treequest', 111, 9);
+        setVarp(player, 'arenaquest', 17, 15);
+        setVarp(player, 'hazeelcultquest', 223, 9);
+        setVarp(player, 'sheepherderquest', 60, 3);
+        setVarp(player, 'elenaquest', 165, 29);
+        setVarp(player, 'seaslugquest', 159, 12);
+        setVarp(player, 'waterfall_quest', 65, 10);
+        setVarp(player, 'biohazard', 68, 16);
+        setVarp(player, 'junglepotion', 175, 12);
+        setVarp(player, 'grandtree', 150, 160);
+        setVarp(player, 'zombiequeen', 116, 15);
+        setVarp(player, 'upass', 161, 10);
+        setVarp(player, 'itgronigen', 112, 7);
+        setVarp(player, 'desertrescue', 197, 30);
+        setVarp(player, 'itwatchtower', 212, 13);
+        setVarp(player, 'mcannon', 0, 11);
+        setVarp(player, 'murderquest', 192, 2);
+        setVarp(player, 'itexamlevel', 131, 9);
+        setVarp(player, 'fluffs', 180, 6);
+        setVarp(player, 'legendsquest', 139, 75);
+        setVarp(player, 'runemysteries', 63, 6);
+        setVarp(player, 'chompybird', 293, 65);
+        setVarp(player, 'elemental_workshop_bits', 299, 1048576);
+        setVarp(player, 'priestperil', 302, 60);
+        setVarp(player, 'druidspirit', 307, 110);
+        setVarp(player, 'death_equiproom', 314, 80);
+        setVarp(player, 'troll_quest', 317, 50);
 
         // ─────────────────────────────────────────────
         // store XP baseline  (key = player.username so _checkLevelUps lookup matches)
