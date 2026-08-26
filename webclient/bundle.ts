@@ -59,6 +59,7 @@ async function applyTerser(script: BunOutput): Promise<boolean> {
                 reserved: [
                     // custom content flags set via inline (non-bundled) HTML script in view/client.ejs —
                     // must keep literal names or CUSTOM_CONTENT?.clans lookups break after mangling
+                    '__customContent',
                     'clans',
                     'middleMouseRotation',
                     'compassReset',
