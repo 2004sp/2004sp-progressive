@@ -184,6 +184,14 @@ function getWebClientUrl() {
     return `http://localhost${portSuffix}/rs2.cgi`;
 }
 
+function getHiscoresUrl() {
+    const defaultPort = process.platform === 'win32' || process.platform === 'darwin' ? 80 : 8888;
+    const configuredPort = Number.parseInt(getEnvSetting('WEB_PORT') ?? '', 10);
+    const port = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65535 ? configuredPort : defaultPort;
+    const portSuffix = port === 80 ? '' : `:${port}`;
+    return `http://localhost${portSuffix}/index.html`;
+}
+
 async function waitForUrl(url: string, timeoutMs = 60_000, intervalMs = 500) {
     const deadline = Date.now() + timeoutMs;
 
@@ -278,11 +286,13 @@ async function autoOpenWebClient() {
 }
 
 async function autoOpenHiscores() {
-    const url = 'http://localhost:3000/';
-    console.log(`Waiting for hiscores on localhost:3000...`);
+    const url = getHiscoresUrl();
+    const parsedUrl = new URL(url);
+    const port = Number.parseInt(parsedUrl.port || '80', 10);
+    console.log(`Waiting for hiscores page at ${url}...`);
 
-    if (!(await waitForPort('127.0.0.1', 3000))) {
-        console.log('Hiscores did not start listening on port 3000; browser was not opened.');
+    if (!(await waitForPort(parsedUrl.hostname, port))) {
+        console.log(`Hiscores web server did not start listening for ${url}; browser was not opened.`);
         return;
     }
 
