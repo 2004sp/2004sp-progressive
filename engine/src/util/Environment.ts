@@ -38,7 +38,7 @@ export default {
     // custom QOL browser controls
     NODE_QOL_MIDDLE_MOUSE_ROTATION: tryParseBoolean(process.env.NODE_QOL_MIDDLE_MOUSE_ROTATION, false),
     NODE_QOL_COMPASS_RESET: tryParseBoolean(process.env.NODE_QOL_COMPASS_RESET, false),
-    NODE_QOL_ANTI_MACRO_ROTATION: tryParseBoolean(process.env.NODE_QOL_ANTI_MACRO_ROTATION, true),
+    NODE_QOL_ANTI_MACRO_ROTATION: tryParseBoolean(process.env.NODE_QOL_ANTI_MACRO_ROTATION, false),
     // launcher QOL controls
     NODE_QOL_AUTO_OPEN_WEBCLIENT: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_WEBCLIENT, false),
     NODE_QOL_AUTO_OPEN_HISCORES: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_HISCORES, false),
