@@ -140,7 +140,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                     members: Environment.NODE_MEMBERS,
                     clansEnabled: Environment.NODE_FEATURE_CLANS,
                     middleMouseRotationEnabled: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
-                    compassResetEnabled: Environment.NODE_QOL_COMPASS_RESET
+                    compassResetEnabled: Environment.NODE_QOL_COMPASS_RESET,
+                    antiMacroRotationEnabled: Environment.NODE_QOL_ANTI_MACRO_ROTATION
                 });
 
             res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -154,6 +155,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                 clans: Environment.NODE_FEATURE_CLANS,
                 middleMouseRotation: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
                 compassReset: Environment.NODE_QOL_COMPASS_RESET,
+                antiMacroRotation: Environment.NODE_QOL_ANTI_MACRO_ROTATION,
                 customshops: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMSHOPS, true),
                 bosspets: tryParseBoolean(process.env.NODE_FEATURE_BOSSPETS, true),
                 customweapons: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMWEAPONS, true),

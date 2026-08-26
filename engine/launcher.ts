@@ -1,4 +1,5 @@
-﻿import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
+import net from 'net';
 import readline from 'readline';
 import fs from 'fs';
 import path from 'path';
@@ -10,6 +11,8 @@ const ENV_PATH = path.join(__dirname, '.env');
 
 type ScriptMap = Record<string, string[]>;
 type ProgressRange = { from: number; to: number; message: string };
+type CustomContentToggle = readonly [name: string, key: string, defaultValue?: boolean];
+type ScriptEnvOverrides = Record<string, string>;
 
 const scripts: ScriptMap = {
     start: ['npm', 'run', 'start'],
@@ -24,7 +27,7 @@ const scripts: ScriptMap = {
     setup: ['npm', 'run', 'setup'],
 };
 
-const customContent = [
+const customContent: readonly CustomContentToggle[] = [
     ['Clans', 'NODE_FEATURE_CLANS'],
     ['Custom Shops', 'NODE_FEATURE_CUSTOMSHOPS'],
     ['Boss Pets', 'NODE_FEATURE_BOSSPETS'],
@@ -34,7 +37,10 @@ const customContent = [
     ['Make-X Skill Actions', 'NODE_FEATURE_MAKEX'],
     ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
     ['Left Click Compass Reset', 'NODE_QOL_COMPASS_RESET'],
-] as const;
+    ['Anti-Macro Camera Rotation', 'NODE_QOL_ANTI_MACRO_ROTATION', false],
+    ['Auto-Open Web Client', 'NODE_QOL_AUTO_OPEN_WEBCLIENT', false],
+    ['Auto-Open Hiscores', 'NODE_QOL_AUTO_OPEN_HISCORES', false],
+];
 
 const customContentCategories = [
     ['Custom', customContent.slice(0, 5)],
@@ -75,31 +81,43 @@ function createReadline() {
 
 function runScript(name: string, detached = false) {
     if (!scripts[name]) {
-        console.log(`âŒ Script "${name}" not found`);
+        console.log(`❌ Script "${name}" not found`);
         return;
     }
 
-    console.log(`ðŸš€ Starting ${name}...`);
+    console.log(`🚀 Starting ${name}...`);
 
     const [cmd, ...args] = scripts[name];
     const proc = spawn(cmd, args, {
-        stdio: 'inherit',
+        stdio: detached ? 'ignore' : 'inherit',
         shell: true,
+        windowsHide: detached,
     });
 
     runningProcesses[name] = proc;
 
+    proc.on('error', error => {
+        console.log(`❌ ${name} failed to start: ${error.message}`);
+        delete runningProcesses[name];
+    });
+
+    proc.on('exit', code => {
+        delete runningProcesses[name];
+        if (detached) {
+            if (code !== 0) {
+                console.log(`❌ ${name} background process exited with code ${code ?? 'unknown'}`);
+            }
+        } else {
+            console.log(`🛑 ${name} stopped`);
+        }
+    });
+
     if (detached) {
-        console.log(`ðŸ§µ ${name} running in background`);
-    } else {
-        proc.on('exit', () => {
-            console.log(`ðŸ›‘ ${name} stopped`);
-            delete runningProcesses[name];
-        });
+        console.log(`🧵 ${name} running in background`);
     }
 }
 
-async function runScriptAndWait(name: string, heartbeat?: ProgressRange) {
+async function runScriptAndWait(name: string, heartbeat?: ProgressRange, envOverrides?: ScriptEnvOverrides) {
     if (!scripts[name]) {
         console.log(`Script "${name}" not found`);
         return 1;
@@ -111,6 +129,7 @@ async function runScriptAndWait(name: string, heartbeat?: ProgressRange) {
     const proc = spawn(cmd, args, {
         stdio: 'inherit',
         shell: true,
+        env: envOverrides ? { ...process.env, ...envOverrides } : process.env,
     });
 
     runningProcesses[name] = proc;
@@ -144,6 +163,164 @@ async function runCommandAndWait(cmd: string, args: string[], cwd: string, heart
     }
     delete runningProcesses[key];
     return code ?? 0;
+}
+
+function getEnvSetting(key: string) {
+    if (process.env[key]) {
+        return process.env[key];
+    }
+
+    const content = fs.existsSync(ENV_PATH) ? fs.readFileSync(ENV_PATH, 'utf8') : '';
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = content.match(new RegExp(`^\\s*${escapedKey}\\s*=\\s*([^#\\r\\n]+?)\\s*$`, 'mi'));
+    return match?.[1].trim();
+}
+
+function getWebClientUrl() {
+    const defaultPort = process.platform === 'win32' || process.platform === 'darwin' ? 80 : 8888;
+    const configuredPort = Number.parseInt(getEnvSetting('WEB_PORT') ?? '', 10);
+    const port = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65535 ? configuredPort : defaultPort;
+    const portSuffix = port === 80 ? '' : `:${port}`;
+    return `http://localhost${portSuffix}/rs2.cgi`;
+}
+
+function getHiscoresUrl() {
+    const defaultPort = process.platform === 'win32' || process.platform === 'darwin' ? 80 : 8888;
+    const configuredPort = Number.parseInt(getEnvSetting('WEB_PORT') ?? '', 10);
+    const port = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65535 ? configuredPort : defaultPort;
+    const portSuffix = port === 80 ? '' : `:${port}`;
+    return `http://localhost${portSuffix}/index.html`;
+}
+
+async function waitForUrl(url: string, timeoutMs = 60_000, intervalMs = 500) {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+        try {
+            const response = await fetch(url, { signal: AbortSignal.timeout(Math.min(intervalMs, 2_000)) });
+            if (response.ok) {
+                return true;
+            }
+        } catch {
+            // Server is still starting; retry until the timeout expires.
+        }
+
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+
+    return false;
+}
+
+async function waitForPort(host: string, port: number, timeoutMs = 60_000, intervalMs = 250) {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+        const reachable = await new Promise<boolean>(resolve => {
+            const socket = net.createConnection({ host, port });
+            let settled = false;
+
+            const finish = (value: boolean) => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                socket.removeAllListeners();
+                socket.destroy();
+                resolve(value);
+            };
+
+            socket.setTimeout(1_000);
+            socket.once('connect', () => finish(true));
+            socket.once('timeout', () => finish(false));
+            socket.once('error', () => finish(false));
+        });
+
+        if (reachable) {
+            return true;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+
+    return false;
+}
+
+function openUrl(url: string) {
+    let command: string;
+    let args: string[];
+
+    if (process.platform === 'win32') {
+        command = 'cmd';
+        args = ['/c', 'start', '', url];
+    } else if (process.platform === 'darwin') {
+        command = 'open';
+        args = [url];
+    } else {
+        command = 'xdg-open';
+        args = [url];
+    }
+
+    const proc = spawn(command, args, {
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true,
+    });
+    proc.unref();
+}
+
+async function autoOpenWebClient() {
+    const url = getWebClientUrl();
+    console.log(`Waiting for webclient at ${url}...`);
+
+    if (!(await waitForUrl(url))) {
+        console.log(`Webclient did not become reachable at ${url}; browser was not opened.`);
+        return;
+    }
+
+    try {
+        openUrl(url);
+        console.log(`Opened webclient: ${url}`);
+    } catch (error) {
+        console.log(`Could not open webclient automatically: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+async function autoOpenHiscores() {
+    const url = getHiscoresUrl();
+    const parsedUrl = new URL(url);
+    const port = Number.parseInt(parsedUrl.port || '80', 10);
+    const apiUrl = new URL('/api/hiscores?skill=overall&page=0', url).toString();
+    console.log(`Waiting for hiscores page and API at ${url}...`);
+
+    if (!(await waitForPort(parsedUrl.hostname, port))) {
+        console.log(`Hiscores web server did not start listening for ${url}; browser was not opened.`);
+        return;
+    }
+
+    if (!(await waitForUrl(url)) || !(await waitForUrl(apiUrl))) {
+        console.log(`Hiscores page/API did not become ready at ${url}; browser was not opened.`);
+        return;
+    }
+
+    console.log('Hiscores is ready; waiting briefly before opening the browser...');
+    await new Promise(resolve => setTimeout(resolve, 1_500));
+
+    try {
+        openUrl(url);
+        console.log(`Opened hiscores: ${url}`);
+    } catch (error) {
+        console.log(`Could not open hiscores automatically: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+async function autoOpenCustomPages(openHiscores: boolean, openWebClient: boolean) {
+    if (openHiscores) {
+        await autoOpenHiscores();
+    }
+
+    if (openWebClient) {
+        await autoOpenWebClient();
+    }
 }
 
 async function buildWebClient() {
@@ -217,7 +394,11 @@ async function runServer(showComplete = true) {
     }
 
     progress(80, 'Starting game server');
-    const code = await runScriptAndWait('quickstart', { from: 80, to: 99, message: 'Starting game server' });
+    const code = await runScriptAndWait(
+        'quickstart',
+        { from: 80, to: 99, message: 'Starting game server' },
+        { NODE_QOL_ANTI_MACRO_ROTATION: 'false' }
+    );
     if (code !== 0) {
         console.log('Server stopped with an error.');
         return;
@@ -228,7 +409,7 @@ async function runServer(showComplete = true) {
 }
 
 async function runCustomServer() {
-    progress(10, 'Preparing custom server');
+    progress(10, 'Preparing custom server and hiscores');
     if (!(await ensureDependencies())) {
         console.log('npm install failed; custom server not started.');
         return;
@@ -252,8 +433,22 @@ async function runCustomServer() {
     fs.rmSync(scriptDat, { force: true });
     console.log('Deleted data/pack/server/script.dat');
 
-    progress(85, 'Starting game server');
-    const serverCode = await runScriptAndWait('quickstart', { from: 85, to: 99, message: 'Starting game server' });
+    const openHiscores = getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false);
+    const openWebClient = getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false);
+    console.log(`Option 2 auto-open settings: hiscores=${openHiscores}, webclient=${openWebClient}`);
+
+    progress(82, 'Preparing hiscores on the main web server');
+    if (openHiscores || openWebClient) {
+        void autoOpenCustomPages(openHiscores, openWebClient).catch(error => {
+            console.log(`Auto-open failed: ${error instanceof Error ? error.message : String(error)}`);
+        });
+    }
+    progress(85, 'Starting custom game server');
+    const serverCode = await runScriptAndWait(
+        'quickstart',
+        { from: 85, to: 99, message: 'Starting custom game server' },
+        { NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', false)) }
+    );
     if (serverCode !== 0) {
         console.log('Server stopped with an error.');
         return;
@@ -265,11 +460,11 @@ async function runCustomServer() {
 // Closes readline so the child owns stdin, then restores it on exit.
 async function runInteractive(name: string) {
     if (!scripts[name]) {
-        console.log(`âŒ Script "${name}" not found`);
+        console.log(`❌ Script "${name}" not found`);
         return;
     }
 
-    console.log(`ðŸš€ Starting ${name}...`);
+    console.log(`🚀 Starting ${name}...`);
 
     rl.close();
 
@@ -283,7 +478,7 @@ async function runInteractive(name: string) {
 
     await new Promise<void>(resolve => proc.on('exit', resolve));
 
-    console.log(`ðŸ›‘ ${name} stopped`);
+    console.log(`🛑 ${name} stopped`);
     delete runningProcesses[name];
 
     createReadline();
@@ -304,7 +499,7 @@ function patchEnv(patches: Record<string, string>) {
     }
 
     fs.writeFileSync(ENV_PATH, content, 'utf8');
-    console.log('âœ… .env patched:');
+    console.log('✅ .env patched:');
     for (const [key, value] of Object.entries(patches)) {
         console.log(`   ${key}=${value}`);
     }
@@ -319,7 +514,7 @@ ${kleur.green('Recommended:')} Use ${kleur.bold('3')} for normal play. Use ${kle
 
 ${kleur.bold().green('Play')}
   ${kleur.green('1.')}  Start Server ${kleur.gray('(skips npm install after first run)')}
-  ${kleur.green('2.')}  Custom Server ${kleur.gray('(patch .env -> build -> delete script.dat -> start)')}
+  ${kleur.green('2.')}  Custom Server + Hiscores ${kleur.gray('(patch .env -> build -> delete script.dat -> start; hiscores at /index.html)')}
   ${kleur.green('3.')}  Start Server + Hiscores ${recommended}
 
 ${kleur.bold().cyan('Services')}
@@ -368,7 +563,11 @@ async function handleInput(input: string) {
             progress(90, 'Starting hiscores');
             runScript('hiscores', true);
             progress(92, 'Starting game server');
-            await runScriptAndWait('quickstart', { from: 92, to: 99, message: 'Starting game server' });
+            await runScriptAndWait(
+                'quickstart',
+                { from: 92, to: 99, message: 'Starting game server' },
+                { NODE_QOL_ANTI_MACRO_ROTATION: 'false' }
+            );
             return; // server owns the terminal until it exits
 
         case '4':
@@ -442,17 +641,17 @@ async function handleInput(input: string) {
             return; // changePassword shows the menu after finishing
 
         case '0':
-            console.log('ðŸ‘‹ Exiting...');
+            console.log('👋 Exiting...');
             process.exit(0);
     }
 
     showMenu();
 }
 
-function getEnvValue(key: string) {
+function getEnvValue(key: string, defaultValue = false) {
     const content = fs.existsSync(ENV_PATH) ? fs.readFileSync(ENV_PATH, 'utf8') : '';
     const match = content.match(new RegExp(`^#?\\s*${key}\\s*=\\s*(true|false)\\s*$`, 'mi'));
-    return match?.[1].toLowerCase() === 'true';
+    return match ? match[1].toLowerCase() === 'true' : defaultValue;
 }
 
 async function customContentMenu() {
@@ -469,8 +668,8 @@ async function customContentMenu() {
             let option = 1;
             for (const [category, features] of customContentCategories) {
                 console.log(kleur.bold().cyan(`\n${category}`));
-                for (const [name, key] of features) {
-                    const enabled = getEnvValue(key);
+                for (const [name, key, defaultValue = false] of features) {
+                    const enabled = getEnvValue(key, defaultValue);
                     const state = enabled ? kleur.green('enabled') : kleur.red('disabled');
                     console.log(`  ${option}. ${name} ${kleur.gray(`(${key})`)} - ${state}`);
                     option++;
@@ -504,8 +703,8 @@ async function customContentMenu() {
                 continue;
             }
 
-            const [name, key] = selected;
-            const enabled = !getEnvValue(key);
+            const [name, key, defaultValue = false] = selected;
+            const enabled = !getEnvValue(key, defaultValue);
             patchEnv({ [key]: String(enabled) });
             console.log(`${name} is now ${enabled ? 'enabled' : 'disabled'}.`);
         }
@@ -523,29 +722,29 @@ async function importCharacter() {
     const question = (q: string) => new Promise<string>(resolve => tempRl.question(q, resolve));
 
     try {
-        console.log('\nðŸ“‚ Import Character');
-        console.log('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
+        console.log('\n📂 Import Character');
+        console.log('──────────────────────────────────────────');
         console.log('Place your .sav file in:');
         console.log('  engine/data/players/main/');
-        console.log('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
+        console.log('──────────────────────────────────────────');
         await question('\nPress Enter once your .sav file is in place...');
 
         const username = (await question('Enter username (filename without .sav, e.g. "bob"): ')).trim().toLowerCase();
         if (!username) {
-            console.log('âŒ Username cannot be empty.');
+            console.log('❌ Username cannot be empty.');
             return;
         }
 
         const savPath = path.join(__dirname, 'data', 'players', 'main', `${username}.sav`);
         if (!fs.existsSync(savPath)) {
-            console.log(`âŒ File not found: ${savPath}`);
+            console.log(`❌ File not found: ${savPath}`);
             console.log('   Make sure the filename matches the username exactly.');
             return;
         }
 
         const password = (await question('Enter password for this account: ')).trim();
         if (!password) {
-            console.log('âŒ Password cannot be empty.');
+            console.log('❌ Password cannot be empty.');
             return;
         }
 
@@ -557,11 +756,11 @@ async function importCharacter() {
 
         try {
             db.prepare("INSERT INTO account (username, password, registration_ip, registration_date) VALUES (?, ?, ?, datetime('now'))").run(username, hash, '127.0.0.1');
-            console.log(`âœ… Account created â€” ${username} can now log in.`);
+            console.log(`✅ Account created — ${username} can now log in.`);
         } catch (e: any) {
             if (e.message?.includes('UNIQUE')) {
                 db.prepare('UPDATE account SET password = ? WHERE username = ?').run(hash, username);
-                console.log(`âœ… Password updated â€” ${username} can now log in.`);
+                console.log(`✅ Password updated — ${username} can now log in.`);
             } else {
                 throw e;
             }
@@ -569,7 +768,7 @@ async function importCharacter() {
             db.close();
         }
     } catch (e: any) {
-        console.log(`âŒ Error: ${e.message}`);
+        console.log(`❌ Error: ${e.message}`);
     } finally {
         tempRl.close();
         createReadline();
@@ -584,31 +783,31 @@ async function changePassword() {
     const question = (q: string) => new Promise<string>(resolve => tempRl.question(q, resolve));
 
     try {
-        console.log('\nðŸ”‘ Change Password');
-        console.log('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
+        console.log('\n🔑 Change Password');
+        console.log('──────────────────────────────────────────');
         console.log('Your .sav file must be present in:');
         console.log('  engine/data/player/main/');
         console.log('This verifies you own the account.');
-        console.log('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
+        console.log('──────────────────────────────────────────');
 
         const username = (await question('\nEnter username: ')).trim().toLowerCase();
         if (!username) {
-            console.log('âŒ Username cannot be empty.');
+            console.log('❌ Username cannot be empty.');
             return;
         }
 
         const savPath = path.join(__dirname, 'data', 'players', 'main', `${username}.sav`);
         if (!fs.existsSync(savPath)) {
-            console.log(`âŒ No .sav found for "${username}" â€” cannot verify account ownership.`);
+            console.log(`❌ No .sav found for "${username}" — cannot verify account ownership.`);
             console.log(`   Expected: ${savPath}`);
             return;
         }
 
-        console.log(`âœ”ï¸  Save file verified for "${username}".`);
+        console.log(`✔️  Save file verified for "${username}".`);
 
         const newPassword = (await question('Enter new password: ')).trim();
         if (!newPassword) {
-            console.log('âŒ Password cannot be empty.');
+            console.log('❌ Password cannot be empty.');
             return;
         }
 
@@ -621,15 +820,15 @@ async function changePassword() {
         try {
             const result = db.prepare('UPDATE account SET password = ? WHERE username = ?').run(hash, username) as { changes: number };
             if (result.changes === 0) {
-                console.log(`âš ï¸  No account found for "${username}". Use option 15 to import it first.`);
+                console.log(`⚠️  No account found for "${username}". Use option 15 to import it first.`);
             } else {
-                console.log(`âœ… Password updated â€” ${username} can now log in with the new password.`);
+                console.log(`✅ Password updated — ${username} can now log in with the new password.`);
             }
         } finally {
             db.close();
         }
     } catch (e: any) {
-        console.log(`âŒ Error: ${e.message}`);
+        console.log(`❌ Error: ${e.message}`);
     } finally {
         tempRl.close();
         createReadline();

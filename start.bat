@@ -59,6 +59,13 @@ if not exist "engine\launcher.ts" (
     pause
     exit /b 1
 )
+if not exist "engine\launcher-job.ps1" (
+    echo Could not find engine\launcher-job.ps1.
+    echo Make sure your branch is fully up to date.
+    echo.
+    pause
+    exit /b 1
+)
 
 call :progress 35 "Checking Node.js"
 where node >nul 2>nul
@@ -85,7 +92,7 @@ cd engine
 call :progress 90 "Starting launcher"
 echo Starting launcher...
 echo.
-npx tsx launcher.ts
+powershell -NoProfile -ExecutionPolicy Bypass -File launcher-job.ps1
 
 echo.
 call :progress 100 "Launcher closed"

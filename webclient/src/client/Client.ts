@@ -81,8 +81,9 @@ const SCROLLBAR_TRACK = 0x23201b;
 const SCROLLBAR_GRIP_FOREGROUND = 0x4d4233;
 const SCROLLBAR_GRIP_HIGHLIGHT = 0x766654;
 const SCROLLBAR_GRIP_LOWLIGHT = 0x332d25;
-const CUSTOM_CONTENT = (globalThis as typeof globalThis & { __customContent?: { clans?: boolean } }).__customContent;
+const CUSTOM_CONTENT = (globalThis as typeof globalThis & { __customContent?: { clans?: boolean; antiMacroRotation?: boolean } }).__customContent;
 const CLANS_ENABLED = CUSTOM_CONTENT?.clans === true;
+const ANTI_MACRO_ROTATION_ENABLED = CUSTOM_CONTENT?.antiMacroRotation !== false;
 
 export class Client extends GameShell {
     static levelExperience: number[] = [];
@@ -2052,9 +2053,16 @@ export class Client extends GameShell {
                 this.sceneState = 0;
                 this.waveCount = 0;
 
-                this.macroCameraX = ((Math.random() * 100.0) | 0) - 50;
-                this.macroCameraZ = ((Math.random() * 110.0) | 0) - 55;
-                this.macroCameraAngle = ((Math.random() * 80.0) | 0) - 40;
+                if (ANTI_MACRO_ROTATION_ENABLED) {
+                    this.macroCameraX = ((Math.random() * 100.0) | 0) - 50;
+                    this.macroCameraZ = ((Math.random() * 110.0) | 0) - 55;
+                    this.macroCameraAngle = ((Math.random() * 80.0) | 0) - 40;
+                } else {
+                    this.macroCameraX = 0;
+                    this.macroCameraZ = 0;
+                    this.macroCameraAngle = 0;
+                    this.macroCameraCycle = 0;
+                }
                 this.macroMinimapAngle = ((Math.random() * 120.0) | 0) - 60;
                 this.macroMinimapZoom = ((Math.random() * 30.0) | 0) - 20;
                 this.orbitCameraYaw = (((Math.random() * 20.0) | 0) - 10) & 0x7ff;
@@ -2613,41 +2621,43 @@ export class Client extends GameShell {
             this.out.pIsaac(ClientProt.IDLE_TIMER);
         }
 
-        this.macroCameraCycle++;
-        if (this.macroCameraCycle > 500) {
-            this.macroCameraCycle = 0;
+        if (ANTI_MACRO_ROTATION_ENABLED) {
+            this.macroCameraCycle++;
+            if (this.macroCameraCycle > 500) {
+                this.macroCameraCycle = 0;
 
-            const rand: number = (Math.random() * 8.0) | 0;
-            if ((rand & 0x1) === 1) {
-                this.macroCameraX += this.macroCameraXModifier;
+                const rand: number = (Math.random() * 8.0) | 0;
+                if ((rand & 0x1) === 1) {
+                    this.macroCameraX += this.macroCameraXModifier;
+                }
+                if ((rand & 0x2) === 2) {
+                    this.macroCameraZ += this.macroCameraZModifier;
+                }
+                if ((rand & 0x4) === 4) {
+                    this.macroCameraAngle += this.macroCameraAngleModifier;
+                }
             }
-            if ((rand & 0x2) === 2) {
-                this.macroCameraZ += this.macroCameraZModifier;
+
+            if (this.macroCameraX < -50) {
+                this.macroCameraXModifier = 2;
             }
-            if ((rand & 0x4) === 4) {
-                this.macroCameraAngle += this.macroCameraAngleModifier;
+            if (this.macroCameraX > 50) {
+                this.macroCameraXModifier = -2;
             }
-        }
 
-        if (this.macroCameraX < -50) {
-            this.macroCameraXModifier = 2;
-        }
-        if (this.macroCameraX > 50) {
-            this.macroCameraXModifier = -2;
-        }
+            if (this.macroCameraZ < -55) {
+                this.macroCameraZModifier = 2;
+            }
+            if (this.macroCameraZ > 55) {
+                this.macroCameraZModifier = -2;
+            }
 
-        if (this.macroCameraZ < -55) {
-            this.macroCameraZModifier = 2;
-        }
-        if (this.macroCameraZ > 55) {
-            this.macroCameraZModifier = -2;
-        }
-
-        if (this.macroCameraAngle < -40) {
-            this.macroCameraAngleModifier = 1;
-        }
-        if (this.macroCameraAngle > 40) {
-            this.macroCameraAngleModifier = -1;
+            if (this.macroCameraAngle < -40) {
+                this.macroCameraAngleModifier = 1;
+            }
+            if (this.macroCameraAngle > 40) {
+                this.macroCameraAngleModifier = -1;
+            }
         }
 
         this.macroMinimapCycle++;
@@ -3479,8 +3489,8 @@ export class Client extends GameShell {
             return; // custom
         }
 
-        const orbitX: number = this.localPlayer.x + this.macroCameraX;
-        const orbitZ: number = this.localPlayer.z + this.macroCameraZ;
+        const orbitX: number = this.localPlayer.x + (ANTI_MACRO_ROTATION_ENABLED ? this.macroCameraX : 0);
+        const orbitZ: number = this.localPlayer.z + (ANTI_MACRO_ROTATION_ENABLED ? this.macroCameraZ : 0);
 
         if (this.orbitCameraX - orbitX < -500 || this.orbitCameraX - orbitX > 500 || this.orbitCameraZ - orbitZ < -500 || this.orbitCameraZ - orbitZ > 500) {
             this.orbitCameraX = orbitX;
@@ -4452,7 +4462,7 @@ export class Client extends GameShell {
                 pitch = this.camShakeRan[4] + 128;
             }
 
-            const yaw: number = (this.orbitCameraYaw + this.macroCameraAngle) & 0x7ff;
+            const yaw: number = (this.orbitCameraYaw + (ANTI_MACRO_ROTATION_ENABLED ? this.macroCameraAngle : 0)) & 0x7ff;
 
             if (this.localPlayer) {
                 this.camFollow(pitch, yaw, this.orbitCameraX, this.getAvH(this.localPlayer.x, this.localPlayer.z, this.minusedlevel) - 50, this.orbitCameraZ, pitch * 3 + 600);
