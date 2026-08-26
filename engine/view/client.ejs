@@ -340,7 +340,6 @@
         const customContent = window.__customContent ?? {};
         const middleMouseRotationEnabled = customContent.middleMouseRotation === true;
         const compassResetEnabled = customContent.compassReset === true;
-        const antiMacroRotationEnabled = customContent.antiMacroRotation !== false;
 
         function isCompassClick(client, x, y) {
             if (!compassResetEnabled) {
@@ -486,23 +485,6 @@
         (() => {
             const client = new Client(<%= nodeid %>, <%= lowmem %>, <%= members %>);
             window.__gameClient = client;
-
-            if (!antiMacroRotationEnabled) {
-                Object.defineProperties(client, {
-                    Ff: {
-                        configurable: true,
-                        enumerable: true,
-                        get: () => 0,
-                        set: () => {}
-                    },
-                    Ic: {
-                        configurable: true,
-                        enumerable: true,
-                        get: () => 0,
-                        set: () => {}
-                    }
-                });
-            }
 
             const canvas = document.getElementById('canvas');
             let middleRotating = false;
