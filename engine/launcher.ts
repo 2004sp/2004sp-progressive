@@ -10,6 +10,7 @@ const ENV_PATH = path.join(__dirname, '.env');
 
 type ScriptMap = Record<string, string[]>;
 type ProgressRange = { from: number; to: number; message: string };
+type CustomContentToggle = readonly [name: string, key: string, defaultValue?: boolean];
 
 const scripts: ScriptMap = {
     start: ['npm', 'run', 'start'],
@@ -24,7 +25,7 @@ const scripts: ScriptMap = {
     setup: ['npm', 'run', 'setup'],
 };
 
-const customContent = [
+const customContent: readonly CustomContentToggle[] = [
     ['Clans', 'NODE_FEATURE_CLANS'],
     ['Custom Shops', 'NODE_FEATURE_CUSTOMSHOPS'],
     ['Custom Bosses', 'NODE_FEATURE_CUSTOMBOSSES'],
@@ -35,7 +36,10 @@ const customContent = [
     ['Make-X Skill Actions', 'NODE_FEATURE_MAKEX'],
     ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
     ['Left Click Compass Reset', 'NODE_QOL_COMPASS_RESET'],
-] as const;
+    ['Anti-Macro Camera Rotation', 'NODE_QOL_ANTI_MACRO_ROTATION', false],
+    ['Auto-Open Web Client', 'NODE_QOL_AUTO_OPEN_WEBCLIENT', false],
+    ['Auto-Open Hiscores', 'NODE_QOL_AUTO_OPEN_HISCORES', false],
+];
 
 const customContentCategories = [
     ['Custom', customContent.slice(0, 6)],
@@ -295,7 +299,7 @@ function patchEnv(patches: Record<string, string>) {
     let content = fs.existsSync(ENV_PATH) ? fs.readFileSync(ENV_PATH, 'utf8') : '';
 
     for (const [key, value] of Object.entries(patches)) {
-        const pattern = new RegExp(`^#?\\s*${key}\\s*=.*$`, 'm');
+        const pattern = new RegExp(`^#?\s*${key}\s*=.*$`, 'm');
         const replacement = `${key}=${value}`;
         if (pattern.test(content)) {
             content = content.replace(pattern, replacement);
@@ -452,7 +456,7 @@ async function handleInput(input: string) {
 
 function getEnvValue(key: string) {
     const content = fs.existsSync(ENV_PATH) ? fs.readFileSync(ENV_PATH, 'utf8') : '';
-    const match = content.match(new RegExp(`^#?\\s*${key}\\s*=\\s*(true|false)\\s*$`, 'mi'));
+    const match = content.match(new RegExp(`^#?\s*${key}\s*=\s*(true|false)\s*$`, 'mi'));
     return match?.[1].toLowerCase() === 'true';
 }
 
