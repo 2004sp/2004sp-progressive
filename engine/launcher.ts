@@ -247,6 +247,16 @@ async function autoOpenHiscores() {
     }
 }
 
+async function autoOpenCustomPages() {
+    if (getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false)) {
+        await autoOpenHiscores();
+    }
+
+    if (getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false)) {
+        await autoOpenWebClient();
+    }
+}
+
 async function buildWebClient() {
     const webclientDir = path.join(__dirname, '..', 'webclient');
 
@@ -359,10 +369,10 @@ async function runCustomServer() {
 
     progress(82, 'Starting hiscores');
     runScript('hiscores', true);
-    progress(85, 'Starting custom game server');
-    if (getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false)) {
-        void autoOpenWebClient();
+    if (getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false) || getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false)) {
+        void autoOpenCustomPages();
     }
+    progress(85, 'Starting custom game server');
     const serverCode = await runScriptAndWait(
         'quickstart',
         { from: 85, to: 99, message: 'Starting custom game server' },
@@ -481,9 +491,6 @@ async function handleInput(input: string) {
             }
             progress(90, 'Starting hiscores');
             runScript('hiscores', true);
-            if (getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false)) {
-                void autoOpenHiscores();
-            }
             progress(92, 'Starting game server');
             await runScriptAndWait(
                 'quickstart',
