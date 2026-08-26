@@ -289,12 +289,21 @@ async function autoOpenHiscores() {
     const url = getHiscoresUrl();
     const parsedUrl = new URL(url);
     const port = Number.parseInt(parsedUrl.port || '80', 10);
-    console.log(`Waiting for hiscores page at ${url}...`);
+    const apiUrl = new URL('/api/hiscores?skill=overall&page=0', url).toString();
+    console.log(`Waiting for hiscores page and API at ${url}...`);
 
     if (!(await waitForPort(parsedUrl.hostname, port))) {
         console.log(`Hiscores web server did not start listening for ${url}; browser was not opened.`);
         return;
     }
+
+    if (!(await waitForUrl(url)) || !(await waitForUrl(apiUrl))) {
+        console.log(`Hiscores page/API did not become ready at ${url}; browser was not opened.`);
+        return;
+    }
+
+    console.log('Hiscores is ready; waiting briefly before opening the browser...');
+    await new Promise(resolve => setTimeout(resolve, 1_500));
 
     try {
         openUrl(url);
