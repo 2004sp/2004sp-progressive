@@ -428,8 +428,7 @@ async function runCustomServer() {
     const openWebClient = getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false);
     console.log(`Option 2 auto-open settings: hiscores=${openHiscores}, webclient=${openWebClient}`);
 
-    progress(82, 'Starting hiscores');
-    runScript('hiscores', true);
+    progress(82, 'Preparing hiscores on the main web server');
     if (openHiscores || openWebClient) {
         void autoOpenCustomPages(openHiscores, openWebClient).catch(error => {
             console.log(`Auto-open failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -506,7 +505,7 @@ ${kleur.green('Recommended:')} Use ${kleur.bold('3')} for normal play. Use ${kle
 
 ${kleur.bold().green('Play')}
   ${kleur.green('1.')}  Start Server ${kleur.gray('(skips npm install after first run)')}
-  ${kleur.green('2.')}  Custom Server + Hiscores ${kleur.gray('(patch .env -> build -> delete script.dat -> hiscores -> start)')}
+  ${kleur.green('2.')}  Custom Server + Hiscores ${kleur.gray('(patch .env -> build -> delete script.dat -> start; hiscores at /index.html)')}
   ${kleur.green('3.')}  Start Server + Hiscores ${recommended}
 
 ${kleur.bold().cyan('Services')}
