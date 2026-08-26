@@ -3489,8 +3489,8 @@ export class Client extends GameShell {
             return; // custom
         }
 
-        const orbitX: number = this.localPlayer.x + this.macroCameraX;
-        const orbitZ: number = this.localPlayer.z + this.macroCameraZ;
+        const orbitX: number = this.localPlayer.x + (ANTI_MACRO_ROTATION_ENABLED ? this.macroCameraX : 0);
+        const orbitZ: number = this.localPlayer.z + (ANTI_MACRO_ROTATION_ENABLED ? this.macroCameraZ : 0);
 
         if (this.orbitCameraX - orbitX < -500 || this.orbitCameraX - orbitX > 500 || this.orbitCameraZ - orbitZ < -500 || this.orbitCameraZ - orbitZ > 500) {
             this.orbitCameraX = orbitX;
@@ -4462,7 +4462,7 @@ export class Client extends GameShell {
                 pitch = this.camShakeRan[4] + 128;
             }
 
-            const yaw: number = (this.orbitCameraYaw + this.macroCameraAngle) & 0x7ff;
+            const yaw: number = (this.orbitCameraYaw + (ANTI_MACRO_ROTATION_ENABLED ? this.macroCameraAngle : 0)) & 0x7ff;
 
             if (this.localPlayer) {
                 this.camFollow(pitch, yaw, this.orbitCameraX, this.getAvH(this.localPlayer.x, this.localPlayer.z, this.minusedlevel) - 50, this.orbitCameraZ, pitch * 3 + 600);
