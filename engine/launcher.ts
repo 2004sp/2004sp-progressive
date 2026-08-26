@@ -79,11 +79,11 @@ function createReadline() {
 
 function runScript(name: string, detached = false) {
     if (!scripts[name]) {
-        console.log(`❌ Script "${name}" not found`);
+        console.log(`âŒ Script "${name}" not found`);
         return;
     }
 
-    console.log(`🚀 Starting ${name}...`);
+    console.log(`ðŸš€ Starting ${name}...`);
 
     const [cmd, ...args] = scripts[name];
     const proc = spawn(cmd, args, {
@@ -94,10 +94,10 @@ function runScript(name: string, detached = false) {
     runningProcesses[name] = proc;
 
     if (detached) {
-        console.log(`🧵 ${name} running in background`);
+        console.log(`ðŸ§µ ${name} running in background`);
     } else {
         proc.on('exit', () => {
-            console.log(`🛑 ${name} stopped`);
+            console.log(`ðŸ›‘ ${name} stopped`);
             delete runningProcesses[name];
         });
     }
@@ -269,11 +269,11 @@ async function runCustomServer() {
 // Closes readline so the child owns stdin, then restores it on exit.
 async function runInteractive(name: string) {
     if (!scripts[name]) {
-        console.log(`❌ Script "${name}" not found`);
+        console.log(`âŒ Script "${name}" not found`);
         return;
     }
 
-    console.log(`🚀 Starting ${name}...`);
+    console.log(`ðŸš€ Starting ${name}...`);
 
     rl.close();
 
@@ -287,7 +287,7 @@ async function runInteractive(name: string) {
 
     await new Promise<void>(resolve => proc.on('exit', resolve));
 
-    console.log(`🛑 ${name} stopped`);
+    console.log(`ðŸ›‘ ${name} stopped`);
     delete runningProcesses[name];
 
     createReadline();
@@ -308,7 +308,7 @@ function patchEnv(patches: Record<string, string>) {
     }
 
     fs.writeFileSync(ENV_PATH, content, 'utf8');
-    console.log('✅ .env patched:');
+    console.log('âœ… .env patched:');
     for (const [key, value] of Object.entries(patches)) {
         console.log(`   ${key}=${value}`);
     }
@@ -446,7 +446,7 @@ async function handleInput(input: string) {
             return; // changePassword shows the menu after finishing
 
         case '0':
-            console.log('👋 Exiting...');
+            console.log('ðŸ‘‹ Exiting...');
             process.exit(0);
     }
 
@@ -527,29 +527,29 @@ async function importCharacter() {
     const question = (q: string) => new Promise<string>(resolve => tempRl.question(q, resolve));
 
     try {
-        console.log('\n📂 Import Character');
-        console.log('──────────────────────────────────────────');
+        console.log('\nðŸ“‚ Import Character');
+        console.log('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
         console.log('Place your .sav file in:');
         console.log('  engine/data/players/main/');
-        console.log('──────────────────────────────────────────');
+        console.log('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
         await question('\nPress Enter once your .sav file is in place...');
 
         const username = (await question('Enter username (filename without .sav, e.g. "bob"): ')).trim().toLowerCase();
         if (!username) {
-            console.log('❌ Username cannot be empty.');
+            console.log('âŒ Username cannot be empty.');
             return;
         }
 
         const savPath = path.join(__dirname, 'data', 'players', 'main', `${username}.sav`);
         if (!fs.existsSync(savPath)) {
-            console.log(`❌ File not found: ${savPath}`);
+            console.log(`âŒ File not found: ${savPath}`);
             console.log('   Make sure the filename matches the username exactly.');
             return;
         }
 
         const password = (await question('Enter password for this account: ')).trim();
         if (!password) {
-            console.log('❌ Password cannot be empty.');
+            console.log('âŒ Password cannot be empty.');
             return;
         }
 
@@ -561,11 +561,11 @@ async function importCharacter() {
 
         try {
             db.prepare("INSERT INTO account (username, password, registration_ip, registration_date) VALUES (?, ?, ?, datetime('now'))").run(username, hash, '127.0.0.1');
-            console.log(`✅ Account created — ${username} can now log in.`);
+            console.log(`âœ… Account created â€” ${username} can now log in.`);
         } catch (e: any) {
             if (e.message?.includes('UNIQUE')) {
                 db.prepare('UPDATE account SET password = ? WHERE username = ?').run(hash, username);
-                console.log(`✅ Password updated — ${username} can now log in.`);
+                console.log(`âœ… Password updated â€” ${username} can now log in.`);
             } else {
                 throw e;
             }
@@ -573,7 +573,7 @@ async function importCharacter() {
             db.close();
         }
     } catch (e: any) {
-        console.log(`❌ Error: ${e.message}`);
+        console.log(`âŒ Error: ${e.message}`);
     } finally {
         tempRl.close();
         createReadline();
@@ -588,31 +588,31 @@ async function changePassword() {
     const question = (q: string) => new Promise<string>(resolve => tempRl.question(q, resolve));
 
     try {
-        console.log('\n🔑 Change Password');
-        console.log('──────────────────────────────────────────');
+        console.log('\nðŸ”‘ Change Password');
+        console.log('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
         console.log('Your .sav file must be present in:');
         console.log('  engine/data/player/main/');
         console.log('This verifies you own the account.');
-        console.log('──────────────────────────────────────────');
+        console.log('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
 
         const username = (await question('\nEnter username: ')).trim().toLowerCase();
         if (!username) {
-            console.log('❌ Username cannot be empty.');
+            console.log('âŒ Username cannot be empty.');
             return;
         }
 
         const savPath = path.join(__dirname, 'data', 'players', 'main', `${username}.sav`);
         if (!fs.existsSync(savPath)) {
-            console.log(`❌ No .sav found for "${username}" — cannot verify account ownership.`);
+            console.log(`âŒ No .sav found for "${username}" â€” cannot verify account ownership.`);
             console.log(`   Expected: ${savPath}`);
             return;
         }
 
-        console.log(`✔️  Save file verified for "${username}".`);
+        console.log(`âœ”ï¸  Save file verified for "${username}".`);
 
         const newPassword = (await question('Enter new password: ')).trim();
         if (!newPassword) {
-            console.log('❌ Password cannot be empty.');
+            console.log('âŒ Password cannot be empty.');
             return;
         }
 
@@ -625,15 +625,15 @@ async function changePassword() {
         try {
             const result = db.prepare('UPDATE account SET password = ? WHERE username = ?').run(hash, username) as { changes: number };
             if (result.changes === 0) {
-                console.log(`⚠️  No account found for "${username}". Use option 15 to import it first.`);
+                console.log(`âš ï¸  No account found for "${username}". Use option 15 to import it first.`);
             } else {
-                console.log(`✅ Password updated — ${username} can now log in with the new password.`);
+                console.log(`âœ… Password updated â€” ${username} can now log in with the new password.`);
             }
         } finally {
             db.close();
         }
     } catch (e: any) {
-        console.log(`❌ Error: ${e.message}`);
+        console.log(`âŒ Error: ${e.message}`);
     } finally {
         tempRl.close();
         createReadline();
