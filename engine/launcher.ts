@@ -1,4 +1,4 @@
-﻿import { spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import readline from 'readline';
 import fs from 'fs';
 import path from 'path';
@@ -227,6 +227,23 @@ async function autoOpenWebClient() {
         console.log(`Opened webclient: ${url}`);
     } catch (error) {
         console.log(`Could not open webclient automatically: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
+async function autoOpenHiscores() {
+    const url = 'http://localhost:3000/';
+    console.log(`Waiting for hiscores at ${url}...`);
+
+    if (!(await waitForUrl(url))) {
+        console.log(`Hiscores did not become reachable at ${url}; browser was not opened.`);
+        return;
+    }
+
+    try {
+        openUrl(url);
+        console.log(`Opened hiscores: ${url}`);
+    } catch (error) {
+        console.log(`Could not open hiscores automatically: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 
@@ -464,6 +481,9 @@ async function handleInput(input: string) {
             }
             progress(90, 'Starting hiscores');
             runScript('hiscores', true);
+            if (getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false)) {
+                void autoOpenHiscores();
+            }
             progress(92, 'Starting game server');
             await runScriptAndWait(
                 'quickstart',
