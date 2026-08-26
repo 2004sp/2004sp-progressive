@@ -38,6 +38,11 @@ export default {
     // custom QOL browser controls
     NODE_QOL_MIDDLE_MOUSE_ROTATION: tryParseBoolean(process.env.NODE_QOL_MIDDLE_MOUSE_ROTATION, false),
     NODE_QOL_COMPASS_RESET: tryParseBoolean(process.env.NODE_QOL_COMPASS_RESET, false),
+    // option 2 only: true enables the plugin that suppresses vanilla anti-macro camera rotation
+    NODE_QOL_ANTI_MACRO_ROTATION: tryParseBoolean(process.env.NODE_QOL_ANTI_MACRO_ROTATION, false),
+    // launcher QOL controls
+    NODE_QOL_AUTO_OPEN_WEBCLIENT: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_WEBCLIENT, false),
+    NODE_QOL_AUTO_OPEN_HISCORES: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_HISCORES, false),
     NODE_SUBMIT_INPUT: tryParseBoolean(process.env.NODE_SUBMIT_INPUT, false),
     // Maximum approximate number of storage bytes allowed per single input tracking session.
     // It does not seem remotely possible to get near this amount under normal inputs.
