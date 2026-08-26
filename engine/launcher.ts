@@ -11,6 +11,7 @@ const ENV_PATH = path.join(__dirname, '.env');
 type ScriptMap = Record<string, string[]>;
 type ProgressRange = { from: number; to: number; message: string };
 type CustomContentToggle = readonly [name: string, key: string, defaultValue?: boolean];
+type ScriptEnvOverrides = Record<string, string>;
 
 const scripts: ScriptMap = {
     start: ['npm', 'run', 'start'],
@@ -103,7 +104,7 @@ function runScript(name: string, detached = false) {
     }
 }
 
-async function runScriptAndWait(name: string, heartbeat?: ProgressRange) {
+async function runScriptAndWait(name: string, heartbeat?: ProgressRange, envOverrides?: ScriptEnvOverrides) {
     if (!scripts[name]) {
         console.log(`Script "${name}" not found`);
         return 1;
@@ -115,6 +116,7 @@ async function runScriptAndWait(name: string, heartbeat?: ProgressRange) {
     const proc = spawn(cmd, args, {
         stdio: 'inherit',
         shell: true,
+        env: envOverrides ? { ...process.env, ...envOverrides } : process.env,
     });
 
     runningProcesses[name] = proc;
@@ -221,7 +223,11 @@ async function runServer(showComplete = true) {
     }
 
     progress(80, 'Starting game server');
-    const code = await runScriptAndWait('quickstart', { from: 80, to: 99, message: 'Starting game server' });
+    const code = await runScriptAndWait(
+        'quickstart',
+        { from: 80, to: 99, message: 'Starting game server' },
+        { NODE_QOL_ANTI_MACRO_ROTATION: 'true' }
+    );
     if (code !== 0) {
         console.log('Server stopped with an error.');
         return;
@@ -257,7 +263,11 @@ async function runCustomServer() {
     console.log('Deleted data/pack/server/script.dat');
 
     progress(85, 'Starting game server');
-    const serverCode = await runScriptAndWait('quickstart', { from: 85, to: 99, message: 'Starting game server' });
+    const serverCode = await runScriptAndWait(
+        'quickstart',
+        { from: 85, to: 99, message: 'Starting game server' },
+        { NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', true)) }
+    );
     if (serverCode !== 0) {
         console.log('Server stopped with an error.');
         return;
@@ -372,7 +382,11 @@ async function handleInput(input: string) {
             progress(90, 'Starting hiscores');
             runScript('hiscores', true);
             progress(92, 'Starting game server');
-            await runScriptAndWait('quickstart', { from: 92, to: 99, message: 'Starting game server' });
+            await runScriptAndWait(
+                'quickstart',
+                { from: 92, to: 99, message: 'Starting game server' },
+                { NODE_QOL_ANTI_MACRO_ROTATION: 'true' }
+            );
             return; // server owns the terminal until it exits
 
         case '4':
