@@ -62,6 +62,7 @@ async function applyTerser(script: BunOutput): Promise<boolean> {
                     'clans',
                     'middleMouseRotation',
                     'compassReset',
+                    'antiMacroRotation',
 
                     // stdlib
                     'willReadFrequently',
