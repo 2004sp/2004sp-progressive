@@ -1,4 +1,5 @@
 import { spawn, ChildProcess } from 'child_process';
+import net from 'net';
 import readline from 'readline';
 import fs from 'fs';
 import path from 'path';
@@ -94,13 +95,24 @@ function runScript(name: string, detached = false) {
 
     runningProcesses[name] = proc;
 
+    proc.on('error', error => {
+        console.log(`❌ ${name} failed to start: ${error.message}`);
+        delete runningProcesses[name];
+    });
+
+    proc.on('exit', code => {
+        delete runningProcesses[name];
+        if (detached) {
+            if (code !== 0) {
+                console.log(`❌ ${name} background process exited with code ${code ?? 'unknown'}`);
+            }
+        } else {
+            console.log(`🛑 ${name} stopped`);
+        }
+    });
+
     if (detached) {
         console.log(`🧵 ${name} running in background`);
-    } else {
-        proc.on('exit', () => {
-            console.log(`🛑 ${name} stopped`);
-            delete runningProcesses[name];
-        });
     }
 }
 
@@ -190,6 +202,40 @@ async function waitForUrl(url: string, timeoutMs = 60_000, intervalMs = 500) {
     return false;
 }
 
+async function waitForPort(host: string, port: number, timeoutMs = 60_000, intervalMs = 250) {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+        const reachable = await new Promise<boolean>(resolve => {
+            const socket = net.createConnection({ host, port });
+            let settled = false;
+
+            const finish = (value: boolean) => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                socket.removeAllListeners();
+                socket.destroy();
+                resolve(value);
+            };
+
+            socket.setTimeout(1_000);
+            socket.once('connect', () => finish(true));
+            socket.once('timeout', () => finish(false));
+            socket.once('error', () => finish(false));
+        });
+
+        if (reachable) {
+            return true;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+
+    return false;
+}
+
 function openUrl(url: string) {
     let command: string;
     let args: string[];
@@ -232,10 +278,10 @@ async function autoOpenWebClient() {
 
 async function autoOpenHiscores() {
     const url = 'http://localhost:3000/';
-    console.log(`Waiting for hiscores at ${url}...`);
+    console.log(`Waiting for hiscores on localhost:3000...`);
 
-    if (!(await waitForUrl(url))) {
-        console.log(`Hiscores did not become reachable at ${url}; browser was not opened.`);
+    if (!(await waitForPort('127.0.0.1', 3000))) {
+        console.log('Hiscores did not start listening on port 3000; browser was not opened.');
         return;
     }
 
@@ -247,12 +293,12 @@ async function autoOpenHiscores() {
     }
 }
 
-async function autoOpenCustomPages() {
-    if (getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false)) {
+async function autoOpenCustomPages(openHiscores: boolean, openWebClient: boolean) {
+    if (openHiscores) {
         await autoOpenHiscores();
     }
 
-    if (getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false)) {
+    if (openWebClient) {
         await autoOpenWebClient();
     }
 }
@@ -367,10 +413,16 @@ async function runCustomServer() {
     fs.rmSync(scriptDat, { force: true });
     console.log('Deleted data/pack/server/script.dat');
 
+    const openHiscores = getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false);
+    const openWebClient = getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false);
+    console.log(`Option 2 auto-open settings: hiscores=${openHiscores}, webclient=${openWebClient}`);
+
     progress(82, 'Starting hiscores');
     runScript('hiscores', true);
-    if (getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false) || getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false)) {
-        void autoOpenCustomPages();
+    if (openHiscores || openWebClient) {
+        void autoOpenCustomPages(openHiscores, openWebClient).catch(error => {
+            console.log(`Auto-open failed: ${error instanceof Error ? error.message : String(error)}`);
+        });
     }
     progress(85, 'Starting custom game server');
     const serverCode = await runScriptAndWait(
