@@ -304,7 +304,7 @@
             clans: <%= typeof clansEnabled !== 'undefined' && clansEnabled ? 'true' : 'false' %>,
             middleMouseRotation: <%= typeof middleMouseRotationEnabled !== 'undefined' && middleMouseRotationEnabled ? 'true' : 'false' %>,
             compassReset: <%= typeof compassResetEnabled !== 'undefined' && compassResetEnabled ? 'true' : 'false' %>,
-            antiMacroRotation: <%= typeof antiMacroRotationEnabled === 'undefined' || antiMacroRotationEnabled ? 'true' : 'false' %>
+            antiMacroRotation: <%= typeof antiMacroRotationEnabled === 'undefined' || !antiMacroRotationEnabled ? 'true' : 'false' %>
         };
 
         const canvas = document.getElementById('canvas');
