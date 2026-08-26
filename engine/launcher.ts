@@ -36,7 +36,7 @@ const customContent: readonly CustomContentToggle[] = [
     ['Make-X Skill Actions', 'NODE_FEATURE_MAKEX'],
     ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
     ['Left Click Compass Reset', 'NODE_QOL_COMPASS_RESET'],
-    ['Anti-Macro Camera Rotation', 'NODE_QOL_ANTI_MACRO_ROTATION', true],
+    ['Anti-Macro Camera Rotation', 'NODE_QOL_ANTI_MACRO_ROTATION', false],
     ['Auto-Open Web Client', 'NODE_QOL_AUTO_OPEN_WEBCLIENT', false],
     ['Auto-Open Hiscores', 'NODE_QOL_AUTO_OPEN_HISCORES', false],
 ];
@@ -226,7 +226,7 @@ async function runServer(showComplete = true) {
     const code = await runScriptAndWait(
         'quickstart',
         { from: 80, to: 99, message: 'Starting game server' },
-        { NODE_QOL_ANTI_MACRO_ROTATION: 'true' }
+        { NODE_QOL_ANTI_MACRO_ROTATION: 'false' }
     );
     if (code !== 0) {
         console.log('Server stopped with an error.');
@@ -266,7 +266,7 @@ async function runCustomServer() {
     const serverCode = await runScriptAndWait(
         'quickstart',
         { from: 85, to: 99, message: 'Starting game server' },
-        { NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', true)) }
+        { NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', false)) }
     );
     if (serverCode !== 0) {
         console.log('Server stopped with an error.');
@@ -385,7 +385,7 @@ async function handleInput(input: string) {
             await runScriptAndWait(
                 'quickstart',
                 { from: 92, to: 99, message: 'Starting game server' },
-                { NODE_QOL_ANTI_MACRO_ROTATION: 'true' }
+                { NODE_QOL_ANTI_MACRO_ROTATION: 'false' }
             );
             return; // server owns the terminal until it exits
 
