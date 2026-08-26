@@ -167,7 +167,8 @@ function getWebClientUrl() {
     const defaultPort = process.platform === 'win32' || process.platform === 'darwin' ? 80 : 8888;
     const configuredPort = Number.parseInt(getEnvSetting('WEB_PORT') ?? '', 10);
     const port = Number.isInteger(configuredPort) && configuredPort > 0 && configuredPort <= 65535 ? configuredPort : defaultPort;
-    return `http://localhost:${port}/`;
+    const portSuffix = port === 80 ? '' : `:${port}`;
+    return `http://localhost${portSuffix}/rs2.cgi`;
 }
 
 async function waitForUrl(url: string, timeoutMs = 60_000, intervalMs = 500) {
@@ -175,11 +176,15 @@ async function waitForUrl(url: string, timeoutMs = 60_000, intervalMs = 500) {
 
     while (Date.now() < deadline) {
         try {
-            await fetch(url, { signal: AbortSignal.timeout(Math.min(intervalMs, 2_000)) });
-            return true;
+            const response = await fetch(url, { signal: AbortSignal.timeout(Math.min(intervalMs, 2_000)) });
+            if (response.ok) {
+                return true;
+            }
         } catch {
-            await new Promise(resolve => setTimeout(resolve, intervalMs));
+            // Server is still starting; retry until the timeout expires.
         }
+
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
 
     return false;
