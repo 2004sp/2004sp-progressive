@@ -89,8 +89,9 @@ function runScript(name: string, detached = false) {
 
     const [cmd, ...args] = scripts[name];
     const proc = spawn(cmd, args, {
-        stdio: 'inherit',
+        stdio: detached ? 'ignore' : 'inherit',
         shell: true,
+        windowsHide: detached,
     });
 
     runningProcesses[name] = proc;
