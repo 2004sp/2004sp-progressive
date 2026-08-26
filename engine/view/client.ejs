@@ -488,11 +488,19 @@
             window.__gameClient = client;
 
             if (!antiMacroRotationEnabled) {
-                Object.defineProperty(client, 'Ff', {
-                    configurable: true,
-                    enumerable: true,
-                    get: () => 0,
-                    set: () => {}
+                Object.defineProperties(client, {
+                    Ff: {
+                        configurable: true,
+                        enumerable: true,
+                        get: () => 0,
+                        set: () => {}
+                    },
+                    Ic: {
+                        configurable: true,
+                        enumerable: true,
+                        get: () => 0,
+                        set: () => {}
+                    }
                 });
             }
 
