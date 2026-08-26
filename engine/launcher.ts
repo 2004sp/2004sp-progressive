@@ -238,7 +238,7 @@ async function runServer(showComplete = true) {
 }
 
 async function runCustomServer() {
-    progress(10, 'Preparing custom server');
+    progress(10, 'Preparing custom server and hiscores');
     if (!(await ensureDependencies())) {
         console.log('npm install failed; custom server not started.');
         return;
@@ -262,10 +262,12 @@ async function runCustomServer() {
     fs.rmSync(scriptDat, { force: true });
     console.log('Deleted data/pack/server/script.dat');
 
-    progress(85, 'Starting game server');
+    progress(82, 'Starting hiscores');
+    runScript('hiscores', true);
+    progress(85, 'Starting custom game server');
     const serverCode = await runScriptAndWait(
         'quickstart',
-        { from: 85, to: 99, message: 'Starting game server' },
+        { from: 85, to: 99, message: 'Starting custom game server' },
         { NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', false)) }
     );
     if (serverCode !== 0) {
@@ -333,7 +335,7 @@ ${kleur.green('Recommended:')} Use ${kleur.bold('3')} for normal play. Use ${kle
 
 ${kleur.bold().green('Play')}
   ${kleur.green('1.')}  Start Server ${kleur.gray('(skips npm install after first run)')}
-  ${kleur.green('2.')}  Custom Server ${kleur.gray('(patch .env -> build -> delete script.dat -> start)')}
+  ${kleur.green('2.')}  Custom Server + Hiscores ${kleur.gray('(patch .env -> build -> delete script.dat -> hiscores -> start)')}
   ${kleur.green('3.')}  Start Server + Hiscores ${recommended}
 
 ${kleur.bold().cyan('Services')}
