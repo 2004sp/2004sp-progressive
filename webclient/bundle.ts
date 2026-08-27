@@ -64,6 +64,7 @@ async function applyTerser(script: BunOutput): Promise<boolean> {
                     'middleMouseRotation',
                     'compassReset',
                     'antiMacroRotation',
+                    'scrollwheelZoom',
 
                     // stdlib
                     'willReadFrequently',
@@ -138,12 +139,14 @@ const args = process.argv.slice(2);
 const prod = args[0] !== 'dev';
 
 const entrypoints = [
-    'src/client/Client.ts',
+    'src/client/ClientEntry.ts',
     'src/mapview/MapView.ts'
 ];
 
 for (const file of entrypoints) {
-    const output = path.basename(file).replace('.ts', '.js').toLowerCase();
+    const output = file === 'src/client/ClientEntry.ts'
+        ? 'client.js'
+        : path.basename(file).replace('.ts', '.js').toLowerCase();
 
     const script = await bunBuild(file, [], prod, prod ? ['console'] : []);
     if (script) {
