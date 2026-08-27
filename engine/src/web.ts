@@ -16,6 +16,7 @@ import WSClientSocket from '#/server/ws/WSClientSocket.js';
 import Environment from '#/util/Environment.js';
 import OnDemand from '#/engine/OnDemand.js';
 import { tryParseBoolean, tryParseInt } from '#/util/TryParse.js';
+import { handleBotDebugHttp, tryHandleBotDebugUpgrade } from '#/engine/bot/debug/BotDebugServer.js';
 
 export type WebSocketData = {
     client: WSClientSocket;
@@ -91,6 +92,10 @@ function sendBuffer(res: ServerResponse, buf: Buffer | Uint8Array) {
 async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: WebSocketServer): Promise<void> {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
 
+    if (Environment.BOT_DEBUG_ENABLED && (url.pathname === '/debug/bots' || url.pathname.startsWith('/debug/api/'))) {
+        if (await handleBotDebugHttp(req, res, url)) return;
+    }
+
     if (req.method === 'GET') {
         if (url.pathname === '/') {
             // WebSocket upgrade is handled by the 'upgrade' event — if it's a plain GET, 404.
@@ -141,8 +146,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                     clansEnabled: Environment.NODE_FEATURE_CLANS,
                     middleMouseRotationEnabled: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
                     compassResetEnabled: Environment.NODE_QOL_COMPASS_RESET,
-                    antiMacroRotationEnabled: Environment.NODE_QOL_ANTI_MACRO_ROTATION,
-                    scrollwheelZoomEnabled: Environment.NODE_QOL_SCROLLWHEEL_ZOOM
+                    antiMacroRotationEnabled: Environment.NODE_QOL_ANTI_MACRO_ROTATION
                 });
 
             res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -157,10 +161,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                 middleMouseRotation: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
                 compassReset: Environment.NODE_QOL_COMPASS_RESET,
                 antiMacroRotation: Environment.NODE_QOL_ANTI_MACRO_ROTATION,
-                scrollwheelZoom: Environment.NODE_QOL_SCROLLWHEEL_ZOOM,
                 customshops: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMSHOPS, true),
+                custombosses: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMBOSSES, true),
                 bosspets: tryParseBoolean(process.env.NODE_FEATURE_BOSSPETS, true),
                 customweapons: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMWEAPONS, true),
+                skillcapes: tryParseBoolean(process.env.NODE_FEATURE_SKILLCAPES, true),
                 xamount: tryParseBoolean(process.env.NODE_FEATURE_XAMOUNT, true),
                 makex: tryParseBoolean(process.env.NODE_FEATURE_MAKEX, true)
             });
@@ -313,6 +318,11 @@ export async function startWeb() {
 
     server.on('upgrade', (req, socket, head) => {
         const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+
+        if (Environment.BOT_DEBUG_ENABLED && tryHandleBotDebugUpgrade(req, socket, head, url.pathname)) {
+            return;
+        }
+
         if (url.pathname !== '/') {
             socket.destroy();
             return;
