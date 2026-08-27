@@ -38,6 +38,7 @@ export default {
     // custom QOL browser controls
     NODE_QOL_MIDDLE_MOUSE_ROTATION: tryParseBoolean(process.env.NODE_QOL_MIDDLE_MOUSE_ROTATION, false),
     NODE_QOL_COMPASS_RESET: tryParseBoolean(process.env.NODE_QOL_COMPASS_RESET, false),
+    NODE_QOL_SCROLLWHEEL_ZOOM: tryParseBoolean(process.env.NODE_QOL_SCROLLWHEEL_ZOOM, false),
     // option 2 only: true enables the plugin that suppresses vanilla anti-macro camera rotation
     NODE_QOL_ANTI_MACRO_ROTATION: tryParseBoolean(process.env.NODE_QOL_ANTI_MACRO_ROTATION, false),
     // launcher QOL controls
