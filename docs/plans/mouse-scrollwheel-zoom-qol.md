@@ -108,6 +108,8 @@ The disabled path must preserve vanilla behavior exactly:
 
 ## Phase 3 — Implement the optional web-client plugin behavior
 
+**Status: implementation complete (2026-08-27); runtime/build verification remains Phase 5.**
+
 1. Register the wheel hook only when `scrollwheelZoom === true`.
 2. Scope the handler to the game canvas/client interaction area.
 3. Normalize `WheelEvent.deltaY` into a stable zoom direction and step.
@@ -115,6 +117,14 @@ The disabled path must preserve vanilla behavior exactly:
 5. Call `preventDefault()` only while the plugin is enabled and the wheel event is being consumed for game zoom, so normal page scrolling remains available otherwise.
 6. Keep the implementation independent from middle-mouse rotation and compass reset so each QOL flag can be enabled or disabled separately within option 2.
 7. Do not add fallback logic that independently re-reads `.env`, query parameters, local storage, or another source in the browser; the server-provided effective flag must remain the single runtime gate.
+
+### Implementation notes
+
+- `webclient/src/client/ClientEntry.ts` installs the behavior at the source-level `camFollow` distance seam before Bun/Terser minification; it does not patch obfuscated property names from `client.ejs`.
+- The zoom state starts inactive, so merely enabling the flag does not rewrite or clamp the vanilla camera distance before the first consumed wheel event.
+- The wheel listener is attached only to `#canvas`, uses only the sign of `deltaY`, steps by `64`, and clamps the active distance to `768..2048`.
+- Wheel input is ignored without consumption outside normal in-game scene state, including login/loading and scripted cinematic camera behavior.
+- `webclient/bundle.ts` preserves the external `scrollwheelZoom` property name through Terser and maps the source entry module back to the existing `client.js` output name.
 
 ### Exit criteria
 - Wheel up/down produces predictable zoom in/out on option 2 when enabled.
