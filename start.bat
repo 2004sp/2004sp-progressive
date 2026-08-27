@@ -41,9 +41,13 @@ if not exist "engine\.build_complete" (
     call :progress 12 "Building engine (first run only)"
     pushd engine
     set "BUILD_VERBOSE=true"
+    rem This distribution includes custom NPC definitions, so its packed data will
+    rem intentionally differ from the stock revision-254 checksum.
+    set "BUILD_VERIFY=false"
     call npm run build
     if errorlevel 1 (
         set "BUILD_VERBOSE="
+        set "BUILD_VERIFY="
         popd
         echo.
         echo Engine build failed. The full stack trace is shown above.
@@ -52,6 +56,7 @@ if not exist "engine\.build_complete" (
         exit /b 1
     )
     set "BUILD_VERBOSE="
+    set "BUILD_VERIFY="
     echo. > .build_complete
     popd
 )

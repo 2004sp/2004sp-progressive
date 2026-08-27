@@ -46,7 +46,9 @@ progress 10 "Installing engine dependencies"
 
 if [ ! -f "$ROOT_DIR/engine/.build_complete" ]; then
     progress 12 "Building engine (first run only)"
-    if ! (cd "$ROOT_DIR/engine" && BUILD_VERBOSE=true npm run build); then
+    # This distribution includes custom NPC definitions, so its packed data will
+    # intentionally differ from the stock revision-254 checksum.
+    if ! (cd "$ROOT_DIR/engine" && BUILD_VERBOSE=true BUILD_VERIFY=false npm run build); then
         echo
         echo "Engine build failed. The full stack trace is shown above."
         exit 1

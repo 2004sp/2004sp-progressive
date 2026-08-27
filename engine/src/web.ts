@@ -161,7 +161,6 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                 customshops: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMSHOPS, true),
                 bosspets: tryParseBoolean(process.env.NODE_FEATURE_BOSSPETS, true),
                 customweapons: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMWEAPONS, true),
-                skillcapes: tryParseBoolean(process.env.NODE_FEATURE_SKILLCAPES, true),
                 xamount: tryParseBoolean(process.env.NODE_FEATURE_XAMOUNT, true),
                 makex: tryParseBoolean(process.env.NODE_FEATURE_MAKEX, true)
             });

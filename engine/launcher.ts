@@ -32,7 +32,6 @@ const customContent: readonly CustomContentToggle[] = [
     ['Custom Shops', 'NODE_FEATURE_CUSTOMSHOPS'],
     ['Boss Pets', 'NODE_FEATURE_BOSSPETS'],
     ['Custom Weapons', 'NODE_FEATURE_CUSTOMWEAPONS'],
-    ['Skillcapes', 'NODE_FEATURE_SKILLCAPES'],
     ['X-Amount Shop Input', 'NODE_FEATURE_XAMOUNT'],
     ['Make-X Skill Actions', 'NODE_FEATURE_MAKEX'],
     ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
