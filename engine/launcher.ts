@@ -38,6 +38,7 @@ const customContent: readonly CustomContentToggle[] = [
     ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
     ['Left Click Compass Reset', 'NODE_QOL_COMPASS_RESET'],
     ['Anti Random Events', 'NODE_ANTI_RANDOM_EVENTS', false],
+    ['Mouse Scrollwheel Zoom', 'NODE_QOL_SCROLLWHEEL_ZOOM', false],
     ['Anti-Macro Camera Rotation', 'NODE_QOL_ANTI_MACRO_ROTATION', false],
     ['Auto-Open Web Client', 'NODE_QOL_AUTO_OPEN_WEBCLIENT', false],
     ['Auto-Open Hiscores', 'NODE_QOL_AUTO_OPEN_HISCORES', false],
@@ -401,6 +402,7 @@ async function runServer(showComplete = true) {
         {
             NODE_QOL_ANTI_MACRO_ROTATION: 'false',
             NODE_ANTI_RANDOM_EVENTS: 'false',
+            NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
         }
     );
     if (code !== 0) {
@@ -576,6 +578,7 @@ async function handleInput(input: string) {
                 {
                     NODE_QOL_ANTI_MACRO_ROTATION: 'false',
                     NODE_ANTI_RANDOM_EVENTS: 'false',
+                    NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
                 }
             );
             return; // server owns the terminal until it exits
