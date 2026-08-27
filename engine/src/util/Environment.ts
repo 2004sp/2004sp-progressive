@@ -40,6 +40,8 @@ export default {
     NODE_QOL_COMPASS_RESET: tryParseBoolean(process.env.NODE_QOL_COMPASS_RESET, false),
     // option 2 only: true enables the plugin that suppresses vanilla anti-macro camera rotation
     NODE_QOL_ANTI_MACRO_ROTATION: tryParseBoolean(process.env.NODE_QOL_ANTI_MACRO_ROTATION, false),
+    // option 2 only: true keeps Random/AFK events enabled
+    NODE_QOL_AFK_EVENTS: tryParseBoolean(process.env.NODE_QOL_AFK_EVENTS, true),
     // launcher QOL controls
     NODE_QOL_AUTO_OPEN_WEBCLIENT: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_WEBCLIENT, false),
     NODE_QOL_AUTO_OPEN_HISCORES: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_HISCORES, false),
