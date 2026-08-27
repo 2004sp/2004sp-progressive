@@ -40,6 +40,8 @@ export default {
     NODE_QOL_COMPASS_RESET: tryParseBoolean(process.env.NODE_QOL_COMPASS_RESET, false),
     // option 2 only: true enables the plugin that suppresses vanilla anti-macro camera rotation
     NODE_QOL_ANTI_MACRO_ROTATION: tryParseBoolean(process.env.NODE_QOL_ANTI_MACRO_ROTATION, false),
+    // option 2 only: true enables mouse scrollwheel camera zoom
+    NODE_QOL_SCROLLWHEEL_ZOOM: tryParseBoolean(process.env.NODE_QOL_SCROLLWHEEL_ZOOM, false),
     // launcher QOL controls
     NODE_QOL_AUTO_OPEN_WEBCLIENT: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_WEBCLIENT, false),
     NODE_QOL_AUTO_OPEN_HISCORES: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_HISCORES, false),
@@ -84,7 +86,7 @@ export default {
 
     /// logger server
     LOGGER_SERVER: tryParseBoolean(process.env.LOGGER_SERVER, false),
-    LOGGER_HOST: tryParseString(process.env.LOGGER_HOST, 'localhost'),
+    LOGGER_HOST: tryParseString(process.env.LOGGER_HOST, ''),
     LOGGER_PORT: tryParseInt(process.env.LOGGER_PORT, 43501),
 
     /// database

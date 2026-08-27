@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 
 import { minify } from 'terser';
 
@@ -64,6 +63,7 @@ async function applyTerser(script: BunOutput): Promise<boolean> {
                     'middleMouseRotation',
                     'compassReset',
                     'antiMacroRotation',
+                    'scrollwheelZoom',
 
                     // stdlib
                     'willReadFrequently',
@@ -138,13 +138,11 @@ const args = process.argv.slice(2);
 const prod = args[0] !== 'dev';
 
 const entrypoints = [
-    'src/client/Client.ts',
-    'src/mapview/MapView.ts'
+    { file: 'src/client/ClientEntry.ts', output: 'client.js' },
+    { file: 'src/mapview/MapView.ts', output: 'mapview.js' }
 ];
 
-for (const file of entrypoints) {
-    const output = path.basename(file).replace('.ts', '.js').toLowerCase();
-
+for (const { file, output } of entrypoints) {
     const script = await bunBuild(file, [], prod, prod ? ['console'] : []);
     if (script) {
         if (prod) {
