@@ -26,8 +26,6 @@
     <option value="../wiki.html">Home</option>
 <option value="quests.html">1. Quests</option>
 <option value="skills.html">2. Skills</option>
-<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
-<option value="npcs.html">4. NPCs &amp; dialogue</option>
 <option value="shops.html">5. Shops &amp; economy</option>
 <option value="drops.html">6. Drop tables</option>
 <option value="minigames.html">7. Minigames</option>
@@ -49,8 +47,6 @@
       <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
 <li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
 <li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
-<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
-<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
 <li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
 <li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
 <li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
@@ -67,9 +63,9 @@
     <div class="factbox">
       <div class="frow"><dt>Target build</dt><dd>254</dd></div>
       <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
-      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>57 / 57</dd></div>
       <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
-      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 15</dd></div>
       <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
     </div>
   </nav>
@@ -98,6 +94,30 @@
 </tbody>
 </table>
 </div>
+
+<h2>Findings from the completed quest and skill guide audit</h2>
+<p>The later 58 quest/miniquest-guide and 19-skill guide audit did uncover additional inaccuracies and build-specific divergences that were outside this page's original subsystem pass. The table below records the strongest source-backed findings. A <span class="pill missing">Build issue</span> marks behaviour that is directly inconsistent with the verified quest/skill requirement or with the source's own intended flow; a <span class="pill partial">Conflict</span> means the build and surviving period evidence disagree, but the audit could not prove which historical value changed first.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Area</th><th>Guide</th><th>Verdict</th><th>Audit finding</th></tr></thead>
+<tbody>
+<tr><td>Quest completion</td><td><a href="quests/biohazard.html">Biohazard</a></td><td><span class="pill missing">Build issue</span></td><td class="evidence">King Lathas only reaches the quest-completion queue through the <strong>“I don't understand...”</strong> dialogue branch; the dismissive branch ends without completing the quest. Separately, the rope-ladder route does not actually check that the player is wearing the gas mask required by the period route.</td></tr>
+<tr><td>Quest instancing</td><td><a href="quests/demon-slayer.html">Demon Slayer</a></td><td><span class="pill missing">Build issue</span></td><td class="evidence">The flushed sewer key is spawned as an ordinary world-visible item rather than a per-player quest object, and Delrith is also a shared world NPC whose quest-state changes can affect other players. The guide audit confirmed both as cross-player state/instancing problems.</td></tr>
+<tr><td>Quest reward</td><td><a href="quests/dorics-quest.html">Doric's Quest</a></td><td><span class="pill missing">Build issue</span></td><td class="evidence">The completion queue begins before the script adds the <strong>180 coins</strong>. The source itself warns that the coin grant can be missed even though quest completion still triggers, so interruption at the wrong point can produce an incomplete reward.</td></tr>
+<tr><td>Quest route</td><td><a href="quests/ernest-the-chicken.html">Ernest the Chicken</a></td><td><span class="pill missing">Build issue</span></td><td class="evidence">The Search-side bookcase-opening route into Draynor Manor's hidden basement path is explicitly described by the source as <strong>“borked”</strong> under the current zone search. The audited guide warns players about this rather than presenting the historical route as reliably functional.</td></tr>
+<tr><td>Quest skill gate</td><td><a href="quests/observatory-quest.html">Observatory Quest</a></td><td><span class="pill missing">Build issue</span></td><td class="evidence">The verified period requirement is <strong>10 Crafting</strong>, but build 254's lens-making interaction removes molten glass and creates the lens with <strong>no Crafting-level check</strong>.</td></tr>
+<tr><td>Quest / Fletching</td><td><a href="quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a></td><td><span class="pill extra">Extra gate</span></td><td class="evidence">Build 254 adds an unsupported <strong>level-5 Crafting</strong> requirement when chiselling wolf bones for ogre arrows and awards Crafting XP alongside Fletching XP. Contemporary quest requirements support 5 Fletching, 30 Cooking and 30 Ranged, not this extra Crafting gate.</td></tr>
+<tr><td>Fletching</td><td><a href="skills/fletching.html">Fletching</a></td><td><span class="pill missing">Missing gate</span></td><td class="evidence">The period skill/quest evidence makes <a href="quests/the-tourist-trap.html">The Tourist Trap</a> the unlock for throwing-dart manufacture, but build 254's generic dart routine checks membership and Fletching level only. A player with dart tips can therefore fletch darts without completing the quest. The build level-up popup is also incomplete, omitting several recipes that are implemented elsewhere.</td></tr>
+<tr><td>Herblore</td><td><a href="skills/herblore.html">Herblore</a></td><td><span class="pill missing">Missing gate</span></td><td class="evidence">Generic herb-identification and potion-brewing routines do not check <a href="quests/druidic-ritual.html">Druidic Ritual</a> completion even though it is the verified historical entry route. The audit also retained several period/build numeric disagreements, including Tarromin identification <strong>10 vs 11</strong>, Torstol <strong>77 vs 75</strong>, Anti-firebreath <strong>68 vs 69</strong>, and Weapon poison <strong>137.5 vs 127.5 XP</strong>.</td></tr>
+<tr><td>Fishing</td><td><a href="skills/fishing.html">Fishing</a></td><td><span class="pill partial">Conflict</span></td><td class="evidence">The 14 July 2004 RuneScape 2 guide records <strong>30 Fishing XP</strong> for a Lava eel while build 254 gives <strong>60</strong>. Big-net Seaweed is recorded as <strong>1 XP</strong> in the period guide, while build 254's tenths-of-XP convention makes its <code>stat_advance(fishing, 1)</code> call <strong>0.1 XP</strong>. These remain explicit unresolved period/build conflicts rather than silently choosing one value.</td></tr>
+<tr><td>Cooking</td><td><a href="skills/cooking.html">Cooking</a></td><td><span class="pill missing">Build issue</span></td><td class="evidence">The cake script's own historical-source comment says adding chocolate to a cooked cake should give <strong>no additional Cooking XP</strong>, but the current code executes <code>stat_advance(cooking, 300)</code>, awarding <strong>30 Cooking XP</strong>.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout" style="margin-top:16px">
+<p><strong>Scope note:</strong> these are the notable inaccuracies/deviations exposed while rewriting and source-checking the public quest and skill guides; they are not a claim that every period/build disagreement is a code bug. Where contemporary evidence and build 254 merely disagree on a number, the row is deliberately labelled <strong>Conflict</strong>. Runtime bugs that already have a dedicated entry may also be cross-referenced on <a href="bugs.html">Known bugs &amp; rough edges</a>.</p>
+</div>
+
 <div class="callout warn" style="margin-top:16px">
 <p><strong>The one substantive finding from this pass:</strong> <code>ClientGameProt.ts</code> declares a full family of "anticheat" wire opcodes (<code>ANTICHEAT_OPLOGIC1–9</code>, <code>ANTICHEAT_CYCLELOGIC1–7</code>) with corresponding model classes (<code>AnticheatOpLogic.ts</code>, <code>AnticheatCycleLogic.ts</code>) — but a repo-wide search found no handler or codec that actually processes them. The wire format exists; nothing decodes or acts on it. Separately, rate limiting exists only for login attempts (<code>World.ts</code>, gated by <code>NODE_RATELIMIT_ADDRESS_LOGIN</code> / <code>NODE_RATELIMIT_DEVICE_LOGIN</code>) — there's no rate limiting on gameplay packets (drops, trades, etc.), and no transactional/locking protection around item-container mutations that would guard against duplication races. This is documentation only: no code was changed to address it. Wiring up real anti-cheat/anti-dupe protection is a deep, high-risk systems change that deserves its own dedicated review rather than a fast pass alongside a documentation audit.</p>
 </div>

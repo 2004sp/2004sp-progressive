@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 import ObjType from '#/cache/config/ObjType.js';
 import ParamType from '#/cache/config/ParamType.js';
 import ScriptVarType from '#/cache/config/ScriptVarType.js';
@@ -9,15 +7,6 @@ import { printWarning } from '#/util/Logger.js';
 import { CategoryPack, ModelPack, ObjPack, SeqPack } from '#tools/pack/PackFile.js';
 import { ParamValue, ConfigValue, ConfigLine, PackedData, isConfigBoolean, getConfigBoolean, packStepError } from '#tools/pack/config/PackShared.js';
 import { lookupParamValue } from '#tools/pack/config/ParamConfig.js';
-
-const SKILLCAPE_CUSTOM_CONTENT_FILES = [
-    `${Environment.BUILD_SRC_DIR}/scripts/player/scripts/skillcape_emote.rs2`,
-    `${Environment.BUILD_SRC_DIR}/scripts/player/configs/skillcape.seq`,
-    `${Environment.BUILD_SRC_DIR}/scripts/player/configs/skillcape.spotanim`,
-    `${Environment.BUILD_SRC_DIR}/scripts/skill_crafting/configs/dye_cape/capes.obj`
-];
-
-const HAS_SKILLCAPE_CUSTOM_CONTENT = SKILLCAPE_CUSTOM_CONTENT_FILES.every(path => fs.existsSync(path));
 
 export function parseObjConfig(key: string, value: string): ConfigValue | null | undefined {
     // prettier-ignore
@@ -359,10 +348,6 @@ export function packObjConfigs(configs: Map<string, ConfigLine[]>, modelFlags: n
                     client.p1(30 + index);
                     client.pjstr(value as string);
                 } else if (key.startsWith('iop')) {
-                    if (!HAS_SKILLCAPE_CUSTOM_CONTENT && debugname.endsWith('_skill_cape') && key === 'iop3' && (value as string).toLowerCase() === 'play emote') {
-                        continue;
-                    }
-
                     const index = parseInt(key.substring('iop'.length)) - 1;
                     client.p1(35 + index);
                     client.pjstr(value as string);

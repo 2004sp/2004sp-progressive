@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Mining skill guide for 2004scape Progressive build 254, including ore and pickaxe unlocks and membership requirements.">
+  <meta name="description" content="Mining skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering rocks, ore XP, pickaxes, gems, the Mining Guild, training routes, quests and implementation differences.">
   <title>Mining — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,29 +16,183 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Mining</p>
   <h1 class="pagetitle">Mining</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Mining</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Gathering</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 85</dd></div></div>
-  <p class="lede">Mining extracts ores and gems and also gates stronger pickaxes. The build includes the standard ore progression, gem rocks, and the Mining Guild milestone.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>6</td><td>Mine with Steel pickaxes.</td><td class="member-no">No</td></tr>
-    <tr><td>15</td><td>Mine Iron.</td><td class="member-no">No</td></tr>
-    <tr><td>20</td><td>Mine Silver.</td><td class="member-no">No</td></tr>
-    <tr><td>21</td><td>Mine with Mithril pickaxes.</td><td class="member-no">No</td></tr>
-    <tr><td>30</td><td>Mine Coal.</td><td class="member-no">No</td></tr>
-    <tr><td>31</td><td>Mine with Adamant pickaxes.</td><td class="member-no">No</td></tr>
-    <tr><td>40</td><td>Mine Gold.</td><td class="member-no">No</td></tr>
-    <tr><td>40</td><td>Mine Gem rocks.<span class="requirement-note"><a href="../quests/shilo-village.html">Shilo Village</a> completion for access to the village's gem rocks.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>41</td><td>Mine with Rune pickaxes.</td><td class="member-no">No</td></tr>
-    <tr><td>55</td><td>Mine Mithril.</td><td class="member-no">No</td></tr>
-    <tr><td>60</td><td>Enter the Mining Guild.</td><td class="member-no">No</td></tr>
-    <tr><td>70</td><td>Mine Adamantite.</td><td class="member-no">No</td></tr>
-    <tr><td>85</td><td>Mine Runite.</td><td class="member-no">No</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Mining</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Gathering</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main tool</dt><dd>Pickaxe</dd></div>
+    <div class="row"><dt>Guild</dt><dd>Mining Guild — level 60</dd></div>
+    <div class="row"><dt>Highest cutoff ore</dt><dd>Level 85 — Runite</dd></div>
+  </div>
+
+  <p class="lede">Mining extracts ore, essence and gems from rocks and supplies most raw material used by <a href="smithing.html">Smithing</a>. At the 7 September 2004 cutoff, ordinary ore progression runs from Clay, Copper and Tin at level 1 through Iron, Coal, Gold, Mithril and Adamantite to Runite at level 85. Members also have quest-linked Blurite, Elemental and perfect-gold interactions plus Shilo Village gem rocks.</p>
+
+  <h3>How Mining works</h3>
+  <div class="callout"><p><strong>Basic loop:</strong> choose Mine on a rock while carrying or wielding a pickaxe your current Mining level can use. Build 254 checks the rock requirement, selects the best usable pickaxe in your inventory or weapon slot, repeatedly rolls for success, awards the rock's XP and item on success, and normally turns the rock into a depleted state until it respawns.</p></div>
+  <ul>
+    <li><strong>Current Mining level is used:</strong> build 254 reads the current stat both for rock requirements and for deciding which pickaxe is usable. Temporary boosts therefore affect actions whose checks are reached while the boost is active.</li>
+    <li><strong>You do not have to wield the pickaxe:</strong> the pickaxe checker accepts a usable pickaxe in the weapon slot or ordinary inventory. It automatically prefers Rune, then Adamant, Mithril, Steel, Iron and Bronze when several usable pickaxes are available.</li>
+    <li><strong>Better pickaxes make checks happen sooner:</strong> the build assigns a decreasing mining-rate value from Bronze 7 to Rune 2. These are timing parameters, not success percentages; the rock's own success roll is still level-dependent.</li>
+    <li><strong>Most rocks deplete:</strong> ordinary ore and gem rocks become empty after a successful mine and later respawn. Build 254 scales rock respawn timing with player count, so raw configuration values should not be read as fixed real-world seconds.</li>
+    <li><strong>Prospecting is separate:</strong> Prospect identifies the mineral in a live rock and reports an empty rock when it has been depleted. Rune Essence uses its own prospect text.</li>
+    <li><strong>Special rocks can bypass the ordinary loop:</strong> Rune Essence does not deplete; Elemental Workshop's level-20 rock creates an Earth elemental rather than directly awarding ore; and Family Crest changes successful Gold ore into perfect gold inside the quest mine.</li>
+  </ul>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements / notes</th></tr></thead><tbody>
+    <tr><td>1</td><td>Mine Clay, Copper and Tin.</td><td class="member-no">No</td><td>Any usable pickaxe.</td></tr>
+    <tr><td>1</td><td>Mine Rune essence.</td><td class="member-no">No</td><td>Normal mine access is unlocked by <a href="../quests/rune-mysteries.html">Rune Mysteries</a>.</td></tr>
+    <tr><td>1</td><td>Use Bronze and Iron pickaxes.</td><td class="member-no">No</td><td>The build configs use no positive Mining requirement for either; level 1 is the practical starting point.</td></tr>
+    <tr><td>6</td><td>Use Steel pickaxes.</td><td class="member-no">No</td><td>No quest requirement.</td></tr>
+    <tr><td>10</td><td>Mine Blurite.</td><td class="member-no">No</td><td>Used during <a href="../quests/the-knights-sword.html">The Knight's Sword</a>; the accessible blurite rocks are in its ice-dungeon route.</td></tr>
+    <tr><td>15</td><td>Mine Iron.</td><td class="member-no">No</td><td>Ordinary ore rock.</td></tr>
+    <tr><td>20</td><td>Mine Silver.</td><td class="member-no">No</td><td>Ordinary ore rock.</td></tr>
+    <tr><td>20</td><td>Disturb the Elemental Workshop earth rock.</td><td class="member-yes">Yes</td><td><a href="../quests/elemental-workshop-i.html">Elemental Workshop</a> progression; the interaction spawns an Earth elemental whose death drops Elemental ore.</td></tr>
+    <tr><td>21</td><td>Use Mithril pickaxes.</td><td class="member-no">No</td><td>No quest requirement.</td></tr>
+    <tr><td>30</td><td>Mine Coal.</td><td class="member-no">No</td><td>Ordinary ore rock.</td></tr>
+    <tr><td>31</td><td>Use Adamant pickaxes.</td><td class="member-no">No</td><td>No quest requirement.</td></tr>
+    <tr><td>40</td><td>Mine Gold.</td><td class="member-no">No</td><td>Ordinary ore rock.</td></tr>
+    <tr><td>40</td><td>Mine perfect gold from quest-zone Gold rocks.</td><td class="member-yes">Yes</td><td><a href="../quests/family-crest.html">Family Crest</a> progression and access to its perfect-gold mine.</td></tr>
+    <tr><td>40</td><td>Mine Gem rocks.</td><td class="member-yes">Yes</td><td>Completion of <a href="../quests/shilo-village.html">Shilo Village</a> for access to the village gem rocks.</td></tr>
+    <tr><td>41</td><td>Use Rune pickaxes.</td><td class="member-no">No</td><td>Best pickaxe present in build 254's Mining table.</td></tr>
+    <tr><td>50</td><td>Mine through the Heroes' Quest rockslide.</td><td class="member-yes">Yes</td><td><a href="../quests/heroes-quest.html">Heroes' Quest</a> progression; this is a quest obstacle rather than an ore rock.</td></tr>
+    <tr><td>52</td><td>Mine through the Legends' Quest cave boulders.</td><td class="member-yes">Yes</td><td><a href="../quests/legends-quest.html">Legends' Quest</a> progression; any usable pickaxe is sufficient.</td></tr>
+    <tr><td>55</td><td>Mine Mithril.</td><td class="member-no">No</td><td>Ordinary ore rock.</td></tr>
+    <tr><td>60</td><td>Enter the Mining Guild.</td><td class="member-no">No</td><td>The build checks current Mining, so a +1 Dwarven stout can allow entry from base level 59 while the boost remains.</td></tr>
+    <tr><td>70</td><td>Mine Adamantite.</td><td class="member-no">No</td><td>Ordinary ore rock.</td></tr>
+    <tr><td>85</td><td>Mine Runite.</td><td class="member-no">No</td><td>Highest ordinary ore requirement in the cutoff progression.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The level 40 source message contains both Gold and members-only Gem rocks, so those are separated here. Milestones come from <code>levelup_unlocks_mining.rs2</code>.</p></div>
+
+  <h3>Ore and rock experience</h3>
+  <p>Build 254's core mining database stores XP in tenths and converts to the familiar values below. A direct RuneScape 2 guide updated 14 July 2004 agrees with the ordinary progression except for Iron, where it records 30 XP while the build awards 35 XP. That conflict is kept visible rather than silently normalised.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Rock / resource</th><th>Members</th><th>Mining XP</th><th>Evidence note</th></tr></thead><tbody>
+    <tr><td>1</td><td>Rune essence</td><td class="member-no">No</td><td>5</td><td>Special non-depleting mine loop after Rune Mysteries access.</td></tr>
+    <tr><td>1</td><td>Clay</td><td class="member-no">No</td><td>5</td><td>Build and period guide agree.</td></tr>
+    <tr><td>1</td><td>Copper ore</td><td class="member-no">No</td><td>17.5</td><td>Build and period guide agree.</td></tr>
+    <tr><td>1</td><td>Tin ore</td><td class="member-no">No</td><td>17.5</td><td>Build and period guide agree.</td></tr>
+    <tr><td>10</td><td>Blurite ore</td><td class="member-no">No</td><td>17.5</td><td>Build value; success tuning contains a reconstruction TODO noted below.</td></tr>
+    <tr><td>15</td><td>Iron ore</td><td class="member-no">No</td><td><strong>35 in build</strong>; 30 in July-2004 guide</td><td>Target-period/build discrepancy remains explicit.</td></tr>
+    <tr><td>20</td><td>Silver ore</td><td class="member-no">No</td><td>40</td><td>Build and period guide agree.</td></tr>
+    <tr><td>20</td><td>Elemental ore</td><td class="member-yes">Yes</td><td>No direct Mining XP</td><td>The rock interaction creates an Earth elemental; its death drops the ore.</td></tr>
+    <tr><td>30</td><td>Coal</td><td class="member-no">No</td><td>50</td><td>Build and period guide agree.</td></tr>
+    <tr><td>40</td><td>Gold ore</td><td class="member-no">No</td><td>65</td><td>Build and period guide agree.</td></tr>
+    <tr><td>40</td><td>Perfect gold ore</td><td class="member-yes">Yes</td><td>65</td><td>Family Crest quest-zone Gold rocks substitute the quest ore while using the Gold-rock mining reward.</td></tr>
+    <tr><td>40</td><td>Gem rock</td><td class="member-yes">Yes</td><td>65</td><td>Shilo Village gem rock; gem type comes from a separate weighted table.</td></tr>
+    <tr><td>55</td><td>Mithril ore</td><td class="member-no">No</td><td>80</td><td>Build and period guide agree.</td></tr>
+    <tr><td>70</td><td>Adamantite ore</td><td class="member-no">No</td><td>95</td><td>Build and period guide agree.</td></tr>
+    <tr><td>85</td><td>Runite ore</td><td class="member-no">No</td><td>125</td><td>Build and period guide agree.</td></tr>
+  </tbody></table></div>
+
+  <h3>Pickaxes</h3>
+  <p>Pickaxe level gates and the build's mining-rate parameters are straightforward. The rate number is an internal timing value: <strong>lower is faster</strong>. It is not a percentage chance to mine the ore.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Pickaxe</th><th>Mining level</th><th>Build mining-rate value</th><th>Inventory accepted?</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>Bronze</td><td>1</td><td>7</td><td>Yes</td><td>Slowest supported pickaxe.</td></tr>
+    <tr><td>Iron</td><td>1</td><td>6</td><td>Yes</td><td>Automatically preferred over Bronze when both are usable.</td></tr>
+    <tr><td>Steel</td><td>6</td><td>5</td><td>Yes</td><td>Level-up unlock at 6.</td></tr>
+    <tr><td>Mithril</td><td>21</td><td>4</td><td>Yes</td><td>Level-up unlock at 21.</td></tr>
+    <tr><td>Adamant</td><td>31</td><td>3</td><td>Yes</td><td>Level-up unlock at 31.</td></tr>
+    <tr><td>Rune</td><td>41</td><td>2</td><td>Yes</td><td>Fastest Mining pickaxe in build 254's table.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Best-tool selection:</strong> carrying a Rune pickaxe does not help if your current Mining level is below 41. In that case the checker falls back through the lower tiers until it finds the best one you can currently use.</p></div>
+
+  <h3>Gems and the Amulet of glory</h3>
+  <p>Ordinary ore mining and Shilo Village gem rocks use two different gem systems in build 254.</p>
+  <h4>Random gems while mining ordinary rocks</h4>
+  <ul>
+    <li>Before the ordinary ore-success roll, supported rocks perform a separate gem check. The normal build check is <strong>1 in 256</strong>.</li>
+    <li>On a members map, wearing a <strong>charged Amulet of glory</strong> changes that check to <strong>1 in 86</strong>. The uncharged Glory is not in the build's mining-boost category.</li>
+    <li>A successful pre-check then uses a second table that can yield Sapphire, Emerald, Ruby or Diamond — or no gem. This means the 1-in-256 / 1-in-86 figure is the trigger for the gem table, not a guarantee that every trigger produces a gem.</li>
+    <li>The build's ordinary-rock gem table does <strong>not</strong> include Dragonstone. A period community guide that mentions Dragonstone in this context is therefore not used as evidence for build behaviour.</li>
+  </ul>
+
+  <h4>Shilo Village gem rocks</h4>
+  <p>Gem rocks require <strong>40 Mining</strong> and access to Shilo Village. A successful mine awards <strong>65 Mining XP</strong> and chooses from this build-254 weighted table:</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Gem</th><th>Weight</th><th>Share of 128-weight table</th></tr></thead><tbody>
+    <tr><td>Opal</td><td>60</td><td>60 / 128</td></tr>
+    <tr><td>Jade</td><td>30</td><td>30 / 128</td></tr>
+    <tr><td>Red topaz</td><td>15</td><td>15 / 128</td></tr>
+    <tr><td>Sapphire</td><td>9</td><td>9 / 128</td></tr>
+    <tr><td>Emerald</td><td>5</td><td>5 / 128</td></tr>
+    <tr><td>Ruby</td><td>5</td><td>5 / 128</td></tr>
+    <tr><td>Diamond</td><td>4</td><td>4 / 128</td></tr>
+  </tbody></table></div>
+  <p>A charged Amulet of glory also affects gem-rock mining in build 254, but differently: it multiplies the gem rock's low/high Mining success-roll parameters rather than changing the gem-type weights above.</p>
+
+  <h3>Mining Guild</h3>
+  <p>The Mining Guild beneath Falador is <strong>free-to-play</strong> and normally requires <strong>60 Mining</strong>. Build 254 checks the player's current Mining stat at both the door and ladder, not a stored base level.</p>
+  <ul>
+    <li><strong>Dwarven stout boost:</strong> build 254's ordinary Dwarven stout raises Mining and Smithing by +1 while lowering Attack, Strength and Defence by 3. A player at base 59 Mining can therefore reach 60 and enter while the +1 Mining boost is active.</li>
+    <li><strong>Period facilities:</strong> a July-2004 RuneScape 2 guide describes the guild as containing a large concentration of Coal with a smaller number of Mithril rocks; its period count is 37 Coal and 5 Mithril.</li>
+    <li><strong>Access is re-checked:</strong> if your temporary boost has already fallen before you operate the entrance, the build rejects entry below current level 60.</li>
+  </ul>
+
+  <h3>Period training routes</h3>
+  <p>The following is a period example anchored to a RuneScape 2 guide updated on 14 July 2004. It is intentionally not rewritten into a modern tick-perfect or XP/hour route.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Access</th><th>XP per success</th><th>Practical notes</th></tr></thead><tbody>
+    <tr><td>1&ndash;14</td><td><strong>Copper and Tin south of Varrock</strong></td><td>Free-to-play</td><td>17.5</td><td>The July-2004 route begins on the south-Varrock mine. Mine whichever nearby Copper/Tin rocks are available and bank or drop the ore depending on whether Smithing supplies matter to you.</td></tr>
+    <tr><td>15&ndash;29</td><td><strong>Continue Copper/Tin or switch to Iron</strong></td><td>Free-to-play</td><td>17.5 / 35 build</td><td>Iron becomes available at 15. The period guide keeps its opening Copper/Tin phase until roughly 30, but build players can use Iron earlier.</td></tr>
+    <tr><td>30&ndash;59</td><td><strong>Mine Iron</strong></td><td>Free-to-play</td><td>35 build; 30 in July-2004 guide</td><td>The period route recommends Iron for its faster cycle rather than switching immediately to slower Coal simply because Coal unlocks at 30.</td></tr>
+    <tr><td>40+</td><td><strong>Shilo gem rocks as a members alternative</strong></td><td>Members</td><td>65</td><td>Requires Shilo Village completion. Gem value and the nearby village services can make this attractive even when pure Mining XP is not the only goal.</td></tr>
+    <tr><td>60+</td><td><strong>Mining Guild access</strong></td><td>Free-to-play</td><td>Depends on rock</td><td>The guild opens at 60 and offers concentrated Coal/Mithril. A +1 Dwarven stout can provide temporary entry from base 59 in build 254.</td></tr>
+    <tr><td>70+</td><td><strong>Coal in the Mining Guild</strong></td><td>Free-to-play</td><td>50</td><td>The July-2004 guide specifically gives Guild Coal as its later alternative around level 70+, illustrating a period preference for availability/value rather than always mining the highest-level ore.</td></tr>
+    <tr><td>85+</td><td><strong>Runite for high-value ore</strong></td><td>Free-to-play</td><td>125</td><td>Period guides place Runite rocks in scarce, dangerous or restricted locations such as the Lava Maze and Heroes' Guild. This is a value-oriented activity, not a claim of best XP/hour.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>No invented XP/hour:</strong> ore XP is known, but September-2004 hourly rates depend heavily on success rolls, pickaxe tier, competition, rock respawns, banking distance and world population. This guide therefore avoids presenting modern XP/hour figures as target-period fact.</p></div>
+
+  <h3>Relevant quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Mining relevance at the cutoff</th></tr></thead><tbody>
+    <tr><td><a href="../quests/rune-mysteries.html">Rune Mysteries</a></td><td>Free-to-play</td><td>Unlocks normal access to the Rune Essence Mine. Rune essence requires level 1 Mining and gives 5 XP per essence in build 254.</td></tr>
+    <tr><td><a href="../quests/dorics-quest.html">Doric's Quest</a></td><td>Free-to-play</td><td>Awards <strong>1,300 Mining XP</strong>. The quest itself has no Mining gate; 15 Mining is only needed if you personally mine the required Iron ore.</td></tr>
+    <tr><td><a href="../quests/the-knights-sword.html">The Knight's Sword</a></td><td>Free-to-play</td><td>Requires <strong>10 Mining</strong> to mine Blurite. Its completion reward is Smithing XP, not Mining XP.</td></tr>
+    <tr><td><a href="../quests/plague-city.html">Plague City</a></td><td>Members</td><td>Has no Mining requirement and awards <strong>2,425 Mining XP</strong>.</td></tr>
+    <tr><td><a href="../quests/the-dig-site.html">The Dig Site</a></td><td>Members</td><td>Has no formal Mining requirement and awards <strong>15,300 Mining XP</strong>, the largest fixed Mining-XP quest reward among the audited cutoff quest pages.</td></tr>
+    <tr><td><a href="../quests/elemental-workshop-i.html">Elemental Workshop</a></td><td>Members</td><td>Requires <strong>20 Mining</strong>. Mining the special earth rock starts the level-35 Earth elemental encounter; the ore is its drop rather than a direct mined item.</td></tr>
+    <tr><td><a href="../quests/family-crest.html">Family Crest</a></td><td>Members</td><td>Requires <strong>40 Mining</strong> to obtain two perfect gold ores. The quest gives no completion Mining XP.</td></tr>
+    <tr><td><a href="../quests/shilo-village.html">Shilo Village</a></td><td>Members</td><td>Completion gives access to the level-40 Gem rocks. The quest's own skill requirements are Agility and Crafting, not Mining.</td></tr>
+    <tr><td><a href="../quests/watchtower.html">Watch Tower</a></td><td>Members</td><td>Requires <strong>40 Mining</strong> to mine the fourth powering crystal from the Rock of Dalgroth.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Members</td><td>Requires <strong>50 Mining</strong> for the Ice Queen rockslide and awards <strong>2,575 Mining XP</strong> on completion.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>Members</td><td>Requires <strong>52 Mining</strong> to clear cave boulders. Mining is not one of the quest's selectable 7,650-XP training rewards.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <div class="callout"><p><strong>Core implementation:</strong> <code>scripts/skill_mining/scripts/mining.rs2</code> handles ordinary mining and special dispatch; <code>pickaxe_checker.rs2</code> selects the best usable pickaxe; <code>mine.dbrow</code> supplies ordinary rock levels, XP and success parameters; and <code>levelup_unlocks_mining.rs2</code> provides the familiar milestone messages.</p></div>
+  <ul>
+    <li><strong>Success formula caution:</strong> ordinary rocks call the engine's level-scaled <code>stat_random</code> with each rock's low/high parameters. Those database values are therefore recorded here as roll parameters rather than falsely converted into simple fixed percentages.</li>
+    <li><strong>Iron XP conflict:</strong> build 254 awards <strong>35 XP</strong> per Iron ore. The direct RS2 guide updated 14 July 2004 records <strong>30 XP</strong>. The page exposes both values instead of using later familiarity to erase the conflict.</li>
+    <li><strong>Blurite reconstruction TODO:</strong> the build's Blurite row correctly uses level 10 and 17.5 XP, but its success parameters are marked as a TODO/placeholder based on Limestone data. Those parameters are not presented as historically proven September-2004 Blurite rates.</li>
+    <li><strong>Rune Essence special path:</strong> essence mining bypasses ordinary rock depletion/success handling and directly awards one essence plus 5 Mining XP on its cycle. Access to the mine itself is quest-gated by Rune Mysteries.</li>
+    <li><strong>Perfect gold coordinate substitution:</strong> inside Family Crest's quest mine, the ordinary Gold-rock success path creates <code>perfect_gold_ore</code> instead of normal Gold ore while retaining Gold's Mining requirement and XP.</li>
+    <li><strong>Elemental Workshop special path:</strong> its level-20 earth rock checks for a usable pickaxe, then spawns an Earth elemental. The elemental's death-drop handler supplies the Elemental ore; the rock interaction itself does not advance Mining XP.</li>
+    <li><strong>Random mining events:</strong> the current build can interrupt Mining with gas, a lost pickaxe head, a rock golem and general random-event logic. The rock-golem script itself comments that one ranged attack was added in December 2006, so that later attack is treated as a build reconstruction deviation rather than September-2004 historical evidence.</li>
+    <li><strong>Charged Glory implementation:</strong> only charged Glory variants are placed in the build category used by Mining. The ordinary-rock gem boost is also restricted to the members map.</li>
+  </ul>
+
+  <h3>Cutoff exclusions</h3>
+  <div class="callout warn"><p><strong>Source-tree presence is not enough to make content September-2004 content.</strong> Release chronology takes priority when the current checkout contains later Mining additions.</p></div>
+  <ul>
+    <li><strong>Limestone:</strong> the current Mining database contains a level-10 Limestone row, but Limestone was introduced on <strong>20 September 2004</strong>, after this wiki's 7 September cutoff. It is excluded from the historical progression table.</li>
+    <li><strong>Sandstone and Granite:</strong> these desert Mining rocks were introduced with later 2006 content and are outside the target snapshot.</li>
+    <li><strong>Black, Dragon and later pickaxes:</strong> build 254's audited Mining pickaxe table ends at Rune. Later tool tiers are not projected backward into the September-2004 guide.</li>
+    <li><strong>Later mining areas and training methods:</strong> later-game quarry systems, expanded guild mechanics and modern optimisation routes are not substituted for the period evidence above.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Direct period community evidence:</strong> MagicMario's <em>RuneScape FAQ</em> v1.40, updated 14 July 2004, explicitly separates its RuneScape 2 material from RuneScape Classic and supplies the ordinary ore levels/XP, Mining Guild description and a period training route.</li>
+    <li><strong>Period mining cross-check:</strong> the preserved LostHQ Mining guide supplies the six pickaxe Mining requirements, Rune essence/Blurite/Gem-rock progression, Shilo Village gem-rock access and period Runite-location context.</li>
+    <li><strong>Quest cross-checks:</strong> the already-audited local Rune Mysteries, Doric's Quest, The Knight's Sword, Plague City, The Dig Site, Elemental Workshop, Family Crest, Shilo Village, Watch Tower, Heroes' Quest and Legends' Quest pages were used to keep Mining requirements, rewards and special interactions consistent across the wiki.</li>
+    <li><strong>Build-254 core:</strong> <code>scripts/skill_mining/configs/mine.dbrow</code>, <code>ores.obj</code>, <code>pickaxes.obj</code>, <code>gem_rock_table.dbrow</code>, <code>scripts/skill_mining/scripts/mining.rs2</code>, <code>pickaxe_checker.rs2</code>, <code>prospect.rs2</code>, and <code>scripts/levelup/scripts/levelup_unlocks_mining.rs2</code>.</li>
+    <li><strong>Mining Guild and boosts:</strong> <code>scripts/areas/area_falador/scripts/mining_guild.rs2</code>, <code>scripts/skill_mining/scripts/dwarf_mining_guild.rs2</code> and the Dwarven-stout consumption row establish the build's current-stat level-60 gate and +1 Mining boost.</li>
+    <li><strong>Special interactions:</strong> the Family Crest, Elemental Workshop and Rune Essence build scripts were checked separately because they do not all behave like ordinary ore rocks.</li>
+    <li><strong>Historical scope:</strong> Limestone's 20 September 2004 release and the much later desert-quarry rocks keep those entries outside the 7 September snapshot despite later/current source data.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="smithing.html">&larr; Smithing</a><a class="next" href="herblore.html">Herblore &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's Mining implementation. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

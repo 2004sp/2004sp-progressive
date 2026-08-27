@@ -16,7 +16,7 @@
 
 import Player from '#/engine/entity/Player.js';
 import { PlayerStat, getBaseLevel, hasItem, countItem, isInventoryFull } from '#/engine/bot/BotAction.js';
-import { Items, SkillProgression, getProgressionStep } from '#/engine/bot/BotKnowledge.js';
+import { Items, Locations, SkillProgression, getProgressionStep, getWoodcuttingStepForLog } from '#/engine/bot/BotKnowledge.js';
 import { getMissingPurchases, canAffordStep, totalCostOfMissing } from '#/engine/bot/BotNeeds.js';
 import type { Purchase } from '#/engine/bot/BotNeeds.js';
 import { bankInvId, BotTask } from '#/engine/bot/tasks/BotTaskBase.js';
@@ -34,6 +34,9 @@ import { CraftingTask } from '#/engine/bot/tasks/CraftingTask.js';
 import { RangedMagicTask, MIN_COINS_TO_SHOP as RM_MIN_COINS } from '#/engine/bot/tasks/RangedMagicTask.js';
 import { RunecraftingTask } from '#/engine/bot/tasks/RunecraftingTask.js';
 import { FletchingTask } from '#/engine/bot/tasks/FletchingTask.js';
+import { BowStringingTask } from '#/engine/bot/tasks/BowStringingTask.js';
+import { PickupSpawnTask } from '#/engine/bot/tasks/PickupSpawnTask.js';
+import type { SpawnEntry } from '#/engine/bot/tasks/PickupSpawnTask.js';
 import { HerbloreTask } from '#/engine/bot/tasks/HerbloreTask.js';
 import { BankstandTask } from '#/engine/bot/tasks/BankstandTask.js';
 import { FlaxPickingTask } from '#/engine/bot/tasks/FlaxPickingTask.js';
@@ -43,6 +46,18 @@ import { VendorTask } from '#/engine/bot/tasks/VendorTask.js';
 import { PKerTask } from '#/engine/bot/tasks/PKerTask.js';
 import { EdgevillePKerTask } from '#/engine/bot/tasks/EdgevillePKerTask.js';
 import { AgilityTask } from '#/engine/bot/tasks/AgilityTask.js';
+import { BotDebugService } from '#/engine/bot/debug/BotDebugService.js';
+import type { BotPlannerCandidate } from '#/engine/bot/debug/BotDebugTypes.js';
+
+/** Combined bank+inventory flax count required to switch from gathering to spinning. */
+const FLAX_SPIN_MIN = 25;
+
+const KNIFE_SPAWNS: SpawnEntry[] = [
+    // Lumbridge knife is south of the castle — route east of the walls first.
+    { coords: Locations.KNIFE_SPAWN_LUMBRIDGE, via: [3199, 3218, 0] },
+    { coords: Locations.KNIFE_SPAWN_CATHERBY },
+    { coords: Locations.KNIFE_SPAWN_SEERS },
+];
 
 // ── Personality ───────────────────────────────────────────────────────────────
 
@@ -55,52 +70,93 @@ export const Personalities: Record<string, BotPersonality> = {
     SKILLER: {
         name: 'Skiller',
         weights: {
+            // Combat — low priority, but still trainable
+            ATTACK: 2,
+            STRENGTH: 2,
+            DEFENCE: 2,
+            RANGED: 2,
+            MAGIC: 2,
+            PRAYER: 6,
+
+            // Gathering — high priority
             WOODCUTTING: 15,
             FISHING: 20,
             MINING: 15,
+
+            // Production — high priority
             COOKING: 15,
             SMITHING: 15,
-            THIEVING: 15,
-            PRAYER: 10,
-            FIREMAKING: 9,   // 35% share of the fletch/FM pair (9:17 ≈ 35:65)
+            FIREMAKING: 9,
             CRAFTING: 12,
-            FLETCHING: 17,   // 65% share of the fletch/FM pair
-            RUNECRAFT: 5,    // unlocks once a talisman drops
-            HERBLORE: 8,     // requires guams (chaos druid drops) + coins for vials/newts
-            AGILITY: 10,
+            FLETCHING: 17,
+
+            // Support / utility skills
+            RUNECRAFT: 5,
+            HERBLORE: 8,
+            THIEVING: 15,
+            AGILITY: 10
         }
     },
+
     FIGHTER: {
         name: 'Fighter',
         weights: {
+            // Combat — primary focus
             ATTACK: 30,
             STRENGTH: 30,
             DEFENCE: 20,
-            RANGED: 10,
-            MAGIC: 5,
-            PRAYER: 5
+            RANGED: 12,
+            MAGIC: 8,
+            PRAYER: 8,
+
+            // Gathering — low priority
+            WOODCUTTING: 3,
+            FISHING: 4,
+            MINING: 4,
+
+            // Production — low priority
+            COOKING: 5,
+            SMITHING: 5,
+            FIREMAKING: 2,
+            CRAFTING: 3,
+            FLETCHING: 3,
+
+            // Support / utility skills
+            RUNECRAFT: 3,
+            HERBLORE: 4,
+            THIEVING: 3,
+            AGILITY: 4
         }
     },
+
     BALANCED: {
         name: 'Balanced',
         weights: {
+            // Combat
             ATTACK: 10,
             STRENGTH: 10,
             DEFENCE: 8,
-            WOODCUTTING: 12,
+            RANGED: 6,
+            MAGIC: 6,
+            PRAYER: 6,
+
+            // Gathering
+            WOODCUTTING: 10,
             FISHING: 10,
             MINING: 8,
+
+            // Production
             COOKING: 8,
-            SMITHING: 5,
-            PRAYER: 5,
-            RANGED: 4,
-            MAGIC: 4,
-            FIREMAKING: 13,  // 35% share of the fletch/FM pair (13:24 ≈ 35:65)
-            CRAFTING: 6,
-            FLETCHING: 24,   // 65% share of the fletch/FM pair
-            RUNECRAFT: 8,    // unlocks once a talisman drops
-            HERBLORE: 6,     // requires guams (chaos druid drops) + coins
-            AGILITY: 8,
+            SMITHING: 7,
+            FIREMAKING: 7,
+            CRAFTING: 7,
+            FLETCHING: 9,
+
+            // Support / utility
+            RUNECRAFT: 6,
+            HERBLORE: 6,
+            THIEVING: 8,
+            AGILITY: 8
         }
     }
 };
@@ -154,6 +210,18 @@ export class BotGoalPlanner {
     }
 
     pickTask(player: Player): BotTask | null {
+        const task = this._pickTaskInternal(player);
+        if (BotDebugService.enabled) {
+            try {
+                this._recordDecision(player, task);
+            } catch {
+                // debug hook must never affect gameplay
+            }
+        }
+        return task;
+    }
+
+    private _pickTaskInternal(player: Player): BotTask | null {
         // ── 1. Init ───────────────────────────────────────────────────────────
         if (!this.initialised) {
             this.initialised = true;
@@ -169,6 +237,45 @@ export class BotGoalPlanner {
 
         // ── 3 + 4. Pick skill, handle affordability ───────────────────────────
         return this._pickBestTask(player);
+    }
+
+    /**
+     * Debug-only: reconstructs a human-readable summary of this decision for
+     * the dashboard's Planner tab. Deliberately re-derives shouldRun/reason
+     * from the same public helpers _pickBestTask uses, rather than threading
+     * reasoning state through every branch above — keeps the actual decision
+     * logic completely untouched.
+     */
+    private _recordDecision(player: Player, chosen: BotTask | null): void {
+        const botName = (player as any)._bot?.name;
+        if (!botName) return;
+
+        const candidates: BotPlannerCandidate[] = [];
+        for (const [skill, weight] of Object.entries(this.personality.weights)) {
+            if (!weight || weight <= 0 || !SKILLS_WITH_CONTENT.has(skill)) continue;
+            const stat = SKILL_STAT[skill];
+            if (stat === undefined) continue;
+            const level = getBaseLevel(player, stat);
+            if (level >= 99) {
+                candidates.push({ name: skill, weight, shouldRun: false, reason: 'already 99' });
+                continue;
+            }
+            const step = getProgressionStep(skill, level);
+            if (!step) {
+                candidates.push({ name: skill, weight, shouldRun: false, reason: 'no progression step for level' });
+                continue;
+            }
+            const missing = getMissingPurchases(player, step);
+            if (missing.length > 0) {
+                const afford = canAffordStep(player, step);
+                candidates.push({ name: skill, weight, shouldRun: false, reason: afford ? `needs shop trip: ${missing[0].shopKey}` : 'cannot afford required tools' });
+            } else {
+                candidates.push({ name: skill, weight, shouldRun: true });
+            }
+        }
+
+        const reason = chosen ? `selected ${chosen.name}` : 'no runnable task found — idling';
+        BotDebugService.recordPlannerDecision(botName, chosen?.name ?? null, reason, candidates);
     }
 
     // ── Internal ──────────────────────────────────────────────────────────────
@@ -219,6 +326,25 @@ export class BotGoalPlanner {
             const smithTask = this._findSmithingTask(player);
             if (smithTask) return smithTask;
             console.log(`[Planner] ${player.username} SMITHING skipped: no smithTask (ores/bars?)`);
+        }
+
+        // ── LOGS priority: 50/50 split between Firemaking and Fletching ──────
+        // When the bot has ≥ 10 logs matching either skill's current step,
+        // a coin flip decides which task runs instead of relying on weights alone.
+        // Falls through to null (and on to the weighted loop) when no logs available.
+        if ((this.personality.weights['FIREMAKING'] ?? 0) > 0 || (this.personality.weights['FLETCHING'] ?? 0) > 0) {
+            const logsTask = this._findLogsTask(player);
+            if (logsTask) return logsTask;
+        }
+
+        // ── STRINGING priority: string bows whenever both materials are banked ──
+        // Unstrung bows come from FletchingTask's log cutting, bow strings from
+        // CraftingTask's spin_flax — both are gathering loops with no reason to
+        // stop on their own, so stringing needs to actively claim priority
+        // whenever it has something to consume, same reasoning as cooking/smithing.
+        if ((this.personality.weights['FLETCHING'] ?? 0) > 0) {
+            const stringTask = this._findStringingTask(player);
+            if (stringTask) return stringTask;
         }
 
         // ── CRAFTING priority (Phase 2 only) ─────────────────────────────────
@@ -288,7 +414,30 @@ export class BotGoalPlanner {
             if (missing.length === 0) {
                 // Double-check: getMissingPurchases omits unaffordable items (returns empty list
                 // even if tools are missing), so we must verify the bot actually owns every tool.
-                if (!step.toolItemIds.every(id => hasItem(player, id))) continue;
+                // Woodcutting/mining list all valid tiers — any one suffices.
+                // Fletching knife is special: it can live in the bank (task withdraws it on
+                // the bank_walk → withdraw_logs transition), so we accept bank ownership too.
+                let toolOk: boolean;
+                if (step.action.startsWith('fletch_')) {
+                    toolOk = this._hasKnifeAccessible(player);
+                    console.log(`[Planner:${player.username}] FLETCHING weighted-loop step=${step.action} knifeOk=${toolOk}`);
+                    if (!toolOk) {
+                        console.log(`[Planner:${player.username}] FLETCH→PickupSpawn (knife gone)`);
+                        return new PickupSpawnTask(Items.KNIFE, KNIFE_SPAWNS);
+                    }
+                } else if (skillName === 'FLETCHING' && step.action.startsWith('string_')) {
+                    // Stringing is handled by the dedicated STRINGING priority
+                    // check above (_findStringingTask), which scans every
+                    // string_ step for one with materials available rather than
+                    // relying on whichever random step getProgressionStep handed
+                    // to this loop. Nothing to do with that random pick here.
+                    continue;
+                } else {
+                    toolOk = (step.action === 'woodcut' || step.action === 'mine')
+                        ? step.toolItemIds.some(id => hasItem(player, id))
+                        : step.toolItemIds.every(id => hasItem(player, id));
+                    if (!toolOk) continue;
+                }
 
                 // Check consumable availability (bait, feathers, raw fish for cooking, logs for FM)
                 // If the step consumes an item that isn't purchasable (e.g. raw fish, logs),
@@ -313,14 +462,17 @@ export class BotGoalPlanner {
 
                     const hasBank = bankConsumeCount > 0;
                     if (!hasInv && !hasBank) {
-                        // 🔥 fallback to woodcutting ONLY if no logs anywhere
                         if (skillName === 'FIREMAKING') {
                             const wcLevel = getBaseLevel(player, PlayerStat.WOODCUTTING);
-                            const wcStep = getProgressionStep('WOODCUTTING', wcLevel);
-
+                            const wcStep = getWoodcuttingStepForLog(step.itemConsumed!, wcLevel);
+                            console.log(`[Planner:${player.username}] FIREMAKING no logs(id=${step.itemConsumed}) → wcStep=${wcStep ? wcStep.action : 'null'}`);
                             if (wcStep) {
                                 return new WoodcuttingTask(wcStep);
                             }
+                        } else if (skillName === 'FLETCHING') {
+                            // FletchingTask handles its own log acquisition via embedded woodcutting
+                            console.log(`[Planner:${player.username}] FLETCHING no logs → FletchingTask (self-contained WC)`);
+                            return new FletchingTask(step);
                         }
 
                         continue;
@@ -357,8 +509,6 @@ export class BotGoalPlanner {
                     return new HerbloreTask(step);
                 }
                 if (step.action.startsWith('fletch_')) {
-                    // Don't start with fewer than 50 logs — let the bot accumulate
-                    // a worthwhile batch from woodcutting first.
                     if (step.itemConsumed) {
                         let totalLogs = countItem(player, step.itemConsumed);
                         const fletchBid = bankInvId();
@@ -371,13 +521,10 @@ export class BotGoalPlanner {
                                 }
                             }
                         }
-                        if (totalLogs < 10) continue; //this is where to adjust threshold 
+                        console.log(`[Planner:${player.username}] FLETCH weighted-loop logs=${totalLogs} (id=${step.itemConsumed}) step=${step.action}`);
+                        if (totalLogs < 10) { console.log(`[Planner:${player.username}] FLETCH skip: only ${totalLogs} logs`); continue; }
                     }
-                    // Knife is a starter item but can be lost.  If it's not in
-                    // inventory or bank, buy one from the Lumbridge General Store.
-                    if (!this._hasKnifeAccessible(player)) {
-                        return new ShopTripTask('LUMBRIDGE_GENERAL', Items.KNIFE, 1, 6);
-                    }
+                    console.log(`[Planner:${player.username}] FLETCH→FletchingTask (weighted-loop) step=${step.action}`);
                     return new FletchingTask(step);
                 }
                 continue;
@@ -499,16 +646,23 @@ export class BotGoalPlanner {
     }
 
     /**
-     * Returns the appropriate CraftingTask for the player's current state:
+     * Returns the appropriate CraftingTask (or a supporting task) for the
+     * player's current state.  Priority order:
      *
-     *   Phase 1 (craft_wool): while Mining < 40 OR Smithing < 40.
-     *     Requires shears in inventory.  If missing, returns a ShopTripTask.
+     *   1. Flax: consumer (spin_flax) beats producer (pick_flax) — only gather
+     *      more flax when the bank+inventory supply is running low, so a bot
+     *      that already has flax banked spins it into bow strings instead of
+     *      picking forever. See FLAX_SPIN_MIN below.
+     *   2. Leather crafting / gem cutting: independent of the gold pipeline —
+     *      hides come from combat, gems from thieving/drops — so these run
+     *      whenever the crafting level and materials line up, regardless of
+     *      Mining/Smithing.
+     *   3. Phase 2 (craft_ring): once Mining >= 40 AND Smithing >= 40.
+     *      Requires ring_mould in inventory and gold bars in bank/inv.
+     *   4. Phase 1 (craft_wool): universal fallback — no materials besides
+     *      shears required, so this always has something to do.
      *
-     *   Phase 2 (craft_ring): once Mining >= 40 AND Smithing >= 40.
-     *     Requires ring_mould in inventory and gold bars in bank/inv.
-     *     If ring_mould missing, returns a ShopTripTask.
-     *
-     * Returns null when neither phase can run right now.
+     * Returns null when nothing above can run right now.
      */
     private _findCraftingTask(player: Player): BotTask | null {
         const mineLevel = getBaseLevel(player, PlayerStat.MINING);
@@ -520,10 +674,22 @@ export class BotGoalPlanner {
 
         const craftLevel = getBaseLevel(player, PlayerStat.CRAFTING);
 
-        // ── Flax picking: runs when crafting level qualifies ──────────────────
-        const flaxStep = steps.find(s => s.action === 'pick_flax' && craftLevel >= Math.max(s.minLevel, 10) && craftLevel <= s.maxLevel);
-        if (flaxStep) {
-            return new FlaxPickingTask(flaxStep);
+        // ── Flax: spin (consumer) takes priority over picking (producer) ──────
+        // pick_flax has no in-game level requirement, but spinning needs 10, so
+        // there's no point gathering before that. Once spinnable, only send the
+        // bot back to the field when supply is low — otherwise keep spinning
+        // down what's already banked. This is what makes FlaxPickingTask
+        // terminate each cycle (see its bankedOnce flag) rather than run forever.
+        const spinStep = steps.find(s => s.action === 'spin_flax' && craftLevel >= s.minLevel && craftLevel <= s.maxLevel);
+        if (spinStep) {
+            const flaxSupply = countItem(player, Items.FLAX) + this._bankCount(player, Items.FLAX);
+            if (flaxSupply >= FLAX_SPIN_MIN) {
+                return new CraftingTask(spinStep);
+            }
+            const flaxStep = steps.find(s => s.action === 'pick_flax' && craftLevel >= s.minLevel && craftLevel <= s.maxLevel);
+            if (flaxStep) {
+                return new FlaxPickingTask(flaxStep);
+            }
         }
 
         // ── Soften clay: if bot has buckets but no bucket-of-water ────────────
@@ -532,51 +698,107 @@ export class BotGoalPlanner {
             return new WaterFillingTask(Items.BUCKET, Items.BUCKET_OF_WATER);
         }
 
-        if (!phase2Unlocked) {
-            // ── Phase 1: wool spinning ────────────────────────────────────────
-            const step = steps.find(s => s.action === 'craft_wool');
-            if (!step) return null;
-
-            if (!hasItem(player, Items.SHEARS)) {
-                // Shears are given as a starter item, but if somehow lost, buy from
-                // the Lumbridge General Store (1gp, always in NEARBY_SHOPS).
-                return new ShopTripTask('LUMBRIDGE_GENERAL', Items.SHEARS, 1, 1);
-            }
-
-            return new CraftingTask(step);
-        }
-
-        // ── Phase 2: gold rings ───────────────────────────────────────────────
-        const step = steps.find(s => s.action === 'craft_ring');
-        if (!step) return null;
-
-        if (!hasItem(player, Items.RING_MOULD)) {
-            // Buy ring mould from Al Kharid crafting shop if affordable
-            if (canAffordStep(player, step) && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
-                return new ShopTripTask('AL_KHARID_CRAFTING', Items.RING_MOULD, 1, 25);
-            }
-            return null;
-        }
-
-        // Need gold bars to be available
-        const bid = bankInvId();
-        const hasGoldInInv = countItem(player, Items.GOLD_BAR) > 0;
-        let hasGoldInBank = false;
-        if (bid !== -1) {
-            const bank = player.getInventory(bid);
-            if (bank) {
-                for (let i = 0; i < bank.capacity; i++) {
-                    if (bank.get(i)?.id === Items.GOLD_BAR) {
-                        hasGoldInBank = true;
-                        break;
-                    }
+        // ── Leather crafting: needle + thread + (leather or cowhide anywhere) ──
+        const leatherStep = steps.find(s => (s.action.startsWith('craft_leather_') || s.action === 'craft_hard_leather_body') && craftLevel >= s.minLevel && craftLevel <= s.maxLevel);
+        if (leatherStep) {
+            const leatherId = leatherStep.itemConsumed!;
+            const hasMaterial = this._bankCount(player, leatherId) > 0 || countItem(player, leatherId) > 0 || this._bankCount(player, Items.COW_HIDE) > 0 || countItem(player, Items.COW_HIDE) > 0;
+            if (hasMaterial) {
+                const hasNeedle = hasItem(player, Items.NEEDLE) || this._bankCount(player, Items.NEEDLE) > 0;
+                const hasThread = hasItem(player, Items.THREAD) || this._bankCount(player, Items.THREAD) > 0;
+                if (!hasNeedle && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.NEEDLE, 1, 100);
+                }
+                if (!hasThread && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.THREAD, 5, 5);
+                }
+                if (hasNeedle && hasThread) {
+                    return new CraftingTask(leatherStep);
                 }
             }
         }
 
-        if (!hasGoldInInv && !hasGoldInBank) return null;
+        // ── Gem cutting: chisel + uncut gems in bank/inv ───────────────────────
+        const gemStep = steps.find(s => s.action.startsWith('cut_') && craftLevel >= s.minLevel && craftLevel <= s.maxLevel);
+        if (gemStep) {
+            const uncutId = gemStep.itemConsumed!;
+            const hasMaterial = this._bankCount(player, uncutId) > 0 || countItem(player, uncutId) > 0;
+            if (hasMaterial) {
+                const hasChisel = hasItem(player, Items.CHISEL) || this._bankCount(player, Items.CHISEL) > 0;
+                if (!hasChisel && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
+                    return new ShopTripTask('AL_KHARID_CRAFTING', Items.CHISEL, 1, 100);
+                }
+                if (hasChisel) {
+                    return new CraftingTask(gemStep);
+                }
+            }
+        }
 
-        return new CraftingTask(step);
+        if (phase2Unlocked) {
+            // ── Phase 2: gold rings ─────────────────────────────────────────────
+            const step = steps.find(s => s.action === 'craft_ring');
+            if (step) {
+                if (!hasItem(player, Items.RING_MOULD)) {
+                    // Buy ring mould from Al Kharid crafting shop if affordable
+                    if (canAffordStep(player, step) && NEARBY_SHOPS.has('AL_KHARID_CRAFTING')) {
+                        return new ShopTripTask('AL_KHARID_CRAFTING', Items.RING_MOULD, 1, 100);
+                    }
+                } else if (countItem(player, Items.GOLD_BAR) > 0 || this._bankCount(player, Items.GOLD_BAR) > 0) {
+                    return new CraftingTask(step);
+                }
+            }
+        }
+
+        // ── Phase 1: wool spinning — universal fallback ────────────────────────
+        const woolStep = steps.find(s => s.action === 'craft_wool');
+        if (!woolStep) return null;
+
+        if (!hasItem(player, Items.SHEARS)) {
+            // Shears are given as a starter item, but if somehow lost, buy from
+            // the Lumbridge General Store (1gp, always in NEARBY_SHOPS).
+            return new ShopTripTask('LUMBRIDGE_GENERAL', Items.SHEARS, 1, 1);
+        }
+
+        return new CraftingTask(woolStep);
+    }
+
+    /** Counts how many of an item are sitting in the bank (0 if bank not loaded). */
+    private _bankCount(player: Player, itemId: number): number {
+        const bid = bankInvId();
+        if (bid === -1) return 0;
+        const bank = player.getInventory(bid);
+        if (!bank) return 0;
+        let count = 0;
+        for (let i = 0; i < bank.capacity; i++) {
+            const item = bank.get(i);
+            if (item?.id === itemId) count += item.count;
+        }
+        return count;
+    }
+
+    /**
+     * Scans every string_ step (unstrung bow + bow string → finished bow) for
+     * one whose level requirement is met and whose materials are available in
+     * bank or inventory. Unlike the other FLETCHING steps, getProgressionStep()
+     * can't be trusted to hand back a matching string_ step here — it picks
+     * randomly among all steps at the bot's level, so a bot could be sitting on
+     * a full set of, say, willow materials while the random pick keeps landing
+     * on maple. Returns null when no string_ step has both materials ready.
+     */
+    private _findStringingTask(player: Player): BowStringingTask | null {
+        const level = getBaseLevel(player, PlayerStat.FLETCHING);
+        const steps = SkillProgression['FLETCHING'].filter(s => s.action.startsWith('string_') && level >= s.minLevel && level <= s.maxLevel);
+
+        for (const step of steps) {
+            const unstrungId = step.itemConsumed!;
+            const stringId = (step.extra?.stringItem as number | undefined) ?? Items.BOW_STRING;
+            const hasUnstrung = countItem(player, unstrungId) > 0 || this._bankCount(player, unstrungId) > 0;
+            const hasString = countItem(player, stringId) > 0 || this._bankCount(player, stringId) > 0;
+            if (hasUnstrung && hasString) {
+                return new BowStringingTask(step);
+            }
+        }
+        return null;
     }
 
     /**
@@ -634,6 +856,79 @@ export class BotGoalPlanner {
     private _findRunecraftingTask(player: Player): RunecraftingTask | null {
         const task = new RunecraftingTask();
         return task.shouldRun(player) ? task : null;
+    }
+
+    /**
+     * When the bot has ≥ 10 logs consumable by its current Firemaking OR Fletching
+     * step, returns either a FiremakingTask or a FletchingTask with a 50/50 coin
+     * flip.  If only one of the two tasks can currently use the available logs,
+     * that task is returned without a flip.  Returns null when logs are scarce
+     * (< 10) so the weighted loop handles gathering and the FM woodcutting fallback.
+     */
+    private _findLogsTask(player: Player): BotTask | null {
+        const fmWeight = this.personality.weights['FIREMAKING'] ?? 0;
+        const fletchWeight = this.personality.weights['FLETCHING'] ?? 0;
+
+        const fmStep = fmWeight > 0 ? getProgressionStep('FIREMAKING', getBaseLevel(player, PlayerStat.FIREMAKING)) : null;
+        const fletchStep = fletchWeight > 0 ? getProgressionStep('FLETCHING', getBaseLevel(player, PlayerStat.FLETCHING)) : null;
+
+        if (!fmStep && !fletchStep) return null;
+
+        const bid = bankInvId();
+        const bank = bid !== -1 ? player.getInventory(bid) : null;
+
+        const totalLogs = (logId: number): number => {
+            if (logId === -1) return 0;
+            let n = countItem(player, logId);
+            if (bank) {
+                for (let i = 0; i < bank.capacity; i++) {
+                    const it = bank.get(i);
+                    if (it?.id === logId) n += it.count;
+                }
+            }
+            return n;
+        };
+
+        const fmLogId = fmStep?.itemConsumed ?? -1;
+        const fletchLogId = fletchStep?.itemConsumed ?? -1;
+
+        const fmAvail = fmStep !== null && fmLogId !== -1 && totalLogs(fmLogId) >= 10;
+        const fletchAvail =
+            fletchStep !== null &&
+            fletchStep.action.startsWith('fletch_') &&
+            fletchLogId !== -1 &&
+            totalLogs(fletchLogId) >= 10;
+
+        console.log(`[Planner:${player.username}] _findLogsTask fmAvail=${fmAvail}(logId=${fmLogId},n=${totalLogs(fmLogId)}) fletchAvail=${fletchAvail}(logId=${fletchLogId},n=${totalLogs(fletchLogId)})`);
+
+        if (!fmAvail && !fletchAvail) return null;
+
+        const doFletching = (): BotTask => {
+            if (!this._hasKnifeAccessible(player)) {
+                console.log(`[Planner:${player.username}] FLETCH→PickupSpawn (no knife)`);
+                return new PickupSpawnTask(Items.KNIFE, KNIFE_SPAWNS);
+            }
+            console.log(`[Planner:${player.username}] FLETCH→FletchingTask step=${fletchStep!.action}`);
+            return new FletchingTask(fletchStep!);
+        };
+
+        if (fmAvail && !fletchAvail) {
+            if (fletchStep && fletchWeight > 0) {
+                const total = fmWeight + fletchWeight;
+                if (Math.random() >= fmWeight / total) {
+                    // FletchingTask handles its own WC when logs are low
+                    console.log(`[Planner:${player.username}] FLETCH→FletchingTask (self-contained WC, fmAvail but fletchAvail=false)`);
+                    return doFletching();
+                }
+            }
+            console.log(`[Planner:${player.username}] FLETCH→FM (only fmAvail)`);
+            return new FiremakingTask(fmStep!);
+        }
+        if (!fmAvail && fletchAvail) return doFletching();
+
+        // Both available — weighted flip proportional to fm/fletch weights
+        const total = fmWeight + fletchWeight;
+        return Math.random() < fmWeight / total ? new FiremakingTask(fmStep!) : doFletching();
     }
 
     /**

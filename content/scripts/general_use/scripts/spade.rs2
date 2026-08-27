@@ -14,6 +14,10 @@ if(inzone(0_45_46_40_54, 0_45_46_43_55, coord) = true) {
 
 // Falador Park underground entrance
 if (distance(coord, 0_47_52_11_42) <= 1) {
+    if (map_feature("custombosses") = false) {
+        mes("The Giant Mole lair is currently disabled.");
+        return;
+    }
     if (inv_total(inv, lit_candle) = 0) {
         mes("You need a lit candle to enter the underground passage.");
         return;
@@ -28,6 +32,10 @@ if (distance(coord, 0_47_52_11_42) <= 1) {
 
 // Scorpion Pit entrance
 if (distance(coord, 0_50_61_34_39) <= 1) {
+    if (map_feature("custombosses") = false) {
+        mes("The Scorpion Pit is currently disabled.");
+        return;
+    }
     p_arrivedelay;
     p_stopaction;
     anim(human_dig, 0);

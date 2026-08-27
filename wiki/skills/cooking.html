@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Cooking skill guide for 2004scape Progressive build 254, including food unlocks and membership requirements.">
+  <meta name="description" content="Cooking skill guide for 2004scape Progressive build 254, covering September 2004 cooking mechanics, food XP, burn behaviour, recipes, the Cooks' Guild, Cooking gauntlets, and related quests.">
   <title>Cooking — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,42 +16,166 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Cooking</p>
   <h1 class="pagetitle">Cooking</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Cooking</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Artisan</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 91</dd></div></div>
-  <p class="lede">Cooking turns raw food and prepared ingredients into edible food, pies, pizzas, cakes, stews, wine, and members-only dishes. The milestone list below is taken from the build's level-up messages.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>5</td><td>Cook Herring.</td><td class="member-no">No</td></tr>
-    <tr><td>10</td><td>Cook Redberry pies.</td><td class="member-no">No</td></tr>
-    <tr><td>10</td><td>Cook Mackerel.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>12</td><td>Cook Thin snail.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>15</td><td>Cook Trout.</td><td class="member-no">No</td></tr>
-    <tr><td>17</td><td>Cook Lean snail.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>18</td><td>Cook Cod.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>20</td><td>Cook Meat pies and Pike.</td><td class="member-no">No</td></tr>
-    <tr><td>22</td><td>Cook Fat snail.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>25</td><td>Cook Stews and Salmon.</td><td class="member-no">No</td></tr>
-    <tr><td>28</td><td>Cook Slimy eels.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>30</td><td>Cook Apple pies and Tuna.</td><td class="member-no">No</td></tr>
-    <tr><td>32</td><td>Enter the Cooks' Guild.<span class="requirement-note">A Chef's hat must be worn.</span></td><td class="member-no">No</td></tr>
-    <tr><td>35</td><td>Cook Pizzas and make Wine.</td><td class="member-no">No</td></tr>
-    <tr><td>40</td><td>Cook Cakes and Lobsters.</td><td class="member-no">No</td></tr>
-    <tr><td>43</td><td>Cook Bass.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>45</td><td>Cook Meat pizzas and Swordfish.</td><td class="member-no">No</td></tr>
-    <tr><td>50</td><td>Cook Chocolate cakes.</td><td class="member-no">No</td></tr>
-    <tr><td>53</td><td>Cook Lava eel.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>55</td><td>Cook Anchovy pizza.</td><td class="member-no">No</td></tr>
-    <tr><td>58</td><td>Cook Pitta bread.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>60</td><td>Cook Curry.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>65</td><td>Cook Pineapple pizza.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>80</td><td>Cook Shark.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>82</td><td>Cook Sea turtle.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>91</td><td>Cook Manta ray.</td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Cooking</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Production / artisan</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Released</dt><dd>4 January 2001</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main purpose</dt><dd>Turn raw food and ingredients into edible food</dd></div>
+    <div class="row"><dt>Related guild</dt><dd>Cooks' Guild — 32 Cooking + chef's hat</dd></div>
+    <div class="row"><dt>Highest listed unlock</dt><dd>Level 91</dd></div>
+  </div>
+
+  <p class="lede">Cooking is a free-to-play production skill used to turn raw meat, fish and prepared ingredients into food. Successful cooking normally gives Cooking XP and an edible item; failure normally produces a burnt item instead. By 7 September 2004 the skill already covered ordinary fish and meat, pies, stews, pizzas, cakes, wine, members-only snails and eels, gnome cuisine, Big Chompy Bird Hunting food, and high-level catches through manta ray.</p>
+
+  <h3>Mechanics</h3>
+  <div class="callout"><p><strong>Basic cooking loop:</strong> use a supported raw item on a fire, range or oven. Build 254 checks the item's required Cooking level and membership flag, consumes the raw item, then rolls success from the item's cooking data. A success gives the cooked product and its listed XP; a normal failure gives the corresponding burnt product and no Cooking XP.</p></div>
+  <ul>
+    <li><strong>Current Cooking level matters:</strong> the generic cooker calls the build's Cooking skill roll with the player's current level. Temporary boosts can therefore affect success checks, although this page lists normal base-level unlocks rather than advertising boosted unlocks.</li>
+    <li><strong>Fire versus range:</strong> many raw meats and fish can be cooked on either. Some database rows provide a better range-specific success roll, while prepared foods such as bread, pies, pizza and cake require a range or oven rather than an ordinary fire.</li>
+    <li><strong>Lumbridge Cook-o-matic 100:</strong> after completing <a href="../quests/cooks-assistant.html">Cook's Assistant</a>, the castle cook permits use of his range. Build 254 gives supported foods a separate Cook-o-matic success roll, making it preferable to an ordinary range where that override exists.</li>
+    <li><strong>Cooking gauntlets:</strong> after <a href="../quests/family-crest.html">Family Crest</a>, Caleb can enchant the steel gauntlets into Cooking gauntlets. At the target date and in build 254, their special reduced-burn roll is specifically implemented for <strong>lobster, swordfish and shark</strong>.</li>
+    <li><strong>Wine:</strong> grapes and a jug of water make unfermented wine. It later resolves into wine or bad wine; successful fermentation awards 110 Cooking XP in build 254.</li>
+    <li><strong>No intrinsic damage:</strong> ordinary cooking failures waste food but do not damage the player. Risk comes from where ingredients are obtained or where a player chooses to cook, not from the basic Cooking action itself.</li>
+  </ul>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <div class="callout"><p>The build's level-up popup is abbreviated, so this table combines those milestone messages with the fuller in-game skill-guide data and recipe scripts. Mixed free-to-play and members unlocks are separated so every row has an explicit membership status.</p></div>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements</th></tr></thead><tbody>
+    <tr><td>1</td><td>Cook ordinary meat, chicken, shrimp, anchovies and sardines; bake bread.</td><td class="member-no">No</td><td>Appropriate raw food, or bread dough for bread.</td></tr>
+    <tr><td>1</td><td>Cook Ugthanki meat.</td><td class="member-yes">Yes</td><td>Raw Ugthanki meat from the members' desert.</td></tr>
+    <tr><td>5</td><td>Cook herring.</td><td class="member-no">No</td><td>Raw herring.</td></tr>
+    <tr><td>10</td><td>Bake redberry pie.</td><td class="member-no">No</td><td>Uncooked redberry pie and a range/oven.</td></tr>
+    <tr><td>10</td><td>Cook mackerel.</td><td class="member-yes">Yes</td><td>Raw mackerel.</td></tr>
+    <tr><td>12</td><td>Cook thin snail.</td><td class="member-yes">Yes</td><td>Raw thin snail.</td></tr>
+    <tr><td>15</td><td>Cook trout.</td><td class="member-no">No</td><td>Raw trout.</td></tr>
+    <tr><td>17</td><td>Cook lean snail.</td><td class="member-yes">Yes</td><td>Raw lean snail.</td></tr>
+    <tr><td>18</td><td>Cook cod.</td><td class="member-yes">Yes</td><td>Raw cod.</td></tr>
+    <tr><td>20</td><td>Bake meat pie and cook pike.</td><td class="member-no">No</td><td>Uncooked meat pie or raw pike.</td></tr>
+    <tr><td>22</td><td>Cook fat snail.</td><td class="member-yes">Yes</td><td>Raw fat snail.</td></tr>
+    <tr><td>25</td><td>Cook stew and salmon.</td><td class="member-no">No</td><td>Uncooked stew or raw salmon.</td></tr>
+    <tr><td>28</td><td>Cook slimy eel.</td><td class="member-yes">Yes</td><td>Raw slimy eel.</td></tr>
+    <tr><td>30</td><td>Bake apple pie and cook tuna.</td><td class="member-no">No</td><td>Uncooked apple pie or raw tuna.</td></tr>
+    <tr><td>30</td><td>Cook chompy meat.</td><td class="member-yes">Yes</td><td>Access to <a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a> content; the quest's spit sequence also uses 30 Cooking.</td></tr>
+    <tr><td>32</td><td>Enter the Cooks' Guild.</td><td class="member-no">No</td><td>Wear a chef's hat.</td></tr>
+    <tr><td>35</td><td>Bake plain pizza and make wine.</td><td class="member-no">No</td><td>Uncooked pizza + range/oven; or grapes + jug of water for wine.</td></tr>
+    <tr><td>40</td><td>Bake cake and cook lobster.</td><td class="member-no">No</td><td>Uncooked cake + range/oven; or raw lobster.</td></tr>
+    <tr><td>43</td><td>Cook bass.</td><td class="member-yes">Yes</td><td>Raw bass.</td></tr>
+    <tr><td>45</td><td>Make meat pizza and cook swordfish.</td><td class="member-no">No</td><td>Plain pizza + cooked meat/chicken; or raw swordfish.</td></tr>
+    <tr><td>50</td><td>Make chocolate cake.</td><td class="member-no">No</td><td>Cooked cake + chocolate bar or chocolate dust.</td></tr>
+    <tr><td>53</td><td>Cook lava eel.</td><td class="member-yes">Yes</td><td>Raw lava eel; obtaining one is tied to the <a href="../quests/heroes-quest.html">Heroes' Quest</a> lava-eel fishing sequence.</td></tr>
+    <tr><td>55</td><td>Make anchovy pizza.</td><td class="member-no">No</td><td>Plain pizza + cooked anchovies.</td></tr>
+    <tr><td>58</td><td>Bake pitta bread.</td><td class="member-yes">Yes</td><td>Pitta dough + range/oven.</td></tr>
+    <tr><td>60</td><td>Cook curry.</td><td class="member-yes">Yes</td><td>Uncooked curry.</td></tr>
+    <tr><td>65</td><td>Make pineapple pizza.</td><td class="member-yes">Yes</td><td>Plain pizza + pineapple ring/chunks.</td></tr>
+    <tr><td>80</td><td>Cook shark.</td><td class="member-yes">Yes</td><td>Raw shark.</td></tr>
+    <tr><td>82</td><td>Cook sea turtle.</td><td class="member-yes">Yes</td><td>Raw sea turtle.</td></tr>
+    <tr><td>91</td><td>Cook manta ray.</td><td class="member-yes">Yes</td><td>Raw manta ray.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The build also contains broader recipe families beyond these level-up milestones. Unlocks are taken from <code>levelup_unlocks_cooking.rs2</code>.</p></div>
+
+  <h3>Raw food cooking XP</h3>
+  <p>The following values come from build 254's generic Cooking database. They are the XP awarded on a successful cook; normal burnt results give no XP.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Raw food</th><th>Cooked result</th><th>Members</th><th>XP</th></tr></thead><tbody>
+    <tr><td>1</td><td>Raw beef / rat meat / bear meat</td><td>Cooked meat</td><td class="member-no">No</td><td>30</td></tr>
+    <tr><td>1</td><td>Raw chicken</td><td>Cooked chicken</td><td class="member-no">No</td><td>30</td></tr>
+    <tr><td>1</td><td>Raw shrimp</td><td>Shrimp</td><td class="member-no">No</td><td>30</td></tr>
+    <tr><td>1</td><td>Raw anchovies</td><td>Anchovies</td><td class="member-no">No</td><td>30</td></tr>
+    <tr><td>1</td><td>Raw sardine</td><td>Sardine</td><td class="member-no">No</td><td>40</td></tr>
+    <tr><td>1</td><td>Raw Ugthanki meat</td><td>Cooked Ugthanki meat</td><td class="member-yes">Yes</td><td>40</td></tr>
+    <tr><td>5</td><td>Raw herring</td><td>Herring</td><td class="member-no">No</td><td>50</td></tr>
+    <tr><td>10</td><td>Raw mackerel</td><td>Mackerel</td><td class="member-yes">Yes</td><td>60</td></tr>
+    <tr><td>12</td><td>Raw thin snail</td><td>Thin snail</td><td class="member-yes">Yes</td><td>70</td></tr>
+    <tr><td>15</td><td>Raw trout</td><td>Trout</td><td class="member-no">No</td><td>70</td></tr>
+    <tr><td>17</td><td>Raw lean snail</td><td>Lean snail</td><td class="member-yes">Yes</td><td>80</td></tr>
+    <tr><td>18</td><td>Raw cod</td><td>Cod</td><td class="member-yes">Yes</td><td>75</td></tr>
+    <tr><td>20</td><td>Raw pike</td><td>Pike</td><td class="member-no">No</td><td>80</td></tr>
+    <tr><td>22</td><td>Raw fat snail</td><td>Fat snail</td><td class="member-yes">Yes</td><td>95</td></tr>
+    <tr><td>25</td><td>Raw salmon</td><td>Salmon</td><td class="member-no">No</td><td>90</td></tr>
+    <tr><td>28</td><td>Raw slimy eel</td><td>Slimy eel</td><td class="member-yes">Yes</td><td>95</td></tr>
+    <tr><td>30</td><td>Raw tuna</td><td>Tuna</td><td class="member-no">No</td><td>100</td></tr>
+    <tr><td>30</td><td>Raw chompy</td><td>Cooked chompy</td><td class="member-yes">Yes</td><td>14 in the ordinary off-quest cooking path</td></tr>
+    <tr><td>40</td><td>Raw lobster</td><td>Lobster</td><td class="member-no">No</td><td>120</td></tr>
+    <tr><td>43</td><td>Raw bass</td><td>Bass</td><td class="member-yes">Yes</td><td>130</td></tr>
+    <tr><td>45</td><td>Raw swordfish</td><td>Swordfish</td><td class="member-no">No</td><td>140</td></tr>
+    <tr><td>53</td><td>Raw lava eel</td><td>Lava eel</td><td class="member-yes">Yes</td><td>140; build row is non-burning</td></tr>
+    <tr><td>80</td><td>Raw shark</td><td>Shark</td><td class="member-yes">Yes</td><td>210</td></tr>
+    <tr><td>82</td><td>Raw sea turtle</td><td>Sea turtle</td><td class="member-yes">Yes</td><td>211.3</td></tr>
+    <tr><td>91</td><td>Raw manta ray</td><td>Manta ray</td><td class="member-yes">Yes</td><td>216.3</td></tr>
+  </tbody></table></div>
+
+  <h3>Prepared foods and recipe XP</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Food</th><th>Preparation / tool</th><th>Members</th><th>Verified Cooking XP</th></tr></thead><tbody>
+    <tr><td>1</td><td><strong>Bread</strong></td><td>Make bread dough from flour and water, then bake it on a range/oven.</td><td class="member-no">No</td><td>40 on successful baking</td></tr>
+    <tr><td>10</td><td><strong>Redberry pie</strong></td><td>Prepare the pie in a pie dish and bake it on a range/oven.</td><td class="member-no">No</td><td>78 on successful baking</td></tr>
+    <tr><td>20</td><td><strong>Meat pie</strong></td><td>Prepare the meat-filled pie and bake it on a range/oven.</td><td class="member-no">No</td><td>110 on successful baking</td></tr>
+    <tr><td>25</td><td><strong>Stew</strong></td><td>Prepare an uncooked stew in a bowl, then cook it.</td><td class="member-no">No</td><td>117 on successful cooking</td></tr>
+    <tr><td>30</td><td><strong>Apple pie</strong></td><td>Prepare the apple-filled pie and bake it on a range/oven.</td><td class="member-no">No</td><td>130 on successful baking</td></tr>
+    <tr><td>35</td><td><strong>Plain pizza</strong></td><td>Pizza base + tomato + cheese makes uncooked pizza; bake it on a range/oven.</td><td class="member-no">No</td><td>143 on successful baking</td></tr>
+    <tr><td>35</td><td><strong>Wine</strong></td><td>Use grapes with a jug of water and allow the unfermented wine to resolve.</td><td class="member-no">No</td><td>110 if it becomes wine; bad wine on failure</td></tr>
+    <tr><td>40</td><td><strong>Cake</strong></td><td>Flour + egg + milk + cake tin makes uncooked cake; bake it on a range/oven.</td><td class="member-no">No</td><td>180 on successful baking</td></tr>
+    <tr><td>45</td><td><strong>Meat pizza</strong></td><td>Add cooked meat or cooked chicken to a plain pizza.</td><td class="member-no">No</td><td>26 for the topping step, in addition to the plain-pizza XP</td></tr>
+    <tr><td>50</td><td><strong>Chocolate cake</strong></td><td>Add a chocolate bar or chocolate dust to a cooked cake.</td><td class="member-no">No</td><td>Build 254 currently awards 30 for this step; see implementation conflict below</td></tr>
+    <tr><td>55</td><td><strong>Anchovy pizza</strong></td><td>Add cooked anchovies to a plain pizza.</td><td class="member-no">No</td><td>39 for the topping step, in addition to the plain-pizza XP</td></tr>
+    <tr><td>58</td><td><strong>Pitta bread</strong></td><td>Bake pitta dough on a range/oven.</td><td class="member-yes">Yes</td><td>40 on successful baking</td></tr>
+    <tr><td>60</td><td><strong>Curry</strong></td><td>Prepare an uncooked curry in a bowl, then cook it.</td><td class="member-yes">Yes</td><td>280 on successful cooking</td></tr>
+    <tr><td>65</td><td><strong>Pineapple pizza</strong></td><td>Add pineapple ring or chunks to a plain pizza.</td><td class="member-yes">Yes</td><td>45 for the topping step, in addition to the plain-pizza XP</td></tr>
+  </tbody></table></div>
+
+  <h3>Training methods</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Access / locations</th><th>Items / tools</th><th>XP per success</th><th>Practical notes and risks</th></tr></thead><tbody>
+    <tr><td>1+</td><td><strong>Cook meat and low-level fish</strong></td><td>Free-to-play; any convenient fire or range</td><td>Raw meat/fish</td><td>30&ndash;50 at the first tiers</td><td>The basic repeatable route. A range may use a better success roll than a fire for supported foods. Burnt food gives no XP.</td></tr>
+    <tr><td>After Cook's Assistant</td><td><strong>Lumbridge Cook-o-matic</strong></td><td>Free-to-play; Lumbridge Castle kitchen</td><td>Supported raw food; completed <a href="../quests/cooks-assistant.html">Cook's Assistant</a></td><td>Same food XP as normal</td><td>Build 254 supplies special Cook-o-matic success rolls for supported foods, so the benefit is fewer burns rather than bonus XP.</td></tr>
+    <tr><td>15&ndash;45</td><td><strong>Trout, salmon, tuna and swordfish</strong></td><td>Free-to-play where the fish can be obtained and a cooking spot is nearby</td><td>Raw fish + fire/range</td><td>70 / 90 / 100 / 140</td><td>Straightforward fish progression. Swordfish remains burnable; Cooking gauntlets can later improve its success rate for members who complete Family Crest.</td></tr>
+    <tr><td>35+</td><td><strong>Wine</strong></td><td>Free-to-play</td><td>Grapes + jugs of water</td><td>110 on successful fermentation</td><td>Does not require standing at a range, but the batch can resolve into bad wine instead of granting XP.</td></tr>
+    <tr><td>35+</td><td><strong>Prepared foods</strong></td><td>Free-to-play and members depending on recipe; ranges/ovens</td><td>Dough, bowls, pie dishes, cake tins and recipe ingredients</td><td>40&ndash;280 for the verified base recipes above</td><td>More inventory preparation than raw fish. Pitta and curry are members-only; pineapple pizza is members-only.</td></tr>
+    <tr><td>40+</td><td><strong>Lobster, swordfish and shark with Cooking gauntlets</strong></td><td>Members for the gauntlets; any suitable range/fire</td><td>Cooking gauntlets + supported raw fish</td><td>120 / 140 / 210</td><td>The gauntlets reduce burns only for these three build-supported foods. Lobster and swordfish themselves remain usable in free-to-play, but the gauntlet benefit requires members' Family Crest content.</td></tr>
+    <tr><td>Members</td><td><strong>Gnome cuisine</strong></td><td>Tree Gnome Stronghold and associated gnome cooking content</td><td>Gianne dough, bowls, cocktail shaker and specialised ingredients</td><td>Varies</td><td>Period-correct cuisine exists in build 254, but several reconstructed level checks are missing or explicitly uncertain. This guide does not invent precise training breakpoints for those recipes.</td></tr>
+  </tbody></table></div>
+
+  <h3>Equipment, guilds and special areas</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Feature</th><th>Cooking relevance</th><th>Members</th><th>Requirements</th></tr></thead><tbody>
+    <tr><td><strong>Chef's hat</strong></td><td>Required clothing for normal entry to the Cooks' Guild.</td><td class="member-no">No</td><td>32 Cooking to enter the guild.</td></tr>
+    <tr><td><strong>Cooks' Guild</strong></td><td>Cooking-focused free-to-play guild with cooking ingredients and facilities.</td><td class="member-no">No</td><td>32 Cooking and a chef's hat.</td></tr>
+    <tr><td><strong>Lumbridge Cook-o-matic 100</strong></td><td>Uses special success-roll data for supported foods.</td><td class="member-no">No</td><td>Complete <a href="../quests/cooks-assistant.html">Cook's Assistant</a> before the cook permits use.</td></tr>
+    <tr><td><strong>Cooking gauntlets</strong></td><td>Reduce burn chance for lobster, swordfish and shark in build 254.</td><td class="member-yes">Yes</td><td>Complete <a href="../quests/family-crest.html">Family Crest</a> and have Caleb enchant the steel gauntlets.</td></tr>
+    <tr><td><strong>Gnome cuisine</strong></td><td>Battas, crunchies, gnome bowls and cocktails form a separate multi-step Cooking system.</td><td class="member-yes">Yes</td><td>Access to the gnome area and the required ingredients.</td></tr>
+    <tr><td><strong>Big Chompy cooking</strong></td><td>Chompy meat and the quest's seasoned-spit cooking sequence use Cooking.</td><td class="member-yes">Yes</td><td><a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a> progress; 30 Cooking for the relevant cooking sequence.</td></tr>
+  </tbody></table></div>
+
+  <h3>Relevant quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Cooking relevance</th></tr></thead><tbody>
+    <tr><td><a href="../quests/cooks-assistant.html">Cook's Assistant</a></td><td>Free-to-play</td><td>Awards <strong>300 Cooking XP</strong> and unlocks permitted use of the Lumbridge Cook-o-matic range in build 254.</td></tr>
+    <tr><td><a href="../quests/gertrudes-cat.html">Gertrude's Cat</a></td><td>Members</td><td>Awards <strong>1,525 Cooking XP</strong>.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Members</td><td>Awards <strong>2,825 Cooking XP</strong>; its lava-eel sequence provides the period route associated with the level-53 lava-eel unlock.</td></tr>
+    <tr><td><a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a></td><td>Members</td><td>Awards <strong>1,470 Cooking XP</strong> and uses 30 Cooking in the chompy cooking sequence.</td></tr>
+    <tr><td><a href="../quests/family-crest.html">Family Crest</a></td><td>Members</td><td>Caleb asks for cooked shrimp, salmon, tuna, bass and swordfish. After the quest he can turn the steel gauntlets into <strong>Cooking gauntlets</strong>.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <div class="callout"><p><strong>Why this page is larger than the old one:</strong> <code>levelup_unlocks_cooking.rs2</code> only contains milestone popup messages and is not a complete Cooking guide. Build 254 also has a fuller skill-guide row, a table-driven generic Cooking database, separate inventory recipe scripts, Cook-o-matic overrides, Cooking-gauntlet overrides, gnome cooking scripts and quest-specific cooking flows. This audit uses those sources together instead of treating the popup list as exhaustive.</p></div>
+  <ul>
+    <li><strong>Generic food data:</strong> <code>cooking_generic.dbrow</code> supplies required levels, XP, burnt products and success-roll variants. The generic <code>cooking.rs2</code> handler enforces membership and level checks before processing a cook.</li>
+    <li><strong>Range and special-range behaviour:</strong> the generic handler can replace the ordinary success roll with range-specific or Lumbridge Cook-o-matic values when the database row provides them.</li>
+    <li><strong>Cooking gauntlets:</strong> the handler uses a gauntlet-specific roll only when one exists in the row; the period-supported targets in this build are lobster, swordfish and shark.</li>
+    <li><strong>Gnome recipes:</strong> the checkout contains battas, crunchies, bowls and cocktails, but several reconstructed gnome level restrictions are absent or uncertain. Their existence is documented without fabricating exact unlock levels.</li>
+    <li><strong>Chocolate-cake conflict:</strong> the cake script's own historical-source comment says adding chocolate should not give XP, but the current code executes <code>stat_advance(cooking, 300)</code>, which is 30 Cooking XP in this project's x10 skill scale. The table above records the build behaviour and flags the conflict rather than silently choosing one.</li>
+  </ul>
+  <div class="callout warn"><p><strong>Cutoff exclusion — Tai Bwo Wannai Trio:</strong> the checkout also contains Tai Bwo Wannai Trio and karambwan-related Cooking code, but that quest was released on <strong>14 September 2004</strong>, one week after this wiki's <strong>7 September 2004</strong> snapshot. Karambwan and the quest's Cooking reward are therefore intentionally excluded from target-period unlocks and training.</p></div>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Historical anchors:</strong> Cooking is an original RuneScape skill dated to 4 January 2001; the Cooks' Guild is an early 2001 feature; gnome food and cocktail content predates the cutoff; Big Chompy Bird Hunting was released in May 2004; and Tai Bwo Wannai Trio is dated 14 September 2004, after the target snapshot.</li>
+    <li><strong>Build-254 Cooking implementation:</strong> <code>scripts/skill_cooking/scripts/cooking.rs2</code>, <code>scripts/skill_cooking/configs/cooking_source/cooking_generic.dbrow</code>, <code>scripts/player/configs/skill_guide.dbrow</code>, <code>scripts/levelup/scripts/levelup_unlocks_cooking.rs2</code>, and the recipe scripts under <code>scripts/skill_cooking/scripts/cooking_inv/</code>.</li>
+    <li><strong>Special systems:</strong> <code>cooking_guild.rs2</code>, the gnome-cooking scripts, <code>quest_cook.rs2</code>, <code>crest_caleb.rs2</code>, and the Big Chompy cooking script supply the guild, Cook-o-matic, gauntlet and quest-specific behaviour.</li>
+    <li><strong>Quest reward cross-checks:</strong> the already-audited local Cook's Assistant, Gertrude's Cat, Heroes' Quest, Big Chompy Bird Hunting and Family Crest guides agree with the build findings used above.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="magic.html">&larr; Magic</a><a class="next" href="fishing.html">Fishing &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 Cooking implementation. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

@@ -52,6 +52,8 @@ import {
 import NpcType from '#/cache/config/NpcType.js';
 import { Interfaces, GRIMY_HERB_MAP } from '#/engine/bot/BotKnowledge.js';
 import ObjType from '#/cache/config/ObjType.js';
+import type { BotTaskDebugInfo } from '#/engine/bot/debug/BotDebugTypes.js';
+import { PlayerStatNameMap } from '#/engine/entity/PlayerStat.js';
 
 // ── Shared NPC claim registry ─────────────────────────────────────────────────
 // Module-level set of NPC keys currently targeted by any CombatTask instance.
@@ -787,6 +789,28 @@ export class CombatTask extends BotTask {
 
     isComplete(): boolean {
         return false;
+    }
+
+    override getDebugInfo(player: Player): BotTaskDebugInfo {
+        const [lx, lz, ll] = this.step.location;
+        const hp = player.stats[PlayerStat.HITPOINTS];
+        const maxHp = player.baseLevels[PlayerStat.HITPOINTS];
+        return {
+            task: this.name,
+            state: this.state,
+            target: this.currentNpc ? `${NpcType.get(this.currentNpc.type).debugname ?? 'npc'}@(${this.currentNpc.x},${this.currentNpc.z})` : undefined,
+            destination: { x: lx, z: lz, level: ll },
+            details: {
+                trainingStat: PlayerStatNameMap.get(this.stat) ?? `stat${this.stat}`,
+                hp, maxHp,
+                interactTicks: this.interactTicks,
+                approachTicks: this.approachTicks,
+                scanFail: this.scanFail,
+                fleeTicks: this.fleeTicks,
+                buryCount: this.buryCount,
+                stuck: this.stuck.getDebugSnapshot()
+            }
+        };
     }
 
     override reset(): void {

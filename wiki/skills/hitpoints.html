@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Hitpoints skill guide for 2004scape Progressive build 254, including level progression and membership requirements.">
+  <meta name="description" content="Historically audited Hitpoints skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering health, combat XP, regeneration, combat level, quest XP, Dwarf multicannon behavior, and implementation details.">
   <title>Hitpoints — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,17 +16,117 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Hitpoints</p>
   <h1 class="pagetitle">Hitpoints</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Hitpoints</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Combat</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>None</dd></div></div>
-  <p class="lede">Hitpoints is the character's health skill. Damage reduces current Hitpoints and healing restores them up to the current maximum. The build defines no separate equipment, area, or activity unlocks at particular Hitpoints levels.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. This skill has no discrete content-unlock levels, so the progression effect is listed instead.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>10–99</td><td>No discrete content unlock; each base level raises the character's maximum Hitpoints.</td><td class="member-no">No</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Hitpoints</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Combat</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Released</dt><dd>4 January 2001</dd></div>
+    <div class="row"><dt>Normal starting level</dt><dd>10</dd></div>
+    <div class="row"><dt>Normal starting XP</dt><dd>1,154</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main purpose</dt><dd>Maximum health / survival</dd></div>
+    <div class="row"><dt>Discrete level unlocks</dt><dd>None in build 254</dd></div>
+  </div>
+
+  <p class="lede">Hitpoints is the free-to-play combat skill that represents a player's health. Current Hitpoints fall when damage is taken and can be restored by food, other healing effects, or natural regeneration; reaching zero causes death. Unlike the other ordinary skills, a normal new RuneScape 2 character begins at <strong>level 10 Hitpoints</strong> rather than level 1. Raising the base level increases the normal maximum health and also contributes to the player's combat level.</p>
+
+  <h3>Mechanics</h3>
+  <div class="callout"><p><strong>Combat XP:</strong> for ordinary combat in build 254, every point of credited damage gives <strong>1.33 Hitpoints XP</strong> in addition to the experience assigned by the chosen melee, Ranged or Magic combat style. A hit of 10 damage therefore gives 13.3 Hitpoints XP before any special NPC combat-XP multiplier is applied.</p></div>
+  <ul>
+    <li><strong>Base versus current Hitpoints:</strong> the base skill level is the player's normal maximum health. Damage lowers the current value without lowering the base level; healing raises the current value again.</li>
+    <li><strong>Death:</strong> build 254's damage routine queues player death when current Hitpoints reaches <strong>0</strong>.</li>
+    <li><strong>Melee:</strong> accurate, aggressive, defensive and controlled melee styles all award the same normal Hitpoints XP from damage. The style only changes how the other combat XP is distributed between <a href="attack.html">Attack</a>, <a href="strength.html">Strength</a> and <a href="defence.html">Defence</a>.</li>
+    <li><strong>Ranged:</strong> damaging bow, crossbow and thrown-weapon attacks award normal Hitpoints XP alongside <a href="ranged.html">Ranged</a> XP. Longrange still gives Hitpoints XP even though its combat-skill XP is split between Ranged and Defence.</li>
+    <li><strong>Magic:</strong> damaging combat spells award Hitpoints XP from damage alongside their <a href="magic.html">Magic</a> experience. Spell-casting XP that is awarded independently of damage is not converted into extra Hitpoints XP.</li>
+    <li><strong>Healing is not training:</strong> eating food or receiving another healing effect restores current Hitpoints but does not itself award Hitpoints experience.</li>
+    <li><strong>Natural regeneration:</strong> build 254 gives Hitpoints its own regeneration timer. Each health-regeneration trigger heals 1 Hitpoint; the normal login timer is set to 100 cycles, while the <a href="prayer.html">Rapid Heal</a> prayer changes that timer to 50 cycles while active.</li>
+    <li><strong>Combat level:</strong> build 254 explicitly includes base Hitpoints together with Defence and half of Prayer in the base portion of the combat-level calculation. Raising Hitpoints can therefore raise combat level even though it unlocks no equipment.</li>
+  </ul>
+
+  <h3>Level progression at the 7 September 2004 cutoff</h3>
+  <div class="callout"><p><strong>No conventional unlock table:</strong> Hitpoints does not gate weapons, armour, guilds, spells or activities at particular levels in build 254. Its progression benefit is the larger health pool itself.</p></div>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock / progression effect</th><th>Members</th><th>Other requirements</th></tr></thead><tbody>
+    <tr><td>10</td><td>Normal RuneScape 2 starting Hitpoints level; maximum normal health is 10.</td><td class="member-no">No</td><td>A normal new character starts here with 1,154 Hitpoints XP.</td></tr>
+    <tr><td>11&ndash;99</td><td>Each base level adds 1 to the player's normal maximum Hitpoints and contributes to the combat-level formula.</td><td class="member-no">No</td><td>No separate item, quest or activity unlock is attached to these Hitpoints levels in build 254.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The character starts at level 10 Hitpoints. The build's <code>levelup_unlocks_hitpoints</code> list is empty.</p></div>
+  <div class="callout warn"><p><strong>Historical edge case:</strong> RuneScape Classic used a special starting Hits-XP value that did not line up with RuneScape 2's level-10 XP threshold. Some transferred Classic accounts could therefore appear below the normal level-10 RuneScape 2 starting state. This guide describes the ordinary new-character progression used for the September-2004 skill.</p></div>
+
+  <h3>Training methods</h3>
+  <p class="lede">Hitpoints is normally trained as a by-product of combat rather than by selecting a Hitpoints-specific attack style. For ordinary enemies, total credited damage is what matters: whichever combat method deals that damage also supplies the Hitpoints XP.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Verified XP</th><th>Requirements and practical notes</th></tr></thead><tbody>
+    <tr><td>10+</td><td><strong>Melee combat</strong></td><td>1.33 Hitpoints XP per point of credited damage</td><td>Free-to-play. Train Attack, Strength or Defence normally against targets you can damage and survive against. Controlled combat changes the melee-skill split, not the normal Hitpoints rate.</td></tr>
+    <tr><td>10+</td><td><strong>Ranged combat</strong></td><td>1.33 Hitpoints XP per point of credited damage</td><td>Free-to-play. Ordinary direct Ranged attacks give Hitpoints XP from damage. Longrange still gives the same Hitpoints XP while splitting other combat XP between Ranged and Defence.</td></tr>
+    <tr><td>10+</td><td><strong>Combat Magic</strong></td><td>1.33 Hitpoints XP per point of credited damage</td><td>Free-to-play spells are available as well as members spells. Damage-derived Hitpoints XP is separate from a spell's fixed/base Magic casting XP.</td></tr>
+    <tr><td>Quest-dependent</td><td><strong>Quest reward XP</strong></td><td>875&ndash;30,600 Hitpoints XP in the verified rewards below</td><td>One-time or choice-based rewards. Membership, combat, quest prerequisites and other requirements vary by quest.</td></tr>
+  </tbody></table></div>
+
+  <div class="callout warn"><p><strong>Dwarf multicannon exception:</strong> cannon damage should not be treated as Hitpoints training. Build 254's <a href="../quests/dwarf-cannon.html">Dwarf Cannon</a> firing script awards <strong>2 Ranged XP per point of credited cannon damage</strong> and does not call the normal combat-XP routine or award Hitpoints XP.</p></div>
+
+  <h3>Verified Hitpoints XP quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Hitpoints relevance</th></tr></thead><tbody>
+    <tr><td><a href="../quests/witchs-house.html">Witch's House</a></td><td>Free-to-play</td><td><strong>6,325 Hitpoints XP.</strong> This is the largest fixed Hitpoints-only quest reward in the audited cutoff quest set.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Members</td><td><strong>3,075 Hitpoints XP</strong> as part of its broad skill reward.</td></tr>
+    <tr><td><a href="../quests/nature-spirit.html">Nature Spirit</a></td><td>Members</td><td><strong>2,000 Hitpoints XP</strong> alongside Crafting and Defence XP.</td></tr>
+    <tr><td><a href="../quests/observatory-quest.html">Observatory Quest</a></td><td>Members</td><td><strong>875 Hitpoints XP</strong> only if the random constellation reward is Leo; this reward is not guaranteed.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>Members</td><td>Hitpoints is one of the <strong>7,650-XP training choices</strong>. Build 254 allows all four selections to be assigned to Hitpoints for up to <strong>30,600 Hitpoints XP</strong>.</td></tr>
+  </tbody></table></div>
+
+  <h3>Quest and progression links</h3>
+  <ul>
+    <li><a href="../quests/witchs-house.html"><strong>Witch's House</strong></a> is the standout direct Hitpoints quest at the cutoff, awarding 6,325 XP after the experiment combat sequence.</li>
+    <li><a href="../quests/heroes-quest.html"><strong>Heroes' Quest</strong></a> awards 3,075 Hitpoints XP among its many skill rewards.</li>
+    <li><a href="../quests/nature-spirit.html"><strong>Nature Spirit</strong></a> awards 2,000 Hitpoints XP and is members-only.</li>
+    <li><a href="../quests/observatory-quest.html"><strong>Observatory Quest</strong></a> can award 875 Hitpoints XP when Leo is the randomly selected constellation.</li>
+    <li><a href="../quests/legends-quest.html"><strong>Legends' Quest</strong></a> can place one or more of its four 7,650-XP selections into Hitpoints.</li>
+    <li><a href="../quests/dwarf-cannon.html"><strong>Dwarf Cannon</strong></a> matters for the opposite reason: cannon damage trains Ranged without the normal accompanying Hitpoints XP in build 254.</li>
+  </ul>
+
+  <h3>Healing and survival</h3>
+  <p>Hitpoints training and Hitpoints restoration are separate systems. Combat raises the base skill through experience, while food and other healing effects restore the current value toward its normal maximum. This distinction matters when planning dangerous training: a higher Hitpoints level gives a larger health pool, but remaining alive still depends on armour, food, prayer, enemy damage, poison and the safety of the area.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>System</th><th>What it changes</th><th>Members</th><th>Important note</th></tr></thead><tbody>
+    <tr><td>Food / healing effects</td><td>Current Hitpoints</td><td class="member-no">No for ordinary food</td><td>Restoration does not itself award Hitpoints XP.</td></tr>
+    <tr><td>Natural regeneration</td><td>Current Hitpoints</td><td class="member-no">No</td><td>Build 254 heals 1 Hitpoint on each health-regeneration timer trigger.</td></tr>
+    <tr><td>Rapid Heal prayer</td><td>Regeneration interval</td><td class="member-no">No</td><td>The level-22 prayer halves the build's health-regeneration timer from 100 to 50 cycles while active.</td></tr>
+    <tr><td>Combat / quest XP</td><td>Base Hitpoints level</td><td class="member-no">Combat is F2P; quests vary</td><td>Increasing the base level raises the normal maximum health and can affect combat level.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <ul>
+    <li><strong>1.33 XP per damage is explicit:</strong> build ref 254's general combat-XP procedure converts credited damage into 1.33 Hitpoints XP after applying the NPC combat-XP multiplier.</li>
+    <li><strong>Hitpoints is independent of combat style:</strong> the general routine awards Hitpoints XP after the style-specific Attack, Strength, Defence, Ranged or Magic allocation.</li>
+    <li><strong>No level-up unlock entries:</strong> <code>levelup_unlocks_hitpoints</code> exists but contains no level values at ref 254. The previous local page was correct on this narrow point, but it mistook that empty popup list for a complete skill guide.</li>
+    <li><strong>Combat-level contribution:</strong> <code>combat_level.rs2</code> includes base Hitpoints in the defensive/base component of the player's combat level.</li>
+    <li><strong>Health regeneration is separate:</strong> <code>stat.rs2</code> excludes Hitpoints from ordinary stat restoration and instead heals it with a dedicated <code>health_regen</code> timer. The login script starts that timer at 100 cycles, and Rapid Heal switches it to 50.</li>
+    <li><strong>Death at zero:</strong> <code>damage.rs2</code> queues <code>player_death</code> when current Hitpoints reaches zero.</li>
+    <li><strong>Cannon bypass:</strong> the build-254 multicannon script directly advances Ranged by 2 XP per credited point of damage. It does not award Hitpoints XP.</li>
+  </ul>
+
+  <h3>Cutoff and terminology notes</h3>
+  <div class="callout warn"><p><strong>Use the 2004 name:</strong> the skill is <strong>Hitpoints</strong> in this September-2004 guide. Jagex did not rename the skill to <em>Constitution</em> and multiply displayed health values by ten until <strong>3 March 2010</strong>. "Constitution" and "life points" are therefore post-cutoff terminology and are not used for target-period mechanics here.</p></div>
+  <ul>
+    <li><strong>Original skill:</strong> the health skill dates to RuneScape's 4 January 2001 launch; the earliest Classic name was <em>Hits</em>, but the target RuneScape 2 skill is Hitpoints.</li>
+    <li><strong>Normal RuneScape 2 start:</strong> a new account begins at level 10 with 1,154 Hitpoints XP rather than level 1.</li>
+    <li><strong>No later health systems:</strong> Constitution-era ten-times health scaling, later foods designed to overheal, later skillcapes, later minigames and other post-cutoff Hitpoints mechanics are excluded.</li>
+    <li><strong>No invented XP/hour:</strong> Hitpoints XP/hour depends on total damage output, target XP multipliers, supplies and combat method. The guide therefore records the verified per-damage rate instead of importing modern training rates.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Historical identity:</strong> preserved RuneScape/Old School RuneScape skill histories date the health skill to 4 January 2001, identify it as free-to-play, and preserve the normal RuneScape 2 level-10 / 1,154-XP starting state.</li>
+    <li><strong>Later-name boundary:</strong> Jagex's 3 March 2010 Hitpoints update renamed the skill Constitution and multiplied displayed health by ten; that change is used only to establish what terminology must be excluded from September 2004.</li>
+    <li><strong>Build-254 combat XP:</strong> <code>Content/scripts/skill_combat/scripts/combat.rs2</code> at ref <code>254</code> awards 1.33 Hitpoints XP per credited point of ordinary combat damage, subject to the target's combat-XP multiplier.</li>
+    <li><strong>Build-254 unlock list:</strong> <code>Content/scripts/levelup/configs/levelup_unlocks.enum</code> at ref <code>254</code> defines <code>levelup_unlocks_hitpoints</code> with no level entries.</li>
+    <li><strong>Build-254 combat level:</strong> <code>Content/scripts/player/scripts/combat_level.rs2</code> at ref <code>254</code> includes base Hitpoints in the combat-level formula.</li>
+    <li><strong>Build-254 health/death:</strong> <code>Content/scripts/player/scripts/stat.rs2</code>, <code>scripts/login_logout/login.rs2</code> and <code>scripts/player/scripts/damage.rs2</code> at ref <code>254</code> establish the dedicated health-regeneration timer and the zero-Hitpoints death check.</li>
+    <li><strong>Build-254 Rapid Heal:</strong> <code>Content/scripts/skill_prayer/scripts/prayers/rapidheal.rs2</code> switches the health timer from 100 to 50 cycles while the prayer is active.</li>
+    <li><strong>Build-254 cannon exception:</strong> <code>Content/scripts/quests/quest_mcannon/scripts/cannon_fire.rs2</code> directly awards 2 Ranged XP per credited cannon damage and no Hitpoints XP.</li>
+    <li><strong>Local quest cross-checks:</strong> the already-audited Witch's House, Heroes' Quest, Nature Spirit, Observatory Quest and Legends' Quest pages provide the cutoff-safe Hitpoints quest rewards listed above.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="strength.html">&larr; Strength</a><a class="next" href="ranged.html">Ranged &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's exact build-254 combat, level-up, regeneration, death and multicannon scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

@@ -31,7 +31,8 @@ import {
     ProgressWatchdog,
     openNearbyGate,
     botJitter,
-    advanceBankWalk
+    advanceBankWalk,
+    addXp
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 
@@ -245,16 +246,23 @@ export class SmithingTask extends BotTask {
             const ok = interactUseLocOp(player, workLoc, itemId, slot);
 
             if (ok) {
-                // Manual XP since server-side may not give XP (matches FiremakingTask architecture)
-                const oldLevel = getBaseLevel(player, PlayerStat.SMITHING);
-                player.stats[PlayerStat.SMITHING] += this.step.xpPerAction;
-                const newLevel = getBaseLevel(player, PlayerStat.SMITHING);
-                if (newLevel > oldLevel) {
-                    this.rescanTimer = 0; // Force rescan on level change
+                if (this.useAnvil) {
+                    // smithing.rs2's [oplocu,_anvil] only opens the make-X smithing
+                    // interface — the actual inv_del/inv_add/stat_advance happens
+                    // inside the inv_button click handler, which a headless bot
+                    // cannot press. Manual credit is required here. Use addXp()
+                    // (not a raw stats[] write) so baseLevels/levels — and this
+                    // level-up rescan check — stay accurate.
+                    const oldLevel = getBaseLevel(player, PlayerStat.SMITHING);
+                    addXp(player, PlayerStat.SMITHING, this.step.xpPerAction);
+                    if (getBaseLevel(player, PlayerStat.SMITHING) > oldLevel) {
+                        this.rescanTimer = 0; // Force rescan on level change
+                    }
                 }
-                const currentXp = player.stats[PlayerStat.SMITHING];
-                const gained = currentXp - this.lastXp;
-                this.lastXp = currentXp;
+                // Furnace smelting (smelting.rs2) grants Smithing XP via
+                // stat_advance() server-side with no interface involved —
+                // no manual credit needed there, it would double-count.
+                this.lastXp = player.stats[PlayerStat.SMITHING];
 
                 this.workFailTicks = 0;
 
@@ -263,12 +271,9 @@ export class SmithingTask extends BotTask {
                 }
 
                 this.cooldown = randInt(SMELT_COOLDOWN_MIN, SMELT_COOLDOWN_MAX);
+                this.watchdog.notifyActivity();
 
-                if (gained > 0) {
-                    this.watchdog.notifyActivity();
-                }
-
-                this.debug(player, `Work action sent successfully; xpGain=${gained}, cooldown=${this.cooldown}`);
+                this.debug(player, `Work action sent successfully; cooldown=${this.cooldown}`);
             } else {
                 this.workFailTicks++;
                 this.debug(player, `Work interaction failed; workFailTicks=${this.workFailTicks}/${SMITH_FAIL_LIMIT}`);

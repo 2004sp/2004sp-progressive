@@ -141,7 +141,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                     clansEnabled: Environment.NODE_FEATURE_CLANS,
                     middleMouseRotationEnabled: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
                     compassResetEnabled: Environment.NODE_QOL_COMPASS_RESET,
-                    antiMacroRotationEnabled: Environment.NODE_QOL_ANTI_MACRO_ROTATION
+                    antiMacroRotationEnabled: Environment.NODE_QOL_ANTI_MACRO_ROTATION,
+                    scrollwheelZoomEnabled: Environment.NODE_QOL_SCROLLWHEEL_ZOOM
                 });
 
             res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -156,10 +157,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                 middleMouseRotation: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
                 compassReset: Environment.NODE_QOL_COMPASS_RESET,
                 antiMacroRotation: Environment.NODE_QOL_ANTI_MACRO_ROTATION,
+                scrollwheelZoom: Environment.NODE_QOL_SCROLLWHEEL_ZOOM,
                 customshops: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMSHOPS, true),
                 bosspets: tryParseBoolean(process.env.NODE_FEATURE_BOSSPETS, true),
                 customweapons: tryParseBoolean(process.env.NODE_FEATURE_CUSTOMWEAPONS, true),
-                skillcapes: tryParseBoolean(process.env.NODE_FEATURE_SKILLCAPES, true),
                 xamount: tryParseBoolean(process.env.NODE_FEATURE_XAMOUNT, true),
                 makex: tryParseBoolean(process.env.NODE_FEATURE_MAKEX, true)
             });

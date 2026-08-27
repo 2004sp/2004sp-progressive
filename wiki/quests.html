@@ -26,8 +26,6 @@
     <option value="../wiki.html">Home</option>
 <option value="quests.html" selected>1. Quests</option>
 <option value="skills.html">2. Skills</option>
-<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
-<option value="npcs.html">4. NPCs &amp; dialogue</option>
 <option value="shops.html">5. Shops &amp; economy</option>
 <option value="drops.html">6. Drop tables</option>
 <option value="minigames.html">7. Minigames</option>
@@ -49,8 +47,6 @@
       <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
 <li data-title="1 Quests"><a class="active" href="quests.html">1&ensp;Quests</a></li>
 <li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
-<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
-<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
 <li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
 <li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
 <li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
@@ -67,9 +63,9 @@
     <div class="factbox">
       <div class="frow"><dt>Target build</dt><dd>254</dd></div>
       <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
-      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>57 / 57</dd></div>
       <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
-      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 15</dd></div>
       <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
     </div>
   </nav>
@@ -82,12 +78,13 @@
 <section class="standalone-section" id="quests">
 <p class="lede">Every quest folder was opened and read — not just listed — to identify which real quest it implements (via in-game journal title strings) and whether its dialogue chain, item/level gates, and reward-granting code are actually wired up.</p>
 <div class="callout">
-<p><strong>Headline: all 56 quests that existed in RuneScape by 7 Sept 2004 are implemented and reward-complete.</strong> Nothing is fully missing. Two bonus, non-canonical miniquests are also implemented (Pub Crawl, Witch's Potion). The one quest released just after the cutoff — Tai Bwo Wannai Trio (14 Sept 2004) — correctly does not appear.</p>
+<p><strong>Headline: all 57 quests that existed in RuneScape by 7 Sept 2004 are implemented and reward-complete.</strong> Witch's Potion counts among those 57: it was still a free-to-play quest in 2004 and was not demoted to a miniquest until 24 June 2010. Alfred Grimhand's Bar Crawl is also implemented as a period-authentic members miniquest, but is not part of the quest count. Tai Bwo Wannai Trio, released 14 Sept 2004, is correctly outside the cutoff.</p>
 </div>
+<p class="evidence"><strong>Historical baseline:</strong> 57 quests at cutoff — 18 free-to-play and 39 members. Troll Stronghold (24 Aug 2004) is the newest quest inside the target; Tai Bwo Wannai Trio (14 Sep 2004) is the first quest outside it.</p>
 <div aria-label="Filter quests by status" class="filters" role="group">
 <button class="active" data-filter="all">All (58)</button>
-<button data-filter="complete">Complete (56)</button>
-<button data-filter="extra">Bonus/non-canonical (2)</button>
+<button data-filter="complete">Complete (57)</button>
+<button data-filter="extra">Period miniquest (1)</button>
 </div>
 <div class="table-wrap">
 <table id="quest-table">
@@ -100,11 +97,12 @@
 <tr data-status="complete"><td><code>quest_sheep</code></td><td><a href="quests/sheep-shearer.html">Sheep Shearer</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Shearing logic in <code>general_use/shear_sheep.rs2</code>.</td></tr>
 <tr data-status="complete"><td><code>quest_blackarmgang</code></td><td><a href="quests/shield-of-arrav.html">Shield of Arrav</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Full Black Arm/Phoenix Gang path, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_haunted</code></td><td><a href="quests/ernest-the-chicken.html">Ernest the Chicken</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Manor chain + reward wired, but <code>// todo: This is borked for opening the doors now. Using the lever is fine.</code> — real acknowledged bug, workaround exists.</td></tr>
-<tr data-status="complete"><td><code>quest_vampire</code></td><td><a href="quests/vampyre-slayer.html">Vampyre Slayer</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Count Draynor chain, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_vampire</code></td><td><a href="quests/vampyre-slayer.html">Vampire Slayer</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Count Draynor chain, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_imp</code></td><td><a href="quests/imp-catcher.html">Imp Catcher</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Wizard Mizgog dialogue lives in <code>areas/area_wizard_tower/</code>.</td></tr>
 <tr data-status="complete"><td><code>quest_prince</code></td><td><a href="quests/prince-ali-rescue.html">Prince Ali Rescue</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Full Leela/Lady Keli disguise chain, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_doric</code></td><td><a href="quests/dorics-quest.html">Doric's Quest</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Simple quest, fully wired.</td></tr>
-<tr data-status="complete"><td><code>quest_blackknight</code></td><td><a href="quests/black-knights-fortress.html">Black Knights' Fortress</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">170-line main script, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_blackknight</code></td><td><a href="quests/black-knights-fortress.html">Black Knight's Fortress</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">170-line main script, reward wired.</td></tr>
+<tr data-status="complete"><td><code>quest_hetty</code></td><td><a href="quests/witchs-potion.html">Witch's Potion</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Historical free-to-play quest #13, released 6 Apr 2001. It still awarded 1 quest point at the Sept 2004 cutoff; demotion to miniquest did not happen until 24 Jun 2010.</td></tr>
 <tr data-status="complete"><td><code>quest_squire</code></td><td><a href="quests/the-knights-sword.html">The Knight's Sword</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Full smith/squire/cog chain, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_gobdip</code></td><td><a href="quests/goblin-diplomacy.html">Goblin Diplomacy</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Goblin mail sub-chain, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_hunt</code></td><td><a href="quests/pirates-treasure.html">Pirate's Treasure</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Redbeard Frank/dig chain, reward wired.</td></tr>
@@ -115,7 +113,7 @@
 <tr data-status="complete"><td><code>quest_arthur</code></td><td><a href="quests/merlins-crystal.html">Merlin's Crystal</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Sir Mordred, Morgan Le Faye's keep, 276-line main script.</td></tr>
 <tr data-status="complete"><td><code>quest_hero</code></td><td><a href="quests/heroes-quest.html">Heroes' Quest</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Brimhaven HQ/Scarface mansion, dragon battleaxe reward. Some missing out-of-order-interaction dialogue (edge-case polish).</td></tr>
 <tr data-status="complete"><td><code>quest_scorpcatcher</code></td><td><a href="quests/scorpion-catcher.html">Scorpion Catcher</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Full chain, reward wired.</td></tr>
-<tr data-status="complete"><td><code>quest_crest</code></td><td><a href="quests/family-crest.html">Family Crest</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">All four Avan brothers scripted. Reward call reuses the <code>^squire_questpoints</code> constant instead of its own — same value, wrong name (cosmetic).</td></tr>
+<tr data-status="complete"><td><code>quest_crest</code></td><td><a href="quests/family-crest.html">Family Crest</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Dimintheis's three sons are Caleb, Avan and Johnathon. Reward call reuses the <code>^squire_questpoints</code> constant instead of its own — same value, wrong name (cosmetic).</td></tr>
 <tr data-status="complete"><td><code>quest_totem</code></td><td><a href="quests/tribal-totem.html">Tribal Totem</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Own interface (<code>tribal_door2.if</code>), full chain, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_fishingcompo</code></td><td><a href="quests/fishing-contest.html">Fishing Contest</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Hemenster chain + reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_drunkmonk</code></td><td><a href="quests/monks-friend.html">Monk's Friend</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Full chain + reward.</td></tr>
@@ -140,17 +138,16 @@
 <tr data-status="complete"><td><code>quest_mcannon</code></td><td><a href="quests/dwarf-cannon.html">Dwarf Cannon</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Nulodion/cannon assembly, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_murder</code></td><td><a href="quests/murder-mystery.html">Murder Mystery</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Every Sinclair scripted individually, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_itexam</code></td><td><a href="quests/the-dig-site.html">The Dig Site</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">895-line area script + 546-line examiner script.</td></tr>
-<tr data-status="complete"><td><code>quest_fluffs</code></td><td><a href="quests/gertrudes-cat.html">Gertrude's Cat</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Custom quest-scroll interface; intentional no-item reward matches the real quest.</td></tr>
+<tr data-status="complete"><td><code>quest_fluffs</code></td><td><a href="quests/gertrudes-cat.html">Gertrude's Cat</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Custom quest-scroll interface; rewards include a pet kitten, chocolate cake and stew alongside the quest's XP and Quest Point rewards.</td></tr>
 <tr data-status="complete"><td><code>quest_legends</code></td><td><a href="quests/legends-quest.html">Legends' Quest</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">2,100-line main script — the largest quest in the repo.</td></tr>
 <tr data-status="complete"><td><code>quest_runemysteries</code></td><td><a href="quests/rune-mysteries.html">Rune Mysteries</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Aubury/Sedridor/Duke Horacio, reward wired.</td></tr>
 <tr data-status="complete"><td><code>quest_chompybird</code></td><td><a href="quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">793-line Rantz saga, Ogre bow crafting, reward wired.</td></tr>
-<tr data-status="complete"><td><code>quest_elemental_workshop</code></td><td><a href="quests/elemental-workshop-i.html">Elemental Workshop I</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">All 4 guardians + shield book. Correctly scoped to EW1 only (EW2 is 2005).</td></tr>
-<tr data-status="complete"><td><code>quest_priestperil</code></td><td><a href="quests/priest-in-peril.html">Priest in Peril</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Drezel/vampire coffin chain, own quest-log interface. <a href="magic-prayer.html">Its 3 unlocked prayers aren't implemented</a> — see Magic &amp; Prayer.</td></tr>
+<tr data-status="complete"><td><code>quest_elemental_workshop</code></td><td><a href="quests/elemental-workshop-i.html">Elemental Workshop</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">All 4 guardians + shield book. Correctly scoped to the original quest only; Elemental Workshop II was released in October 2006.</td></tr>
+<tr data-status="complete"><td><code>quest_priestperil</code></td><td><a href="quests/priest-in-peril.html">Priest in Peril</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Drezel/vampire coffin chain, own quest-log interface. <a href="skills/prayer.html">The September-2004 prayer book is 15 / 15 implemented</a> — see the Prayer guide.</td></tr>
 <tr data-status="complete"><td><code>quest_druidspirit</code></td><td><a href="quests/nature-spirit.html">Nature Spirit</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Filliman/Ghast/swamp decay, 435-line main script.</td></tr>
 <tr data-status="complete"><td><code>quest_death</code></td><td><a href="quests/death-plateau.html">Death Plateau</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">2,058-line NPC config, full IG commander/equipment room chain.</td></tr>
 <tr data-status="complete"><td><code>quest_troll</code></td><td><a href="quests/troll-stronghold.html">Troll Stronghold</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Eadgar/Godric/champion, 1,465-line NPC config.</td></tr>
-<tr data-status="extra"><td><code>quest_barcrawl</code></td><td><em><a href="quests/pub-crawl.html">Pub Crawl</a></em> (non-canonical)</td><td><span class="pill extra">Bonus</span></td><td class="evidence">Bartender-visiting achievement activity, no quest points — not one of the 56, implemented anyway.</td></tr>
-<tr data-status="extra"><td><code>quest_hetty</code></td><td><em><a href="quests/witchs-potion.html">Witch's Potion</a></em> (RSC-era miniquest)</td><td><span class="pill extra">Bonus</span></td><td class="evidence">Demoted to a no-QP miniquest in real RS2, but implemented here as a full 1-QP quest with its own completion scroll.</td></tr>
+<tr data-status="extra"><td><code>quest_barcrawl</code></td><td><em><a href="quests/pub-crawl.html">Alfred Grimhand's Bar Crawl</a></em> (miniquest)</td><td><span class="pill extra">Period miniquest</span></td><td class="evidence">Members miniquest released 25 Mar 2002. It is authentic to the cutoff and grants no quest points, so it is tracked separately from the 57-quest total.</td></tr>
 </tbody>
 </table>
 </div>

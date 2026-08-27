@@ -49,6 +49,8 @@ import LocType from '#/cache/config/LocType.js';
 import InvType from '#/cache/config/InvType.js';
 import { getWorld } from '#/engine/bot/BotWorld.js';
 import { botWalkPath, botFindPath } from '#/engine/GameMap.js';
+import { BotCollisionMap } from '#/engine/bot/BotCollisionMap.js';
+import { trimPathAtCsvBlock, findNearestWalkableTile } from '#/engine/bot/BotNavigation.js';
 import { MoveSpeed } from '#/engine/entity/MoveSpeed.js';
 import VarPlayerType from '#/cache/config/VarPlayerType.js';
 import Obj from '#/engine/entity/Obj.js';
@@ -67,6 +69,45 @@ import Component from '#/cache/config/Component.js';
 import ScriptState from '#/engine/script/ScriptState.js';
 import World from '#/engine/World.js';
 import * as rsbuf from '@2004scape/rsbuf';
+import { BotDebugService, itemName, npcDebugName, locDebugName } from '#/engine/bot/debug/BotDebugService.js';
+
+/** Debug-only: resolves the BotPlayer wrapper's name off a Player, or null for real (non-bot) players. */
+function _debugBotName(player: Player): string | null {
+    return (player as any)._bot?.name ?? null;
+}
+
+/**
+ * Debug-only: records the start of an NPC/Loc interaction as an in-flight
+ * BotDebugAction. Resolution (success/failed/timeout) happens generically in
+ * BotPlayer's per-tick debug hook by observing XP/inventory deltas and an
+ * age-based timeout — this function only ever records that the click happened.
+ * No-op (and zero-cost beyond one map lookup) for real players / when disabled.
+ */
+function _debugStartInteraction(
+    player: Player,
+    type: string,
+    targetType: 'npc' | 'loc',
+    targetId: number,
+    targetName: string,
+    x: number,
+    z: number,
+    op: number
+): void {
+    try {
+        const botName = _debugBotName(player);
+        if (!botName) return;
+        BotDebugService.startAction(botName, type, `${type === 'interactLoc' || type === 'interactLocOp' ? 'oploc' : 'opnpc'}${op} ${targetName}`, {
+            type: targetType,
+            id: targetId,
+            name: targetName,
+            x, z,
+            level: player.level
+        });
+        BotDebugService.noteTarget(botName, targetName);
+    } catch {
+        // debug hook must never affect gameplay
+    }
+}
 
 export { PlayerStat };
 
@@ -88,6 +129,13 @@ export { PlayerStat };
  * player.teleJump() directly.
  */
 export function botTeleport(player: Player, x: number, z: number, level: number): void {
+    try {
+        const botName = _debugBotName(player);
+        if (botName) BotDebugService.event(botName, 'movement', `teleport to (${x},${z},${level})`, { x, z, level });
+    } catch {
+        // debug hook must never affect gameplay
+    }
+
     const animId = SeqType.getId('human_castteleport');
     const spotId = SpotanimType.getId('teleport_casting');
     if (animId !== -1) player.playAnimation(animId, 0);
@@ -496,8 +544,11 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
         let path = botWalkPath(player.level, player.x, player.z, destX, destZ);
         if (path.length === 0) path = botFindPath(player.level, player.x, player.z, destX, destZ);
         if (path.length > 0) {
-            player.queueWaypoints(path);
-            return;
+            const safe = trimPathAtCsvBlock(player.level, path);
+            if (safe.length > 0) {
+                player.queueWaypoints(safe);
+                return;
+            }
         }
         // Path is completely blocked — a door or gate is likely in the way.
         // Try opening one within 8 tiles before falling back to the compass sweep.
@@ -512,11 +563,15 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
             const angle = baseAngle + (deg * Math.PI) / 180;
             const midX = Math.round(player.x + Math.cos(angle) * segDist);
             const midZ = Math.round(player.z + Math.sin(angle) * segDist);
+            if (BotCollisionMap.isCsvBlocked(player.level, midX, midZ)) continue;
             let path = botWalkPath(player.level, player.x, player.z, midX, midZ);
             if (path.length === 0) path = botFindPath(player.level, player.x, player.z, midX, midZ);
             if (path.length > 0) {
-                player.queueWaypoints(path);
-                return;
+                const safe = trimPathAtCsvBlock(player.level, path);
+                if (safe.length > 0) {
+                    player.queueWaypoints(safe);
+                    return;
+                }
             }
         }
         // Retry with shorter segments in case the 90-tile target is unreachable
@@ -524,11 +579,15 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
             const angle = baseAngle + (deg * Math.PI) / 180;
             const midX = Math.round(player.x + Math.cos(angle) * 60);
             const midZ = Math.round(player.z + Math.sin(angle) * 60);
+            if (BotCollisionMap.isCsvBlocked(player.level, midX, midZ)) continue;
             let path = botWalkPath(player.level, player.x, player.z, midX, midZ);
             if (path.length === 0) path = botFindPath(player.level, player.x, player.z, midX, midZ);
             if (path.length > 0) {
-                player.queueWaypoints(path);
-                return;
+                const safe = trimPathAtCsvBlock(player.level, path);
+                if (safe.length > 0) {
+                    player.queueWaypoints(safe);
+                    return;
+                }
             }
         }
     }
@@ -540,17 +599,25 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
             const angle = baseAngle + (deg * Math.PI) / 180;
             const midX = Math.round(player.x + Math.cos(angle) * step);
             const midZ = Math.round(player.z + Math.sin(angle) * step);
+            if (BotCollisionMap.isCsvBlocked(player.level, midX, midZ)) continue;
             let path = botWalkPath(player.level, player.x, player.z, midX, midZ);
             if (path.length === 0) path = botFindPath(player.level, player.x, player.z, midX, midZ);
             if (path.length > 0) {
-                player.queueWaypoints(path);
-                return;
+                const safe = trimPathAtCsvBlock(player.level, path);
+                if (safe.length > 0) {
+                    player.queueWaypoints(safe);
+                    return;
+                }
             }
         }
     }
 
-    // Absolute last resort: 1-tile naive step
-    player.queueWaypoint(player.x + Math.sign(dx), player.z + Math.sign(dz));
+    // Absolute last resort: 1-tile naive step (skip if CSV-blocked)
+    const naiveX = player.x + Math.sign(dx);
+    const naiveZ = player.z + Math.sign(dz);
+    if (!BotCollisionMap.isCsvBlocked(player.level, naiveX, naiveZ)) {
+        player.queueWaypoint(naiveX, naiveZ);
+    }
 }
 
 /**
@@ -568,6 +635,13 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
  * moveSpeed is INSTANT, permanently blocking headless player movement.
  */
 export function walkTo(player: Player, destX: number, destZ: number): void {
+    try {
+        const botName = _debugBotName(player);
+        if (botName) BotDebugService.noteDestination(botName, destX, destZ, player.level);
+    } catch {
+        // debug hook must never affect gameplay
+    }
+
     // If a gate/door interaction is already pending (queued by openNearbyGate on
     // the previous tick), preserve it rather than wiping it here.  The engine's
     // processInteraction will walk the bot to the gate and fire APLOC1; calling
@@ -603,6 +677,16 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
     player.moveSpeed = MoveSpeed.WALK; // guard against INSTANT; processMovement overrides via defaultMoveSpeed()
 
     if (Math.abs(player.x - destX) < 1 && Math.abs(player.z - destZ) < 1) return;
+
+    // ── Destination validation ───────────────────────────────────────────────
+    // If the requested destination is CSV-blocked or WALK_BLOCKED, find the
+    // nearest walkable tile before engaging gateway/corridor/path logic.
+    if (BotCollisionMap.isCsvBlocked(player.level, destX, destZ)) {
+        const alt = findNearestWalkableTile(player.level, destX, destZ, 5);
+        if (!alt) return; // nowhere reachable near this destination
+        destX = alt.x;
+        destZ = alt.z;
+    }
 
     // ── Gateway routing ─────────────────────────────────────────────────────
     // If the destination is inside a gated region and the bot is outside,
@@ -881,6 +965,7 @@ export function interactUseLocOp(player: Player, loc: Loc, item: number, slot: n
     }
     player.lastUseItem = item;
     player.lastUseSlot = slot;
+    _debugStartInteraction(player, 'interactUseLocOp', 'loc', loc.type, `${locDebugName(loc.type)} <- ${itemName(item)}`, loc.x, loc.z, 0);
     player.setInteraction(Interaction.ENGINE, loc, ServerTriggerType.APLOCU);
     //player.opcalled = true; //<- This is in NetworkPlayer not sure if its needed
     return true;
@@ -1035,6 +1120,7 @@ export function isNear(player: Player, x: number, z: number, dist: number, level
  * The engine will path the bot to the NPC and fire [opnpc1,npcName].
  */
 export function interactNpc(player: Player, npc: Npc): void {
+    _debugStartInteraction(player, 'interactNpc', 'npc', npc.type, npcDebugName(npc.type), npc.x, npc.z, 1);
     player.clearPendingAction();
     player.setInteraction(Interaction.ENGINE, npc, ServerTriggerType.APNPC1);
 }
@@ -1045,6 +1131,7 @@ export function interactNpc(player: Player, npc: Npc): void {
  */
 export function interactNpcOp(player: Player, npc: Npc, op: 1 | 2 | 3 | 4 | 5): void {
     const trigger = (ServerTriggerType.APNPC1 + (op - 1)) as ServerTriggerType;
+    _debugStartInteraction(player, 'interactNpcOp', 'npc', npc.type, npcDebugName(npc.type), npc.x, npc.z, op);
     player.clearPendingAction();
     player.setInteraction(Interaction.ENGINE, npc, trigger);
 }
@@ -1121,6 +1208,7 @@ export function findLootObj(player: Player, cx: number, cz: number, level: numbe
  * The engine will path the bot adjacent to the Loc and fire [oploc1,locName].
  */
 export function interactLoc(player: Player, loc: Loc): void {
+    _debugStartInteraction(player, 'interactLoc', 'loc', loc.type, locDebugName(loc.type), loc.x, loc.z, 1);
     player.clearPendingAction();
     player.setInteraction(Interaction.ENGINE, loc, ServerTriggerType.APLOC1);
 }
@@ -1130,6 +1218,7 @@ export function interactLoc(player: Player, loc: Loc): void {
  */
 export function interactLocOp(player: Player, loc: Loc, op: 1 | 2 | 3 | 4 | 5): void {
     const trigger = (ServerTriggerType.APLOC1 + (op - 1)) as ServerTriggerType;
+    _debugStartInteraction(player, 'interactLocOp', 'loc', loc.type, locDebugName(loc.type), loc.x, loc.z, op);
     player.clearPendingAction();
     player.setInteraction(Interaction.ENGINE, loc, trigger);
 }
@@ -1208,6 +1297,21 @@ export function findLocByPrefix(cx: number, cz: number, level: number, prefix: s
         if (!name?.startsWith(prefix)) return false;
         if (exclude && name.includes(exclude)) return false;
         return true;
+    });
+}
+
+/**
+ * Same as findLocByPrefix, but also requires a caller predicate to pass —
+ * e.g. "not already claimed by another bot" (see claimLoc/isLocClaimed in
+ * BotTaskBase.ts) so multiple bots searching from nearby tiles don't all
+ * deterministically land on the exact same nearest resource node.
+ */
+export function findLocByPrefixWhere(cx: number, cz: number, level: number, prefix: string, radius: number, predicate: (loc: Loc) => boolean, exclude?: string): Loc | null {
+    return _findLoc(cx, cz, level, radius, loc => {
+        const name = LocType.get(loc.type).debugname;
+        if (!name?.startsWith(prefix)) return false;
+        if (exclude && name.includes(exclude)) return false;
+        return predicate(loc);
     });
 }
 
@@ -1307,6 +1411,12 @@ export function getXp(player: Player, stat: PlayerStat): number {
 
 export function addXp(player: Player, stat: PlayerStat, xp: number): void {
     player.addXp(stat, xp);
+    try {
+        const botName = _debugBotName(player);
+        if (botName) BotDebugService.noteXpGain(botName, stat, player.stats[stat]);
+    } catch {
+        // debug hook must never affect gameplay
+    }
 }
 
 /**
@@ -1318,15 +1428,23 @@ export function setCombatStyle(player: Player, style: 0 | 1 | 2 | 3): void {
 }
 
 /**
- * Enables autocast wind strike for bots in magic mode.
- * Sets autocast_spell = 51 (^wind_strike) and attackstyle_magic = 3 (autocast toggle on).
+ * Enables autocast for an arbitrary combat spell.
+ * Sets autocast_spell = the spell's varp value (see
+ * content/scripts/skill_combat/configs/magic/spells.constant, e.g. 51 =
+ * ^wind_strike, 4 = ^wind_bolt, 8 = ^wind_blast, 12 = ^wind_wave) and
+ * attackstyle_magic = 3 (autocast toggle on).
  */
-export function setAutocastWindStrike(player: Player): void {
+export function setAutocastSpell(player: Player, autocastVarp: number): void {
     const spellVarp = VarPlayerType.getByName('autocast_spell');
-    if (spellVarp) player.setVar(spellVarp.id, 51); // 51 = ^wind_strike
+    if (spellVarp) player.setVar(spellVarp.id, autocastVarp);
 
     const styleVarp = VarPlayerType.getByName('attackstyle_magic');
     if (styleVarp) player.setVar(styleVarp.id, 3); // 3 = spell chosen + autocast enabled
+}
+
+/** Enables autocast wind strike specifically — kept for callers that only ever need the base spell. */
+export function setAutocastWindStrike(player: Player): void {
+    setAutocastSpell(player, 51); // 51 = ^wind_strike
 }
 
 // ── Inventory ─────────────────────────────────────────────────────────────────
@@ -1358,13 +1476,35 @@ export function countItem(player: Player, itemId: number): number {
 export function addItem(player: Player, itemId: number, count = 1): boolean {
     const inv = getBackpack(player);
     if (!inv) return false;
-    return inv.add(itemId, count).hasSucceeded();
+    const before = countItem(player, itemId);
+    const success = inv.add(itemId, count).hasSucceeded();
+    try {
+        const botName = _debugBotName(player);
+        if (botName) {
+            const after = countItem(player, itemId);
+            BotDebugService.event(botName, 'inventory', `addItem ${itemName(itemId)} x${count}: ${success ? 'ok' : 'FAILED'} (${before} -> ${after})`, { itemId, count, before, after, success });
+        }
+    } catch {
+        // debug hook must never affect gameplay
+    }
+    return success;
 }
 
 export function removeItem(player: Player, itemId: number, count = 1): boolean {
     const inv = getBackpack(player);
     if (!inv) return false;
-    return inv.remove(itemId, count).completed >= count;
+    const before = countItem(player, itemId);
+    const success = inv.remove(itemId, count).completed >= count;
+    try {
+        const botName = _debugBotName(player);
+        if (botName) {
+            const after = countItem(player, itemId);
+            BotDebugService.event(botName, 'inventory', `removeItem ${itemName(itemId)} x${count}: ${success ? 'ok' : 'FAILED'} (${before} -> ${after})`, { itemId, count, before, after, success });
+        }
+    } catch {
+        // debug hook must never affect gameplay
+    }
+    return success;
 }
 
 export function clearBackpack(player: Player): void {
@@ -1749,6 +1889,13 @@ function _walkToGate(player: Player, gate: Loc): void {
 export function openNearbyGate(player: Player, radius = 30): boolean {
     const gate = _findLoc(player.x, player.z, player.level, radius, _isClosedGate);
     if (!gate) return false;
+
+    try {
+        const botName = _debugBotName(player);
+        if (botName) BotDebugService.noteRecovery(botName, 'gate');
+    } catch {
+        // debug hook must never affect gameplay
+    }
 
     if (isAdjacentToLoc(player, gate)) {
         // Adjacent — fire the OPLOC1 script directly.

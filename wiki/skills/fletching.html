@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Fletching skill guide for 2004scape Progressive build 254, including bow, arrow and dart unlocks and membership requirements.">
+  <meta name="description" content="Historically audited Fletching skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering bows, arrows, darts, tipped bolts, ogre arrows, XP, training, quests and implementation differences.">
   <title>Fletching — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,39 +16,183 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Fletching</p>
   <h1 class="pagetitle">Fletching</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Fletching</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Artisan</dd></div><div class="row"><dt>Access</dt><dd>Members</dd></div><div class="row"><dt>Status</dt><dd>Unverified in detail</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 85</dd></div></div>
-  <p class="lede">Fletching makes bows and ranged ammunition from logs, bow strings, arrow components, and dart tips. The source contains a complete-looking bow and ammunition progression.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Fletching itself is members-only in this build, so every unlock below is marked Yes.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>5</td><td>Make Shortbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>10</td><td>Make Longbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>15</td><td>Make Iron arrows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>20</td><td>Make Oak shortbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>22</td><td>Make Iron darts.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>25</td><td>Make Oak longbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>25</td><td>Meet the Fletching requirement used by The Fremennik Trials.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>30</td><td>Make Steel arrows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>35</td><td>Make Willow shortbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>37</td><td>Make Steel darts.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>40</td><td>Make Willow longbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>45</td><td>Make Mithril arrows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>50</td><td>Make Maple shortbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>52</td><td>Make Mithril darts.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>55</td><td>Make Maple longbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>60</td><td>Make Adamant arrows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>65</td><td>Make Yew shortbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>67</td><td>Make Adamant darts.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>70</td><td>Make Yew longbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>75</td><td>Make Rune arrows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>80</td><td>Make Magic shortbows.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>81</td><td>Make Rune darts.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>85</td><td>Make Magic longbows.</td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Fletching</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Artisan</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members only</dd></div>
+    <div class="row"><dt>Released</dt><dd>25 March 2002</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main tools</dt><dd>Knife, feathers, bow strings, chisel</dd></div>
+    <div class="row"><dt>Highest core unlock</dt><dd>Level 85 — Magic longbow</dd></div>
+    <div class="row"><dt>Quest unlocks</dt><dd>Throwing darts; ogre arrows</dd></div>
+  </div>
+
+  <p class="lede">Fletching is the members-only skill used to turn logs and ammunition components into bows, arrows, throwing darts, tipped bolts and quest-specific ogre arrows. The target-period skill is more than the level-up popup list: several useful products depend on another skill, a quest unlock or a separate supply chain. This guide uses a RuneScape 2 Fletching guide updated on 14 July 2004 as the main period community reference and checks it against the project's build-254 recipes.</p>
+
+  <h3>How Fletching works</h3>
+  <div class="callout"><p><strong>Members-only creation:</strong> the build-254 cutting, bow-stringing, arrow, dart, bolt and ogre-arrow routines all reject Fletching actions on a free-to-play map. A July-2004 RuneScape 2 guide likewise describes Fletching as a members skill. Finished ranged equipment could still have free-to-play uses; that does not make the act of Fletching free-to-play.</p></div>
+  <ul>
+    <li><strong>Cutting logs:</strong> use a knife on normal logs to choose arrow shafts, a shortbow or a longbow. Higher-tier logs are cut into their matching shortbow or longbow. Build 254 makes 15 arrow shafts from one normal log.</li>
+    <li><strong>Stringing bows:</strong> use a bow string on the matching unstrung bow. If you make the string yourself, flax must first be spun on a spinning wheel; the July-2004 guide records level 10 Crafting for spinning flax into bow string.</li>
+    <li><strong>Making arrows:</strong> normal logs become shafts; feathers make headless arrows; arrowheads finish the ammunition. Making your own metal arrowheads also requires the appropriate <a href="smithing.html">Smithing</a> level, but traded arrowheads can be used directly.</li>
+    <li><strong>Making darts:</strong> combine feathers with metal dart tips. Historically, the ability to make throwing darts is taught by <a href="../quests/the-tourist-trap.html">Tourist Trap</a>; the quest itself requires 10 Fletching and 20 Smithing.</li>
+    <li><strong>Tipping bolts:</strong> the 2004 system upgrades ordinary bolts rather than fletching modern crossbow stocks. Opal, pearl and barbed bolt tips have their own Fletching thresholds and supply sources.</li>
+    <li><strong>Ogre arrows:</strong> <a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a> introduces the separate Achey-log, wolfbone and four-feather ogre-arrow chain at level 5 Fletching.</li>
+  </ul>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <p>The levels below prioritise the July-2004 RuneScape 2 table where it directly records a period value. Build-254 disagreements are called out rather than silently replacing the historical value.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements</th></tr></thead><tbody>
+    <tr><td>1</td><td>Cut 15 arrow shafts from normal logs.</td><td class="member-yes">Yes</td><td>Knife + normal logs.</td></tr>
+    <tr><td>1</td><td>Make headless arrows and Bronze arrows.</td><td class="member-yes">Yes</td><td>Arrow shafts + feathers; Bronze arrowheads for the finished arrows.</td></tr>
+    <tr><td>1</td><td>Make Bronze darts.</td><td class="member-yes">Yes</td><td><a href="../quests/the-tourist-trap.html">Tourist Trap</a> must be complete historically; feathers + Bronze dart tips. Because Tourist Trap itself requires 10 Fletching, a player cannot practically gain this ability at base level 1.</td></tr>
+    <tr><td>5</td><td>Make Shortbows.</td><td class="member-yes">Yes</td><td>Knife + normal logs; bow string to finish the bow.</td></tr>
+    <tr><td>5</td><td>Make ogre-arrow components and Ogre arrows.</td><td class="member-yes">Yes</td><td><a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a> progression; Achey logs, knife, wolf bones, chisel and four feathers per arrow.</td></tr>
+    <tr><td>10</td><td>Make Longbows.</td><td class="member-yes">Yes</td><td>Knife + normal logs; bow string to finish the bow.</td></tr>
+    <tr><td>15</td><td>Make Iron arrows.</td><td class="member-yes">Yes</td><td>Headless arrows + Iron arrowheads.</td></tr>
+    <tr><td>17</td><td>Make Opal-tipped bolts.</td><td class="member-yes">Yes</td><td>Ordinary bolts + Opal bolt tips. The July-2004 table gives level 17; build 254 uses level 11.</td></tr>
+    <tr><td>20</td><td>Make Oak shortbows.</td><td class="member-yes">Yes</td><td>Knife + Oak logs; bow string to finish.</td></tr>
+    <tr><td>22</td><td>Make Iron darts.</td><td class="member-yes">Yes</td><td>Tourist Trap complete historically; feathers + Iron dart tips.</td></tr>
+    <tr><td>25</td><td>Make Oak longbows.</td><td class="member-yes">Yes</td><td>Knife + Oak logs; bow string to finish.</td></tr>
+    <tr><td>30</td><td>Make Steel arrows.</td><td class="member-yes">Yes</td><td>Headless arrows + Steel arrowheads.</td></tr>
+    <tr><td>33</td><td>Make Pearl-tipped bolts.</td><td class="member-yes">Yes</td><td>Ordinary bolts + Pearl bolt tips. The July-2004 table gives level 33; build 254 uses level 41.</td></tr>
+    <tr><td>35</td><td>Make Willow shortbows.</td><td class="member-yes">Yes</td><td>Knife + Willow logs; bow string to finish.</td></tr>
+    <tr><td>37</td><td>Make Steel darts.</td><td class="member-yes">Yes</td><td>Tourist Trap complete historically; feathers + Steel dart tips.</td></tr>
+    <tr><td>40</td><td>Make Willow longbows.</td><td class="member-yes">Yes</td><td>Knife + Willow logs; bow string to finish.</td></tr>
+    <tr><td>45</td><td>Make Mithril arrows.</td><td class="member-yes">Yes</td><td>Headless arrows + Mithril arrowheads.</td></tr>
+    <tr><td>50</td><td>Make Maple shortbows.</td><td class="member-yes">Yes</td><td>Knife + Maple logs; bow string to finish.</td></tr>
+    <tr><td>51</td><td>Make Barbed-tipped bolts.</td><td class="member-yes">Yes</td><td>Ordinary bolts + Barbed bolt tips; the period guide obtains the tips through the Ranging Guild target activity.</td></tr>
+    <tr><td>52</td><td>Make Mithril darts.</td><td class="member-yes">Yes</td><td>Tourist Trap complete historically; feathers + Mithril dart tips.</td></tr>
+    <tr><td>55</td><td>Make Maple longbows.</td><td class="member-yes">Yes</td><td>Knife + Maple logs; bow string to finish.</td></tr>
+    <tr><td>60</td><td>Make Adamant arrows.</td><td class="member-yes">Yes</td><td>Headless arrows + Adamant arrowheads.</td></tr>
+    <tr><td>65</td><td>Make Yew shortbows.</td><td class="member-yes">Yes</td><td>Knife + Yew logs; bow string to finish.</td></tr>
+    <tr><td>67</td><td>Make Adamant darts.</td><td class="member-yes">Yes</td><td>Tourist Trap complete historically; feathers + Adamant dart tips.</td></tr>
+    <tr><td>70</td><td>Make Yew longbows.</td><td class="member-yes">Yes</td><td>Knife + Yew logs; bow string to finish.</td></tr>
+    <tr><td>75</td><td>Make Rune arrows.</td><td class="member-yes">Yes</td><td>Headless arrows + Rune arrowheads.</td></tr>
+    <tr><td>80</td><td>Make Magic shortbows.</td><td class="member-yes">Yes</td><td>Knife + Magic logs; bow string to finish.</td></tr>
+    <tr><td>81</td><td>Make Rune darts.</td><td class="member-yes">Yes</td><td>Tourist Trap complete historically; feathers + Rune dart tips.</td></tr>
+    <tr><td>85</td><td>Make Magic longbows.</td><td class="member-yes">Yes</td><td>Knife + Magic logs; bow string to finish.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The main audit still labels Fletching unverified because it was not diffed recipe-by-recipe against a historical list. Dart-making cases exist in <code>levelup_unlocks_fletching.rs2</code> even though several dart levels are absent from the separate enum that controls the extra unlock popup.</p></div>
-  <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="runecrafting.html">&larr; Runecrafting</a><a class="next" href="../skills.html">Back to skill list &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+
+  <h3>Bow experience</h3>
+  <p>Bow-making normally awards experience twice: once when the log is cut into an unstrung bow and again when a bow string is attached. The July-2004 guide says an unstrung bow gives half the complete bow's XP. Build 254 closely matches the period totals, with one visible conflict for the Oak longbow.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Bow</th><th>July-2004 total XP</th><th>Build-254 cut XP</th><th>Build-254 string XP</th><th>Build total</th></tr></thead><tbody>
+    <tr><td>5</td><td>Shortbow</td><td>10</td><td>5</td><td>5</td><td>10</td></tr>
+    <tr><td>10</td><td>Longbow</td><td>20</td><td>10</td><td>10</td><td>20</td></tr>
+    <tr><td>20</td><td>Oak shortbow</td><td>33</td><td>16.5</td><td>16.5</td><td>33</td></tr>
+    <tr><td>25</td><td>Oak longbow</td><td><strong>55</strong></td><td>25</td><td>25</td><td><strong>50</strong></td></tr>
+    <tr><td>35</td><td>Willow shortbow</td><td>66.5</td><td>33.3</td><td>33.2</td><td>66.5</td></tr>
+    <tr><td>40</td><td>Willow longbow</td><td>83</td><td>41.5</td><td>41.5</td><td>83</td></tr>
+    <tr><td>50</td><td>Maple shortbow</td><td>100</td><td>50</td><td>50</td><td>100</td></tr>
+    <tr><td>55</td><td>Maple longbow</td><td>116.5</td><td>58.3</td><td>58.2</td><td>116.5</td></tr>
+    <tr><td>65</td><td>Yew shortbow</td><td>135</td><td>67.5</td><td>67.5</td><td>135</td></tr>
+    <tr><td>70</td><td>Yew longbow</td><td>150</td><td>75</td><td>75</td><td>150</td></tr>
+    <tr><td>80</td><td>Magic shortbow</td><td>166.5</td><td>83.3</td><td>83.2</td><td>166.5</td></tr>
+    <tr><td>85</td><td>Magic longbow</td><td>183</td><td>91.5</td><td>91.5</td><td>183</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Oak-longbow conflict:</strong> the July-2004 period guide lists 55 XP for a completed Oak longbow, while build 254 awards 25 XP for cutting and 25 XP for stringing, for 50 total. The period value is kept visible because the audit did not find a stronger dated source that resolves the discrepancy.</p></div>
+
+  <h3>Arrow experience</h3>
+  <p>One normal log makes 15 shafts. In build 254, cutting those shafts awards 5 XP in total and feathering all 15 awards another 15 XP. The final arrowhead stage then supplies the metal-dependent XP below. The period table agrees through Mithril but differs at the two highest arrow tiers.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>15 finished arrows</th><th>July-2004 XP from one-log chain</th><th>Build-254 final-head XP</th><th>Build-254 one-log chain</th></tr></thead><tbody>
+    <tr><td>1</td><td>Bronze arrows</td><td>39.5</td><td>19.5</td><td>39.5</td></tr>
+    <tr><td>15</td><td>Iron arrows</td><td>57.5</td><td>37.5</td><td>57.5</td></tr>
+    <tr><td>30</td><td>Steel arrows</td><td>95</td><td>75</td><td>95</td></tr>
+    <tr><td>45</td><td>Mithril arrows</td><td>132.5</td><td>112.5</td><td>132.5</td></tr>
+    <tr><td>60</td><td>Adamant arrows</td><td><strong>165</strong></td><td>150</td><td><strong>170</strong></td></tr>
+    <tr><td>75</td><td>Rune arrows</td><td><strong>225</strong></td><td>187.5</td><td><strong>207.5</strong></td></tr>
+  </tbody></table></div>
+
+  <h3>Darts</h3>
+  <p>Tourist Trap is the period unlock for throwing-dart manufacture. The metal progression in build 254 uses the same level thresholds as the July-2004 guide, but the build's generic dart routine does not check whether Tourist Trap is complete. That missing quest gate is a server-specific deviation, not historical evidence that the quest was unnecessary.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Dart</th><th>Members</th><th>Historical / build note</th></tr></thead><tbody>
+    <tr><td>1</td><td>Bronze dart</td><td class="member-yes">Yes</td><td>Period listed XP: 18. Build 254 awards 18 XP for ten; Tourist Trap remains the historical unlock.</td></tr>
+    <tr><td>22</td><td>Iron dart</td><td class="member-yes">Yes</td><td>Period listed XP: 32; build 254 awards 38 XP for ten.</td></tr>
+    <tr><td>37</td><td>Steel dart</td><td class="member-yes">Yes</td><td>Period listed XP: 75; build 254 awards 75 XP for ten.</td></tr>
+    <tr><td>52</td><td>Mithril dart</td><td class="member-yes">Yes</td><td>Period listed XP: 112; build 254 awards 112 XP for ten.</td></tr>
+    <tr><td>67</td><td>Adamant dart</td><td class="member-yes">Yes</td><td>Period listed XP: 150; build 254 awards 150 XP for ten.</td></tr>
+    <tr><td>81</td><td>Rune dart</td><td class="member-yes">Yes</td><td>Period listed XP: 188; build 254 awards 188 XP for ten.</td></tr>
+  </tbody></table></div>
+
+  <h3>Tipped bolts</h3>
+  <p>The cutoff-period bolt system is much smaller than later crossbow/Fletching systems. The July-2004 guide says ordinary bolts are not made through Fletching; Fletching upgrades them with Opal, Pearl or Barbed tips. Build 254 follows that general model but disagrees on the Opal and Pearl levels and batch values.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Type</th><th>July-2004 level</th><th>July-2004 listed batch / XP</th><th>Build-254 level</th><th>Build-254 recipe</th></tr></thead><tbody>
+    <tr><td>Opal-tipped bolts</td><td>17</td><td>2 bolts / 6 XP</td><td>11</td><td>Up to 10 bolts at once; 1.6 XP each. Build also cuts an Opal into 12 tips at level 11.</td></tr>
+    <tr><td>Pearl-tipped bolts</td><td>33</td><td>2 bolts / 12.5 XP</td><td>41</td><td>Up to 10 bolts at once; 3.2 XP each. Small oyster pearls make 6 tips and big oyster pearls make 24 tips at level 41.</td></tr>
+    <tr><td>Barbed-tipped bolts</td><td>51</td><td>30 bolts / 95 XP</td><td>51</td><td>Up to 10 bolts at once; 9.5 XP each. Barbed tips come from the members Ranging Guild activity in the period guide.</td></tr>
+  </tbody></table></div>
+
+  <h3>Ogre arrows</h3>
+  <p><a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a>, released 18 May 2004, adds a separate level-5 Fletching chain using Achey logs and wolf bones. This is firmly inside the 7 September cutoff.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Stage</th><th>Build-254 result</th><th>Members</th><th>Requirements / XP</th></tr></thead><tbody>
+    <tr><td>Cut Achey logs</td><td>2–6 Ogre arrow shafts per log</td><td class="member-yes">Yes</td><td>5 Fletching; quest progression; knife. Build awards 1.8 Fletching XP per shaft.</td></tr>
+    <tr><td>Chisel Wolf bones</td><td>2–6 Wolfbone arrowtips per bone</td><td class="member-yes">Yes</td><td>5 Fletching; quest started; chisel. Build additionally requires 5 Crafting and awards 2.5 XP in both skills per tip — the Crafting gate is not supported by the contemporary quest requirement list.</td></tr>
+    <tr><td>Flight the shafts</td><td>Ogre headless arrows</td><td class="member-yes">Yes</td><td>Four feathers per arrow; 5 Fletching; build awards 1.5 Fletching XP per arrow.</td></tr>
+    <tr><td>Add Wolfbone tips</td><td>Ogre arrows</td><td class="member-yes">Yes</td><td>5 Fletching; build awards 1 Fletching XP per finished arrow.</td></tr>
+  </tbody></table></div>
+
+  <h3>Useful materials and secondary requirements</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Material</th><th>Purpose</th><th>Members</th><th>Other requirement</th></tr></thead><tbody>
+    <tr><td><strong>Knife</strong></td><td>Cuts logs into shafts or unstrung bows.</td><td class="member-yes">Yes</td><td>Reusable.</td></tr>
+    <tr><td><strong>Feathers</strong></td><td>Headless arrows, darts and ogre arrows.</td><td class="member-yes">Yes</td><td>One per normal arrow/dart; four per ogre arrow in build 254.</td></tr>
+    <tr><td><strong>Bow string</strong></td><td>Finishes unstrung bows.</td><td class="member-yes">Yes</td><td>Can be traded. To make your own from flax, the July-2004 guide records 10 Crafting at a spinning wheel.</td></tr>
+    <tr><td><strong>Arrowheads / dart tips</strong></td><td>Finish metal ammunition.</td><td class="member-yes">Yes</td><td>Can be traded; making the metal pieces yourself also uses <a href="smithing.html">Smithing</a>.</td></tr>
+    <tr><td><strong>Ordinary bolts</strong></td><td>Base item for Opal, Pearl and Barbed tipped bolts.</td><td class="member-yes">Yes</td><td>The period guide explicitly treats bolt-making separately and uses Fletching only for the tipped upgrade.</td></tr>
+    <tr><td><strong>Chisel</strong></td><td>Produces Opal/Pearl bolt tips in build 254 and Wolfbone arrowtips during Big Chompy.</td><td class="member-yes">Yes</td><td>Quest/state and level checks depend on the product.</td></tr>
+  </tbody></table></div>
+
+  <h3>Period training route</h3>
+  <p>The July-2004 RuneScape 2 guide gives the following simple route. It is useful as a dated example of how players were advised to train at the cutoff, not a claim about modern efficiency or exact XP per hour.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Access</th><th>Supplies</th><th>XP basis</th><th>Practical note</th></tr></thead><tbody>
+    <tr><td>1–9</td><td><strong>Arrow shafts</strong></td><td>Members</td><td>Knife + normal logs</td><td>5 XP per 15 shafts in build 254</td><td>The period guide begins with shafts. Save them if you intend to turn them into arrows later.</td></tr>
+    <tr><td>10–24</td><td><strong>Normal bows</strong></td><td>Members</td><td>Knife, normal logs, optional bow strings</td><td>10 XP Shortbow / 20 XP Longbow completed</td><td>Stringing doubles the build XP relative to cutting only.</td></tr>
+    <tr><td>25–39</td><td><strong>Oak longbows</strong></td><td>Members</td><td>Knife, Oak logs, bow strings</td><td>55 XP in the July-2004 guide; 50 in build 254</td><td>This is the one bow-total conflict in the period table used for this audit.</td></tr>
+    <tr><td>40–69</td><td><strong>Willow longbows</strong></td><td>Members</td><td>Knife, Willow logs, bow strings</td><td>83 XP completed</td><td>The period route stays on Willows even after Maple bows unlock.</td></tr>
+    <tr><td>70+</td><td><strong>Yew longbows</strong></td><td>Members</td><td>Knife, Yew logs, bow strings</td><td>150 XP completed</td><td>The July-2004 route recommends Yews from 70 onward despite Magic bows unlocking later, reflecting supply/practicality rather than merely using the highest unlock.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>No invented XP/hour:</strong> a period-correct hourly rate depends on log supply, bank route, flax/string supply, trading and player pace. This guide keeps verified action XP and a dated training route rather than importing modern efficiency figures.</p></div>
+
+  <h3>Relevant quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Fletching relevance at the cutoff</th></tr></thead><tbody>
+    <tr><td><a href="../quests/the-tourist-trap.html">Tourist Trap</a></td><td>Members</td><td>Requires <strong>10 Fletching</strong>. Completing the prototype-dart sequence teaches throwing-dart manufacture. The reward gives two choices of 4,650 XP from Agility, Fletching, Smithing or Thieving, and both choices may be placed into Fletching for <strong>9,300 Fletching XP</strong>.</td></tr>
+    <tr><td><a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a></td><td>Members</td><td>Requires <strong>5 Fletching</strong>, introduces Ogre arrows and awards <strong>262 Fletching XP</strong>. Build 254 adds an unsupported 5 Crafting gate while chiselling Wolf bones.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <div class="callout"><p><strong>Build-254 core:</strong> the actual recipe scripts are under <code>scripts/skill_fletching/</code>. The guide was checked against the build-254 log cutting, bow stringing, arrows, darts, bolts and ogre-arrow scripts plus their database rows. The build's level-up popup is not a complete recipe list.</p></div>
+  <ul>
+    <li><strong>Level-up popup is incomplete:</strong> build 254's <code>levelup_unlocks_fletching.rs2</code> lists the bow tiers and Iron-to-Rune arrows, but omits Bronze arrows, arrow shafts, headless arrows, darts, tipped bolts and ogre arrows even though their recipes exist elsewhere.</li>
+    <li><strong>Tourist Trap gate is missing from generic dart-making:</strong> the historical July-2004 guide explicitly requires Tourist Trap before making darts, and the audited quest teaches the ability. Build 254's generic <code>make_darts</code> routine checks membership and Fletching level but does not check the quest state, so a player who obtains dart tips can mechanically fletch them without the historical unlock.</li>
+    <li><strong>Opal/Pearl bolt levels differ:</strong> the July-2004 table records levels 17 and 33. Build 254 uses 11 and 41 respectively; Barbed bolts agree at 51.</li>
+    <li><strong>Bow XP conflict:</strong> the period guide records 55 total XP for an Oak longbow, while build 254 awards 50. All other ordinary bow totals in the same table agree with the build after tenths are combined.</li>
+    <li><strong>High-tier arrow XP conflicts:</strong> the period guide records 165 XP for the full 15-Adamant-arrow chain and 225 for Rune. Build 254 gives 170 and 207.5 respectively. Bronze through Mithril agree.</li>
+    <li><strong>Iron-dart XP conflict:</strong> the July-2004 table records 32 XP; build 254 awards 38 XP for ten. The other dart XP values in that period table match the build.</li>
+    <li><strong>Big Chompy Crafting gate:</strong> build 254 requires 5 Crafting when chiselling Wolf bones and awards Crafting XP alongside Fletching XP. The contemporary quest requirements list only 5 Fletching, 30 Cooking and 30 Ranged, so this is kept as a build-specific extra requirement.</li>
+  </ul>
+
+  <h3>Cutoff and uncertainty notes</h3>
+  <div class="callout warn"><p><strong>Do not let later Fletching expansions leak backward into September 2004.</strong> Recipe data from a newer branch or a modern wiki is not automatically valid for build 254 or the target date.</p></div>
+  <ul>
+    <li><strong>The Fremennik Trials requirement is post-cutoff:</strong> the old local Fletching page included a level-25 Fremennik Trials note copied from a later level-up script. The quest was released on 2 November 2004 and is excluded from the 7 September guide.</li>
+    <li><strong>Later crossbow construction is excluded:</strong> the cutoff-period evidence used here supports tipping ordinary bolts, not the much larger later system of fletching crossbow stocks, limbs and modern bolt families.</li>
+    <li><strong>Javelin production is not promoted to a verified cutoff unlock:</strong> retrospective references place javelin items in early RuneScape 2 and later Fletching guides give javelin-making levels, but the dated July-2004 Fletching table used here does not list javelin production and build 254 contains no corresponding Fletching recipe. Without stronger period evidence, this guide does not guess the crafting method backward.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Direct period community evidence:</strong> MagicMario's <em>RuneScape FAQ</em> v1.40, updated 14 July 2004. Its explicitly separated RuneScape 2 Fletching section supplies the members status, materials, bow/arrow/bolt/dart tables and a period training route.</li>
+    <li><strong>Release evidence:</strong> the preserved official 25 March 2002 update announces the new Fletching skill as a members feature.</li>
+    <li><strong>Build-254 bow core:</strong> <code>scripts/skill_fletching/scripts/cut_logs.rs2</code>, <code>scripts/skill_fletching/scripts/bows.rs2</code>, <code>configs/cut_logs/cut_logs.dbrow</code> and <code>configs/stringing/bows.dbrow</code>.</li>
+    <li><strong>Build-254 ammunition:</strong> <code>scripts/skill_fletching/scripts/arrows.rs2</code>, <code>darts.rs2</code>, <code>bolts.rs2</code> and the corresponding <code>configs/arrows</code>, <code>configs/darts</code> and <code>configs/bolts</code> database rows.</li>
+    <li><strong>Ogre arrows:</strong> <code>scripts/skill_fletching/scripts/ogre_arrows.rs2</code> plus the already-audited <a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a> guide.</li>
+    <li><strong>Dart quest unlock:</strong> the already-audited <a href="../quests/the-tourist-trap.html">Tourist Trap</a> guide establishes the 10 Fletching requirement, prototype-dart sequence, permanent dart-making unlock and selectable Fletching XP reward.</li>
+  </ul>
+
+  <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="runecrafting.html">&larr; Runecrafting</a><a class="next" href="../skills.html">Skill list &rarr;</a></nav>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's Fletching implementation at build 254. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>
