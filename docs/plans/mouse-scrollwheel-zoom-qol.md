@@ -30,17 +30,65 @@ A user may leave `NODE_QOL_SCROLLWHEEL_ZOOM=true` in `.env`; choosing option 1 o
 
 ## Phase 1 — Identify and isolate the camera zoom hook
 
-1. Locate the web client's authoritative camera-distance/zoom state and the render/update path that consumes it.
-2. Confirm whether zoom should be implemented by:
-   - a small `Client.prototype` patch, consistent with existing QOL hooks; or
-   - a canvas `wheel` listener that updates the client camera field directly.
-3. Define safe bounds and a deterministic wheel step so repeated wheel events cannot push the camera outside supported values.
-4. Confirm the hook does not interfere with existing camera yaw/pitch controls, minimap/compass behavior, touch controls, text input, or browser scrolling when the plugin is disabled.
+**Status: complete (2026-08-27).**
+
+### Camera discovery
+
+- The normal gameplay camera does **not** have a persistent authoritative `cameraDistance`/zoom field.
+- `webclient/src/client/Client.ts` computes the normal camera's final distance in `gameDrawMain()` and passes it to `camFollow(...)` as `pitch * 3 + 600`.
+- `camFollow(pitch, yaw, targetX, targetY, targetZ, distance)` is the authoritative consumer of that distance. It rotates the distance vector by pitch/yaw and writes the resulting `camX`, `camY`, and `camZ` camera position.
+- `followCamera()` keeps the normal orbit pitch in the vanilla range `128..383`. With the existing `pitch * 3 + 600` formula, the ordinary vanilla distance range is therefore `984..1749`.
+- Camera shake can raise the effective pitch before the distance is calculated. The zoom implementation must not rewrite the existing pitch, yaw, shake, or camera-position code.
+- When `cinemaCam` is active, the normal `camFollow(...)` path is bypassed. Scrollwheel zoom must leave scripted/cinematic camera behavior untouched.
+- The separate `distance` array populated during startup for `World.init(...)` uses a related projection formula but is scene/render setup, not interactive camera zoom state. It must not be modified by this plugin.
+
+### Selected hook
+
+Use a small, explicit scrollwheel-zoom state at the normal gameplay distance seam rather than trying to repurpose pitch or monkey-patch an obfuscated/minified camera method from `client.ejs`.
+
+The Phase 3 implementation should:
+
+1. Keep the vanilla base expression `pitch * 3 + 600` as the source of normal camera distance.
+2. Add plugin-owned zoom state with a neutral/default value that produces no change.
+3. Apply that state only on the normal non-`cinemaCam` path immediately before the `camFollow(...)` call.
+4. Register a `wheel` listener only when the server-provided effective `scrollwheelZoom` flag is true, scoped to the game canvas/client area.
+5. Normalize wheel magnitude to direction only: wheel up zooms in by one step; wheel down zooms out by one step.
+
+This keeps keyboard/pointer pitch and yaw controls, middle-mouse rotation, compass reset, camera shake inputs, and touch controls on their existing code paths.
+
+### Initial safe zoom envelope
+
+Use these conservative initial values for implementation and Phase 5 verification:
+
+- **Minimum camera distance:** `768`
+- **Maximum camera distance:** `2048`
+- **Wheel step:** `64`
+
+Rationale:
+
+- The ordinary vanilla range is `984..1749`, so `768..2048` extends both directions without making the first implementation dramatically more aggressive than the existing camera envelope.
+- A `64`-unit step is deterministic and granular enough that a single wheel event cannot cause a large jump.
+- The final user-adjusted distance must be clamped to the configured envelope so rapid wheel input cannot accumulate beyond the supported range.
+- These are conservative engineering bounds, not claimed engine hard-limits; Phase 5 visual/build testing may tighten them if clipping, visibility, or scene artifacts appear.
+
+### Disabled-state/no-op requirement
+
+The disabled path must preserve vanilla behavior exactly:
+
+- Do not install or consume a `wheel` handler when `scrollwheelZoom !== true`.
+- Do not call `preventDefault()` for wheel events when disabled.
+- Do not clamp or otherwise rewrite the existing `pitch * 3 + 600` camera distance when disabled.
+- Do not alter `orbitCameraPitch`, `orbitCameraYaw`, `cameraPitchClamp`, `camX`, `camY`, `camZ`, camera shake state, compass behavior, middle-mouse rotation, or touch input.
+- Page scrolling outside the canvas must remain normal even when the plugin is enabled; consume the event only when the enabled handler is actually applying game zoom.
 
 ### Exit criteria
-- Camera field/method is identified.
-- Min/max zoom values and wheel step are documented in code comments or constants.
-- Disabled state is a true no-op.
+
+- [x] Authoritative camera distance seam identified: `gameDrawMain()` → `camFollow(..., pitch * 3 + 600)`.
+- [x] Vanilla ordinary distance envelope documented: `984..1749` from pitch `128..383`.
+- [x] Initial plugin bounds selected: `768..2048`.
+- [x] Deterministic wheel step selected: `64`.
+- [x] Cinematic camera, startup `World.init(...)` projection setup, pointer/touch controls, and existing camera controls identified as out-of-scope for mutation.
+- [x] Disabled behavior defined as a true no-op with no wheel-event consumption.
 
 ## Phase 2 — Add environment and server-to-client wiring
 
