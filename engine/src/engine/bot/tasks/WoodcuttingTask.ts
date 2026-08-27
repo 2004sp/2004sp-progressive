@@ -19,17 +19,19 @@ import LocType from '#/cache/config/LocType.js';
 import {
     BotTask, Player, Loc, InvType,
     walkTo, interactLoc,
-    findLocByPrefix, findNpcByName,
+    findLocByPrefix, findLocByPrefixWhere, findNpcByName,
+    claimLoc, releaseLoc, isLocClaimed,
     hasItem, addItem, isInventoryFull, isNear,
     getBaseLevel, PlayerStat,
     Items, Locations, getProgressionStep,
     teleportToSafety, teleportNear, randInt, bankInvId, INTERACT_TIMEOUT, StuckDetector, ProgressWatchdog,
-    isAdjacentToLoc, openNearbyGate, botJitter, advanceBankWalk,
+    isAdjacentToLoc, openNearbyGate, botJitter, advanceBankWalk, hasStrayItems,
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getCombatLevel, getNpcCombatLevel, findAggressorNpc } from '#/engine/bot/BotAction.js';
+import type { BotTaskDebugInfo } from '#/engine/bot/debug/BotDebugTypes.js';
 
-/** Draynor village woodcutting spots — aggressive Dark Wizards patrol here, minimum combat 16. */
+/** Draynor village woodcutting spots — aggressive Dark Wizards patrol here, minimum combat 15. */
 const DRAYNOR_WC_LOCATIONS: Array<[number, number, number]> = [
     Locations.WILLOWS_DRAYNOR,
 ];
@@ -57,20 +59,36 @@ export class WoodcuttingTask extends BotTask {
     private readonly watchdog = new ProgressWatchdog();
 
     constructor(step: SkillStep) {
-        super('Woodcut');
+        // Include the log type so the rescan name-comparison in BotPlayer
+        // can distinguish "cut trees for LOGS" from "cut willows for WILLOW_LOGS"
+        // and force a task switch when the planner needs a different log type.
+        super(`Woodcut:${step.itemGained}`);
         this.step = step;
         this.watchdog.destination = step.location;
     }
 
     shouldRun(player: Player): boolean {
-        if (!this.step.toolItemIds.every(id => hasItem(player, id))) return false;
+        const hasHatchetInv  = this.step.toolItemIds.some(id => hasItem(player, id));
+        const hasHatchetBank = !hasHatchetInv && this._hatchetInBank(player);
+        if (!hasHatchetInv && !hasHatchetBank) return false;
 
-        // Draynor village has aggressive Dark Wizards — require combat level 16
+        // Draynor village has aggressive Dark Wizards — require combat level 15
         const [sx, sz, sl] = this.step.location;
         const isDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
-        if (isDraynor && getCombatLevel(player) < 16) return false;
+        if (isDraynor && getCombatLevel(player) < 15) return false;
 
         return true;
+    }
+
+    private _hatchetInBank(player: Player): boolean {
+        const bid = bankInvId();
+        if (bid === -1) return false;
+        const bank = player.getInventory(bid);
+        if (!bank) return false;
+        for (let i = 0; i < bank.capacity; i++) {
+            if (this.step.toolItemIds.includes(bank.get(i)?.id ?? -1)) return true;
+        }
+        return false;
     }
 
     tick(player: Player): void {
@@ -81,7 +99,7 @@ export class WoodcuttingTask extends BotTask {
             player.clearPendingAction();
             this.stuck.reset();
             this.state = 'approach';
-            this.currentTree = null;
+            this._releaseTree();
             this.interactTicks = 0;
             this.scanFailTicks = 0;
             this.approachTicks = 0;
@@ -89,6 +107,12 @@ export class WoodcuttingTask extends BotTask {
             return;
         }
         if (this.cooldown > 0) { this.cooldown--; return; }
+
+        // ── Hatchet recovery ─────────────────────────────────────────────────
+        // If the hatchet was banked by another task, go retrieve it before chopping.
+        if (!this.step.toolItemIds.some(id => hasItem(player, id)) && this._hatchetInBank(player)) {
+            this.state = 'bank_walk';
+        }
 
         // ── Aggressor detection ───────────────────────────────────────────────
         if (this.state !== 'bank_walk' && this.state !== 'bank_done' && this.state !== 'flee') {
@@ -98,19 +122,24 @@ export class WoodcuttingTask extends BotTask {
                 if (npcLvl > player.combatLevel) {
                     this.state = 'flee';
                     this.fleeTicks = 0;
-                    this.currentTree = null;
+                    this._releaseTree();
                     return;
                 }
             }
         }
 
-        // Upgrade step when level-up unlocks a better tree tier
+        // Upgrade step when level-up unlocks a better tree tier.
+        // Skip Draynor steps for low-combat bots — Dark Wizards are aggressive there.
         const level   = getBaseLevel(player, PlayerStat.WOODCUTTING);
         const newStep = getProgressionStep('WOODCUTTING', level);
         if (newStep && newStep.minLevel > this.step.minLevel) {
-            this.step         = newStep;
-            this.state        = 'walk';
-            this.currentTree  = null;
+            const [sx, sz, sl] = newStep.location;
+            const isNewDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
+            if (!isNewDraynor || getCombatLevel(player) >= 15) {
+                this.step         = newStep;
+                this.state        = 'walk';
+                this._releaseTree();
+            }
         }
 
         // ── Bank logs ─────────────────────────────────────────────────────────
@@ -130,6 +159,13 @@ export class WoodcuttingTask extends BotTask {
         }
 
         if (isInventoryFull(player)) { this.state = 'bank_walk'; return; }
+
+        // Carrying leftovers from a previous task (e.g. ore, loot) — bank them
+        // before heading out to the tree so the trip starts with a clean slate.
+        if (this.state === 'walk' && hasStrayItems(player, [...this.step.toolItemIds, Items.COINS, Items.KNIFE, Items.TINDERBOX])) {
+            this.state = 'bank_walk';
+            return;
+        }
 
         // ── Flee ──────────────────────────────────────────────────────────────
         if (this.state === 'flee') {
@@ -172,7 +208,7 @@ export class WoodcuttingTask extends BotTask {
 
             // Drop stale reference if another player felled the tree
             if (this.currentTree && !this._isTreeStillValid(this.currentTree)) {
-                this.currentTree   = null;
+                this._releaseTree();
                 this.approachTicks = 0;
             }
 
@@ -192,6 +228,7 @@ export class WoodcuttingTask extends BotTask {
             }
             this.scanFailTicks = 0;
             this.currentTree   = tree;
+            claimLoc(tree);
 
             if (isAdjacentToLoc(player, tree)) {
                 // Already adjacent — interact immediately
@@ -209,8 +246,10 @@ export class WoodcuttingTask extends BotTask {
                 if (this.approachTicks > 30) {
                     // Can't reach this tree — try another
                     console.log(`[WC:${player.username}] Can't reach tree at (${tree.x},${tree.z}), retrying`);
-                    this.currentTree   = null;
+                    this._releaseTree();
                     this.approachTicks = 0;
+                    const [lx, lz] = this.step.location;
+                    walkTo(player, lx + randInt(-5, 5), lz + randInt(-5, 5));
                 }
             }
             return;
@@ -221,7 +260,7 @@ export class WoodcuttingTask extends BotTask {
             // Tree was felled mid-chop by another player — rescan immediately
             if (this.currentTree && !this._isTreeStillValid(this.currentTree)) {
                 this.state        = 'approach';
-                this.currentTree  = null;
+                this._releaseTree();
                 this.interactTicks = 0;
                 return;
             }
@@ -240,13 +279,31 @@ export class WoodcuttingTask extends BotTask {
                 // Tree depleted or interaction was cleared — find another
                 console.log(`[WC:${player.username}] Interact timeout, rescanning`);
                 this.state        = 'approach';
-                this.currentTree  = null;
+                this._releaseTree();
                 this.interactTicks = 0;
             }
         }
     }
 
     isComplete(_p: Player): boolean { return false; }
+
+    override getDebugInfo(_player: Player): BotTaskDebugInfo {
+        const [lx, lz, ll] = this.step.location;
+        return {
+            task: this.name,
+            state: this.state,
+            target: this.currentTree ? `${LocType.get(this.currentTree.type).debugname ?? 'tree'}@(${this.currentTree.x},${this.currentTree.z})` : undefined,
+            destination: { x: lx, z: lz, level: ll },
+            details: {
+                itemGained: this.step.itemGained,
+                interactTicks: this.interactTicks,
+                scanFailTicks: this.scanFailTicks,
+                approachTicks: this.approachTicks,
+                fleeTicks: this.fleeTicks,
+                stuck: this.stuck.getDebugSnapshot()
+            }
+        };
+    }
 
     override reset(): void {
         super.reset();
@@ -256,7 +313,7 @@ export class WoodcuttingTask extends BotTask {
         this.approachTicks = 0;
         this.lastXp        = 0;
         this.fleeTicks     = 0;
-        this.currentTree   = null;
+        this._releaseTree();
         this.stuck.reset();
         this.watchdog.reset();
     }
@@ -266,7 +323,21 @@ export class WoodcuttingTask extends BotTask {
     private _findTree(player: Player): Loc | null {
         // 'treestump'.startsWith('tree') = true — must exclude stumps.
         // Stumps have no [oploc1] script so the woodcutting script silently fails.
+        // Prefer a tree nobody else is on, so nearby bots spread across the
+        // grove instead of all converging on the single nearest tree
+        // (findLocByPrefix alone always returns the exact same closest match
+        // for bots standing in roughly the same spot). But if every tree in
+        // range is already claimed, fall back to the closest one regardless —
+        // better to share a tree than to sit scanning forever finding nothing.
+        const unclaimed = findLocByPrefixWhere(player.x, player.z, player.level, this._treePrefix(), 15, loc => !isLocClaimed(loc), 'stump');
+        if (unclaimed) return unclaimed;
         return findLocByPrefix(player.x, player.z, player.level, this._treePrefix(), 15, 'stump');
+    }
+
+    /** Release the currently claimed tree (if any) so other bots can target it. */
+    private _releaseTree(): void {
+        releaseLoc(this.currentTree);
+        this.currentTree = null;
     }
 
     /**
@@ -281,9 +352,10 @@ export class WoodcuttingTask extends BotTask {
     private _treePrefix(): string {
         switch (this.step.itemGained) {
             case Items.OAK_LOGS:    return 'oaktree';
-            case Items.WILLOW_LOGS: return 'willow_tree';
-            case Items.MAPLE_LOGS:  return 'maple_tree';
-            case Items.YEW_LOGS:    return 'yew_tree';
+            case Items.WILLOW_LOGS: return 'willowtree';
+            case Items.MAPLE_LOGS:  return 'mapletree';
+            case Items.YEW_LOGS:    return 'yewtree';
+            case Items.MAGIC_LOGS:  return 'magictree';
             default:                return 'tree';
         }
     }
@@ -317,13 +389,18 @@ export class WoodcuttingTask extends BotTask {
     /** Pick a fresh random step matching the bot's current level and owned tools. */
     private _rerollStep(player: Player): void {
         const level = getBaseLevel(player, PlayerStat.WOODCUTTING);
+        const combatLvl = getCombatLevel(player);
         const newStep = getProgressionStep(
             'WOODCUTTING', level,
-            ids => ids.every(id => hasItem(player, id)),
+            ids => ids.some(id => hasItem(player, id)),
         );
         if (newStep) {
-            this.step = newStep;
-            this.currentTree = null;
+            const [sx, sz, sl] = newStep.location;
+            const isDraynor = DRAYNOR_WC_LOCATIONS.some(([lx, lz, ll]) => lx === sx && lz === sz && ll === sl);
+            if (!isDraynor || combatLvl >= 15) {
+                this.step = newStep;
+                this._releaseTree();
+            }
         }
     }
 
@@ -338,10 +415,22 @@ export class WoodcuttingTask extends BotTask {
             if (!item) continue;
             if (this.step.toolItemIds.includes(item.id)) continue;
             if (item.id === Items.COINS) continue;
+            if (item.id === Items.KNIFE) continue;
+            if (item.id === Items.TINDERBOX) continue;
             const moved = inv.remove(item.id, item.count);
             if (moved.completed > 0) bank.add(item.id, moved.completed);
         }
-            console.log(`[WC:${player.username}] Deposited logs into the bank.`);
+        // Withdraw hatchet if it was banked by another task (e.g. FletchingTask)
+        if (!this.step.toolItemIds.some(id => hasItem(player, id))) {
+            for (const id of this.step.toolItemIds) {
+                const removed = bank.remove(id, 1);
+                if (removed.completed > 0) {
+                    addItem(player, id, 1);
+                    break;
+                }
+            }
+        }
+        console.log(`[WC:${player.username}] Deposited logs into the bank.`);
     }
 
 

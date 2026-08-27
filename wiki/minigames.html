@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Duel Arena alone spans 29 files (staking, spectating, forfeiting, scoreboards, five named NPCs). Fishing Trawler has a real flooding/bailing/sinking/winch state machine. Castle Wars (real release: December…">
+  <meta name="description" content="Build-254 minigame coverage: the project's six counted minigames are implemented, with Brimhaven Agility Arena also present as a separate Agility activity. Historical names and cutoff notes are checked against 2004 release history.">
   <title>7. Minigames — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="assets/wiki.css">
 </head>
@@ -26,8 +26,6 @@
     <option value="../wiki.html">Home</option>
 <option value="quests.html">1. Quests</option>
 <option value="skills.html">2. Skills</option>
-<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
-<option value="npcs.html">4. NPCs &amp; dialogue</option>
 <option value="shops.html">5. Shops &amp; economy</option>
 <option value="drops.html">6. Drop tables</option>
 <option value="minigames.html" selected>7. Minigames</option>
@@ -49,8 +47,6 @@
       <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
 <li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
 <li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
-<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
-<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
 <li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
 <li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
 <li data-title="7 Minigames"><a class="active" href="minigames.html">7&ensp;Minigames</a></li>
@@ -67,10 +63,10 @@
     <div class="factbox">
       <div class="frow"><dt>Target build</dt><dd>254</dd></div>
       <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
-      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>57 / 57</dd></div>
       <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
-      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
-      <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 15</dd></div>
+      <div class="frow"><dt>Minigames</dt><dd>6 / 6</dd></div>
     </div>
   </nav>
   <main class="page">
@@ -82,19 +78,19 @@
 <section class="standalone-section" id="minigames">
 <div class="table-wrap">
 <table>
-<thead><tr><th>Folder</th><th>Real-world feature</th><th>Status</th></tr></thead>
+<thead><tr><th>Folder</th><th>Build-254 feature</th><th>Classification</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td><code>game_agilityarena</code></td><td>Canifis Werewolf Agility Course</td><td><span class="pill complete">Implemented</span></td></tr>
-<tr><td><code>game_duelarena</code></td><td>Al Kharid Duel Arena</td><td><span class="pill complete">Implemented</span></td></tr>
-<tr><td><code>game_gnomeball</code></td><td>Gnome Ball</td><td><span class="pill complete">Implemented</span></td></tr>
-<tr><td><code>game_partyroom</code></td><td>Falador Party Room</td><td><span class="pill complete">Implemented</span></td></tr>
-<tr><td><code>game_ranging</code></td><td>Ranging Guild</td><td><span class="pill complete">Implemented</span></td></tr>
-<tr><td><code>game_trail</code></td><td>Treasure Trails (clue scrolls)</td><td><span class="pill complete">Implemented</span></td></tr>
-<tr><td><code>game_trawler</code></td><td>Fishing Trawler</td><td><span class="pill complete">Implemented</span></td></tr>
+<tr><td><code>game_agilityarena</code></td><td><a href="minigames/brimhaven-agility-arena.html">Brimhaven Agility Arena</a></td><td>Agility activity; not counted in the project's 6/6 minigame progress</td><td><span class="pill complete">Implemented</span></td></tr>
+<tr><td><code>game_duelarena</code></td><td><a href="minigames/duel-arena.html">Al Kharid Duel Arena</a></td><td>Minigame</td><td><span class="pill complete">Implemented</span></td></tr>
+<tr><td><code>game_gnomeball</code></td><td><a href="minigames/gnome-ball.html">Gnome Ball</a></td><td>Minigame</td><td><span class="pill complete">Implemented</span></td></tr>
+<tr><td><code>game_partyroom</code></td><td><a href="minigames/party-room.html">Seers' Village Party Room</a></td><td>Minigame</td><td><span class="pill complete">Implemented</span></td></tr>
+<tr><td><code>game_ranging</code></td><td><a href="minigames/ranging-guild-shooting-range.html">Ranging Guild shooting range</a></td><td>Minigame</td><td><span class="pill complete">Implemented</span></td></tr>
+<tr><td><code>game_trail</code></td><td><a href="minigames/treasure-trails.html">Treasure Trails (clue scrolls)</a></td><td>Minigame</td><td><span class="pill complete">Implemented</span></td></tr>
+<tr><td><code>game_trawler</code></td><td><a href="minigames/fishing-trawler.html">Fishing Trawler</a></td><td>Minigame</td><td><span class="pill complete">Implemented</span></td></tr>
 </tbody>
 </table>
 </div>
-<p class="evidence" style="margin-top:10px">Duel Arena alone spans 29 files (staking, spectating, forfeiting, scoreboards, five named NPCs). Fishing Trawler has a real flooding/bailing/sinking/winch state machine. Castle Wars (real release: December 2004) is correctly absent — it postdates this build.</p>
+<p class="evidence" style="margin-top:10px">The project's published feature-complete tracker counts six minigames: Duel Arena, Gnomeball, Party Room, Shooting Range, Fishing Trawler and Treasure Trails. <code>game_agilityarena</code> is also present in the audited build source, but belongs to the Agility activity coverage rather than that 6/6 project count. The historical labels matter: the Party Room was still in Seers' Village in September 2004, and Brimhaven Agility Arena had been released on 27 July 2004. Treasure Trails had been available since 5 May 2004. Castle Wars is correctly absent from this target: it was released on 13 December 2004, after build 254's 7 September cutoff.</p>
 </section>
 <nav class="page-navigation" aria-label="Previous and next pages"><a class="prev" href="drops.html">&larr; 6. Drop tables</a><a class="next" href="areas.html">8. World &amp; areas &rarr;</a></nav>
 

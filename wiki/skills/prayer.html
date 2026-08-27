@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Prayer skill guide for 2004scape Progressive build 254, including level unlocks, membership requirements, and missing Priest in Peril prayers.">
+  <meta name="description" content="Prayer skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering all 15 cutoff prayers, bone XP, prayer drain, the level-31 Monastery, training, quests and implementation differences.">
   <title>Prayer — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,31 +16,159 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Prayer</p>
   <h1 class="pagetitle">Prayer</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Prayer</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Combat</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Partial</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 43 implemented</dd></div></div>
-  <p class="lede">Prayer provides temporary combat and utility effects by draining Prayer points while prayers are active. The implemented ladder runs through Protect from Melee.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>4</td><td>Burst of Strength.</td><td class="member-no">No</td></tr>
-    <tr><td>7</td><td>Clarity of Thought.</td><td class="member-no">No</td></tr>
-    <tr><td>10</td><td>Rock Skin.</td><td class="member-no">No</td></tr>
-    <tr><td>13</td><td>Superhuman Strength.</td><td class="member-no">No</td></tr>
-    <tr><td>16</td><td>Improved Reflexes.</td><td class="member-no">No</td></tr>
-    <tr><td>19</td><td>Rapid Restore.</td><td class="member-no">No</td></tr>
-    <tr><td>22</td><td>Rapid Heal.</td><td class="member-no">No</td></tr>
-    <tr><td>25</td><td>Protect Item.</td><td class="member-no">No</td></tr>
-    <tr><td>28</td><td>Steel Skin.</td><td class="member-no">No</td></tr>
-    <tr><td>31</td><td>Ultimate Strength.</td><td class="member-no">No</td></tr>
-    <tr><td>31</td><td>Enter the Monastery.</td><td class="member-no">No</td></tr>
-    <tr><td>34</td><td>Incredible Reflexes.</td><td class="member-no">No</td></tr>
-    <tr><td>37</td><td>Protect from Magic.</td><td class="member-no">No</td></tr>
-    <tr><td>40</td><td>Protect from Missiles.</td><td class="member-no">No</td></tr>
-    <tr><td>43</td><td>Protect from Melee.</td><td class="member-no">No</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Prayer</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Combat support</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Primary training</dt><dd>Bury bones</dd></div>
+    <div class="row"><dt>Special area</dt><dd>Monastery upper floor — level 31</dd></div>
+    <div class="row"><dt>Highest cutoff prayer</dt><dd>Level 43 — Protect from Melee</dd></div>
+  </div>
+
+  <p class="lede">Prayer is trained principally by burying bones and spent by activating temporary combat or restoration effects. At the <strong>7 September 2004</strong> cutoff the standard prayer book contains <strong>15 prayers</strong>, all available to free-to-play players: it begins with <strong>Thick Skin at level 1</strong> and ends with <strong>Protect from Melee at level 43</strong>. Later prayers must not be projected backward into this guide.</p>
+
+  <h3>How Prayer works</h3>
+  <div class="callout"><p><strong>Basic loop:</strong> bury bones to gain Prayer XP, activate prayers when their level requirement is met, and recharge spent Prayer points at an altar. Active prayers drain current Prayer points but do not reduce the player's base Prayer level.</p></div>
+  <ul>
+    <li><strong>Burying bones gives fixed XP:</strong> build 254 removes one bone and awards the item's configured <code>bone_exp</code>. There is no success roll and no Prayer level requirement to bury the ordinary bone types listed below.</li>
+    <li><strong>Prayer points are a consumable pool:</strong> the maximum ordinary pool follows the player's Prayer level. Activating one or more prayers gradually drains current points; when the pool reaches zero the build deactivates the prayer effects.</li>
+    <li><strong>Ordinary altars recharge, not train:</strong> the generic build-254 altar interaction restores current Prayer to the base Prayer level. It does not consume bones or award Prayer XP.</li>
+    <li><strong>Stat prayers use three tiers:</strong> Defence, Strength and Attack each have +5%, +10% and +15% prayers. Only one prayer from the same stat family can remain active at once.</li>
+    <li><strong>Rapid Restore and Rapid Heal affect regeneration:</strong> build 254 halves the corresponding regeneration timer from 100 to 50 while the prayer is active. Rapid Restore applies to restoring lowered stats other than Hitpoints; Rapid Heal applies to natural Hitpoints regeneration.</li>
+    <li><strong>Protect Item keeps one additional item on death:</strong> build 254 normally protects three high-value items when unskulled and none when skulled; Protect Item adds one more protected item in either case.</li>
+    <li><strong>The three overhead protection prayers conflict:</strong> Protect from Magic, Protect from Missiles and Protect from Melee cannot be active together. In build 254, the ordinary NPC combat handlers reduce matching protected hits to zero; PvP handlers reduce the matching maximum hit by 40%. Special encounter scripts can override or modify that ordinary behaviour.</li>
+    <li><strong>Prayer bonus slows drain:</strong> equipped Prayer bonus increases build 254's drain-resistance value from a base 60 by two points per Prayer-bonus point. It changes how long the same Prayer-point pool lasts; it does not raise the Prayer level requirement of any prayer.</li>
+  </ul>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements / notes</th></tr></thead><tbody>
+    <tr><td>1</td><td><strong>Thick Skin</strong> — +5% Defence.</td><td class="member-no">No</td><td>Available from the starting Prayer level; this is why it does not appear in the build's later level-up popup list.</td></tr>
+    <tr><td>4</td><td><strong>Burst of Strength</strong> — +5% Strength.</td><td class="member-no">No</td><td>No secondary requirement.</td></tr>
+    <tr><td>7</td><td><strong>Clarity of Thought</strong> — +5% Attack.</td><td class="member-no">No</td><td>No secondary requirement.</td></tr>
+    <tr><td>10</td><td><strong>Rock Skin</strong> — +10% Defence.</td><td class="member-no">No</td><td>Conflicts with Thick Skin and Steel Skin.</td></tr>
+    <tr><td>13</td><td><strong>Superhuman Strength</strong> — +10% Strength.</td><td class="member-no">No</td><td>Conflicts with Burst of Strength and Ultimate Strength.</td></tr>
+    <tr><td>16</td><td><strong>Improved Reflexes</strong> — +10% Attack.</td><td class="member-no">No</td><td>Conflicts with Clarity of Thought and Incredible Reflexes.</td></tr>
+    <tr><td>19</td><td><strong>Rapid Restore</strong> — doubles the build's ordinary restoration rate for lowered non-Hitpoints stats.</td><td class="member-no">No</td><td>Can run alongside the main stat-boost and protection families.</td></tr>
+    <tr><td>22</td><td><strong>Rapid Heal</strong> — doubles the build's ordinary Hitpoints regeneration rate.</td><td class="member-no">No</td><td>Can run alongside the main stat-boost and protection families.</td></tr>
+    <tr><td>25</td><td><strong>Protect Item</strong> — keep one additional item on death.</td><td class="member-no">No</td><td>Death rules still determine the player's normal protected-item count.</td></tr>
+    <tr><td>28</td><td><strong>Steel Skin</strong> — +15% Defence.</td><td class="member-no">No</td><td>Highest cutoff Defence-boosting prayer.</td></tr>
+    <tr><td>31</td><td><strong>Ultimate Strength</strong> — +15% Strength.</td><td class="member-no">No</td><td>Highest cutoff Strength-boosting prayer.</td></tr>
+    <tr><td>31</td><td>Join the Monastery order and use the upper floor.</td><td class="member-no">No</td><td>Build 254 checks <strong>base</strong> Prayer 31 when Abbot Langley admits the player; see the Monastery section below.</td></tr>
+    <tr><td>34</td><td><strong>Incredible Reflexes</strong> — +15% Attack.</td><td class="member-no">No</td><td>Highest cutoff Attack-boosting prayer.</td></tr>
+    <tr><td>37</td><td><strong>Protect from Magic</strong>.</td><td class="member-no">No</td><td>Mutually exclusive with the other two overhead protection prayers.</td></tr>
+    <tr><td>40</td><td><strong>Protect from Missiles</strong>.</td><td class="member-no">No</td><td>Target-period name is <em>Protect from Missiles</em>; do not silently modernise it to later naming.</td></tr>
+    <tr><td>43</td><td><strong>Protect from Melee</strong>.</td><td class="member-no">No</td><td>Highest-level prayer available at this cutoff.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout warn"><p><strong>Known gap:</strong> Priest in Peril should extend the prayer book with level 46 Retribution, level 49 Redemption, and level 52 Smite. All three are members-only and are not implemented in this build. See <a href="../magic-prayer.html">Magic &amp; Prayer</a> for the audit detail.</p></div>
+
+  <h3>Prayer effects and build-254 drain rates</h3>
+  <p>The build associates each prayer with a drain-effect value. With <strong>0 Prayer bonus</strong>, build 254's drain loop produces the base rates shown below. Wearing Prayer-bonus equipment increases the drain-resistance threshold and therefore extends these times. These timings describe the audited build rather than being substituted from a modern prayer table.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Prayer</th><th>Effect</th><th>Build drain effect</th><th>Base build drain</th></tr></thead><tbody>
+    <tr><td>1</td><td>Thick Skin</td><td>+5% Defence</td><td>3</td><td>1 point / 12 sec</td></tr>
+    <tr><td>4</td><td>Burst of Strength</td><td>+5% Strength</td><td>3</td><td>1 point / 12 sec</td></tr>
+    <tr><td>7</td><td>Clarity of Thought</td><td>+5% Attack</td><td>3</td><td>1 point / 12 sec</td></tr>
+    <tr><td>10</td><td>Rock Skin</td><td>+10% Defence</td><td>6</td><td>1 point / 6 sec</td></tr>
+    <tr><td>13</td><td>Superhuman Strength</td><td>+10% Strength</td><td>6</td><td>1 point / 6 sec</td></tr>
+    <tr><td>16</td><td>Improved Reflexes</td><td>+10% Attack</td><td>6</td><td>1 point / 6 sec</td></tr>
+    <tr><td>19</td><td>Rapid Restore</td><td>2&times; non-Hitpoints stat restoration rate</td><td>1</td><td>1 point / 36 sec</td></tr>
+    <tr><td>22</td><td>Rapid Heal</td><td>2&times; Hitpoints regeneration rate</td><td>2</td><td>1 point / 18 sec</td></tr>
+    <tr><td>25</td><td>Protect Item</td><td>Keep one additional item on death</td><td>2</td><td>1 point / 18 sec</td></tr>
+    <tr><td>28</td><td>Steel Skin</td><td>+15% Defence</td><td>12</td><td>1 point / 3 sec</td></tr>
+    <tr><td>31</td><td>Ultimate Strength</td><td>+15% Strength</td><td>12</td><td>1 point / 3 sec</td></tr>
+    <tr><td>34</td><td>Incredible Reflexes</td><td>+15% Attack</td><td>12</td><td>1 point / 3 sec</td></tr>
+    <tr><td>37</td><td>Protect from Magic</td><td>Protection from matching Magic attacks</td><td>12</td><td>1 point / 3 sec</td></tr>
+    <tr><td>40</td><td>Protect from Missiles</td><td>Protection from matching Ranged attacks</td><td>12</td><td>1 point / 3 sec</td></tr>
+    <tr><td>43</td><td>Protect from Melee</td><td>Protection from matching Melee attacks</td><td>12</td><td>1 point / 3 sec</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Prayer-bonus formula in build 254:</strong> drain resistance is <code>60 + (2 &times; Prayer bonus)</code>. A +15 Prayer bonus therefore raises the threshold from 60 to 90, making the same active-prayer combination last about 50% longer than at +0.</p></div>
+
+  <h3>Bone experience</h3>
+  <p>Build 254 stores Prayer XP in tenths in the object configs. The table below converts its cutoff-relevant entries to ordinary displayed XP. Where later preserved RuneScape references disagree with the build, the conflict is kept visible instead of silently changing the server value.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Bone</th><th>Access</th><th>Build-254 bury XP</th><th>Historical / audit note</th></tr></thead><tbody>
+    <tr><td>Bones</td><td>Free-to-play</td><td>4.5</td><td>Core ordinary-bone value.</td></tr>
+    <tr><td>Burnt bones</td><td>Free-to-play</td><td>4.5</td><td>Same build XP as ordinary bones.</td></tr>
+    <tr><td>Bat bones</td><td>Members in build</td><td><strong>4.5 in build</strong></td><td>Bat bones existed before the cutoff, but later preserved RS2/Old School lineage records 5.3 XP. Build 254 therefore has a visible 4.5-versus-5.3 discrepancy rather than a value this guide treats as historically settled.</td></tr>
+    <tr><td>Big bones</td><td>Free-to-play</td><td>15</td><td>Period-era community evidence and the build agree on 15 XP.</td></tr>
+    <tr><td>Baby dragon bones</td><td>Members</td><td>30</td><td>Build value; members-only source.</td></tr>
+    <tr><td>Dragon bones</td><td>Members</td><td>72</td><td>Build value; period/near-period references also preserve 72 XP.</td></tr>
+    <tr><td>Wolf bones</td><td>Members in build</td><td>4.5</td><td>Wolf bones were added with Big Chompy Bird Hunting on 18 May 2004. The current build marks the object members-only; later RuneScape item history records the item itself as non-members, so access is treated as an implementation point rather than silently generalised.</td></tr>
+  </tbody></table></div>
+  <div class="callout warn"><p><strong>Post-cutoff objects in the current source tree:</strong> <code>bones.obj</code> also contains Tai Bwo Wannai Trio bone variants. That quest released after 7 September 2004, so those rows are not used to expand this historical training table merely because they exist in the present checkout.</p></div>
+
+  <h3>Training at the cutoff</h3>
+  <p>Prayer training in the September-2004 snapshot is much simpler than modern guides suggest: bury bones, collect higher-XP bones when practical, and use one-time quest rewards. This guide deliberately does not import later altar-multiplication methods or modern XP/hour assumptions.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Access</th><th>XP</th><th>Requirements / practical notes</th></tr></thead><tbody>
+    <tr><td>1+</td><td><strong>Bury ordinary bones while training combat</strong></td><td>Free-to-play + members</td><td>4.5 each in build</td><td>No tool or Prayer level gate. This is the universal low-cost method because many ordinary creatures leave bones.</td></tr>
+    <tr><td>1+</td><td><strong>Bury big bones</strong></td><td>Free-to-play + members</td><td>15 each</td><td>Commonly obtained from giants. Higher XP per inventory slot than ordinary bones; availability and combat risk depend on where the player obtains them.</td></tr>
+    <tr><td>1+</td><td><strong>Bury baby-dragon or dragon bones</strong></td><td>Members</td><td>30 / 72 each</td><td>Requires access to and the ability to obtain the relevant dragon drops; dragon combat itself carries obvious danger and may require anti-dragon protection depending on the target.</td></tr>
+    <tr><td>Quest-dependent</td><td><strong>Use fixed quest Prayer-XP rewards</strong></td><td>Varies</td><td>See quest table below</td><td>One-time rewards can skip a significant amount of early bone burial, especially Holy Grail for members.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>No invented XP/hour:</strong> September-2004 Prayer rates depend on how the bones are obtained, banking, monster competition, travel and player combat strength. The page records verified XP per bone and quest rewards rather than presenting modern market-based or click-optimised hourly rates as period fact.</p></div>
+
+  <h3>Prayer bonus equipment</h3>
+  <p>Prayer bonus does not train the skill; it makes active prayers last longer. Build 254 sums the <code>prayerbonus</code> parameter on worn equipment and feeds that total into the drain-resistance formula above. Examples explicitly present in the Prayer content configs include:</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Item</th><th>Access in build</th><th>Prayer bonus</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>Monk's robe top</td><td>Free-to-play</td><td>+6</td><td>No Prayer-level requirement in the Prayer config.</td></tr>
+    <tr><td>Monk's robe bottom</td><td>Free-to-play</td><td>+5</td><td>Pairs with the robe top for +11 from these two pieces.</td></tr>
+    <tr><td>Druid's robe top</td><td>Members</td><td>+4</td><td>Build-configured Prayer bonus.</td></tr>
+    <tr><td>Druid's robe bottom</td><td>Members</td><td>+4</td><td>Build-configured Prayer bonus.</td></tr>
+    <tr><td>Shade robe top</td><td>Free-to-play</td><td>+5</td><td>Build-configured Prayer bonus.</td></tr>
+    <tr><td>Shade robe bottom</td><td>Free-to-play</td><td>+4</td><td>Build-configured Prayer bonus.</td></tr>
+  </tbody></table></div>
+
+  <h3>Monastery / Prayer Guild</h3>
+  <p>The Monastery west of Edgeville is the cutoff skill's special level-gated area. Build 254 models admission as joining Abbot Langley's order rather than as a generic door check.</p>
+  <ul>
+    <li><strong>Requirement:</strong> <strong>31 base Prayer</strong>. The current script uses <code>stat_base(prayer)</code>, so temporary Prayer boosts do not satisfy the admission check in build 254.</li>
+    <li><strong>Membership:</strong> no members-map restriction is attached to the ladder/join sequence; the level-31 unlock is therefore treated as free-to-play.</li>
+    <li><strong>Admission is persistent:</strong> joining sets <code>%prayer_guild = 1</code>, after which the player may climb to the upper floor without repeating the level dialogue.</li>
+    <li><strong>Special altar:</strong> the upstairs monks' altar calls the recharge routine with <strong>base Prayer +2</strong>, temporarily restoring the current pool two points above the normal base maximum. Ordinary altars elsewhere call the routine at the base Prayer value.</li>
+  </ul>
+
+  <h3>Relevant quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Prayer relevance at the cutoff</th></tr></thead><tbody>
+    <tr><td><a href="../quests/restless-ghost.html">The Restless Ghost</a></td><td>Free-to-play</td><td>Awards <strong>1,125 Prayer XP</strong> on completion in the audited build/quest guide, making it the obvious early Prayer quest.</td></tr>
+    <tr><td><a href="../quests/priest-in-peril.html">Priest in Peril</a></td><td>Members</td><td>Awards <strong>1,406 Prayer XP</strong> in build 254. It does <strong>not</strong> expand the September-2004 prayer book with the three later prayers claimed by the old local Prayer page.</td></tr>
+    <tr><td><a href="../quests/holy-grail.html">Holy Grail</a></td><td>Members</td><td>Awards <strong>11,000 Prayer XP</strong> plus Defence XP, a major one-time Prayer gain at the cutoff.</td></tr>
+    <tr><td><a href="../quests/nature-spirit.html">Nature Spirit</a></td><td>Members</td><td>Does not award Prayer XP as a completion reward in build 254, but credited visible-Ghast kills award 30 Prayer XP each; the three required quest kills can therefore produce 90 incidental Prayer XP.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <div class="callout"><p><strong>Core implementation:</strong> <code>scripts/skill_prayer/configs/prayers.dbrow</code> defines the 15 prayers and level requirements; <code>prayers.enum</code> supplies drain effects; individual prayer scripts handle conflicts; <code>prayer.rs2</code> handles drain/deactivation; <code>bury_bone.rs2</code> and <code>bones.obj</code> handle training; and the combat/death scripts apply the actual prayer effects.</p></div>
+  <ul>
+    <li><strong>15/15 cutoff book:</strong> the database runs from Thick Skin through Protect from Melee with no level-46/49/52 entries. This matches the corrected historical cutoff rather than the old page's 15/18 framing.</li>
+    <li><strong>Old page omitted Thick Skin:</strong> the previous local level table began at level 4 because it effectively mirrored level-up popup milestones. The rewrite restores the level-1 starting prayer.</li>
+    <li><strong>Old Priest in Peril note removed:</strong> the previous page incorrectly treated Retribution, Redemption and Smite as September-2004 Priest in Peril prayers missing from the build. Protect from Melee was still the highest-level prayer at the cutoff, so that note was anachronistic.</li>
+    <li><strong>Protection implementation:</strong> ordinary NPC melee/ranged handlers set matching protected damage to zero, while PvP melee/ranged handlers scale the matching maximum hit to 60% (a 40% reduction). Encounter-specific scripts can contain their own protection logic, so the generic rule should not be assumed for every scripted boss or hazard.</li>
+    <li><strong>Prayer bonus implementation:</strong> <code>equip.rs2</code> sets drain resistance to <code>60 + 2 &times; prayerbonus</code>. The guide's base drain timings are therefore build-derived rather than copied from a modern prayer calculator.</li>
+    <li><strong>Bat-bone discrepancy:</strong> build 254 awards 4.5 Prayer XP for bat bones. Later preserved RS2/Old School lineage records 5.3, so the public table exposes the disagreement instead of silently rewriting either source.</li>
+    <li><strong>Current checkout contains later bone content:</strong> Tai Bwo Wannai Trio bone rows are present in the source tree but belong after the 7 September cutoff and are excluded from the historical training progression.</li>
+  </ul>
+
+  <h3>Cutoff exclusions</h3>
+  <div class="callout warn"><p><strong>Do not use a modern Prayer guide as the September-2004 prayer book.</strong> Several familiar training systems, prayers and rewards were introduced later.</p></div>
+  <ul>
+    <li><strong>Retribution, Redemption, Smite and later prayer additions:</strong> they are outside this page's 15-prayer cutoff set. The historical progression here ends at level 43 Protect from Melee.</li>
+    <li><strong>Ectofuntus:</strong> introduced with the Port Phasmatys/Ghosts Ahoy content on <strong>15 February 2005</strong>, so bone grinding, slime and four-times Prayer XP do not belong in a 7 September 2004 training route.</li>
+    <li><strong>Player-owned-house altars:</strong> Construction and its chapel altar training are later content and are not projected backward into the cutoff.</li>
+    <li><strong>Prayer skillcape:</strong> skillcapes were introduced in 2006; level 99 at this cutoff is simply the skill maximum, not a cape unlock.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Historical cutoff:</strong> preserved prayer history identifies Protect from Melee as a 29 March 2004 free-to-play prayer at level 43 and as the highest-level prayer until a 2006 prayer update. That anchors the 7 September 2004 book at level 43 rather than 52.</li>
+    <li><strong>Historical bone cross-checks:</strong> preserved item/update history establishes pre-cutoff bat bones and the 18 May 2004 wolf-bone release; period/near-period community material supports the familiar 15-XP big-bone and 72-XP dragon-bone values. Conflicting bat-bone XP is explicitly retained as a conflict.</li>
+    <li><strong>Build-254 prayer book:</strong> <code>Content/scripts/skill_prayer/configs/prayers.dbrow</code>, <code>prayers.enum</code>, <code>prayers.constant</code>, <code>prayer.varp</code> and <code>Content/scripts/levelup/scripts/levelup_unlocks_prayer.rs2</code>.</li>
+    <li><strong>Training and recharge:</strong> <code>Content/scripts/skill_prayer/configs/bones.obj</code>, <code>scripts/skill_prayer/scripts/bury_bone.rs2</code>, <code>altar.rs2</code> and <code>Content/scripts/areas/monastery/scripts/prayer_guild.rs2</code>.</li>
+    <li><strong>Effects and drain:</strong> the individual prayer scripts, <code>prayer.rs2</code>, <code>Content/scripts/player/scripts/equip.rs2</code>, <code>Content/scripts/player/scripts/death.rs2</code> and the player/NPC/PvP combat scripts.</li>
+    <li><strong>Quest XP cross-checks:</strong> the already-audited local guides for The Restless Ghost, Priest in Peril, Holy Grail and Nature Spirit were used to keep Prayer rewards consistent across the wiki.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="ranged.html">&larr; Ranged</a><a class="next" href="magic.html">Magic &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's Prayer implementation. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

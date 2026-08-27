@@ -1,4 +1,16 @@
 // ============================================================
+// Giant Mole — spawn: static map spawn, so despawn it here when custom bosses are disabled.
+// Replicates the global [ai_spawn,_] body (content/scripts/npc/scripts/ai_spawn.rs2), which a
+// type-specific trigger overrides rather than supplements.
+[ai_spawn,giant_mole]
+%npc_combat_xp_multiplier = npc_param(combat_xp_multiplier);
+%npc_start_coord = npc_coord;
+if (map_feature("custombosses") = false) {
+    npc_del;
+}
+
+
+// ============================================================
 // Giant Mole — retaliate on hit
 [ai_queue1,giant_mole] ~npc_default_retaliate_ap;
 

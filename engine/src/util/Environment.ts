@@ -38,12 +38,9 @@ export default {
     // custom QOL browser controls
     NODE_QOL_MIDDLE_MOUSE_ROTATION: tryParseBoolean(process.env.NODE_QOL_MIDDLE_MOUSE_ROTATION, false),
     NODE_QOL_COMPASS_RESET: tryParseBoolean(process.env.NODE_QOL_COMPASS_RESET, false),
+    NODE_QOL_SCROLLWHEEL_ZOOM: tryParseBoolean(process.env.NODE_QOL_SCROLLWHEEL_ZOOM, false),
     // option 2 only: true enables the plugin that suppresses vanilla anti-macro camera rotation
     NODE_QOL_ANTI_MACRO_ROTATION: tryParseBoolean(process.env.NODE_QOL_ANTI_MACRO_ROTATION, false),
-    // option 2 only: true disables Random/AFK events
-    NODE_ANTI_RANDOM_EVENTS: tryParseBoolean(process.env.NODE_ANTI_RANDOM_EVENTS, false),
-    // option 2 only: true enables mouse scrollwheel camera zoom
-    NODE_QOL_SCROLLWHEEL_ZOOM: tryParseBoolean(process.env.NODE_QOL_SCROLLWHEEL_ZOOM, false),
     // launcher QOL controls
     NODE_QOL_AUTO_OPEN_WEBCLIENT: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_WEBCLIENT, false),
     NODE_QOL_AUTO_OPEN_HISCORES: tryParseBoolean(process.env.NODE_QOL_AUTO_OPEN_HISCORES, false),
@@ -88,7 +85,7 @@ export default {
 
     /// logger server
     LOGGER_SERVER: tryParseBoolean(process.env.LOGGER_SERVER, false),
-    LOGGER_HOST: tryParseString(process.env.LOGGER_HOST, ''),
+    LOGGER_HOST: tryParseString(process.env.LOGGER_HOST, 'localhost'),
     LOGGER_PORT: tryParseInt(process.env.LOGGER_PORT, 43501),
 
     /// database
@@ -106,6 +103,16 @@ export default {
 
     /// kysely
     KYSELY_VERBOSE: tryParseBoolean(process.env.KYSELY_VERBOSE, false),
+
+    /// bot debugger — live web dashboard for observing bot AI (see engine/src/engine/bot/debug/)
+    // master switch. when false: no dashboard route, no server-side tracking allocated, zero tick overhead.
+    BOT_DEBUG_ENABLED: tryParseBoolean(process.env.BOT_DEBUG_ENABLED, false),
+    // off | basic | detailed | trace — trace includes high-frequency movement/interaction events
+    BOT_DEBUG_LEVEL: tryParseString(process.env.BOT_DEBUG_LEVEL, 'detailed'),
+    // max ring-buffer events retained per bot, and globally
+    BOT_DEBUG_EVENT_HISTORY: tryParseInt(process.env.BOT_DEBUG_EVENT_HISTORY, 500),
+    // how often (ms) the REST snapshot endpoints + WS broadcast recompute the cached JSON snapshot
+    BOT_DEBUG_SNAPSHOT_INTERVAL: tryParseInt(process.env.BOT_DEBUG_SNAPSHOT_INTERVAL, 750),
 
     /// development
     BUILD_VERBOSE: tryParseBoolean(process.env.BUILD_VERBOSE, false),

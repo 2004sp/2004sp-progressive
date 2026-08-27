@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="All 19 skills that existed by Sept 2004 are present (7 combat + 4 gathering + 6 artisan + 2 misc) — confirmed both by content folder coverage and by the engine&#x27;s PlayerStat enum, which has exactly 21 slots…">
+  <meta name="description" content="Historical framework and implementation status for the 19 skills available by the 7 September 2004 cutoff, including membership and period naming.">
   <title>2. Skills — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="assets/wiki.css">
 </head>
@@ -26,8 +26,6 @@
     <option value="../wiki.html">Home</option>
 <option value="quests.html">1. Quests</option>
 <option value="skills.html" selected>2. Skills</option>
-<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
-<option value="npcs.html">4. NPCs &amp; dialogue</option>
 <option value="shops.html">5. Shops &amp; economy</option>
 <option value="drops.html">6. Drop tables</option>
 <option value="minigames.html">7. Minigames</option>
@@ -49,8 +47,6 @@
       <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
 <li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
 <li data-title="2 Skills"><a class="active" href="skills.html">2&ensp;Skills</a></li>
-<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
-<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
 <li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
 <li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
 <li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
@@ -67,9 +63,9 @@
     <div class="factbox">
       <div class="frow"><dt>Target build</dt><dd>254</dd></div>
       <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
-      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>57 / 57</dd></div>
       <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
-      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 15</dd></div>
       <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
     </div>
   </nav>
@@ -80,15 +76,15 @@
 <h1 class="pagetitle">2. Skills</h1>
 <p class="byline">A dedicated page from the 2004scape Progressive build 254 coverage audit.</p>
 <section class="standalone-section" id="skills">
-<p class="lede">All 19 skills that existed by Sept 2004 are present (7 combat + 4 gathering + 6 artisan + 2 misc) — confirmed both by content folder coverage and by the engine's <code>PlayerStat</code> enum, which has exactly 21 slots with the two post-2004 slots (reserved for what would become Construction/Farming) explicitly flagged disabled. No anachronistic skill exists.</p>
+<p class="lede">The 7 Sept 2004 target has 19 skills. Fifteen were available to free-to-play players and four were members-only: Agility, Fletching, Herblore, and Thieving. The newest skill was Runecraft, added with RuneScape 2 on 29 Mar 2004; period in-game interfaces used the name <em>Runecraft</em>, while Jagex web/update material also used <em>Runecrafting</em>. No later skill such as Slayer, Farming, or Construction belongs in the cutoff skill list.</p>
 <div class="callout">
-<p><strong>Headline: all 19 period-correct skills are implemented and functional.</strong> 16 are confirmed complete, Prayer is a known partial (3 quest-unlocked prayers missing), and Agility/Fletching look complete by file structure but weren't diffed line-by-line the way Smithing, Prayer, and Magic were.</p>
+<p><strong>Headline: all 19 period-correct skills are implemented and functional.</strong> All 19 are currently classed complete. Prayer has been reconciled to the September 2004 cutoff at 15/15 prayers, and Agility has now been audited obstacle-by-obstacle against the period target. Fletching has also been audited recipe-by-recipe against July-2004 evidence and build 254, with its known historical differences documented in the guide.</p>
 </div>
 <div aria-label="Filter skills by status" class="filters" role="group">
 <button class="active" data-filter="all">All (19)</button>
-<button data-filter="complete">Complete (16)</button>
-<button data-filter="partial">Partial (1)</button>
-<button data-filter="flag">Unverified (2)</button>
+<button data-filter="complete">Complete (19)</button>
+<button data-filter="partial">Partial (0)</button>
+<button data-filter="flag">Unverified (0)</button>
 </div>
 <div class="table-wrap">
 <table id="skill-table">
@@ -99,8 +95,8 @@
 <tr data-status="complete"><td><a href="skills/strength.html">Strength</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Core combat stat; melee max hit runs through the engine's standard combat formulas.</td></tr>
 <tr data-status="complete"><td><a href="skills/hitpoints.html">Hitpoints</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Core combat stat governing the player's health pool; wired throughout combat and quest damage.</td></tr>
 <tr data-status="complete"><td><a href="skills/ranged.html">Ranged</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Core combat stat; ranged accuracy/damage runs through the engine's standard combat formulas.</td></tr>
-<tr data-status="partial"><td><a href="skills/prayer.html">Prayer</a></td><td><span class="pill partial">Partial</span></td><td class="evidence">Engine and 15 base prayers work, but <a href="magic-prayer.html">3 prayers unlocked by Priest in Peril are missing</a>.</td></tr>
-<tr data-status="complete"><td><a href="skills/magic.html">Magic</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Standard spellbook is period-complete for the 7 Sept 2004 target — see the <a href="magic-prayer.html">Magic &amp; Prayer</a> page.</td></tr>
+<tr data-status="complete"><td><a href="skills/prayer.html">Prayer</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">All 15 prayers in the September 2004 standard prayer book are implemented, from Thick Skin through Protect from Melee — see the <a href="skills/prayer.html">Prayer guide</a>.</td></tr>
+<tr data-status="complete"><td><a href="skills/magic.html">Magic</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Standard spellbook is period-complete for the 7 Sept 2004 target — see the <a href="skills/magic.html">Magic guide</a>.</td></tr>
 <tr data-status="complete"><td><a href="skills/cooking.html">Cooking</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">515-line source table plus dedicated recipe families (cakes, pies, pizza, stew, dough, wine, ugthanki kebab, oomlie) and a full parallel Gnome cuisine subsystem.</td></tr>
 <tr data-status="complete"><td><a href="skills/fishing.html">Fishing</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Present via the engine's stat slots; not broken out with recipe-level detail in the audit the way Cooking/Smithing were.</td></tr>
 <tr data-status="complete"><td><a href="skills/woodcutting.html">Woodcutting</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">8 tree types incl. achey and burnt/magic variants.</td></tr>
@@ -109,15 +105,15 @@
 <tr data-status="complete"><td><a href="skills/smithing.html">Smithing</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">129 distinct smithable items across bronze→rune, plus a separate smelting pipeline and the Dragon Slayer square-shield hook.</td></tr>
 <tr data-status="complete"><td><a href="skills/mining.html">Mining</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">14-rock table incl. blurite, clay, gem rocks, and the Dwarven Mining Guild.</td></tr>
 <tr data-status="complete"><td><a href="skills/herblore.html">Herblore</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Full identify → grind → brew → decant pipeline (1,552-line potion table).</td></tr>
-<tr data-status="flag"><td><a href="skills/agility.html">Agility</a></td><td><span class="pill flag">Unverified</span></td><td class="evidence">Looks fleshed out by file structure and dbtable size, but wasn't diffed obstacle-by-obstacle against a historical list.</td></tr>
+<tr data-status="complete"><td><a href="skills/agility.html">Agility</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Audited against the build-254 course, shortcut, Yanille dungeon, Gnome Ball, and Brimhaven Arena scripts; period obstacles, failure behaviour, and XP values are documented in the guide.</td></tr>
 <tr data-status="complete"><td><a href="skills/thieving.html">Thieving</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Pickpocketing, market stalls, trapped chests, and locked doors all separately scripted.</td></tr>
-<tr data-status="complete"><td><a href="skills/runecrafting.html">Runecrafting</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">11 altars scripted, including Death rune (its altar was actually unreachable in real RS until a 2006 quest, so its presence just mirrors what was already in the cache — not a bug).</td></tr>
-<tr data-status="flag"><td><a href="skills/fletching.html">Fletching</a></td><td><span class="pill flag">Unverified</span></td><td class="evidence">Looks fleshed out by file structure and dbtable size, but wasn't diffed recipe-by-recipe against a historical list.</td></tr>
+<tr data-status="complete"><td><a href="skills/runecrafting.html">Runecraft</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Ten target-period runes are implemented from Air through Law, including active multiple-rune thresholds. A Death-rune row/object also exists in the current source tree, but Death crafting was added after the 7 Sep 2004 cutoff and is excluded from the audited guide.</td></tr>
+<tr data-status="complete"><td><a href="skills/fletching.html">Fletching</a></td><td><span class="pill complete">Complete</span></td><td class="evidence">Bows, arrows, darts, tipped bolts and ogre arrows were audited recipe-by-recipe against July-2004 evidence and build 254; known bolt-level, dart-gate and XP differences are documented in the guide.</td></tr>
 </tbody>
 </table>
 </div>
 </section>
-<nav class="page-navigation" aria-label="Previous and next pages"><a class="prev" href="quests.html">&larr; 1. Quests</a><a class="next" href="magic-prayer.html">3. Magic &amp; Prayer &rarr;</a></nav>
+<nav class="page-navigation" aria-label="Previous and next pages"><a class="prev" href="quests.html">&larr; 1. Quests</a><a class="next" href="shops.html">3. Shops &amp; economy &rarr;</a></nav>
 
       <p class="pagefooter">Compiled by reading the project's own source — quest scripts, NPC/shop/skill content trees, and the TypeScript engine core — cross-checked against RuneScape's verified quest release chronology and public update history. Not affiliated with Jagex, Lost City, or the Progressive project maintainers. Where a claim couldn't be verified with real evidence in the code, it's marked as such rather than guessed.</p>
     </article>

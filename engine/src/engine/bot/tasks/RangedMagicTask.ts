@@ -4,19 +4,33 @@
  * Combined Ranged + Magic combat task.
  *
  * Initiation conditions (checked by shouldRun / BotGoalPlanner):
- *   • Has a bow (shortbow/oak shortbow) + any arrows  →  ranged mode
- *   • Has staff_of_air + mind runes                   →  magic mode
- *   • Neither: task only starts once the bot has ≥ 5 000 coins to buy equipment.
+ *   • Has a bow (any tier in RangedBowsByLevel) + any arrows  →  ranged mode
+ *   • Has staff_of_air + any wind-line catalyst rune          →  magic mode
+ *   • Neither: task only starts once the bot has ≥ 3 000 coins to buy equipment.
  *
- * Shopping (when equipment is missing):
- *   Varrock Archery  — shortbow (100gp) + bronze arrows (7gp each × 200)
+ * Gear/spell tier is fully dynamic, recomputed from the bot's live level AND
+ * coin budget (inventory + bank) every time it banks — see _refreshGearAndSpell():
+ *   Magic:  wind_strike(mind, lvl1) → wind_bolt(chaos, lvl17) →
+ *           wind_blast(death, lvl41) → wind_wave(blood, lvl62, members-only,
+ *           never shop-bought — only usable if the bot already owns blood runes).
+ *           A staff_of_air supplies air runes for free, so only the catalyst
+ *           rune needs buying. If the bot can't afford death runes it drops
+ *           back to chaos, then mind — see BotKnowledge.pickBestWindSpell().
+ *   Ranged: prefers the best bow the bot already owns (fletched — see
+ *           FletchingTask/BowStringingTask for willow/maple/yew/magic tiers,
+ *           none of which are shop-purchasable), else buys the best it can
+ *           (shortbow/oak_shortbow, the only tiers Lowe's Archery stocks).
+ *           Arrow tier (bronze/iron/steel) is chosen purely by coin budget —
+ *           see BotKnowledge.bestRangedBow()/bestAffordableArrow().
+ *
+ * Shopping (dynamic, built fresh each time from the picked tiers):
+ *   Varrock Archery  — bow (100-200gp) + arrows (10-20gp each × 500)
  *   Zaff's Staffs    — staff_of_air (1 000gp)
- *   Aubury's Runes   — mind runes (4gp each × 200)
+ *   Aubury's Runes   — mind/chaos/death runes (10/100/150gp each × 250)
  *
- * After equipping, the bot follows the same NPC progression as melee CombatTask:
- *   1–19  chickens / goblins (Lumbridge)
- *   20+   barbarians / chaos druids (Taverley Dungeon via teleJump)
- *   40+   Al Kharid warriors
+ * NPC progression location comes from BotKnowledge's RANGED/MAGIC
+ * SkillProgression tables, same as before — this task only controls WHICH
+ * spell/gear tier is used at whatever location the planner already picked.
  *
  * Dungeon navigation for chaos druids mirrors CombatTask:
  *   Walk to TAVERLY_DUNGEON_ENTRANCE → teleJump to TAVERLY_DUNGEON_FLOOR
@@ -28,6 +42,7 @@ import {
     Player,
     Npc,
     InvType,
+    Inventory,
     walkTo,
     interactNpcOp,
     findNpcByName,
@@ -40,6 +55,7 @@ import {
     getBaseLevel,
     PlayerStat,
     Items,
+    Shops,
     Locations,
     getProgressionStep,
     teleportNear,
@@ -49,16 +65,24 @@ import {
     StuckDetector,
     ProgressWatchdog,
     setCombatStyle,
-    setAutocastWindStrike,
+    setAutocastSpell,
     openNearbyGate,
     botJitter,
     advanceBankWalk,
     cleanGrimyHerbs,
-    botTeleport
+    botTeleport,
+    FOOD_IDS,
+    WIND_SPELLS,
+    pickBestWindSpell,
+    RangedBowsByLevel,
+    bestRangedBow,
+    RangedArrowsByCost,
+    bestAffordableArrow
 } from '#/engine/bot/tasks/BotTaskBase.js';
-import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
+import type { SkillStep, WindSpellTier } from '#/engine/bot/tasks/BotTaskBase.js';
 import { findNpcFiltered, npcMatchesName, interactHeldOp, _wornContains, _equipLoot } from '#/engine/bot/BotAction.js';
 import NpcType from '#/cache/config/NpcType.js';
+import Environment from '#/util/Environment.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -76,6 +100,9 @@ const ARROW_LOW_THRESHOLD = 1;
 
 /** Runes to restock when supply drops below this level. */
 const RUNE_LOW_THRESHOLD = 1;
+
+/** Sharks to maintain in inventory during combat (mirrors CombatTask). */
+const COMBAT_SHARKS = 15;
 
 // ── NPC claim registry (shared with CombatTask) ───────────────────────────────
 const CLAIMED_NPCS_RM = new Set<number>();
@@ -111,11 +138,18 @@ export class RangedMagicTask extends BotTask {
     private step: SkillStep;
     private primaryStat: PlayerStat; // RANGED or MAGIC
 
-    private state: 'check_equip' | 'shop_walk' | 'shop_open' | 'shop_buy' | 'equip' | 'walk' | 'patrol' | 'scan' | 'interact' | 'flee' | 'bank_walk' | 'bank_deposit' = 'check_equip';
+    private state: 'check_equip' | 'shop_walk' | 'shop_open' | 'shop_buy' | 'equip' | 'walk' | 'patrol' | 'scan' | 'interact' | 'flee' | 'eat' | 'bank_walk' | 'bank_deposit' = 'check_equip';
 
     private shopQueue: ShopBuy[] = [];
     private currentShop: ShopBuy | null = null;
     private shopNpc: Npc | null = null;
+
+    // ── Dynamic gear/spell tier — recomputed by _refreshGearAndSpell() whenever
+    // the bot banks, so it always reflects the current level + coin budget. ──
+    private currentSpell: WindSpellTier = WIND_SPELLS[0];
+    private currentBowId: number = Items.SHORTBOW;
+    private currentArrowId: number = Items.BRONZE_ARROW;
+    private currentArrowCost: number = RangedArrowsByCost[0].cost;
 
     private currentNpc: Npc | null = null;
     private claimedNpcKey = -1;
@@ -197,13 +231,46 @@ export class RangedMagicTask extends BotTask {
             return;
         }
 
+        // ── HP CHECK & HEALING ───────────────────────────────────────────────────
+        // Mirrors CombatTask — this task previously had no food/HP handling at
+        // all, so bots would keep fighting (and dying) at any HP.
+        const hp = player.stats[PlayerStat.HITPOINTS];
+        const maxHp = player.baseLevels[PlayerStat.HITPOINTS];
+        const hpSafeStates = ['bank_walk', 'bank_deposit', 'shop_walk', 'shop_open', 'shop_buy', 'check_equip', 'flee', 'eat'];
+        if (hp < maxHp * 0.4 && !hpSafeStates.includes(this.state)) {
+            if (this._hasFood(player)) {
+                this._log(player, `HP low (${hp}/${maxHp}), eating...`, 'heal_trigger');
+                this.state = 'eat';
+                return;
+            }
+            this._log(player, `HP low (${hp}/${maxHp}) and NO FOOD, fleeing!`, 'flee_low_hp');
+            this._releaseNpc();
+            this.currentNpc = null;
+            this.state = 'flee';
+            this.fleeTicks = 0;
+            return;
+        }
+
         // ── CHECK / EQUIP ─────────────────────────────────────────────────────
         if (this.state === 'check_equip') {
             const mode = this._pickMode(player);
             if (mode !== null) {
                 this.mode = mode;
-                // Equip the right weapon before walking to combat
+                // Pick the best sustainable spell/gear tier, then equip it, before walking to combat
+                this._refreshGearAndSpell(player);
                 this._equipWeapons(player);
+
+                // _pickMode()/_refreshGearAndSpell() only check ownership across
+                // inventory + bank — the gear may still be sitting in the bank,
+                // in which case _equipWeapons() (inventory-only) silently does
+                // nothing. Without this check the bot would walk off to combat
+                // and swing bare-handed while carrying arrows it can't use.
+                if (!this._isFullyEquipped(player)) {
+                    this._log(player, 'gear owned but not in hand → bank_walk to withdraw', 'need_withdraw');
+                    this.state = 'bank_walk';
+                    return;
+                }
+
                 this._refreshStep(player);
                 this.state = 'walk';
                 this._log(player, `mode=${mode}, step=${this.step.location}`, 'equip_ok');
@@ -325,6 +392,7 @@ export class RangedMagicTask extends BotTask {
 
         // ── EQUIP ─────────────────────────────────────────────────────────────
         if (this.state === 'equip') {
+            this._refreshGearAndSpell(player);
             this._equipWeapons(player);
             this._refreshStep(player);
             this.state = 'walk';
@@ -354,59 +422,48 @@ export class RangedMagicTask extends BotTask {
         }
 
         // ── LOW AMMO / RUNES → bank to restock ───────────────────────────────
-        if (this.mode === 'ranged' && this.step.itemConsumed) {
-            if (countItem(player, this.step.itemConsumed) < ARROW_LOW_THRESHOLD) {
-                const bid = bankInvId();
-                if (bid !== -1) {
-                    const bank = player.getInventory(bid);
-                    if (bank) {
-                        let bankCount = 0;
-                        for (let i = 0; i < bank.capacity; i++) {
-                            const it = bank.get(i);
-                            if (it?.id === this.step.itemConsumed) bankCount += it.count;
-                        }
-                        if (bankCount > 0) {
-                            this._log(player, 'low arrows → bank_walk', 'low_ammo');
-                            this.state = 'bank_walk';
-                            this.currentNpc = null;
-                            return;
-                        }
-                        // No arrows in bank either — buy more
-                        if (this._totalCoins(player) >= 200 * 7) {
-                            this.shopQueue = [{ shopKey: 'VARROCK_ARCHERY', npcName: 'lowe', itemId: Items.BRONZE_ARROW, qty: ARROW_BUY_QTY, cost: 7, op: 3 }];
-                            this._nextShop();
-                            this.state = 'shop_walk';
-                            return;
-                        }
-                    }
+        // Uses the currently-picked tier (this.currentArrowId / this.currentSpell),
+        // not a fixed item — so restocking always chases whatever tier the bot
+        // has actually settled into.
+        if (this.mode === 'ranged') {
+            if (countItem(player, this.currentArrowId) < ARROW_LOW_THRESHOLD) {
+                const bankCount = this._countAll(player, this.currentArrowId) - countItem(player, this.currentArrowId);
+                if (bankCount > 0) {
+                    this._log(player, 'low arrows → bank_walk', 'low_ammo');
+                    this.state = 'bank_walk';
+                    this.currentNpc = null;
+                    return;
+                }
+                // None in bank either — buy more of whatever tier is currently affordable.
+                if (this._totalCoins(player) >= ARROW_BUY_QTY * this.currentArrowCost) {
+                    this.shopQueue = [{ shopKey: 'VARROCK_ARCHERY', npcName: 'lowe', itemId: this.currentArrowId, qty: ARROW_BUY_QTY, cost: this.currentArrowCost, op: 3 }];
+                    this._nextShop();
+                    this.state = 'shop_walk';
+                    return;
                 }
             }
         }
-        if (this.mode === 'magic' && this.step.itemConsumed) {
-            if (countItem(player, this.step.itemConsumed) < RUNE_LOW_THRESHOLD) {
-                const bid = bankInvId();
-                if (bid !== -1) {
-                    const bank = player.getInventory(bid);
-                    if (bank) {
-                        let bankCount = 0;
-                        for (let i = 0; i < bank.capacity; i++) {
-                            const it = bank.get(i);
-                            if (it?.id === this.step.itemConsumed) bankCount += it.count;
-                        }
-                        if (bankCount > 0) {
-                            this._log(player, 'low runes → bank_walk', 'low_runes');
-                            this.state = 'bank_walk';
-                            this.currentNpc = null;
-                            return;
-                        }
-                        if (this._totalCoins(player) >= RUNE_BUY_QTY * 4) {
-                            this.shopQueue = [{ shopKey: 'VARROCK_RUNES', npcName: 'aubury', itemId: Items.MIND_RUNE, qty: RUNE_BUY_QTY, cost: 4, op: 3 }];
-                            this._nextShop();
-                            this.state = 'shop_walk';
-                            return;
-                        }
-                    }
+        if (this.mode === 'magic') {
+            const catalyst = this.currentSpell.catalystRune;
+            if (countItem(player, catalyst) < RUNE_LOW_THRESHOLD) {
+                const bankCount = this._countAll(player, catalyst) - countItem(player, catalyst);
+                if (bankCount > 0) {
+                    this._log(player, 'low runes → bank_walk', 'low_runes');
+                    this.state = 'bank_walk';
+                    this.currentNpc = null;
+                    return;
                 }
+                if (this.currentSpell.catalystCost >= 0 && this._totalCoins(player) >= RUNE_BUY_QTY * this.currentSpell.catalystCost) {
+                    this.shopQueue = [{ shopKey: 'VARROCK_RUNES', npcName: 'aubury', itemId: catalyst, qty: RUNE_BUY_QTY, cost: this.currentSpell.catalystCost, op: 3 }];
+                    this._nextShop();
+                    this.state = 'shop_walk';
+                    return;
+                }
+                // Out of runes, can't shop-buy this tier (e.g. blood runes) or
+                // can't afford it — drop back down to a sustainable tier now
+                // rather than standing idle waiting for runes that won't come.
+                this.state = 'check_equip';
+                return;
             }
         }
 
@@ -420,10 +477,31 @@ export class RangedMagicTask extends BotTask {
         }
 
         if (this.state === 'bank_deposit') {
+            // _equipLoot() is a generic "wear anything better than what's worn"
+            // sweep meant for armor/jewellery drops. Its tier heuristic only
+            // recognizes melee weapon material names (bronze/iron/.../rune) —
+            // a bow resolves to tier -1 (unrecognized), so ANY tiered melee
+            // weapon sitting in inventory (e.g. a leftover woodcutting axe)
+            // always looks like an "upgrade" and gets auto-equipped over the
+            // bow. Left uncorrected this fights _equipWeapons() every single
+            // bank visit — check_equip immediately fails _isFullyEquipped()
+            // again and loops straight back to bank_walk forever.
             _equipLoot(player);
             cleanGrimyHerbs(player);
+            // Re-pick the best sustainable tier from the coin balance right
+            // after depositing loot (most accurate coin count), then deposit
+            // any stale lower-tier gear and withdraw the new tier.
+            this._refreshGearAndSpell(player);
             this._depositLoot(player);
             this._withdrawAmmo(player);
+            // Re-assert the correct weapon now that it's guaranteed to be in
+            // hand (undoes whatever _equipLoot() wrongly equipped above), then
+            // deposit again so the displaced item (the axe) actually leaves
+            // the inventory instead of sitting there to be re-grabbed next trip.
+            this._equipWeapons(player);
+            this._depositLoot(player);
+            this._withdrawSharks(player);
+            this._withdrawFood(player);
             this.state = 'check_equip';
             this.cooldown = 3;
             return;
@@ -476,6 +554,12 @@ export class RangedMagicTask extends BotTask {
                 this.fleeTicks = 0;
                 this.scanFail = 0;
             }
+            return;
+        }
+
+        // ── EAT ───────────────────────────────────────────────────────────────
+        if (this.state === 'eat') {
+            this._eatFood(player);
             return;
         }
 
@@ -614,28 +698,31 @@ export class RangedMagicTask extends BotTask {
 
     // ── Mode detection ─────────────────────────────────────────────────────────
 
-    private _pickMode(player: Player): Mode | null {
+    /** Count an item across inventory + bank. */
+    private _countAll(player: Player, id: number): number {
+        let n = countItem(player, id);
         const bid = bankInvId();
-        const bank = bid !== -1 ? player.getInventory(bid) : null;
-
-        /** Count item across inventory + bank. */
-        const countAll = (id: number): number => {
-            let n = countItem(player, id);
+        if (bid !== -1) {
+            const bank = player.getInventory(bid);
             if (bank) {
                 for (let i = 0; i < bank.capacity; i++) {
                     const it = bank.get(i);
                     if (it?.id === id) n += it.count;
                 }
             }
-            return n;
-        };
+        }
+        return n;
+    }
 
-        const hasBow = countAll(Items.OAK_SHORTBOW) > 0 || countAll(Items.SHORTBOW) > 0;
-        const hasArrows = countAll(Items.BRONZE_ARROW) > 0 || countAll(Items.IRON_ARROW) > 0 || countAll(Items.STEEL_ARROW) > 0;
-        const hasStaff = countAll(Items.STAFF_OF_AIR) > 0;
-        const hasMindRune = countAll(Items.MIND_RUNE) > 0;
+    private _pickMode(player: Player): Mode | null {
+        const hasBow = RangedBowsByLevel.some(t => this._countAll(player, t.itemId) > 0);
+        const hasArrows = RangedArrowsByCost.some(a => this._countAll(player, a.itemId) > 0);
+        const hasStaff = this._countAll(player, Items.STAFF_OF_AIR) > 0;
+        // Any wind-line catalyst rune is enough to start — pickBestWindSpell()
+        // will settle on the tier the bot can actually sustain.
+        const hasCatalyst = WIND_SPELLS.some(t => this._countAll(player, t.catalystRune) > 0);
 
-        const canDoMagic = hasStaff && hasMindRune;
+        const canDoMagic = hasStaff && hasCatalyst;
         const canDoRanged = hasBow && hasArrows;
 
         // 50/50 random chance when both are available
@@ -645,6 +732,31 @@ export class RangedMagicTask extends BotTask {
         if (canDoMagic) return 'magic';
         if (canDoRanged) return 'ranged';
         return null;
+    }
+
+    // ── Dynamic tier selection ────────────────────────────────────────────────
+
+    /**
+     * Recomputes the best sustainable spell (magic) or bow+arrow (ranged) tier
+     * from the bot's current level and coin budget (inventory + bank). Called
+     * whenever the bot banks/re-equips, so upgrades — or graceful downgrades,
+     * e.g. running out of death runes and dropping back to chaos — happen
+     * naturally over time instead of the tier being fixed forever.
+     */
+    private _refreshGearAndSpell(player: Player): void {
+        const coins = this._totalCoins(player);
+
+        if (this.mode === 'magic') {
+            const magicLevel = getBaseLevel(player, PlayerStat.MAGIC);
+            this.currentSpell = pickBestWindSpell(magicLevel, coins, runeId => this._countAll(player, runeId), Environment.NODE_MEMBERS);
+        } else if (this.mode === 'ranged') {
+            const rangedLevel = getBaseLevel(player, PlayerStat.RANGED);
+            const bowTier = bestRangedBow(rangedLevel, id => this._countAll(player, id) > 0);
+            this.currentBowId = bowTier.itemId;
+            const arrowTier = bestAffordableArrow(coins, id => this._countAll(player, id));
+            this.currentArrowId = arrowTier.itemId;
+            this.currentArrowCost = arrowTier.cost;
+        }
     }
 
     // ── Equipment helpers ─────────────────────────────────────────────────────
@@ -665,33 +777,23 @@ export class RangedMagicTask extends BotTask {
                 }
             }
         } else if (this.mode === 'ranged') {
-            // Equip oak shortbow (preferred) or shortbow
-            const bowIds = [Items.OAK_SHORTBOW, Items.SHORTBOW];
-            for (const bowId of bowIds) {
-                if (!_wornContains(player, bowId) && hasItem(player, bowId)) {
-                    for (let slot = 0; slot < inv.capacity; slot++) {
-                        const it = inv.get(slot);
-                        if (it?.id === bowId) {
-                            interactHeldOp(player, inv, it.id, slot, 2);
-                            break;
-                        }
+            // Equip the bow/arrow tier _refreshGearAndSpell() picked.
+            if (!_wornContains(player, this.currentBowId) && hasItem(player, this.currentBowId)) {
+                for (let slot = 0; slot < inv.capacity; slot++) {
+                    const it = inv.get(slot);
+                    if (it?.id === this.currentBowId) {
+                        interactHeldOp(player, inv, it.id, slot, 2);
+                        break;
                     }
-                    break;
                 }
             }
-
-            // Equip arrows into ammo slot (best available: steel > iron > bronze)
-            const arrowIds = [Items.STEEL_ARROW, Items.IRON_ARROW, Items.BRONZE_ARROW];
-            for (const arrowId of arrowIds) {
-                if (!_wornContains(player, arrowId) && hasItem(player, arrowId)) {
-                    for (let slot = 0; slot < inv.capacity; slot++) {
-                        const it = inv.get(slot);
-                        if (it?.id === arrowId) {
-                            interactHeldOp(player, inv, it.id, slot, 2);
-                            break;
-                        }
+            if (!_wornContains(player, this.currentArrowId) && hasItem(player, this.currentArrowId)) {
+                for (let slot = 0; slot < inv.capacity; slot++) {
+                    const it = inv.get(slot);
+                    if (it?.id === this.currentArrowId) {
+                        interactHeldOp(player, inv, it.id, slot, 2);
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -699,12 +801,28 @@ export class RangedMagicTask extends BotTask {
 
     private _setAttackStyle(player: Player): void {
         if (this.mode === 'magic') {
-            // Enable autocast wind strike with staff_of_air
-            setAutocastWindStrike(player);
+            // Autocast whichever wind-line spell _refreshGearAndSpell() picked.
+            setAutocastSpell(player, this.currentSpell.autocastVarp);
         } else {
             // Ranged: style 0 (accurate) → ranged XP
             setCombatStyle(player, 0);
         }
+    }
+
+    /**
+     * True only if the weapon (and ammo/runes) needed for the current mode is
+     * actually in hand, not just owned somewhere across inventory + bank.
+     * _pickMode()/_refreshGearAndSpell() are ownership checks (inv+bank) — this
+     * is the "can the bot swing right now" check that gates leaving check_equip.
+     */
+    private _isFullyEquipped(player: Player): boolean {
+        if (this.mode === 'magic') {
+            return _wornContains(player, Items.STAFF_OF_AIR) && countItem(player, this.currentSpell.catalystRune) > 0;
+        }
+        if (this.mode === 'ranged') {
+            return _wornContains(player, this.currentBowId) && countItem(player, this.currentArrowId) > 0;
+        }
+        return false;
     }
 
     // ── Step selection ────────────────────────────────────────────────────────
@@ -720,44 +838,46 @@ export class RangedMagicTask extends BotTask {
     // ── Shopping helpers ──────────────────────────────────────────────────────
 
     private _totalCoins(player: Player): number {
-        let total = countItem(player, Items.COINS);
-        const bid = bankInvId();
-        if (bid !== -1) {
-            const bank = player.getInventory(bid);
-            if (bank) {
-                for (let i = 0; i < bank.capacity; i++) {
-                    const it = bank.get(i);
-                    if (it?.id === Items.COINS) total += it.count;
-                }
-            }
-        }
-        return total;
+        return this._countAll(player, Items.COINS);
     }
 
     private _buildShopQueue(player: Player): ShopBuy[] {
         const queue: ShopBuy[] = [];
         const coins = this._totalCoins(player);
 
-        // Staff of air (1 000gp) — must be bought from Zaff
-        if (!hasItem(player, Items.STAFF_OF_AIR) && coins >= 1000) {
+        // Staff of air (1 000gp) — always needed to unlock magic mode at all,
+        // regardless of which wind spell tier ends up affordable.
+        if (this._countAll(player, Items.STAFF_OF_AIR) === 0 && coins >= 1000) {
             queue.push({ shopKey: 'VARROCK_STAFFS', npcName: 'zaff', itemId: Items.STAFF_OF_AIR, qty: 1, cost: 1000, op: 3 });
         }
 
-        // Shortbow (100gp) from Lowe's Archery
-        if (!hasItem(player, Items.SHORTBOW) && !hasItem(player, Items.OAK_SHORTBOW) && coins >= 100) {
-            queue.push({ shopKey: 'VARROCK_ARCHERY', npcName: 'lowe', itemId: Items.SHORTBOW, qty: 1, cost: 100, op: 3 });
+        // Bow — buy the tier bestRangedBow() picked, but only if it's actually
+        // shop-sold (willow+ come from Fletching, never purchased here) and not
+        // already owned.
+        const rangedLevel = getBaseLevel(player, PlayerStat.RANGED);
+        const bowTier = bestRangedBow(rangedLevel, id => this._countAll(player, id) > 0);
+        const bowConfig = RangedBowsByLevel.find(t => t.itemId === bowTier.itemId);
+        const bowCost = bowConfig?.shopKey ? Shops[bowConfig.shopKey]?.stock.find(s => s.itemId === bowTier.itemId)?.cost : undefined;
+        if (bowConfig && bowConfig.shopKey && bowCost !== undefined && this._countAll(player, bowTier.itemId) === 0 && coins >= bowCost) {
+            queue.push({ shopKey: bowConfig.shopKey as keyof typeof Locations, npcName: 'lowe', itemId: bowTier.itemId, qty: 1, cost: bowCost, op: 3 });
         }
 
-        // Bronze arrows (7gp each × 200)
-        const arrowCount = countItem(player, Items.BRONZE_ARROW);
-        if (arrowCount < ARROW_BUY_QTY && coins >= 7 * (ARROW_BUY_QTY - arrowCount)) {
-            queue.push({ shopKey: 'VARROCK_ARCHERY', npcName: 'lowe', itemId: Items.BRONZE_ARROW, qty: ARROW_BUY_QTY - arrowCount, cost: 7, op: 3 });
+        // Arrows — buy the coin-affordable tier bestAffordableArrow() picked.
+        const arrowTier = bestAffordableArrow(coins, id => this._countAll(player, id));
+        const arrowCount = countItem(player, arrowTier.itemId);
+        if (arrowCount < ARROW_BUY_QTY && coins >= arrowTier.cost * (ARROW_BUY_QTY - arrowCount)) {
+            queue.push({ shopKey: 'VARROCK_ARCHERY', npcName: 'lowe', itemId: arrowTier.itemId, qty: ARROW_BUY_QTY - arrowCount, cost: arrowTier.cost, op: 3 });
         }
 
-        // Mind runes (4gp each × 200)
-        const runeCount = countItem(player, Items.MIND_RUNE);
-        if (runeCount < RUNE_BUY_QTY && coins >= 4 * (RUNE_BUY_QTY - runeCount)) {
-            queue.push({ shopKey: 'VARROCK_RUNES', npcName: 'aubury', itemId: Items.MIND_RUNE, qty: RUNE_BUY_QTY - runeCount, cost: 4, op: 3 });
+        // Catalyst rune — buy the tier pickBestWindSpell() picked (mind/chaos/
+        // death — never blood, that spell only activates if already owned).
+        const magicLevel = getBaseLevel(player, PlayerStat.MAGIC);
+        const spellTier = pickBestWindSpell(magicLevel, coins, runeId => this._countAll(player, runeId), Environment.NODE_MEMBERS);
+        if (spellTier.catalystCost >= 0) {
+            const runeCount = countItem(player, spellTier.catalystRune);
+            if (runeCount < RUNE_BUY_QTY && coins >= spellTier.catalystCost * (RUNE_BUY_QTY - runeCount)) {
+                queue.push({ shopKey: 'VARROCK_RUNES', npcName: 'aubury', itemId: spellTier.catalystRune, qty: RUNE_BUY_QTY - runeCount, cost: spellTier.catalystCost, op: 3 });
+            }
         }
 
         return queue;
@@ -791,30 +911,151 @@ export class RangedMagicTask extends BotTask {
         const bank = player.getInventory(bid);
         if (!inv || !bank) return;
 
-        const keep = new Set<number>([Items.COINS, Items.STAFF_OF_AIR, Items.SHORTBOW, Items.OAK_SHORTBOW, Items.BRONZE_ARROW, Items.IRON_ARROW, Items.STEEL_ARROW, Items.MIND_RUNE]);
+        // Only the CURRENT tier's gear is protected from being banked — any
+        // stale lower tier left over from before a level-up/coin windfall
+        // (e.g. old bronze arrows once on iron, or mind runes once on chaos)
+        // gets deposited normally instead of cluttering the inventory forever.
+        // It isn't lost: still sitting in the bank if the bot ever needs to
+        // drop back down a tier.
+        const keep = new Set<number>([Items.COINS, Items.STAFF_OF_AIR, this.currentBowId, this.currentArrowId, this.currentSpell.catalystRune]);
 
         for (let slot = 0; slot < inv.capacity; slot++) {
             const it = inv.get(slot);
-            if (!it || keep.has(it.id)) continue;
+            if (!it || keep.has(it.id) || FOOD_IDS.includes(it.id)) continue;
             const moved = inv.remove(it.id, it.count);
             if (moved.completed > 0) bank.add(it.id, moved.completed);
         }
     }
 
+    private _hasFood(player: Player): boolean {
+        for (const id of FOOD_IDS) {
+            if (hasItem(player, id)) return true;
+        }
+        return false;
+    }
+
+    private _eatFood(player: Player): void {
+        const inv = player.getInventory(InvType.INV);
+        if (!inv) {
+            this.state = 'walk';
+            return;
+        }
+
+        for (const foodId of FOOD_IDS) {
+            for (let slot = 0; slot < inv.capacity; slot++) {
+                const item = inv.get(slot);
+                if (!item || item.id !== foodId) continue;
+
+                interactHeldOp(player, inv, foodId, slot, 1);
+                this._log(player, `ate ${foodId} to heal`, 'ate_food');
+                this.cooldown = 3;
+
+                const hp = player.stats[PlayerStat.HITPOINTS];
+                const maxHp = player.baseLevels[PlayerStat.HITPOINTS];
+                if (hp < maxHp * 0.8 && this._hasFood(player)) {
+                    this.state = 'eat';
+                } else {
+                    this.state = 'walk';
+                }
+                return;
+            }
+        }
+
+        // Out of food
+        this.state = 'walk';
+    }
+
+    /** Top up inventory with cooked sharks from the bank (up to COMBAT_SHARKS). */
+    private _withdrawSharks(player: Player): void {
+        const inv = player.getInventory(InvType.INV);
+        const bid = bankInvId();
+        if (!inv || bid === -1) return;
+        const bank = player.getInventory(bid);
+        if (!bank) return;
+
+        const current = countItem(player, Items.SHARK);
+        const needed = COMBAT_SHARKS - current;
+        if (needed <= 0) return;
+
+        for (let i = 0; i < bank.capacity; i++) {
+            const it = bank.get(i);
+            if (!it || it.id !== Items.SHARK) continue;
+            const amount = Math.min(needed, it.count);
+            const moved = bank.remove(Items.SHARK, amount);
+            if (moved.completed > 0) inv.add(Items.SHARK, moved.completed);
+            break;
+        }
+    }
+
+    /** Fallback food (any FOOD_IDS type) if the bank has no sharks. */
+    private _withdrawFood(player: Player): void {
+        const inv = player.getInventory(InvType.INV);
+        const bid = bankInvId();
+        if (!inv || bid === -1) return;
+        const bank = player.getInventory(bid);
+        if (!bank) return;
+
+        let currentFoodCount = 0;
+        for (const foodId of FOOD_IDS) {
+            currentFoodCount += countItem(player, foodId);
+        }
+        if (currentFoodCount >= 5) return;
+
+        const toWithdraw = 8 - currentFoodCount;
+        let withdrawn = 0;
+
+        for (const foodId of FOOD_IDS) {
+            if (withdrawn >= toWithdraw) break;
+            for (let i = 0; i < bank.capacity; i++) {
+                const it = bank.get(i);
+                if (it && it.id === foodId) {
+                    const amount = Math.min(toWithdraw - withdrawn, it.count);
+                    const moved = bank.remove(foodId, amount);
+                    if (moved.completed > 0) {
+                        inv.add(foodId, moved.completed);
+                        withdrawn += moved.completed;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    /** Withdraws a single non-stackable item (bow, staff) from the bank into inventory, if not already held. */
+    private _withdrawSingle(player: Player, bank: Inventory, inv: Inventory, itemId: number): void {
+        if (hasItem(player, itemId)) return;
+        for (let i = 0; i < bank.capacity; i++) {
+            if (bank.get(i)?.id === itemId) {
+                const moved = bank.remove(itemId, 1);
+                if (moved.completed > 0) inv.add(itemId, moved.completed);
+                break;
+            }
+        }
+    }
+
     private _withdrawAmmo(player: Player): void {
-        // Withdraw arrows or runes from bank for the current mode
-        if (!this.mode || !this.step.itemConsumed) return;
+        if (!this.mode) return;
         const bid = bankInvId();
         if (bid === -1) return;
         const inv = player.getInventory(InvType.INV);
         const bank = player.getInventory(bid);
         if (!inv || !bank) return;
 
-        const target = this.step.itemConsumed;
+        // The weapon itself is checked independent of ammo/rune supply — a bot
+        // that already has 500 arrows but no bow (e.g. after a fresh tier
+        // upgrade banked the old bow) must still get the bow withdrawn here,
+        // not skipped because "ammo is fine".
+        if (this.mode === 'ranged') {
+            this._withdrawSingle(player, bank, inv, this.currentBowId);
+        } else {
+            this._withdrawSingle(player, bank, inv, Items.STAFF_OF_AIR);
+        }
+
+        // Withdraw the current tier's arrows or catalyst runes from the bank.
+        const target = this.mode === 'ranged' ? this.currentArrowId : this.currentSpell.catalystRune;
         const inInv = countItem(player, target);
         if (inInv >= ARROW_BUY_QTY) return; // already have plenty
 
-        // Find how many we have in bank
         for (let i = 0; i < bank.capacity; i++) {
             const it = bank.get(i);
             if (!it || it.id !== target) continue;
