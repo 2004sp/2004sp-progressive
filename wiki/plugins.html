@@ -99,7 +99,7 @@
 <li>Each line shows a number, a plugin name, its flag in brackets, and whether it's <span style="color:#2f7a3d">enabled</span> or <span style="color:#a1352c">disabled</span>.</li>
 <li>Type the number of the plugin you want to flip and press Enter. Repeat for as many as you like.</li>
 <li>Type <code>A</code> to turn everything on, <code>D</code> to turn everything off, or <code>B</code> to go back to the main menu when you're done.</li>
-<li>Start (or restart) the launcher path that owns the setting. The four new startup QOL controls numbered 10–13 below are intentionally honored only by option <code>2</code>, <strong>Custom Server + Hiscores</strong>; options <code>1</code> and <code>3</code> do not activate them.</li>
+<li>Start (or restart) the launcher path that owns the setting. The five startup QOL controls numbered 10–14 below are intentionally honored only by option <code>2</code>, <strong>Custom Server + Hiscores</strong>; options <code>1</code> and <code>3</code> do not activate them.</li>
 </ol>
 <p>Under the hood this just rewrites the matching line in <code>engine/.env</code> for you — see option B if you'd rather do that by hand.</p>
 </div>
@@ -117,7 +117,7 @@
 </div>
 
 <div class="callout">
-<p><strong>Launcher scope for the new startup QOL controls:</strong> option <code>1</code> is <strong>Start Server</strong> and remains the vanilla path. Option <code>2</code> is <strong>Custom Server + Hiscores</strong> and is the only launcher path that honors <code>NODE_QOL_ANTI_MACRO_ROTATION</code>, <code>NODE_QOL_AUTO_OPEN_WEBCLIENT</code>, <code>NODE_QOL_AUTO_OPEN_HISCORES</code>, and <code>NODE_QOL_SCROLLWHEEL_ZOOM</code>. Option <code>2</code> serves hiscores from the custom server's normal web listener at <code>/index.html</code> (using <code>WEB_PORT</code>) rather than starting the separate port-3000 hiscores process. Option <code>3</code>, <strong>Start Server + Hiscores</strong>, keeps its vanilla server plus separate hiscores-service behavior, and option <code>4</code>, <strong>Run Hiscores in background</strong>, is unchanged.</p>
+<p><strong>Launcher scope for the new startup QOL controls:</strong> option <code>1</code> is <strong>Start Server</strong> and remains the vanilla path. Option <code>2</code> is <strong>Custom Server + Hiscores</strong> and is the only launcher path that honors <code>NODE_ANTI_RANDOM_EVENTS</code>, <code>NODE_QOL_SCROLLWHEEL_ZOOM</code>, <code>NODE_QOL_ANTI_MACRO_ROTATION</code>, <code>NODE_QOL_AUTO_OPEN_WEBCLIENT</code>, and <code>NODE_QOL_AUTO_OPEN_HISCORES</code>. Option <code>2</code> serves hiscores from the custom server's normal web listener at <code>/index.html</code> (using <code>WEB_PORT</code>) rather than starting the separate port-3000 hiscores process. Option <code>3</code>, <strong>Start Server + Hiscores</strong>, keeps its vanilla server plus separate hiscores-service behavior, and option <code>4</code>, <strong>Run Hiscores in background</strong>, is unchanged.</p>
 </div>
 
 <h3>Adding a brand-new plugin toggle (for scripters)</h3>
@@ -238,25 +238,31 @@
 <p class="evidence">Feature flag: <code>NODE_QOL_COMPASS_RESET</code>.</p>
 </div>
 <div class="card">
-<h4>10. Anti-Macro Camera Rotation</h4>
+<h4>10. Anti Random Events</h4>
+<p>When enabled under launcher option <code>2</code>, this blocks Random/AFK events by making the <code>AFK_EVENT</code> opcode report <code>0</code> instead of allowing a ready event to fire. The existing readiness flag is still cleared after the check.</p>
+<p>With the flag disabled, the vanilla event-rate, chance, readiness, and opcode behavior remain unchanged. Launcher options <code>1</code> and <code>3</code> force this plugin off even if the variable is <code>true</code>, preserving vanilla Random/AFK event behavior on those paths.</p>
+<p class="evidence">Feature flag: <code>NODE_ANTI_RANDOM_EVENTS</code>. Default: <strong>false</strong>. Scope: <strong>option 2 only</strong>.</p>
+</div>
+<div class="card">
+<h4>11. Anti-Macro Camera Rotation</h4>
 <p>When enabled under launcher option <code>2</code>, this suppresses the vanilla slow anti-macro camera rotation and the periodic camera nudge that feeds it. It does <strong>not</strong> disable normal arrow-key/manual yaw or pitch controls, middle-mouse rotation, compass reset, or the separate minimap anti-macro drift.</p>
 <p>Launcher options <code>1</code> and <code>3</code> force this plugin off even if the variable is <code>true</code>, preserving their vanilla camera behavior.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_ANTI_MACRO_ROTATION</code>. Default: <strong>false</strong>. Scope: <strong>option 2 only</strong>.</p>
 </div>
 <div class="card">
-<h4>11. Auto-Open Web Client</h4>
+<h4>12. Auto-Open Web Client</h4>
 <p>When enabled under launcher option <code>2</code>, the launcher waits until the custom server's web listener is reachable and then opens the webclient route at <code>/rs2.cgi</code>. The URL uses the configured <code>WEB_PORT</code> instead of assuming port 80.</p>
 <p>Options <code>1</code> and <code>3</code> ignore this flag and never auto-open the webclient from it.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_AUTO_OPEN_WEBCLIENT</code>. Default: <strong>false</strong>. Scope: <strong>option 2 only</strong>.</p>
 </div>
 <div class="card">
-<h4>12. Auto-Open Hiscores</h4>
+<h4>13. Auto-Open Hiscores</h4>
 <p>When enabled under launcher option <code>2</code>, the launcher waits for the custom server's main web listener and hiscores API to be ready, then opens <code>/index.html</code> on the configured <code>WEB_PORT</code>. On the default Windows port 80, that page is <code>http://localhost/index.html</code>.</p>
 <p>Option <code>2</code> does not start the separate port-3000 hiscores process. Option <code>3</code> keeps its existing separate hiscores-service behavior, and options <code>1</code> and <code>3</code> ignore this auto-open flag. If both auto-open flags are enabled for option <code>2</code>, hiscores opens first and the webclient follows through the same default-browser session.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_AUTO_OPEN_HISCORES</code>. Default: <strong>false</strong>. Scope: <strong>option 2 only</strong>.</p>
 </div>
 <div class="card">
-<h4>13. Mouse Scrollwheel Zoom</h4>
+<h4>14. Mouse Scrollwheel Zoom</h4>
 <p>When enabled under launcher option <code>2</code>, move the pointer over the game canvas and scroll the mouse wheel to adjust the normal in-game camera distance. Wheel up zooms in one step and wheel down zooms out one step. Wheel input is normalized by direction, using a <code>64</code>-unit step and clamping camera distance to <code>768..2048</code>.</p>
 <p>The wheel event is consumed only while the plugin is enabled and actively handling normal in-game camera zoom. Login/loading states and cinematic camera control are left untouched, while page scrolling outside the game canvas continues normally. Launcher options <code>1</code> and <code>3</code> force the plugin off even if <code>.env</code> or <code>start.bat</code> sets the flag to <code>true</code>.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_SCROLLWHEEL_ZOOM</code>. Default: <strong>false</strong>. Scope: <strong>option 2 only</strong>.</p>
