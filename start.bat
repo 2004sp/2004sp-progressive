@@ -3,6 +3,11 @@ setlocal
 cd /d "%~dp0"
 title 2004Scape Progressive Launcher
 
+rem Optional QOL overrides for launcher option 2 (Custom Server + Hiscores) only.
+rem Options 1 and 3 explicitly force option-2-only plugins off in engine\launcher.ts.
+rem Uncomment to override the saved .env preference for option 2:
+rem set "NODE_QOL_SCROLLWHEEL_ZOOM=true"
+
 rem Engine-TS revision 254 is Bun-targeted. Make sure Bun is available even if it is not on PATH yet.
 where bun >nul 2>nul
 if errorlevel 1 (

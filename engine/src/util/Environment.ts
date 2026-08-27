@@ -88,7 +88,7 @@ export default {
 
     /// logger server
     LOGGER_SERVER: tryParseBoolean(process.env.LOGGER_SERVER, false),
-    LOGGER_HOST: tryParseString(process.env.LOGGER_HOST, 'localhost'),
+    LOGGER_HOST: tryParseString(process.env.LOGGER_HOST, ''),
     LOGGER_PORT: tryParseInt(process.env.LOGGER_PORT, 43501),
 
     /// database

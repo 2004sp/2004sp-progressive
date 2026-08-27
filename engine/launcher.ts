@@ -298,7 +298,6 @@ async function autoOpenHiscores() {
         console.log(`Hiscores web server did not start listening for ${url}; browser was not opened.`);
         return;
     }
-
     if (!(await waitForUrl(url)) || !(await waitForUrl(apiUrl))) {
         console.log(`Hiscores page/API did not become ready at ${url}; browser was not opened.`);
         return;
@@ -455,7 +454,7 @@ async function runCustomServer() {
         { from: 85, to: 99, message: 'Starting custom game server' },
         {
             NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', false)),
-            NODE_ANTI_RANDOM_EVENTS: String(getEnvValue('NODE_ANTI_RANDOM_EVENTS', false)),
+            NODE_ANTI_RANDOM_EVENTS: String(getEnvValue('NODE_ANTI_RANDOM_EVENTS', false))
         }
     );
     if (serverCode !== 0) {
