@@ -32,11 +32,12 @@ const customContent: readonly CustomContentToggle[] = [
     ['Custom Shops', 'NODE_FEATURE_CUSTOMSHOPS'],
     ['Boss Pets', 'NODE_FEATURE_BOSSPETS'],
     ['Custom Weapons', 'NODE_FEATURE_CUSTOMWEAPONS'],
-    ['Skillcapes', 'NODE_FEATURE_SKILLCAPES'],
     ['X-Amount Shop Input', 'NODE_FEATURE_XAMOUNT'],
     ['Make-X Skill Actions', 'NODE_FEATURE_MAKEX'],
     ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
     ['Left Click Compass Reset', 'NODE_QOL_COMPASS_RESET'],
+    ['Anti Random Events', 'NODE_ANTI_RANDOM_EVENTS', false],
+    ['Mouse Scrollwheel Zoom', 'NODE_QOL_SCROLLWHEEL_ZOOM', false],
     ['Anti-Macro Camera Rotation', 'NODE_QOL_ANTI_MACRO_ROTATION', false],
     ['Auto-Open Web Client', 'NODE_QOL_AUTO_OPEN_WEBCLIENT', false],
     ['Auto-Open Hiscores', 'NODE_QOL_AUTO_OPEN_HISCORES', false],
@@ -296,7 +297,6 @@ async function autoOpenHiscores() {
         console.log(`Hiscores web server did not start listening for ${url}; browser was not opened.`);
         return;
     }
-
     if (!(await waitForUrl(url)) || !(await waitForUrl(apiUrl))) {
         console.log(`Hiscores page/API did not become ready at ${url}; browser was not opened.`);
         return;
@@ -397,7 +397,11 @@ async function runServer(showComplete = true) {
     const code = await runScriptAndWait(
         'quickstart',
         { from: 80, to: 99, message: 'Starting game server' },
-        { NODE_QOL_ANTI_MACRO_ROTATION: 'false' }
+        {
+            NODE_QOL_ANTI_MACRO_ROTATION: 'false',
+            NODE_ANTI_RANDOM_EVENTS: 'false',
+            NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
+        }
     );
     if (code !== 0) {
         console.log('Server stopped with an error.');
@@ -447,7 +451,10 @@ async function runCustomServer() {
     const serverCode = await runScriptAndWait(
         'quickstart',
         { from: 85, to: 99, message: 'Starting custom game server' },
-        { NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', false)) }
+        {
+            NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', false)),
+            NODE_ANTI_RANDOM_EVENTS: String(getEnvValue('NODE_ANTI_RANDOM_EVENTS', false))
+        }
     );
     if (serverCode !== 0) {
         console.log('Server stopped with an error.');
@@ -566,7 +573,11 @@ async function handleInput(input: string) {
             await runScriptAndWait(
                 'quickstart',
                 { from: 92, to: 99, message: 'Starting game server' },
-                { NODE_QOL_ANTI_MACRO_ROTATION: 'false' }
+                {
+                    NODE_QOL_ANTI_MACRO_ROTATION: 'false',
+                    NODE_ANTI_RANDOM_EVENTS: 'false',
+                    NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
+                }
             );
             return; // server owns the terminal until it exits
 

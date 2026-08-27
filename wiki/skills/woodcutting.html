@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Woodcutting skill guide for 2004scape Progressive build 254, including tree unlocks and membership requirements.">
+  <meta name="description" content="Woodcutting skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering tree requirements, log XP, axe behaviour, training, quests, and post-cutoff exclusions.">
   <title>Woodcutting — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,22 +16,128 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Woodcutting</p>
   <h1 class="pagetitle">Woodcutting</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Woodcutting</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Gathering</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 75</dd></div></div>
-  <p class="lede">Woodcutting gathers logs from trees for Firemaking and Fletching. The build follows early-era behaviour where axes themselves do not have Woodcutting-level requirements; the main gates are tree types and one quest requirement.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>15</td><td>Cut Oak trees.</td><td class="member-no">No</td></tr>
-    <tr><td>30</td><td>Cut Willow trees.</td><td class="member-no">No</td></tr>
-    <tr><td>40</td><td>Meet the Woodcutting requirement used by The Fremennik Trials.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>45</td><td>Cut Maple trees.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>60</td><td>Cut Yew trees.</td><td class="member-no">No</td></tr>
-    <tr><td>75</td><td>Cut Magic trees.</td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Woodcutting</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Gathering</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main tool</dt><dd>Axe</dd></div>
+    <div class="row"><dt>Highest free-to-play tree</dt><dd>Level 60 — Yew</dd></div>
+    <div class="row"><dt>Highest cutoff tree</dt><dd>Level 75 — Magic (members)</dd></div>
+  </div>
+
+  <p class="lede">Woodcutting gathers logs from trees for skills such as <a href="firemaking.html">Firemaking</a> and <a href="fletching.html">Fletching</a>. At the 7 September 2004 cutoff, the standard progression runs from normal trees through Oak, Willow, Maple, Yew and Magic, with members also able to cut Achey trees from the pre-cutoff Ogre content. <strong>Axes are deliberately unusual in this period:</strong> Woodcutting level does not gate axe tiers, so a player can chop with any supported axe they can carry; normal equipment requirements only matter if the axe is being wielded.</p>
+
+  <h3>How Woodcutting works</h3>
+  <div class="callout"><p><strong>Basic loop:</strong> choose <em>Chop down</em> on a supported tree while carrying or wielding an axe. The build checks the tree's Woodcutting requirement and inventory space, chooses the best supported axe available, performs a skill-success roll, then awards the tree's configured XP and log product on success.</p></div>
+  <ul>
+    <li><strong>Tree level is the main skill gate:</strong> the chopping handler compares the player's current Woodcutting stat with the tree's configured requirement. The tables below record the normal base-level unlocks.</li>
+    <li><strong>An axe can be worn or carried:</strong> build 254 accepts an axe in the right-hand equipment slot or anywhere in the inventory.</li>
+    <li><strong>The best available axe is selected automatically:</strong> the handler tests Rune, Adamant, Mithril, Black, Steel, Iron and Bronze in that order. You do not need to manually choose a weaker axe if a better supported one is present.</li>
+    <li><strong>No Woodcutting-level axe requirements:</strong> the source contains later-style axe checks but comments them out, explaining that those requirements were not part of the 2004 behaviour. This means a high-tier axe can still be used from the inventory at low Woodcutting levels.</li>
+    <li><strong>Success is a skill roll, not a fixed percentage:</strong> each supported tree and axe tier supplies low/high values to the engine's <code>stat_random</code> routine. Higher axe tiers use stronger values, but those configuration numbers should not be presented as literal chop percentages.</li>
+    <li><strong>Inventory space matters:</strong> the standard handler requires one free inventory slot before beginning the chopping attempt.</li>
+    <li><strong>Tree depletion varies:</strong> Oak, Willow, Maple, Yew and Magic rows use a one-in-eight depletion check after a successful log. Normal and Achey trees use the separate normal-like single-success depletion path.</li>
+    <li><strong>Respawn values are scaled:</strong> the configured tree respawn value passes through the project's player-count scaling routine. Raw configuration numbers are therefore not presented here as fixed real-time seconds.</li>
+  </ul>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <div class="callout"><p>The build's current level-up file also contains a level-40 line for The Fremennik Trials, but that quest is later than this wiki's historical cutoff and is intentionally excluded from the progression table. Quest-specific Woodcutting gates that <em>were</em> live by 7 September are shown alongside the tree unlocks.</p></div>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>1</td><td>Cut normal trees.</td><td class="member-no">No</td><td>The build stores the row at requirement 0; level 1 is the practical starting skill level. Produces normal logs.</td></tr>
+    <tr><td>1</td><td>Cut Achey trees.</td><td class="member-yes">Yes</td><td>Pre-cutoff Ogre-region content used by <a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a>. Produces Achey tree logs.</td></tr>
+    <tr><td>15</td><td>Cut Oak trees.</td><td class="member-no">No</td><td>Standard tree progression.</td></tr>
+    <tr><td>30</td><td>Cut Willow trees.</td><td class="member-no">No</td><td>Standard tree progression.</td></tr>
+    <tr><td>36</td><td>Meet the Woodcutting gate used by <a href="../quests/lost-city.html">Lost City</a>.</td><td class="member-yes">Yes</td><td>Required to cut the Dramen tree during the quest; this is not a normal resource-tree unlock.</td></tr>
+    <tr><td>45</td><td>Cut Maple trees.</td><td class="member-yes">Yes</td><td>At the target date, the normal source trees are in members' areas.</td></tr>
+    <tr><td>50</td><td>Meet the Woodcutting gate used by <a href="../quests/legends-quest.html">Legends' Quest</a>.</td><td class="member-yes">Yes</td><td>Required by the Yommi-tree sequence; this is not a standard tree unlock.</td></tr>
+    <tr><td>60</td><td>Cut Yew trees.</td><td class="member-no">No</td><td>Highest standard tree available to free-to-play at the cutoff.</td></tr>
+    <tr><td>75</td><td>Cut Magic trees.</td><td class="member-yes">Yes</td><td>Highest standard Woodcutting tree tier at the cutoff.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The source comments that axe level requirements were not part of the original period behaviour, so they are deliberately not presented as unlock milestones here. Milestones come from <code>levelup_unlocks_woodcutting.rs2</code>.</p></div>
+
+  <h3>Tree experience</h3>
+  <p>Woodcutting XP is awarded for each successfully obtained product. Build 254 stores <code>productexp</code> in tenths of displayed XP, so values such as <code>375</code> and <code>675</code> correspond to 37.5 and 67.5 Woodcutting XP.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Tree</th><th>Product</th><th>Access</th><th>XP per successful cut</th></tr></thead><tbody>
+    <tr><td>1</td><td>Normal tree</td><td>Logs</td><td>Free-to-play</td><td>25</td></tr>
+    <tr><td>1</td><td>Achey tree</td><td>Achey tree logs</td><td>Members</td><td>25</td></tr>
+    <tr><td>15</td><td>Oak</td><td>Oak logs</td><td>Free-to-play</td><td>37.5</td></tr>
+    <tr><td>30</td><td>Willow</td><td>Willow logs</td><td>Free-to-play</td><td>67.5</td></tr>
+    <tr><td>45</td><td>Maple</td><td>Maple logs</td><td>Members tree source</td><td>100</td></tr>
+    <tr><td>60</td><td>Yew</td><td>Yew logs</td><td>Free-to-play</td><td>175</td></tr>
+    <tr><td>75</td><td>Magic</td><td>Magic logs</td><td>Members</td><td>250</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Cutoff scope:</strong> Hollow trees are present in the current source checkout with a level-45 requirement and 82.5 XP for bark, but that content post-dates 7 September 2004. It is documented under <em>Cutoff exclusions</em> instead of being mixed into the historical progression above.</p></div>
+
+  <h3>Axes</h3>
+  <p>The supported chopping axes form an efficiency ladder rather than a Woodcutting-level unlock ladder. Build 254's tree data gives progressively stronger success-roll parameters to higher tiers, and the chopping script chooses the strongest supported axe it finds.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Priority</th><th>Axe</th><th>Woodcutting level to chop</th><th>Attack level to wield</th><th>How it can be used for chopping</th></tr></thead><tbody>
+    <tr><td>1</td><td>Rune axe</td><td>None</td><td>40</td><td>Right hand or inventory.</td></tr>
+    <tr><td>2</td><td>Adamant axe</td><td>None</td><td>30</td><td>Right hand or inventory.</td></tr>
+    <tr><td>3</td><td>Mithril axe</td><td>None</td><td>20</td><td>Right hand or inventory.</td></tr>
+    <tr><td>4</td><td>Black axe</td><td>None</td><td>10</td><td>Right hand or inventory.</td></tr>
+    <tr><td>5</td><td>Steel axe</td><td>None</td><td>5</td><td>Right hand or inventory.</td></tr>
+    <tr><td>6</td><td>Iron axe</td><td>None</td><td>1</td><td>Right hand or inventory.</td></tr>
+    <tr><td>7</td><td>Bronze axe</td><td>None</td><td>1</td><td>Right hand or inventory.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Carrying versus wielding:</strong> the Woodcutting action does not apply those Attack requirements. Build 254's axe checker accepts the best supported axe in the inventory even when the player cannot wield it, so a level-1 Attack player can still chop with a carried Rune axe. The Attack values above apply only when equipping the axe in the right hand.</p></div>
+
+  <h3>Training methods</h3>
+  <p>The build evidence gives exact requirements, per-log XP and relative axe success parameters, but it does not establish a historically exact XP-per-hour route. The route below is therefore a conservative progression through verified cutoff content rather than a claim about one universally optimal training method.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Access</th><th>XP per log</th><th>Practical notes</th></tr></thead><tbody>
+    <tr><td>1&ndash;14</td><td><strong>Normal trees</strong></td><td>Free-to-play</td><td>25</td><td>The universal starting tree. Members in the Ogre region can also cut Achey trees for the same 25 XP per log.</td></tr>
+    <tr><td>15&ndash;29</td><td><strong>Oak trees</strong></td><td>Free-to-play</td><td>37.5</td><td>The first standard upgrade. Oaks can produce multiple logs before depletion rather than disappearing after every successful cut.</td></tr>
+    <tr><td>30&ndash;44</td><td><strong>Willow trees</strong></td><td>Free-to-play</td><td>67.5</td><td>A strong repeatable training tier. If the goal is Woodcutting levels rather than a particular log, Willow remains a practical option after later trees unlock because higher-tier trees become harder to cut.</td></tr>
+    <tr><td>45&ndash;59</td><td><strong>Willow or Maple</strong></td><td>Free-to-play / members</td><td>67.5 / 100</td><td>Members can cut Maple for higher XP per successful log; Willow remains available when faster successful cuts or free-to-play access matter more.</td></tr>
+    <tr><td>60&ndash;74</td><td><strong>Willow or Yew</strong></td><td>Free-to-play</td><td>67.5 / 175</td><td>Yew gives far more XP per successful log but has a substantially tougher success roll. Choose between faster repetitive chopping and the more valuable high-tier resource.</td></tr>
+    <tr><td>75+</td><td><strong>Willow, Yew or Magic</strong></td><td>Free-to-play / members</td><td>67.5 / 175 / 250</td><td>Magic is the highest cutoff tree tier, not automatically the fastest training method. Its success parameters are much lower than Willow's, so resource value and training speed are separate goals.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Axe choice:</strong> regardless of tree, carry the strongest supported axe available to you. The build's success-roll values improve at every axe step from Bronze through Rune, while Woodcutting level does not prevent a low-level woodcutter from using the better axe from the inventory.</p></div>
+
+  <h3>Relevant quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Woodcutting relevance at the cutoff</th></tr></thead><tbody>
+    <tr><td><a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a></td><td>Members</td><td>Achey trees and Achey tree logs are part of the quest's Ogre-region content. The tree itself has no effective Woodcutting level requirement in build 254.</td></tr>
+    <tr><td><a href="../quests/lost-city.html">Lost City</a></td><td>Members</td><td>Requires <strong>36 Woodcutting</strong> to cut the Dramen tree during the quest. The quest does not award Woodcutting XP on completion.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Members</td><td>Quest completion awards <strong>1,575 Woodcutting XP</strong> in build 254.</td></tr>
+    <tr><td><a href="../quests/monks-friend.html">Monk's Friend</a></td><td>Members</td><td>Uses one ordinary log with no Woodcutting-level gate and awards <strong>2,000 Woodcutting XP</strong> on completion.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>Members</td><td>Requires <strong>50 Woodcutting</strong> for the Yommi-tree sequence. Build 254 specifically requires a Rune axe at the mature Yommi stage and offers four 7,650-XP selectable rewards that can include Woodcutting; selecting Woodcutting all four times yields 30,600 Woodcutting XP. The Kharazi Jungle traversal is a separate Woodcutting interaction: dense jungle trees and bushes require an axe and machete (plus the map before quest completion), have no separate minimum Woodcutting level in that handler, and can award ordinary logs with <strong>100 Woodcutting XP</strong> when a product is obtained.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <div class="callout"><p><strong>Core implementation:</strong> <code>scripts/skill_woodcutting/scripts/woodcut.rs2</code> handles axe detection, membership/product checks, the Woodcutting requirement, success rolls, XP, products, depletion and respawning. <code>scripts/skill_woodcutting/configs/trees.dbrow</code> supplies the supported tree rows and their requirements, XP and axe-specific success parameters.</p></div>
+  <ul>
+    <li><strong>Axe requirements are deliberately disabled:</strong> <code>woodcut.rs2</code> retains the later-style Woodcutting requirement checks as comments but does not execute them. The source comment points to a preserved <strong>22 June 2004 RuneHQ Woodcutting guide</strong> as historical evidence that axe tiers did not have Woodcutting requirements in the target-era behaviour.</li>
+    <li><strong>Axe priority:</strong> the chop handler searches Rune &rarr; Adamant &rarr; Mithril &rarr; Black &rarr; Steel &rarr; Iron &rarr; Bronze and uses the first supported axe found, whether worn in the right hand or carried in inventory.</li>
+    <li><strong>XP scale:</strong> the core cutoff rows use internal product-XP values of 250, 375, 675, 1000, 1750 and 2500 for normal/Achey, Oak, Willow, Maple, Yew and Magic respectively, equal to 25, 37.5, 67.5, 100, 175 and 250 displayed XP.</li>
+    <li><strong>Success parameters are not percentages:</strong> <code>trees.dbrow</code> stores axe-specific low/high values that are passed into <code>stat_random</code>. The higher values on better axes establish relative improvement; this page intentionally does not turn them into unsupported fixed chop-rate percentages.</li>
+    <li><strong>Depletion:</strong> the standard Oak-through-Magic rows use <code>deplete_chance=8</code>, producing a one-in-eight depletion test after a successful log. Normal-like zero-respawn rows use the script's separate single-success depletion path.</li>
+    <li><strong>Respawn scaling:</strong> configured respawn values are passed to <code>scale_by_playercount</code>, so this guide does not label the raw values as exact wall-clock seconds.</li>
+    <li><strong>Membership nuance:</strong> the script checks the chopped product's members flag before awarding it on a free world. Some period members-only tree access, especially Maple sourcing, is also a world-location restriction rather than a property of the log item itself.</li>
+    <li><strong>Level-up file contains later content:</strong> <code>scripts/levelup/scripts/levelup_unlocks_woodcutting.rs2</code> currently includes the level-40 Fremennik Trials requirement. That row is useful evidence of the current build but is not valid for the 7 September 2004 historical unlock table.</li>
+  </ul>
+
+  <h3>Cutoff exclusions</h3>
+  <div class="callout warn"><p><strong>Current checkout does not equal the historical snapshot:</strong> later content can exist in build-254 data and level-up messages even when it had not been released by 7 September 2004. These entries are intentionally kept out of the historical progression and training tables.</p></div>
+  <ul>
+    <li><strong>Hollow trees and bark:</strong> the current Woodcutting database contains a level-45 Hollow-tree row awarding 82.5 XP and Hollow bark, but Hollow trees belong to the 18 October 2004 Shades of Mort'ton / Splitbark-era update and are after the cutoff.</li>
+    <li><strong>The Fremennik Trials level-40 requirement:</strong> the current level-up script advertises this milestone, but The Fremennik Trials was released on 2 November 2004, so the old wiki row has been removed from the cutoff unlock table.</li>
+    <li><strong>Later Woodcutting-level axe gates:</strong> later-era axe requirements are not back-applied to the September 2004 snapshot. Build 254 itself leaves those checks commented out and cites period evidence for the no-Woodcutting-requirement behaviour.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Build-254 core:</strong> <code>scripts/skill_woodcutting/scripts/woodcut.rs2</code> and <code>scripts/skill_woodcutting/configs/trees.dbrow</code>.</li>
+    <li><strong>Axes:</strong> <code>scripts/skill_woodcutting/configs/axes/axes.obj</code> plus the axe-selection and commented Woodcutting-requirement logic in <code>woodcut.rs2</code>. The separate wield requirements come from <code>scripts/levelrequire/scripts/tier5.rs2</code>, <code>tier10.rs2</code>, <code>tier20.rs2</code>, <code>tier30.rs2</code> and <code>tier40.rs2</code>.</li>
+    <li><strong>Level-up messages:</strong> <code>scripts/levelup/scripts/levelup_unlocks_woodcutting.rs2</code>, filtered through the wiki's 7 September 2004 release cutoff rather than copied wholesale.</li>
+    <li><strong>Historical axe behaviour:</strong> the build source itself cites the preserved <a href="https://web.archive.org/web/20040622013913/http://runehq.com/viewguidedb.php?id=00330">22 June 2004 RuneHQ Woodcutting guide</a> for the absence of Woodcutting-level axe requirements.</li>
+    <li><strong>Quest cross-checks:</strong> the audited local guides and corresponding build scripts for Big Chompy Bird Hunting, Lost City, Heroes' Quest, Monk's Friend and Legends' Quest provide the quest gates, item interactions and Woodcutting rewards listed above. <code>scripts/quests/quest_legends/scripts/jungle_tree.rs2</code> supplies the separate Kharazi-jungle axe/machete interaction and uses the 100-XP jungle row in <code>trees.dbrow</code>.</li>
+    <li><strong>Historical scope:</strong> release chronology is used to exclude Hollow-tree content and The Fremennik Trials from the 7 September tables even though both appear in the current checkout.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="fishing.html">&larr; Fishing</a><a class="next" href="firemaking.html">Firemaking &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 Woodcutting implementation. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

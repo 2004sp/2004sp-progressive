@@ -3,7 +3,7 @@ if (map_feature("customshops") = false) {
     ~chatnpc("<p,neutral>Sorry, I'm not currently trading.");
     return;
 }
-~chatnpc("<p,happy>Welcome! I sell the finest skill capes and rare items.");
+~chatnpc("<p,happy>Welcome! I sell rare items.");
 def_int $option = ~p_choice2("Let me take a look.", 1, "No thanks.", 2);
 if($option = 1) {
     ~chatplayer("<p,happy>Let me take a look.");

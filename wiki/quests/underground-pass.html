@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A full walkthrough guide for Underground Pass: requirements, items needed, step-by-step instructions, and rewards.">
+  <meta name="description" content="A September 2004-accurate Underground Pass walkthrough covering King Lathas, Koftik, the four orbs, Iban's doll, Iban's staff, exact rewards, and 2004scape build-254 behaviour.">
   <title>Underground Pass — Quest Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -25,60 +25,212 @@
     <article class="article-card">
       <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../quests.html">Quests</a> &rsaquo; Underground Pass</p>
       <h1 class="pagetitle">Underground Pass</h1>
-      <p class="byline guide-meta">Quest guide &middot; 2004scape Progressive build 254</p>
+      <p class="byline guide-meta">Quest guide &middot; September 2004 target &middot; 2004scape Progressive build 254</p>
+
       <div class="infobox guide-infobox">
         <div class="ibhead">Underground Pass</div>
         <div class="ibicon" aria-hidden="true"></div>
         <div class="row"><dt>Access</dt><dd>Members</dd></div>
-        <div class="row"><dt>Difficulty</dt><dd>Master</dd></div>
-        <div class="row"><dt>Length</dt><dd>Very long</dd></div>
+        <div class="row"><dt>Released</dt><dd>3 March 2003</dd></div>
+        <div class="row"><dt>RS2 conversion</dt><dd>15 April 2004</dd></div>
+        <div class="row"><dt>Period length</dt><dd>Long</dd></div>
         <div class="row"><dt>Quest points</dt><dd>5</dd></div>
-        <div class="row"><dt>Start point</dt><dd>Speak to Eluned, an elf leading a small camp of exiles hidden west of West Ardougne.</dd></div>
+        <div class="row"><dt>Start NPC</dt><dd>King Lathas</dd></div>
+        <div class="row"><dt>Start location</dt><dd>King Lathas's room in East Ardougne</dd></div>
+        <div class="row"><dt>Required quest</dt><dd><a href="biohazard.html">Biohazard</a></dd></div>
+        <div class="row"><dt>Required skill</dt><dd>25 <a href="../skills/ranged.html">Ranged</a></dd></div>
+        <div class="row"><dt>Combat</dt><dd>Three guardian demons and Kalrag</dd></div>
       </div>
-      <p class="lede">West of the plague-scarred city of Ardougne, a band of elven exiles struggles against the tyrant Iban and his hold over their homeland. Eluned asks you to brave the perilous Underground Pass, a gauntlet of traps and monstrous guardians, to reach the elven lands and strike a blow against Iban's grip.</p>
+
+      <p class="lede">After the events of Biohazard, King Lathas reveals that a route west runs beneath the mountains through the Underground Pass. The passage is controlled by Iban, a resurrected Black Knight. Your task is to cross the pass, reconstruct the Doll of Iban from the four parts of his incarnation, destroy Iban at the Well of the Damned, and return to Lathas.</p>
 
       <h3>Requirements</h3>
+
+      <h4>Required quest and level</h4>
       <ul class="tight">
-<li>Completion of <a href="biohazard.html">Biohazard</a></li>
+        <li>Completion of <a href="biohazard.html">Biohazard</a>.</li>
+        <li><strong>25 <a href="../skills/ranged.html">Ranged</a></strong>. King Lathas checks this level before starting Underground Pass in build 254, matching the surviving pre-cutoff quest requirements.</li>
       </ul>
 
-      <h3>Items needed</h3>
+      <h4>Required items</h4>
       <ul class="tight">
-<li>Several logs, collected along the way, for building rafts across underground rivers</li>
-<li>A reliable weapon for combat encounters</li>
+        <li><strong>A bow and several arrows.</strong> Koftik supplies damp cloth; wrap an arrow in it, light the wrapped arrow and shoot the bridge support. Build 254 can make the shot miss and consume the arrow, so do not bring only one.</li>
+        <li><strong>Rope, preferably several.</strong> A rope is used on the rock/stalactite swing and build 254 removes it on an attempt, including a failed one.</li>
+        <li><strong>Tinderbox.</strong> Needed for the bridge and later for Iban's tomb. Klank can supply a tinderbox later if you reach him without one, but bringing your own avoids backtracking.</li>
+        <li><strong>Spade for build 254.</strong> The current build requires a spade to dig through the mud tunnel after the first well.</li>
+        <li><strong>Pickaxe for the historical 2004 route.</strong> Surviving 2004 instructions list and use a pickaxe in the early pass. Build 254 currently contains no Underground Pass pickaxe interaction and uses the spade/mud tunnel instead. See the implementation notes below.</li>
       </ul>
 
-      <h3>Recommended</h3>
+      <h4>Recommended</h4>
       <ul class="tight">
-<li>Plenty of food</li>
-<li>Antipoison potion</li>
-<li>Prayer potions</li>
+        <li><strong>Plenty of food.</strong> Failed obstacles, traps and Iban's temple can inflict repeated damage. A food crate after the first well supplies a small emergency amount in build 254, but it is not enough for the whole quest.</li>
+        <li><strong>Good combat equipment and Prayer supplies.</strong> You must fight three guardian demons and Kalrag. Iban himself is handled with the completed doll rather than a normal boss kill.</li>
+        <li><strong>High Agility and Thieving.</strong> Neither is a fixed quest-start requirement, but both improve obstacle success. <strong>50 Thieving</strong> unlocks an optional railing shortcut in build 254.</li>
+        <li><strong>Several free inventory spaces.</strong> The pass gives you quest objects, crests, amulets, robes, a doll and its components.</li>
       </ul>
 
-      <h3>Walkthrough</h3>
+      <h3>Before you start</h3>
+      <p>This is a long one-way dungeon with damaging obstacles. Bring more food, arrows and rope than the minimum. The floor-grid puzzle is <strong>not a universal fixed pattern in build 254</strong>: its safe route is generated for each character when the quest starts and then retained for that character. Do not copy a tile sequence from another player or an old guide.</p>
+      <p>There is also one important historical/build divergence. Contemporary 2004 walkthroughs tell the player to bring a <strong>pickaxe</strong> for an early obstacle, while build 254's quest scripts use a <strong>spade</strong> on a mud tunnel and contain no Underground Pass pickaxe check. This guide keeps the two claims separate rather than silently treating the implementation as historical evidence.</p>
+
+      <h3>Detailed walkthrough</h3>
+
+      <h4>1. King Lathas and Koftik</h4>
       <ol class="quest-steps">
-<li>Speak to Eluned at the small elven camp hidden west of West Ardougne to learn about Iban's tyranny.</li>
-<li>Agree to venture through the Underground Pass to reach the elven lands beyond and weaken Iban's hold.</li>
-<li>Descend into the pass and begin navigating its long series of interconnected chambers and tunnels.</li>
-<li>Cross treacherous gaps and obstacles using Agility, taking damage if you fail a crossing.</li>
-<li>Gather logs where you find them and use them to construct rafts to cross underground rivers.</li>
-<li>Fight or avoid the dangerous creatures and traps scattered throughout the pass, including deadly guardians.</li>
-<li>Solve environmental puzzles blocking your progress, such as levers, doors, and hidden mechanisms.</li>
-<li>Push through a particularly grueling maze-like section requiring careful navigation to avoid dead ends.</li>
-<li>Reach a chamber guarded by one of Iban's powerful servants and prepare for a difficult confrontation.</li>
-<li>Defeat the guardian blocking the final stretch of the pass through skill and persistence.</li>
-<li>Continue onward until you reach the far end of the Underground Pass, close to the elven lands.</li>
-<li>Emerge from the pass and report your success back toward Eluned's camp to complete the quest.</li>
+        <li><strong>Speak to King Lathas in East Ardougne.</strong> You must have completed Biohazard and have at least 25 Ranged. Agree to investigate the Underground Pass.</li>
+        <li><strong>Travel west of West Ardougne.</strong> Find <strong>Koftik</strong> by the cave entrance leading under the mountains.</li>
+        <li><strong>Enter the cave.</strong> The entrance is quest-gated in build 254; it will not function as the Underground Pass route before Lathas has sent you.</li>
       </ol>
+
+      <h4>2. Light the arrow and cross the bridge</h4>
+      <ol class="quest-steps">
+        <li><strong>Talk to Koftik inside.</strong> He gives you a <strong>damp cloth</strong> and an arrow if needed.</li>
+        <li><strong>Use the damp cloth on an arrow.</strong> Then use the wrapped arrow on the nearby fire to make a burning arrow.</li>
+        <li><strong>Equip your bow and the burning arrow, then shoot the bridge support.</strong> A successful shot drops the bridge so you can cross. If you miss, prepare and fire another arrow; Koftik can supply more damp cloth.</li>
+        <li><strong>Continue through the first cavern.</strong> Expect Agility obstacles and damaging traps. Keep your Hitpoints comfortably above zero rather than trying to conserve every piece of food.</li>
+      </ol>
+
+      <h4>3. Recover the four orbs</h4>
+      <ol class="quest-steps">
+        <li><strong>Explore the four side routes.</strong> Each route leads to one of the four orbs that seal the way onward.</li>
+        <li><strong>Use rope on the swing obstacle where required.</strong> In build 254 the rope is lost on the attempt. A failed swing also deals damage, which is why spare rope is strongly recommended.</li>
+        <li><strong>Use a plank on the flat spike trap where available.</strong> Crossing the trap with a plank avoids its normal damage. Keep the plank while you are still navigating this area.</li>
+        <li><strong>Deal with the other obstacles carefully.</strong> Rockslides, spear traps and the swamp/crevasse can all damage you in build 254. Thieving can be used on the spear trap, but failure can still trigger it.</li>
+        <li><strong>Collect all four orbs.</strong> Do not try to force the first well before the orb stage is complete; build 254 can damage you for using it too early.</li>
+        <li><strong>Destroy the four orbs at the furnace, then use the well.</strong> This opens the route into the next part of the pass.</li>
+      </ol>
+
+      <h4>4. Cross the floor grid</h4>
+      <ol class="quest-steps">
+        <li><strong>Approach the tiled floor cautiously.</strong> Build 254 generates a three-column safe path specifically for your character.</li>
+        <li><strong>Test one tile at a time and remember successful tiles.</strong> A wrong tile deals damage and drops you into the pit below; climb back and continue testing.</li>
+        <li><strong>Do not rely on a printed fixed solution.</strong> Some period walkthroughs preserve the path generated for their author, but the build's quest state records a per-character route.</li>
+        <li><strong>Continue once you are across.</strong> Your generated safe path remains the same for that character, which makes later crossings repeatable.</li>
+      </ol>
+
+      <h4>5. The first well, mud tunnel and unicorn</h4>
+      <ol class="quest-steps">
+        <li><strong>Pass the first well into the next section.</strong> In build 254, search the nearby food crate once for <strong>two salmon and two meat pies</strong> if you need emergency supplies.</li>
+        <li><strong>Build 254: use a spade on the mud tunnel.</strong> Dig through to the unicorn section. This is the build's replacement for the pickaxe-based obstacle described by surviving 2004 walkthroughs.</li>
+        <li><strong>Find the trapped unicorn.</strong> Search its cage for a <strong>loose railing</strong>.</li>
+        <li><strong>Use the railing on the boulder above the unicorn.</strong> The boulder kills the unicorn.</li>
+        <li><strong>Search the remains and take the damaged unicorn horn.</strong> You will need the horn as one of the sacrifices at the next well.</li>
+      </ol>
+
+      <h4>6. Get the three paladin crests</h4>
+      <ol class="quest-steps">
+        <li><strong>Continue to the three paladins.</strong> Speak to them and obtain their <strong>crests/badges</strong> for the sacrifice.</li>
+        <li><strong>Take all three crests to the second well.</strong> You need the complete set; a partial offering does not finish the gate.</li>
+        <li><strong>Sacrifice the damaged unicorn horn and all three paladin crests.</strong> The well opens the way down into Iban's great cavern.</li>
+        <li><strong>Remember this well.</strong> After the quest, build 254 uses it to recharge Iban's staff back to 120 charges.</li>
+      </ol>
+
+      <h4>7. Nilhoof, Kardia and the Doll of Iban</h4>
+      <ol class="quest-steps">
+        <li><strong>Enter the lower cavern and find the dwarfs.</strong> Speak to <strong>Nilhoof</strong>. His account explains that Iban's incarnation has four parts: body, blood, shadow and conscience.</li>
+        <li><strong>Find the cave witch's cat.</strong> Pick up the cat and take it to <strong>Kardia's</strong> door.</li>
+        <li><strong>Use/place the cat at the door.</strong> Kardia is distracted, allowing you to get inside without taking the normal punishment for entering.</li>
+        <li><strong>Search the correct chest.</strong> Take the <strong>Doll of Iban</strong> and the <strong>Old Journal</strong>. In build 254 the same chest also contains a three-dose Super attack potion and a three-dose Restore potion.</li>
+        <li><strong>Keep the doll with you.</strong> The four sections below complete it. If the doll or journal is lost after this point, Nilhoof can supply replacements in build 254.</li>
+      </ol>
+
+      <h4>8. Body — burn Iban's tomb</h4>
+      <ol class="quest-steps">
+        <li><strong>Speak to Klank after obtaining the doll.</strong> He gives you <strong>Klank's gauntlets</strong>. If you do not have a tinderbox, he can also supply one.</li>
+        <li><strong>Get an empty bucket and fill it from the dwarfs' brew barrel.</strong> This gives you <strong>dwarf brew</strong>.</li>
+        <li><strong>Use the dwarf brew on Iban's tomb, then light it with a tinderbox.</strong> Burning the tomb yields <strong>Iban's ashes</strong>.</li>
+        <li><strong>Use Iban's ashes on the Doll of Iban.</strong> This supplies the body element.</li>
+      </ol>
+
+      <h4>9. Shadow — defeat the three guardian demons</h4>
+      <ol class="quest-steps">
+        <li><strong>Fight Doomion, Holthion and Othainian.</strong> Each guardian drops its amulet while you still need the shadow element.</li>
+        <li><strong>Collect all three amulets.</strong> Do not leave the area until you have one from each demon.</li>
+        <li><strong>Use/open the demon chest with the complete set.</strong> The three amulets are consumed and you receive <strong>Iban's shadow</strong>.</li>
+        <li><strong>Use Iban's shadow on the Doll of Iban.</strong></li>
+      </ol>
+
+      <h4>10. Blood — kill Kalrag</h4>
+      <ol class="quest-steps">
+        <li><strong>Take the Doll of Iban with you to Kalrag's lair.</strong> The doll must be in your inventory when the spider dies.</li>
+        <li><strong>Kill Kalrag.</strong> In build 254, Iban's blood is applied to the doll automatically if the doll is present and still needs that element.</li>
+        <li><strong>If you killed Kalrag without the doll, kill it again later.</strong> The build explicitly lets the blood seep away when there is no doll to receive it.</li>
+      </ol>
+
+      <h4>11. Conscience — recover Iban's dove</h4>
+      <ol class="quest-steps">
+        <li><strong>Wear Klank's gauntlets.</strong> They protect your hands while searching the soulless cages.</li>
+        <li><strong>Search the cages until you obtain Iban's dove/remains.</strong> Without the gauntlets, the cage interaction can bite and damage you in build 254.</li>
+        <li><strong>Use the dove remains on the Doll of Iban.</strong> Once the ashes, shadow, blood and dove have all been added, the doll is complete.</li>
+      </ol>
+
+      <h4>12. Enter Iban's temple</h4>
+      <ol class="quest-steps">
+        <li><strong>Kill Iban disciples until you have both Zamorak robe pieces.</strong> Build 254 supplies the robe top first when missing, then the robe bottom.</li>
+        <li><strong>Wear only the Zamorak robe top and bottom.</strong> Remove your weapon, bow, armour, cape, jewellery, gloves and every other equipped item. Build 254 checks for the two robes and <strong>no other equipment</strong> before allowing the final route.</li>
+        <li><strong>Bring the completed Doll of Iban into the temple.</strong> Iban is not a conventional boss fight here. The dangerous floor/temple effects can hit and knock you around while you approach the centre.</li>
+        <li><strong>Use the completed doll on the central Well of the Damned/altar.</strong> This destroys Iban. The pass begins to collapse and you are removed from the temple.</li>
+      </ol>
+
+      <h4>13. Return to King Lathas</h4>
+      <ol class="quest-steps">
+        <li><strong>Speak to Koftik on the way out.</strong> He leads you back out of the pass in build 254.</li>
+        <li><strong>Return to King Lathas in East Ardougne.</strong> Tell him that Iban has been defeated.</li>
+        <li><strong>The quest completes.</strong> Lathas awards the skill experience and Quest Points. The staff and runes are granted as part of Iban's defeat in the temple.</li>
+      </ol>
+
+      <h3>Combat and hazard notes</h3>
+      <ul class="tight">
+        <li><strong>Period combat requirement:</strong> surviving pre-cutoff quest material warns that the player must be able to defeat one level-98 demon and two level-78 demons. This is historical evidence for the 2004 quest, not the current build's exact NPC configuration.</li>
+        <li><strong>Build-254 guardian demons:</strong> Doomion, Holthion and Othainian currently display as <strong>level 91</strong>. Their configs explicitly draw on later preserved/OSRS data, so those numbers are implementation values rather than proof of the exact September 2004 display.</li>
+        <li><strong>Build-254 Kalrag:</strong> currently displays as <strong>level 89</strong>. The same later-source warning applies.</li>
+        <li><strong>Paladins:</strong> build 254 currently displays the Underground Pass paladins as level 62, but their config is likewise later-derived. You need their crests; do not use that level as historical evidence.</li>
+        <li><strong>Floor grid:</strong> a wrong tile deals a heavy fixed hit in build 254 and drops you below the grid. The safe path is unique to your character.</li>
+        <li><strong>Obstacle failures:</strong> the rope swing, swamp/crevasse, rockslides and traps can all damage you. Carry enough food to survive several failures in succession.</li>
+        <li><strong>Iban's temple:</strong> Iban uses environmental hazards rather than a normal melee duel. Reach the centre with the completed doll and use it on the well.</li>
+      </ul>
+
+      <h3>Recovery notes</h3>
+      <ul class="tight">
+        <li><strong>Need another damp cloth:</strong> return to Koftik during the bridge stage. Build 254 can supply another.</li>
+        <li><strong>Need another bridge arrow:</strong> bring spares. The bridge shot can miss and consume the lit arrow.</li>
+        <li><strong>Lost Doll of Iban or Old Journal:</strong> after reaching the relevant quest stage, Nilhoof can replace them in build 254.</li>
+        <li><strong>Missing Zamorak robes:</strong> kill more Iban disciples. The build checks which of the two robe pieces you are missing and supplies them through disciple drops.</li>
+        <li><strong>Soulless cages hurt you:</strong> make sure Klank's gauntlets are equipped before searching for the dove remains.</li>
+        <li><strong>Kalrag blood did not register:</strong> return with the Doll of Iban in your inventory and kill Kalrag again.</li>
+        <li><strong>Temple door will not admit you:</strong> wear the Zamorak robe top and bottom and remove <em>all</em> other equipped items.</li>
+        <li><strong>Iban's staff is empty after the quest:</strong> use it on the second sacrificial well in the pass. Build 254 restores the staff to <strong>120 charges</strong>.</li>
+      </ul>
 
       <h3>Rewards</h3>
       <ul class="tight">
-<li>5 Quest Points</li>
-<li>3,000 Agility experience</li>
-<li>2,000 Ranged experience</li>
-<li>3,000 Attack experience</li>
-<li>Access to the borders of the elven lands, setting up later quests</li>
+        <li><strong>5 Quest Points.</strong></li>
+        <li><strong>3,000 Attack experience.</strong></li>
+        <li><strong>3,000 Agility experience.</strong></li>
+        <li><strong>Iban's staff.</strong> Build 254 grants it with <strong>120 charges</strong>.</li>
+        <li><strong>15 Death runes.</strong></li>
+        <li><strong>30 Fire runes.</strong></li>
+        <li><strong>Access to Iban Blast</strong> once you meet its Magic requirement. In build 254, Iban Blast requires 50 Magic, Iban's staff, 1 Death rune and 5 Fire runes, with a maximum hit of 25.</li>
+        <li><strong>Ability to recharge Iban's staff</strong> at the second well in the Underground Pass; build 254 restores it to 120 charges there.</li>
       </ul>
+      <p>There is <strong>no Ranged-XP reward</strong>. The previous page incorrectly listed 2,000 Ranged experience. Likewise, later elven quest progression such as Regicide is not presented as a 7 September 2004 completion reward because that content falls after this wiki's cutoff.</p>
+
+      <h3>2004scape implementation notes</h3>
+      <div class="guide-footnote">
+        <ul class="tight">
+          <li><strong>Quest start:</strong> build 254 starts Underground Pass through <strong>King Lathas</strong> after Biohazard and enforces <strong>25 Ranged</strong>. Eluned does not start this quest.</li>
+          <li><strong>Bridge:</strong> Koftik's damp cloth is used on an arrow, which is lit and fired from an equipped bow at the bridge support. There are no log-built rafts in the verified quest route.</li>
+          <li><strong>Historical pickaxe/build spade divergence:</strong> surviving July 2004 walkthrough material lists a pickaxe and uses it in the early pass. Build 254's Underground Pass scripts contain no pickaxe interaction; they instead require a <strong>spade</strong> at the mud tunnel after the first well.</li>
+          <li><strong>Random grid:</strong> the build generates and stores a safe floor route per character when the quest starts. A fixed path copied from a historical walkthrough is not a valid universal build-254 solution.</li>
+          <li><strong>Four-orb gate:</strong> all four orbs must be dealt with before the first well can safely advance the route. Premature use can damage the player.</li>
+          <li><strong>Doll elements:</strong> build 254 tracks ashes/body, blood, shadow and dove/conscience separately. Kalrag's blood is applied automatically on death when the doll is present; the other recovered elements are used on the doll.</li>
+          <li><strong>Final disguise:</strong> the temple entry check is unusually strict: the player must wear the Zamorak robe top and bottom with <strong>no other equipment</strong>.</li>
+          <li><strong>Completion rewards:</strong> King Lathas advances exactly <strong>3,000 Agility XP</strong> and <strong>3,000 Attack XP</strong> and awards <strong>5 Quest Points</strong>. Iban's defeat supplies the staff, 15 Death runes and 30 Fire runes. There is no Ranged XP advancement.</li>
+          <li><strong>Iban's staff:</strong> build 254 sets the staff to 120 charges when awarded and when recharged at the pass's second well.</li>
+          <li><strong>Enemy levels:</strong> several Underground Pass NPC configs explicitly rely on later OSRS/preserved values. Exact build levels are useful for playing build 254, but they are not automatically historical September-2004 combat levels.</li>
+          <li><strong>Post-cutoff progression:</strong> build source also contains later follow-on quest logic, but Regicide was released after the 7 September 2004 cutoff and is deliberately excluded from the target-period rewards/progression above.</li>
+        </ul>
+      </div>
 
       <nav class="page-navigation" aria-label="Previous and next quest guides">
         <a class="prev" href="shilo-village.html">&larr; Shilo Village</a>

@@ -151,15 +151,6 @@ return ($value);
 def_int $cost = oc_cost($obj);
 return (~calc_shop_value($cost, %shop_haggle, %shop_buy, ~price_mod(%shop, $diff, $obj)));
 
-// Whether $item is one of the 19 skill capes (sold by Callum's shop), gated separately
-// from customshops so capes can be toggled independently of the shop itself.
-[proc,is_skillcape](obj $item)(boolean)
-def_obj $base = oc_uncert($item);
-if ($base = agility_skill_cape | $base = fishing_skill_cape | $base = attack_skill_cape | $base = crafting_skill_cape | $base = defence_skill_cape | $base = fletch_skill_cape | $base = herblore_skill_cape | $base = hitpoints_skill_cape | $base = magic_skill_cape | $base = mining_skill_cape | $base = prayer_skill_cape | $base = ranging_skill_cape | $base = runecraft_skill_cape | $base = smithing_skill_cape | $base = strength_skill_cape | $base = thieve_skill_cape | $base = cooking_skill_cape | $base = firemaking_skill_cape | $base = woodcutting_skill_cape) {
-    return (true);
-}
-return (false);
-
 // Calculate the amount of items a player has to sell relative to a desired amount
 [proc,calculate_items_amount_sold](obj $item, int $sell_amount)(int)
 def_int $player_amount = inv_total(inv, $item);
@@ -191,10 +182,6 @@ if($amount <= 0) {
     $amount = last_int;
 }
 if($shop_inv = %shop) {
-    if (~is_skillcape($item) = true & map_feature("skillcapes") = false) {
-        mes("This item is not currently available.");
-        return;
-    }
     @buy_item($item, $amount);
 } else {
     @sell_item($item, $amount);

@@ -26,8 +26,6 @@
     <option value="../wiki.html">Home</option>
 <option value="quests.html">1. Quests</option>
 <option value="skills.html">2. Skills</option>
-<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
-<option value="npcs.html">4. NPCs &amp; dialogue</option>
 <option value="shops.html">5. Shops &amp; economy</option>
 <option value="drops.html">6. Drop tables</option>
 <option value="minigames.html">7. Minigames</option>
@@ -49,8 +47,6 @@
       <li data-title="Overview homepage"><a class="home-item" href="../wiki.html">Home &amp; overview</a></li>
 <li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
 <li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
-<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
-<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
 <li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
 <li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
 <li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
@@ -67,9 +63,9 @@
     <div class="factbox">
       <div class="frow"><dt>Target build</dt><dd>254</dd></div>
       <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
-      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>57 / 57</dd></div>
       <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
-      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 15</dd></div>
       <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
     </div>
   </nav>
@@ -99,7 +95,7 @@
 <li>Each line shows a number, a plugin name, its flag in brackets, and whether it's <span style="color:#2f7a3d">enabled</span> or <span style="color:#a1352c">disabled</span>.</li>
 <li>Type the number of the plugin you want to flip and press Enter. Repeat for as many as you like.</li>
 <li>Type <code>A</code> to turn everything on, <code>D</code> to turn everything off, or <code>B</code> to go back to the main menu when you're done.</li>
-<li>Start (or restart) the launcher path that owns the setting. The three new startup QOL controls numbered 10–12 below are intentionally honored only by option <code>2</code>, <strong>Custom Server + Hiscores</strong>; options <code>1</code> and <code>3</code> do not activate them.</li>
+<li>Start (or restart) the launcher path that owns the setting. The startup QOL controls numbered 11–13 below are intentionally honored only by option <code>2</code>, <strong>Custom Server + Hiscores</strong>; options <code>1</code> and <code>3</code> do not activate them.</li>
 </ol>
 <p>Under the hood this just rewrites the matching line in <code>engine/.env</code> for you — see option B if you'd rather do that by hand.</p>
 </div>
@@ -117,7 +113,7 @@
 </div>
 
 <div class="callout">
-<p><strong>Launcher scope for the new startup QOL controls:</strong> option <code>1</code> is <strong>Start Server</strong> and remains the vanilla path. Option <code>2</code> is <strong>Custom Server + Hiscores</strong> and is the only launcher path that honors <code>NODE_QOL_ANTI_MACRO_ROTATION</code>, <code>NODE_QOL_AUTO_OPEN_WEBCLIENT</code>, and <code>NODE_QOL_AUTO_OPEN_HISCORES</code>. Option <code>2</code> serves hiscores from the custom server's normal web listener at <code>/index.html</code> (using <code>WEB_PORT</code>) rather than starting the separate port-3000 hiscores process. Option <code>3</code>, <strong>Start Server + Hiscores</strong>, keeps its vanilla server plus separate hiscores-service behavior, and option <code>4</code>, <strong>Run Hiscores in background</strong>, is unchanged.</p>
+<p><strong>Launcher scope for the startup QOL controls:</strong> option <code>1</code> is <strong>Start Server</strong> and remains the vanilla path. Option <code>2</code> is <strong>Custom Server + Hiscores</strong> and is the only launcher path that honors <code>NODE_QOL_ANTI_MACRO_ROTATION</code>, <code>NODE_QOL_AUTO_OPEN_WEBCLIENT</code>, and <code>NODE_QOL_AUTO_OPEN_HISCORES</code>. Option <code>2</code> serves hiscores from the custom server's normal web listener at <code>/index.html</code> (using <code>WEB_PORT</code>) rather than starting the separate port-3000 hiscores process. Option <code>3</code>, <strong>Start Server + Hiscores</strong>, keeps its vanilla server plus separate hiscores-service behavior, and option <code>4</code>, <strong>Run Hiscores in background</strong>, is unchanged.</p>
 </div>
 
 <h3>Adding a brand-new plugin toggle (for scripters)</h3>
@@ -177,7 +173,12 @@
 <p class="evidence">Feature flag: <code>NODE_FEATURE_CUSTOMSHOPS</code>.</p>
 </div>
 <div class="card">
-<h4>3. Boss Pets</h4>
+<h4>3. Custom Bosses</h4>
+<p>Controls the Progressive custom-boss spawns. When disabled, the static Giant Mole and Scorpia spawns remove themselves, while the Chaos Elemental login/keeper spawn and delayed respawn paths are blocked. Enable it before starting or rebuilding the custom server if you want those custom bosses active.</p>
+<p class="evidence">Feature flag: <code>NODE_FEATURE_CUSTOMBOSSES</code>.</p>
+</div>
+<div class="card">
+<h4>4. Boss Pets</h4>
 <p><strong>How to get them:</strong> defeat the matching boss. King Black Dragon and Kalphite Queen each roll their pet at <strong>1/10,000</strong>; Chaos Elemental, Giant Mole, and Scorpia each roll theirs at <strong>1/5,000</strong>. If you have no follower, the pet spawns beside you automatically. If you already have a follower, its item is placed in your inventory when space is available.</p>
 <div class="table-wrap">
 <table>
@@ -195,7 +196,7 @@
 <p class="evidence">Feature flag: <code>NODE_FEATURE_BOSSPETS</code>.</p>
 </div>
 <div class="card">
-<h4>4. Custom Weapons</h4>
+<h4>5. Custom Weapons</h4>
 <p><strong>How to get them:</strong></p>
 <ul class="tight">
 <li><strong>Dragon pickaxe</strong> — dropped by the Chaos Elemental. The source has a dedicated 1/1,000 roll and also includes it in one slot of the boss's 128-entry main table. Requires 61 Mining to use as a pickaxe.</li>
@@ -206,7 +207,7 @@
 <p class="evidence">Feature flag: <code>NODE_FEATURE_CUSTOMWEAPONS</code>.</p>
 </div>
 <div class="card">
-<h4>5. Skillcapes</h4>
+<h4>6. Skillcapes</h4>
 <p><strong>How to get them:</strong> buy the cape for your skill from Callum at <code>3283, 3386, level 0</code> for <strong>99,000 coins</strong>. A base level of <strong>99</strong> in the matching skill is required to wear it. Use the cape's <strong>Play emote</strong> inventory option to perform its custom animation and graphic.</p>
 <p><strong>Admin spawn names:</strong></p>
 <p class="mono" style="overflow-wrap:anywhere">agility_skill_cape, fishing_skill_cape, attack_skill_cape, crafting_skill_cape, defence_skill_cape, fletch_skill_cape, herblore_skill_cape, hitpoints_skill_cape, magic_skill_cape, mining_skill_cape, prayer_skill_cape, ranging_skill_cape, runecraft_skill_cape, smithing_skill_cape, strength_skill_cape, thieve_skill_cape, cooking_skill_cape, firemaking_skill_cape, woodcutting_skill_cape</p>
@@ -217,40 +218,40 @@
 <h3>Interface and quality-of-life plugins</h3>
 <div class="grid2">
 <div class="card">
-<h4>6. X-Amount Shop Input</h4>
+<h4>7. X-Amount Shop Input</h4>
 <p>Open any shop, right-click the item you want to buy and choose <strong>Buy X</strong>, or right-click an inventory item while the shop is open and choose <strong>Sell X</strong>. Enter the amount in the number box and confirm it. The script caps a single Buy-X or Sell-X request at <strong>500</strong>.</p>
 <p class="evidence">Feature flag: <code>NODE_FEATURE_XAMOUNT</code>.</p>
 </div>
 <div class="card">
-<h4>7. Make-X Skill Actions</h4>
+<h4>8. Make-X Skill Actions</h4>
 <p>Begin a supported production action while carrying multiple sets of materials, then choose <strong>Make X</strong> or use the displayed quantity prompt. Enter the number to make and confirm. The action repeats until that count is reached, you run out of materials, or another requirement stops the action.</p>
 <p>Verified supported examples include cutting logs for Fletching, Cooking, cutting gems, brewing potions, smelting bars, and filling containers at water sources.</p>
 <p class="evidence">Feature flag: <code>NODE_FEATURE_MAKEX</code>.</p>
 </div>
 <div class="card">
-<h4>8. Middle-Mouse Button Rotation</h4>
+<h4>9. Middle-Mouse Button Rotation</h4>
 <p>Move the pointer over the game view, hold the <strong>middle mouse button</strong>, and drag. Horizontal movement rotates camera yaw; vertical movement changes camera pitch. Release the button or move the pointer outside the game canvas to stop rotating.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_MIDDLE_MOUSE_ROTATION</code>.</p>
 </div>
 <div class="card">
-<h4>9. Left Click Compass Reset</h4>
+<h4>10. Left Click Compass Reset</h4>
 <p><strong>Left-click or tap the compass</strong> above the minimap. The camera snaps to north and returns to its default pitch. The reset briefly holds the camera in place so the click cannot immediately drag it away again.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_COMPASS_RESET</code>.</p>
 </div>
 <div class="card">
-<h4>10. Anti-Macro Camera Rotation</h4>
+<h4>11. Anti-Macro Camera Rotation</h4>
 <p>When enabled under launcher option <code>2</code>, this suppresses the vanilla slow anti-macro camera rotation and the periodic camera nudge that feeds it. It does <strong>not</strong> disable normal arrow-key/manual yaw or pitch controls, middle-mouse rotation, compass reset, or the separate minimap anti-macro drift.</p>
 <p>Launcher options <code>1</code> and <code>3</code> force this plugin off even if the variable is <code>true</code>, preserving their vanilla camera behavior.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_ANTI_MACRO_ROTATION</code>. Default: <strong>false</strong>. Scope: <strong>option 2 only</strong>.</p>
 </div>
 <div class="card">
-<h4>11. Auto-Open Web Client</h4>
+<h4>12. Auto-Open Web Client</h4>
 <p>When enabled under launcher option <code>2</code>, the launcher waits until the custom server's web listener is reachable and then opens the webclient route at <code>/rs2.cgi</code>. The URL uses the configured <code>WEB_PORT</code> instead of assuming port 80.</p>
 <p>Options <code>1</code> and <code>3</code> ignore this flag and never auto-open the webclient from it.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_AUTO_OPEN_WEBCLIENT</code>. Default: <strong>false</strong>. Scope: <strong>option 2 only</strong>.</p>
 </div>
 <div class="card">
-<h4>12. Auto-Open Hiscores</h4>
+<h4>13. Auto-Open Hiscores</h4>
 <p>When enabled under launcher option <code>2</code>, the launcher waits for the custom server's main web listener and hiscores API to be ready, then opens <code>/index.html</code> on the configured <code>WEB_PORT</code>. On the default Windows port 80, that page is <code>http://localhost/index.html</code>.</p>
 <p>Option <code>2</code> does not start the separate port-3000 hiscores process. Option <code>3</code> keeps its existing separate hiscores-service behavior, and options <code>1</code> and <code>3</code> ignore this auto-open flag. If both auto-open flags are enabled for option <code>2</code>, hiscores opens first and the webclient follows through the same default-browser session.</p>
 <p class="evidence">Feature flag: <code>NODE_QOL_AUTO_OPEN_HISCORES</code>. Default: <strong>false</strong>. Scope: <strong>option 2 only</strong>.</p>

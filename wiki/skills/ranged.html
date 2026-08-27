@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Ranged skill guide for 2004scape Progressive build 254, including level unlocks and membership requirements.">
+  <meta name="description" content="Ranged skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering combat styles, ammunition, equipment requirements, training, quest XP, the Ranging Guild, multicannon and implementation details.">
   <title>Ranged — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,33 +16,111 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Ranged</p>
   <h1 class="pagetitle">Ranged</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Ranged</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Combat</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 70</dd></div></div>
-  <p class="lede">Ranged governs projectile combat and gates stronger bows, throwing weapons, and dragonhide armour. Free-to-play and members-only rewards at the same level are separated below.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>5</td><td>Wield Oak bows.</td><td class="member-no">No</td></tr>
-    <tr><td>5</td><td>Wield Steel throwing weapons.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>10</td><td>Wield Black throwing weapons.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>20</td><td>Wield Willow bows; wear Studded chaps and Coifs.</td><td class="member-no">No</td></tr>
-    <tr><td>20</td><td>Wear Studded body armour.<span class="requirement-note">20 Defence.</span></td><td class="member-no">No</td></tr>
-    <tr><td>20</td><td>Wield Mithril throwing weapons.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>30</td><td>Wield Maple bows.</td><td class="member-no">No</td></tr>
-    <tr><td>30</td><td>Wield Adamant throwing weapons.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>40</td><td>Wear Green dragonhide chaps and vambraces.</td><td class="member-no">No</td></tr>
-    <tr><td>40</td><td>Wear Green dragonhide body armour.<span class="requirement-note">40 Defence and <a href="../quests/dragon-slayer.html">Dragon Slayer</a>.</span></td><td class="member-no">No</td></tr>
-    <tr><td>40</td><td>Wield Yew bows and Rune throwing weapons; wear Ranger boots and the Robin Hood hat.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>50</td><td>Wield Magic bows; wear Blue dragonhide chaps and vambraces.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>50</td><td>Wear Blue dragonhide body armour.<span class="requirement-note">40 Defence.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>60</td><td>Wear Red dragonhide chaps and vambraces.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>60</td><td>Wear Red dragonhide body armour.<span class="requirement-note">40 Defence.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>70</td><td>Wear Black dragonhide chaps and vambraces.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>70</td><td>Wear Black dragonhide body armour.<span class="requirement-note">40 Defence.</span></td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Ranged</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Combat</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Combat styles</dt><dd>Accurate, Rapid, Longrange</dd></div>
+    <div class="row"><dt>Ranging Guild</dt><dd>40 Ranged, members</dd></div>
+    <div class="row"><dt>Highest listed unlock</dt><dd>Level 70</dd></div>
+  </div>
+
+  <p class="lede">Ranged is a combat skill used with bows, the early crossbow, thrown weapons, and the dwarf multicannon. This guide uses the 7 September 2004 cutoff and has been checked against the build-254 server scripts and configs.</p>
+
+  <h3>How Ranged combat works</h3>
+  <p>Ranged attacks use the player's Ranged level together with the equipped weapon and armour bonuses. In build 254, the effective Ranged level starts from the current Ranged level plus the normal combat calculation baseline, then the selected attack style can add its own bonus. Equipment's Ranged attack bonus affects accuracy, while the weapon's Ranged strength value contributes to maximum damage.</p>
+
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Style</th><th>Combat effect</th><th>XP from normal damage</th></tr></thead><tbody>
+    <tr><td>Accurate</td><td>+3 effective Ranged.</td><td>4 Ranged XP and 1.33 Hitpoints XP per point of damage.</td></tr>
+    <tr><td>Rapid</td><td>No +3 stat bonus; attacks one tick faster than the weapon's normal attack delay.</td><td>4 Ranged XP and 1.33 Hitpoints XP per point of damage.</td></tr>
+    <tr><td>Longrange</td><td>+3 effective Defence and +2 tiles of attack range, capped at 10 tiles.</td><td>2 Ranged XP, 2 Defence XP, and 1.33 Hitpoints XP per point of damage.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>Levels without a listed unlock still improve Ranged combat performance. The milestones come from <code>levelup_unlocks_ranged.rs2</code>.</p></div>
+  <p>The target build does not apply a Ranged-boosting prayer to the combat calculation, so later prayer-based Ranged boosts should not be backported into this guide.</p>
+
+  <h3>Ammunition and weapon compatibility</h3>
+  <p>Ordinary bows require arrows, the Ogre bow requires Ogre arrows, and the period crossbow uses bolts. Build 254 also checks the ammunition tier against the bow: ammunition with a higher level requirement than the bow is rejected.</p>
+
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Weapon</th><th>Ranged level</th><th>Highest normal ammunition tier</th><th>Access at cutoff</th></tr></thead><tbody>
+    <tr><td>Shortbow / Longbow</td><td>1</td><td>Iron arrows</td><td>Free-to-play</td></tr>
+    <tr><td>Oak shortbow / Oak longbow</td><td>5</td><td>Steel arrows</td><td>Free-to-play</td></tr>
+    <tr><td>Willow shortbow / Willow longbow</td><td>20</td><td>Mithril arrows</td><td>Members</td></tr>
+    <tr><td>Maple shortbow / Maple longbow</td><td>30</td><td>Adamant arrows</td><td>Members</td></tr>
+    <tr><td>Ogre bow</td><td>30</td><td>Ogre arrows only</td><td>Members</td></tr>
+    <tr><td>Yew shortbow / Yew longbow</td><td>40</td><td>Rune arrows</td><td>Members</td></tr>
+    <tr><td>Magic shortbow / Magic longbow</td><td>50</td><td>Rune arrows</td><td>Members</td></tr>
+    <tr><td>Crossbow</td><td>1</td><td>Bolts</td><td>Free-to-play</td></tr>
+  </tbody></table></div>
+
+  <p>Fired ammunition and thrown weapons are normally recoverable from the target tile. The build uses a one-in-five loss roll; the other four-in-five attempts place the ammunition on the target tile if that tile allows an item to be dropped there.</p>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements</th></tr></thead><tbody>
+    <tr><td>1</td><td>Shortbow, Longbow, Crossbow, Bronze arrows, Iron arrows and basic Bolts.</td><td class="member-no">No</td><td>None.</td></tr>
+    <tr><td>1</td><td>Bronze and Iron darts, knives, javelins and thrown axes.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>5</td><td>Oak shortbow, Oak longbow and Steel arrows.</td><td class="member-no">No</td><td>None.</td></tr>
+    <tr><td>5</td><td>Steel darts, knives, javelins and thrown axes.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>10</td><td>Black darts and Black knives.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>20</td><td>Coif and Studded chaps.</td><td class="member-no">No</td><td>None.</td></tr>
+    <tr><td>20</td><td>Studded body.</td><td class="member-no">No</td><td>Also requires 20 <a href="defence.html">Defence</a>.</td></tr>
+    <tr><td>20</td><td>Willow shortbow, Willow longbow, Mithril arrows and Mithril throwing weapons.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>30</td><td>Maple shortbow, Maple longbow, Adamant arrows and Adamant throwing weapons.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>30</td><td>Ogre bow and Ogre arrows.</td><td class="member-yes">Yes</td><td>Associated with <a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a>.</td></tr>
+    <tr><td>40</td><td>Green dragonhide chaps and Green dragonhide vambraces.</td><td class="member-no">No</td><td>None.</td></tr>
+    <tr><td>40</td><td>Green dragonhide body.</td><td class="member-no">No</td><td>Also requires 40 <a href="defence.html">Defence</a> and completion of <a href="../quests/dragon-slayer.html">Dragon Slayer</a>.</td></tr>
+    <tr><td>40</td><td>Yew shortbow, Yew longbow, Rune arrows, Rune throwing weapons, Ranger boots and Robin Hood hat.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>50</td><td>Magic shortbow, Magic longbow, Blue dragonhide chaps and Blue dragonhide vambraces.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>50</td><td>Blue dragonhide body.</td><td class="member-yes">Yes</td><td>Also requires 40 <a href="defence.html">Defence</a>.</td></tr>
+    <tr><td>60</td><td>Red dragonhide chaps and Red dragonhide vambraces.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>60</td><td>Red dragonhide body.</td><td class="member-yes">Yes</td><td>Also requires 40 <a href="defence.html">Defence</a>.</td></tr>
+    <tr><td>70</td><td>Black dragonhide chaps and Black dragonhide vambraces.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>70</td><td>Black dragonhide body.</td><td class="member-yes">Yes</td><td>Also requires 40 <a href="defence.html">Defence</a>.</td></tr>
+  </tbody></table></div>
+
+  <h3>Training methods</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Verified XP</th><th>Requirements and practical notes</th></tr></thead><tbody>
+    <tr><td>1+</td><td><strong>Ordinary combat — Accurate</strong></td><td>4 Ranged XP + 1.33 Hitpoints XP per damage</td><td>A Ranged weapon and compatible ammunition where required.</td></tr>
+    <tr><td>1+</td><td><strong>Ordinary combat — Rapid</strong></td><td>4 Ranged XP + 1.33 Hitpoints XP per damage</td><td>A Ranged weapon and compatible ammunition where required; one-tick faster attack delay than the weapon's normal delay.</td></tr>
+    <tr><td>1+</td><td><strong>Ordinary combat — Longrange</strong></td><td>2 Ranged XP + 2 Defence XP + 1.33 Hitpoints XP per damage</td><td>A Ranged weapon and compatible ammunition where required; also trains Defence.</td></tr>
+    <tr><td>Quest-dependent</td><td><strong>Dwarf multicannon</strong></td><td>2 Ranged XP per point of cannon damage; no Hitpoints XP</td><td>Members; <a href="../quests/dwarf-cannon.html">Dwarf Cannon</a> access and cannon supplies.</td></tr>
+    <tr><td>40+</td><td><strong>Ranging Guild target competition</strong></td><td>5, 10, 15, 25 or 50 Ranged XP per successful hit</td><td>Members; 40 base Ranged; 200 coins per competition. Ten supplied Bronze arrows are fired at the target; a miss gives no XP, and the final score determines Archery tickets.</td></tr>
+    <tr><td>1+</td><td><strong>Gnomeball</strong></td><td>Small Ranged XP awards; winning fifth goal gives 30 Ranged XP + 30 Agility XP</td><td>Members; access to the Gnomeball field.</td></tr>
+  </tbody></table></div>
+
+  <h3>Quest Ranged XP</h3>
+  <p>These quest rewards are available by the cutoff and can advance Ranged directly.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Ranged relevance</th></tr></thead><tbody>
+    <tr><td><a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a></td><td>Members</td><td><strong>735 Ranged XP.</strong> Fixed quest reward.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Members</td><td><strong>2,075 Ranged XP.</strong> Fixed quest reward.</td></tr>
+    <tr><td><a href="../quests/temple-of-ikov.html">Temple of Ikov</a></td><td>Members</td><td><strong>10,500 Ranged XP.</strong> Fixed reward whichever quest branch is taken.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>Members</td><td><strong>7,650 Ranged XP per reward choice.</strong> Four selectable skill rewards are available; choosing Ranged for all four gives up to 30,600 Ranged XP.</td></tr>
+  </tbody></table></div>
+
+  <h3>Implementation and cutoff notes</h3>
+  <ul>
+    <li><strong>Willow and Maple bows are members-only at this cutoff.</strong> Build 254 marks both tiers as members items. Their later free-to-play expansion happened after the September 2004 cutoff, so the old page's F2P labels were removed.</li>
+    <li>The target build contains the original basic Crossbow and bolts. The later metal crossbow and bolt progression is outside this guide's cutoff and is not listed.</li>
+    <li>The Ranging Guild entry script requires 40 base Ranged and the guild content is members-only.</li>
+    <li><em>Horror from the Deep</em> is not included in the quest-XP table because it was released on 17 November 2004, after this wiki's 7 September 2004 cutoff.</li>
+    <li>The level-up interface is useful for unlock messaging, but item configs and level-requirement scripts are authoritative here for membership and secondary Defence/quest gates.</li>
+  </ul>
+
+  <h3>Build sources checked</h3>
+  <p>The audit used the following build-254 source areas:</p>
+  <ul>
+    <li><code>scripts/skill_combat/scripts/combat.rs2</code></li>
+    <li><code>scripts/skill_combat/scripts/player/player_ranged.rs2</code>, <code>player_combat.rs2</code> and <code>player_combat_stat.rs2</code></li>
+    <li><code>scripts/skill_combat/configs/ranged/</code> weapon and ammunition configs</li>
+    <li><code>scripts/levelup/scripts/levelup_unlocks_ranged.rs2</code> and <code>scripts/levelrequire/scripts/tier*.rs2</code></li>
+    <li><code>scripts/skill_crafting/configs/leather/leather_gear.obj</code></li>
+    <li>Ranging Guild, Dwarf Cannon, Gnomeball and relevant quest scripts</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="hitpoints.html">&larr; Hitpoints</a><a class="next" href="prayer.html">Prayer &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically rewritten for the 7 September 2004 cutoff and source-checked against the project's build-254 Ranged combat, equipment, Ranging Guild, multicannon and quest scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

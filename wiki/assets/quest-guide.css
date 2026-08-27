@@ -22,28 +22,51 @@
   .guide-topbar{width:calc(100% - 14px);}
 }
 
-/* ---------- shared skill guide unlock tables ---------- */
+/* ---------- shared skill guide tables ---------- */
 .guide-page .table-wrap{
   width:100%;
   max-width:100%;
-  overflow-x:visible;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .guide-page .skill-unlock-table{
   width:100%;
-  min-width:0;
+  min-width:570px;
   table-layout:auto;
 }
 .guide-page .skill-unlock-table th,
 .guide-page .skill-unlock-table td{
   white-space:normal;
-  overflow-wrap:anywhere;
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
 }
-.skill-unlock-table th:first-child,
-.skill-unlock-table td:first-child{width:64px;white-space:nowrap;}
-.skill-unlock-table th:last-child,
-.skill-unlock-table td:last-child{width:76px;text-align:center;white-space:nowrap;}
 .skill-unlock-table td.member-yes,
-.skill-unlock-table td.member-no{font-weight:700;}
+.skill-unlock-table td.member-no{
+  width:82px;
+  font-weight:700;
+  text-align:center;
+  white-space:nowrap;
+}
+
+/* Four-column level/check table from the skill-guide specification. */
+.guide-page .skill-requirements-table{min-width:760px;}
+.skill-requirements-table th:nth-child(1),
+.skill-requirements-table td:nth-child(1){width:64px;white-space:nowrap;}
+.skill-requirements-table th:nth-child(2),
+.skill-requirements-table td:nth-child(2){width:42%;}
+.skill-requirements-table th:nth-child(3),
+.skill-requirements-table td:nth-child(3){width:82px;text-align:center;white-space:nowrap;}
+
+/* Four-column training table: keep method and XP columns readable. */
+.guide-page .skill-training-table{min-width:780px;}
+.skill-training-table th:nth-child(1),
+.skill-training-table td:nth-child(1){width:64px;white-space:nowrap;}
+.skill-training-table th:nth-child(2),
+.skill-training-table td:nth-child(2){width:190px;}
+.skill-training-table th:nth-child(3),
+.skill-training-table td:nth-child(3){width:160px;}
+
 .requirement-note{
   display:block;
   margin-top:4px;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Fishing skill guide for 2004scape Progressive build 254, including catch unlocks and membership requirements.">
+  <meta name="description" content="Fishing skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering catches, tools, XP, Fishing Trawler, the Fishing Guild, training routes, quests and implementation differences.">
   <title>Fishing — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,36 +16,164 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Fishing</p>
   <h1 class="pagetitle">Fishing</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Fishing</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Gathering</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 81</dd></div></div>
-  <p class="lede">Fishing gathers food and special catches from fishing spots using different tools and bait. The table includes free-to-play catches, members-only fishing spots, the Fishing Guild, and Fishing Trawler rewards.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>5</td><td>Fish Sardines.</td><td class="member-no">No</td></tr>
-    <tr><td>5</td><td>Fish Karambwanji.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>10</td><td>Fish Herring.</td><td class="member-no">No</td></tr>
-    <tr><td>15</td><td>Net Anchovies.</td><td class="member-no">No</td></tr>
-    <tr><td>16</td><td>Use a large net for Mackerel, Oysters and Caskets.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>20</td><td>Fly-fish Trout.</td><td class="member-no">No</td></tr>
-    <tr><td>23</td><td>Use a large net for Cod.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>25</td><td>Fish Pike.</td><td class="member-no">No</td></tr>
-    <tr><td>28</td><td>Fish Slimy eel.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>30</td><td>Fly-fish Salmon.</td><td class="member-no">No</td></tr>
-    <tr><td>35</td><td>Harpoon Tuna.</td><td class="member-no">No</td></tr>
-    <tr><td>40</td><td>Catch Lobsters.</td><td class="member-no">No</td></tr>
-    <tr><td>46</td><td>Use a large net for Sea bass.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>50</td><td>Harpoon Swordfish.</td><td class="member-no">No</td></tr>
-    <tr><td>53</td><td>Catch Lava eels.<span class="requirement-note">An oily fishing rod and Fishing bait; the oily rod is obtained through <a href="../quests/heroes-quest.html">Heroes' Quest</a> progression.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>65</td><td>Catch Karambwan.<span class="requirement-note">Lubufu's Tai Bwo Wannai Trio fishing lesson and a Karambwan vessel loaded with Karambwanji.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>68</td><td>Enter the Fishing Guild.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>76</td><td>Harpoon Sharks.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>79</td><td>Catch Sea turtles on the Fishing Trawler.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>81</td><td>Catch Manta rays on the Fishing Trawler.</td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Fishing</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Gathering</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main tools</dt><dd>Nets, rods, harpoon, lobster pot</dd></div>
+    <div class="row"><dt>Members guild</dt><dd>Fishing Guild — level 68</dd></div>
+    <div class="row"><dt>Highest cutoff unlock</dt><dd>Level 81 — Manta ray</dd></div>
+  </div>
+
+  <p class="lede">Fishing catches raw fish and other objects from fishing spots. Each method needs the correct tool and, where applicable, bait or feathers. Successful catches award Fishing XP and can then feed directly into <a href="cooking.html">Cooking</a>. At the 7 September 2004 cutoff the progression runs from Shrimps at level 1 to Manta rays from the members-only Fishing Trawler at level 81.</p>
+
+  <h3>How Fishing works</h3>
+  <div class="callout"><p><strong>Basic loop:</strong> use the appropriate option on a fishing spot while carrying its tool. Build 254 checks the player's current Fishing level, verifies the tool and any bait, rolls for success, then adds the catch and Fishing XP. Fishing bait and feathers are consumed only when a catch succeeds.</p></div>
+  <ul>
+    <li><strong>One spot can hold several catches:</strong> the available catch pool expands with level. Small-net sea spots start with Shrimps and add Anchovies at 15; bait sea spots start with Sardines and add Herring at 10; fly-fishing starts with Trout and adds Salmon at 30; harpooning starts with Tuna and adds Swordfish at 50.</li>
+    <li><strong>Tools are method-specific:</strong> a small net, fishing rod, fly-fishing rod, lobster pot, harpoon, big net and oily fishing rod are not interchangeable. Rod fishing also needs the correct consumable bait.</li>
+    <li><strong>Current level matters in build 254:</strong> ordinary catch checks, Fishing Guild entry and Fishing Trawler reward checks read the current Fishing stat. This means temporary boosts can matter where the historical activity also allowed them.</li>
+    <li><strong>Fishing and Cooking are separate checks:</strong> catching a fish does not imply the player can cook it. Cooking level, fire/range access and burn chance are handled by the Cooking skill.</li>
+    <li><strong>Members methods add non-fish catches:</strong> big-net fishing can produce Mackerel, Cod, Bass, oysters, caskets, seaweed and low-value junk rather than a single predictable fish.</li>
+  </ul>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <div class="callout"><p>The table deliberately excludes Karambwanji and Karambwan. They appear in the current source tree, but they belong to <strong>Tai Bwo Wannai Trio</strong>, released on 14 September 2004 — one week after this wiki's cutoff.</p></div>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements</th></tr></thead><tbody>
+    <tr><td>1</td><td>Net Shrimps.</td><td class="member-no">No</td><td>Small fishing net; suitable sea net spot.</td></tr>
+    <tr><td>5</td><td>Fish Sardines.</td><td class="member-no">No</td><td>Fishing rod + Fishing bait; suitable sea bait spot.</td></tr>
+    <tr><td>10</td><td>Fish Herring.</td><td class="member-no">No</td><td>Fishing rod + Fishing bait; Herring joins the sea-bait catch pool.</td></tr>
+    <tr><td>15</td><td>Net Anchovies.</td><td class="member-no">No</td><td>Small fishing net; Anchovies join the sea-net catch pool.</td></tr>
+    <tr><td>15</td><td>Receive fish from the Fishing Trawler.</td><td class="member-yes">Yes</td><td>Fishing Trawler at Port Khazard; the boat must complete a successful trip. Higher fish still require their own Trawler thresholds.</td></tr>
+    <tr><td>16</td><td>Use a big net for Mackerel, oysters, caskets, seaweed and junk catches.</td><td class="member-yes">Yes</td><td>Big fishing net; members big-net spots such as Catherby or the Fishing Guild.</td></tr>
+    <tr><td>20</td><td>Fly-fish Trout.</td><td class="member-no">No</td><td>Fly-fishing rod + feathers; suitable river spot.</td></tr>
+    <tr><td>23</td><td>Catch Cod with a big net.</td><td class="member-yes">Yes</td><td>Big fishing net; Cod joins the members big-net catch pool.</td></tr>
+    <tr><td>25</td><td>Fish Pike.</td><td class="member-no">No</td><td>Fishing rod + Fishing bait; suitable river bait spot.</td></tr>
+    <tr><td>28</td><td>Fish Slimey eels.</td><td class="member-yes">Yes</td><td>Fishing rod + Fishing bait; members swamp-eel fishing spot.</td></tr>
+    <tr><td>30</td><td>Fly-fish Salmon.</td><td class="member-no">No</td><td>Fly-fishing rod + feathers; Salmon joins the river fly-fishing pool.</td></tr>
+    <tr><td>35</td><td>Harpoon Tuna.</td><td class="member-no">No</td><td>Harpoon; suitable sea harpoon spot.</td></tr>
+    <tr><td>40</td><td>Catch Lobsters.</td><td class="member-no">No</td><td>Lobster pot; suitable cage spot.</td></tr>
+    <tr><td>46</td><td>Catch Bass with a big net.</td><td class="member-yes">Yes</td><td>Big fishing net; Bass joins the members big-net catch pool.</td></tr>
+    <tr><td>50</td><td>Harpoon Swordfish.</td><td class="member-no">No</td><td>Harpoon; Swordfish joins the ordinary Tuna/Swordfish harpoon pool.</td></tr>
+    <tr><td>53</td><td>Catch Lava eels.</td><td class="member-yes">Yes</td><td>Oily fishing rod + Fishing bait; the oily rod is obtained during <a href="../quests/heroes-quest.html">Heroes' Quest</a> progression.</td></tr>
+    <tr><td>68</td><td>Enter the Fishing Guild.</td><td class="member-yes">Yes</td><td>Level 68 normally. A period Fishing potion boosts Fishing by +3, allowing entry from base level 65 while the boost is active.</td></tr>
+    <tr><td>76</td><td>Harpoon Sharks.</td><td class="member-yes">Yes</td><td>Harpoon; members Shark fishing spot.</td></tr>
+    <tr><td>79</td><td>Receive Sea turtles from the Fishing Trawler.</td><td class="member-yes">Yes</td><td>Successful Fishing Trawler trip; level 15 is the minimum to receive any fish, but Sea turtles require 79.</td></tr>
+    <tr><td>81</td><td>Receive Manta rays from the Fishing Trawler.</td><td class="member-yes">Yes</td><td>Successful Fishing Trawler trip; Manta rays require 81.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The membership split also reflects where the build places the relevant fishing methods: large-net member fish are defined at members areas such as Catherby and the Fishing Guild. Level milestones come from <code>levelup_unlocks_fishing.rs2</code>.</p></div>
+
+  <h3>Catch experience</h3>
+  <p>A July 2004 RuneScape 2 fishing guide and build 254 agree on most ordinary catch values. Where they disagree, the table keeps the disagreement visible instead of silently choosing whichever value is more familiar from later RuneScape.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Catch</th><th>Members</th><th>Method</th><th>Fishing XP</th><th>Evidence note</th></tr></thead><tbody>
+    <tr><td>1</td><td>Shrimps</td><td class="member-no">No</td><td>Small net</td><td>10</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>5</td><td>Sardine</td><td class="member-no">No</td><td>Rod + bait</td><td>20</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>10</td><td>Herring</td><td class="member-no">No</td><td>Rod + bait</td><td>30</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>15</td><td>Anchovies</td><td class="member-no">No</td><td>Small net</td><td>40</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>16</td><td>Mackerel</td><td class="member-yes">Yes</td><td>Big net</td><td>20</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>16</td><td>Oyster</td><td class="member-yes">Yes</td><td>Big net</td><td>10</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>16</td><td>Casket</td><td class="member-yes">Yes</td><td>Big net</td><td>10</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>16</td><td>Seaweed</td><td class="member-yes">Yes</td><td>Big net</td><td>1 historically</td><td>July-2004 guide says 1 XP; build 254 advances only 0.1 XP because its script uses 1 internal tenth-unit.</td></tr>
+    <tr><td>20</td><td>Trout</td><td class="member-no">No</td><td>Fly rod + feather</td><td>50</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>23</td><td>Cod</td><td class="member-yes">Yes</td><td>Big net</td><td>45</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>25</td><td>Pike</td><td class="member-no">No</td><td>Rod + bait</td><td>60</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>28</td><td>Slimey eel</td><td class="member-yes">Yes</td><td>Rod + bait</td><td>65</td><td>Build value; later preserved references agree, but the July-2004 table used for the core audit omits this catch.</td></tr>
+    <tr><td>30</td><td>Salmon</td><td class="member-no">No</td><td>Fly rod + feather</td><td>70</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>35</td><td>Tuna</td><td class="member-no">No</td><td>Harpoon</td><td>80</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>40</td><td>Lobster</td><td class="member-no">No</td><td>Lobster pot</td><td>90</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>46</td><td>Bass</td><td class="member-yes">Yes</td><td>Big net</td><td>100</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>50</td><td>Swordfish</td><td class="member-no">No</td><td>Harpoon</td><td>100</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>53</td><td>Lava eel</td><td class="member-yes">Yes</td><td>Oily rod + bait</td><td>30 historically reported; 60 in build</td><td>Unresolved target-period conflict: the 14 July 2004 RS2 guide records 30 XP, while build 254's fishing struct awards 60.</td></tr>
+    <tr><td>76</td><td>Shark</td><td class="member-yes">Yes</td><td>Harpoon</td><td>110</td><td>July-2004 guide and build agree.</td></tr>
+    <tr><td>79</td><td>Sea turtle</td><td class="member-yes">Yes</td><td>Fishing Trawler</td><td>105</td><td>July-2004 guide and the build's actual Trawler reward script agree.</td></tr>
+    <tr><td>81</td><td>Manta ray</td><td class="member-yes">Yes</td><td>Fishing Trawler</td><td>115</td><td>July-2004 guide and the build's actual Trawler reward script agree.</td></tr>
+  </tbody></table></div>
+
+  <h3>Tools and bait</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Tool / item</th><th>Used for</th><th>Members</th><th>Consumption / requirements</th></tr></thead><tbody>
+    <tr><td><strong>Small fishing net</strong></td><td>Shrimps and Anchovies.</td><td class="member-no">No</td><td>Reusable; no bait.</td></tr>
+    <tr><td><strong>Fishing rod</strong></td><td>Sardines, Herring, Pike and members eel methods.</td><td class="member-no">No</td><td>Reusable. Ordinary rod methods consume Fishing bait on successful catches.</td></tr>
+    <tr><td><strong>Fly-fishing rod</strong></td><td>Trout and Salmon.</td><td class="member-no">No</td><td>Reusable; one feather is consumed on each successful catch.</td></tr>
+    <tr><td><strong>Lobster pot</strong></td><td>Lobsters.</td><td class="member-no">No</td><td>Reusable; no bait.</td></tr>
+    <tr><td><strong>Harpoon</strong></td><td>Tuna, Swordfish and members Sharks.</td><td class="member-no">No</td><td>Reusable; no bait. Shark spots themselves are members content.</td></tr>
+    <tr><td><strong>Big fishing net</strong></td><td>Mackerel, Cod, Bass, oysters, caskets, seaweed and junk.</td><td class="member-yes">Yes</td><td>Reusable; no bait.</td></tr>
+    <tr><td><strong>Oily fishing rod</strong></td><td>Lava eels.</td><td class="member-yes">Yes</td><td>Obtained during <a href="../quests/heroes-quest.html">Heroes' Quest</a>; also needs Fishing bait.</td></tr>
+  </tbody></table></div>
+
+  <h3>Period training routes</h3>
+  <p>The following route is anchored to a RuneScape 2 guide updated on 14 July 2004 rather than a modern efficiency guide. It is useful as a period example, not a claim that every player must train this way.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Access</th><th>Tools / supplies</th><th>XP per catch</th><th>Practical notes</th></tr></thead><tbody>
+    <tr><td>1&ndash;9</td><td><strong>Net Shrimps at Draynor Village</strong></td><td>Free-to-play</td><td>Small fishing net</td><td>10</td><td>The July-2004 route uses the spot south of Draynor bank. Bank the fish for Cooking or drop them to stay at the spot.</td></tr>
+    <tr><td>10&ndash;19</td><td><strong>Bait-fish at Draynor Village</strong></td><td>Free-to-play</td><td>Fishing rod + Fishing bait</td><td>20 Sardine / 30 Herring</td><td>The period guide switches to rod-and-bait fishing here. At level 15, small-net Anchovies are another available option.</td></tr>
+    <tr><td>20&ndash;39</td><td><strong>Fly-fish at Barbarian Village</strong></td><td>Free-to-play</td><td>Fly-fishing rod + feathers</td><td>50 Trout / 70 Salmon</td><td>Trout are available immediately; Salmon enter the same method from level 30. Bring a large feather supply for uninterrupted fishing.</td></tr>
+    <tr><td>40&ndash;59</td><td><strong>Catch Lobsters at Karamja</strong></td><td>Free-to-play</td><td>Lobster pot</td><td>90</td><td>The period guide recommends Karamja docks. Keeping the catch is useful for food or trade, but banking requires leaving the island route.</td></tr>
+    <tr><td>60+</td><td><strong>Harpoon Tuna and Swordfish at Karamja</strong></td><td>Free-to-play</td><td>Harpoon</td><td>80 Tuna / 100 Swordfish</td><td>Swordfish unlock at 50, but the period training route changes to harpooning at about 60. The same spot can still produce Tuna.</td></tr>
+    <tr><td>68+</td><td><strong>Fishing Guild methods</strong></td><td>Members</td><td>Depends on catch</td><td>Varies</td><td>The guild combines fishing spots, a nearby bank, a Fishing shop and a range. A Fishing potion can allow entry at base level 65 while its +3 boost lasts.</td></tr>
+    <tr><td>76+</td><td><strong>Sharks</strong></td><td>Members</td><td>Harpoon</td><td>110</td><td>A high-level members catch at Catherby/Fishing Guild-type Shark spots. The July-2004 guide recommends Sharks for late-level members training.</td></tr>
+    <tr><td>79 / 81+</td><td><strong>Fishing Trawler</strong></td><td>Members</td><td>Team supplies; see below</td><td>105 Sea turtle / 115 Manta ray</td><td>The Trawler is the cutoff-period source of Sea turtles and Manta rays, but maintaining the boat and sharing trip rewards makes it a different activity from stationary fishing.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>No invented XP/hour:</strong> catch XP is known, but period-correct hourly rates depend on success chance, travel, banking, bait supply, fishing-spot behaviour and player interaction. This guide therefore avoids presenting modern XP/hour figures as September-2004 fact.</p></div>
+
+  <h3>Fishing Guild</h3>
+  <p>The members-only Fishing Guild is north of West Ardougne. The normal entrance requirement is <strong>68 Fishing</strong>. A July 2004 guide explicitly records that a <strong>Fishing potion raises Fishing by 3</strong> and permits entry from base level 65 while boosted; build 254 likewise checks the current Fishing stat rather than an unboosted base value.</p>
+  <ul>
+    <li><strong>Facilities:</strong> fishing platforms, a bank, Fishing shop and range are all recorded by the July-2004 guide.</li>
+    <li><strong>Catch variety:</strong> the guild supports several sea methods, including members big-net fishing as well as ordinary high-level catches.</li>
+    <li><strong>Boost warning:</strong> reaching the door with a boosted 68 is enough in build 254. If the boost drops before trying to enter, the door check fails again.</li>
+  </ul>
+
+  <h3>Fishing Trawler</h3>
+  <p>The Fishing Trawler is a members activity at Port Khazard, between Yanille and Ardougne. Period evidence and build 254 both use <strong>15 Fishing</strong> as the minimum level to receive fish from the trip. The activity is cooperative: the crew must keep Murphy's boat afloat and its net working long enough to return with a catch.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Supply / action</th><th>Purpose</th><th>Members</th><th>Important requirement</th></tr></thead><tbody>
+    <tr><td><strong>Swamp paste</strong></td><td>Repairs leaks in the hull.</td><td class="member-yes">Yes</td><td>Bring a useful stock for the trip; leaks can overwhelm the boat if ignored.</td></tr>
+    <tr><td><strong>Bailing bucket</strong></td><td>Removes water after flooding starts.</td><td class="member-yes">Yes</td><td>Useful when leaks have already allowed water aboard.</td></tr>
+    <tr><td><strong>Rope</strong></td><td>Repairs a ripped Trawler net.</td><td class="member-yes">Yes</td><td>Build 254 consumes one rope on a successful repair attempt and awards 5 Crafting XP for the repair.</td></tr>
+    <tr><td><strong>Fishing level</strong></td><td>Controls the fish that can appear in the reward.</td><td class="member-yes">Yes</td><td>15 minimum for fish; 79 for Sea turtles; 81 for Manta rays.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Build-specific Trawler note:</strong> <code>trawler_win.rs2</code> is the authoritative reward path in the current checkout. It awards 105 XP for a Sea turtle at 79 and 115 XP for a Manta ray at 81. Those values and thresholds match the July-2004 RS2 guide even though other generic build data contains stale 78/80 and 57/69 values.</p></div>
+
+  <h3>Relevant quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Fishing relevance at the cutoff</th></tr></thead><tbody>
+    <tr><td><a href="../quests/fishing-contest.html">Fishing Contest</a></td><td>Members</td><td>Requires <strong>10 Fishing</strong> and awards <strong>2,437 Fishing XP</strong>. Completion permanently opens the dwarf tunnel beneath White Wolf Mountain.</td></tr>
+    <tr><td><a href="../quests/sea-slug.html">Sea Slug</a></td><td>Members</td><td>Awards <strong>7,175 Fishing XP</strong> and grants access to the Fishing Platform. The quest's hard skill gate is Firemaking rather than Fishing.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Members</td><td>The quest uses the <strong>level-53 Lava eel</strong> method and supplies the progression needed for an oily fishing rod. Completion awards <strong>2,725 Fishing XP</strong> in build 254.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <div class="callout"><p><strong>Core implementation:</strong> <code>scripts/skill_fishing/scripts/fishing.rs2</code> handles equipment and ordinary catch rolls; the individual fishing-spot scripts set level gates and catch pools; <code>fishing.struct</code> supplies ordinary fish XP/success values; <code>levelup_unlocks_fishing.rs2</code> and <code>skill_guide.dbrow</code> provide the in-game unlock displays.</p></div>
+  <ul>
+    <li><strong>Post-cutoff Karambwan data:</strong> the current checkout contains Karambwanji at 5 and Karambwan at 65 plus Tai Bwo Wannai Trio state checks. That quest released 14 September 2004, so neither catch belongs in the 7 September historical unlock table.</li>
+    <li><strong>Trawler level-guide mismatch:</strong> <code>skill_guide.dbrow</code> lists Sea turtle at 78 and Manta ray at 80 and even contains a TODO questioning the Sea-turtle value. <code>levelup_unlocks_fishing.rs2</code>, <code>trawler_win.rs2</code> and the July-2004 RS2 guide all support 79 and 81, so the player-facing table uses 79/81.</li>
+    <li><strong>Trawler XP mismatch inside the build:</strong> generic <code>fishing.struct</code> entries contain 57 XP for Sea turtle and 69 for Manta ray, but the actual Trawler reward script directly awards 105 and 115 XP. Because the Trawler script is the path that creates those rewards, this guide records 105/115 as build behaviour.</li>
+    <li><strong>Lava-eel conflict:</strong> the 14 July 2004 RS2 guide records 30 Fishing XP for Lava eel, while build 254's <code>fishing_struct_lava_eel</code> gives 60. The discrepancy remains unresolved and is shown openly in the XP table.</li>
+    <li><strong>Big-net seaweed discrepancy:</strong> the July-2004 guide records 1 Fishing XP for Seaweed. Build 254 calls <code>stat_advance(fishing, 1)</code>; under the project's tenths-of-XP convention that is only 0.1 XP.</li>
+    <li><strong>Later-source casket loot:</strong> the build's current casket-opening drop rates explicitly cite modern Old School RuneScape sources. Those rates are not used here as evidence for September-2004 casket contents.</li>
+    <li><strong>Lava equipment loss:</strong> build 254 destroys a normal net, big net, harpoon, ordinary fishing rod or fly-fishing rod if it is deliberately used on the Lava-eel spot. This is a source-backed implementation behaviour; use the oily fishing rod instead.</li>
+  </ul>
+
+  <h3>Cutoff exclusions</h3>
+  <div class="callout warn"><p><strong>Later Fishing content can exist in the current checkout without belonging to the target snapshot.</strong> Release chronology takes priority over mere source-tree presence.</p></div>
+  <ul>
+    <li><strong>Karambwanji and Karambwan:</strong> tied to Tai Bwo Wannai Trio, released 14 September 2004, after the cutoff.</li>
+    <li><strong>Cave eels and later Lumbridge Swamp Cave catches:</strong> later quest/cave content is not part of the 7 September progression.</li>
+    <li><strong>Barbarian Fishing, monkfish and other later training systems:</strong> these were introduced well after the target date and are not substituted for period training routes.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Direct period community evidence:</strong> MagicMario's <em>RuneScape FAQ</em> v1.40, updated 14 July 2004, explicitly separates its RuneScape 2 section from RuneScape Classic and supplies the period Fishing tools, ordinary catch table, Fishing Guild boost/facilities, Trawler minimum, 79/81 rewards and a period training route.</li>
+    <li><strong>Quest cross-checks:</strong> the already-audited local <a href="../quests/fishing-contest.html">Fishing Contest</a>, <a href="../quests/sea-slug.html">Sea Slug</a> and <a href="../quests/heroes-quest.html">Heroes' Quest</a> guides were used for Fishing-related quest requirements and rewards.</li>
+    <li><strong>Build-254 core:</strong> <code>scripts/skill_fishing/scripts/fishing.rs2</code>, the files under <code>scripts/skill_fishing/scripts/fishing_spots/</code>, <code>scripts/skill_fishing/configs/fishing.struct</code>, <code>scripts/levelup/scripts/levelup_unlocks_fishing.rs2</code>, and <code>scripts/player/configs/skill_guide.dbrow</code>.</li>
+    <li><strong>Fishing Guild:</strong> <code>scripts/skill_fishing/scripts/fishing_guild.rs2</code> confirms level 68 is checked against the current Fishing stat and exposes the guild shop dialogue.</li>
+    <li><strong>Fishing Trawler:</strong> <code>scripts/minigames/game_trawler/scripts/murphy.rs2</code>, <code>trawler_net.rs2</code> and <code>trawler_win.rs2</code> establish the level-15 minimum, repair interactions and build reward thresholds/XP.</li>
+    <li><strong>Historical scope:</strong> Tai Bwo Wannai Trio's 14 September 2004 release keeps Karambwanji and Karambwan outside this wiki's 7 September cutoff even where later/current source data includes them.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="cooking.html">&larr; Cooking</a><a class="next" href="woodcutting.html">Woodcutting &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's Fishing implementation. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

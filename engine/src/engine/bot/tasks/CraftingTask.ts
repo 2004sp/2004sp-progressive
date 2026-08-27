@@ -62,7 +62,12 @@ const FAIL_LIMIT = 6;
 // ── CraftingTask ──────────────────────────────────────────────────────────────
 
 type Phase1State = 'shear_walk' | 'shear' | 'climb' | 'spin' | 'spin_flax' | 'descend' | 'bank_walk' | 'bank';
-type Phase2State = 'bank_walk' | 'withdraw' | 'furnace_walk' | 'craft' | 'bank_return' | 'tanning_walk' | 'tanning' | 'pottery_walk' | 'pottery' | 'wait_pottery' | 'wait_gem' | 'wait_leather';
+type Phase2State = 'bank_walk' | 'withdraw' | 'furnace_walk' | 'craft' | 'bank_return' | 'tanning_walk' | 'tanning' | 'pottery_walk' | 'pottery' | 'wait_pottery' | 'wait_gem' | 'wait_leather' | 'wait_ring';
+/** States for the standalone flax→bow string action (BotGoalPlanner routes here once enough flax is banked). */
+type SpinFlaxState = 'bank_walk' | 'withdraw' | 'spin';
+
+/** Withdraw/spin this many flax per bank trip (leaves room to also bank the resulting bow strings). */
+const FLAX_WITHDRAW_BATCH = 27;
 
 export class CraftingTask extends BotTask {
     private readonly step: SkillStep;
@@ -70,6 +75,7 @@ export class CraftingTask extends BotTask {
 
     private p1State: Phase1State = 'shear_walk';
     private p2State: Phase2State = 'bank_walk';
+    private spinFlaxState: SpinFlaxState = 'bank_walk';
 
     private failTicks = 0;
     private done = false;
@@ -92,22 +98,39 @@ export class CraftingTask extends BotTask {
         const smithLevel = getBaseLevel(player, PlayerStat.SMITHING);
         const phase2Unlocked = mineLevel >= 40 && smithLevel >= 40;
 
+        if (this.step.action === 'spin_flax') {
+            return hasItem(player, Items.FLAX) || this._hasItemInBank(player, Items.FLAX);
+        }
+
         if (this.phase === 1) {
             if (phase2Unlocked) return false; // gate closed
             return hasItem(player, Items.SHEARS);
         }
 
-        // Phase 2
-        if (!phase2Unlocked) return false;
+        // Phase 2 — leather and gems have their own material sources (hides from
+        // combat, gems from thieving/drops) and don't depend on the gold pipeline,
+        // so they're not gated behind phase2Unlocked.
         if (this.step.action.startsWith('craft_leather_')) {
-            return hasItem(player, Items.NEEDLE) && hasItem(player, Items.THREAD) && (hasItem(player, Items.LEATHER) || this._hasLeatherAnywhere(player) || hasItem(player, Items.COW_HIDE) || this._hasCowHideInBank(player));
+            // Needle/thread may be sitting in the bank rather than inventory —
+            // the 'withdraw' state pulls them out — so accept either. Requiring
+            // them in-hand here would block the task from ever reaching that
+            // withdraw logic (and would falsely fail shouldRun() mid-batch if
+            // thread runs out between bank trips).
+            const hasNeedle = hasItem(player, Items.NEEDLE) || this._hasItemInBank(player, Items.NEEDLE);
+            const hasThread = hasItem(player, Items.THREAD) || this._hasItemInBank(player, Items.THREAD);
+            return hasNeedle && hasThread && (hasItem(player, Items.LEATHER) || this._hasLeatherAnywhere(player) || hasItem(player, Items.COW_HIDE) || this._hasCowHideInBank(player));
         }
         if (this.step.action === 'craft_hard_leather_body') {
-            return hasItem(player, Items.NEEDLE) && hasItem(player, Items.THREAD) && (hasItem(player, Items.HARD_LEATHER) || this._hasItemInBank(player, Items.HARD_LEATHER));
+            const hasNeedle = hasItem(player, Items.NEEDLE) || this._hasItemInBank(player, Items.NEEDLE);
+            const hasThread = hasItem(player, Items.THREAD) || this._hasItemInBank(player, Items.THREAD);
+            return hasNeedle && hasThread && (hasItem(player, Items.HARD_LEATHER) || this._hasItemInBank(player, Items.HARD_LEATHER));
         }
         if (this.step.action.startsWith('cut_')) {
             return hasItem(player, Items.CHISEL) && (hasItem(player, this.step.itemConsumed!) || this._hasItemInBank(player, this.step.itemConsumed!));
         }
+
+        // Gold ring crafting is the only step still tied to the gold ore pipeline.
+        if (!phase2Unlocked) return false;
         if (!hasItem(player, Items.RING_MOULD)) return false;
         return this._hasGoldBarsAnywhere(player);
     }
@@ -120,6 +143,7 @@ export class CraftingTask extends BotTask {
         super.reset();
         this.p1State = 'shear_walk';
         this.p2State = 'bank_walk';
+        this.spinFlaxState = 'bank_walk';
         this.failTicks = 0;
         this.done = false;
         this.lastBallWool = 0;
@@ -130,7 +154,9 @@ export class CraftingTask extends BotTask {
     tick(player: Player): void {
         if (this.interrupted) return;
 
-        const banking = this.phase === 1 ? this.p1State === 'bank_walk' || this.p1State === 'bank' : this.p2State === 'bank_walk' || this.p2State === 'withdraw' || this.p2State === 'bank_return';
+        const banking = this.step.action === 'spin_flax'
+            ? this.spinFlaxState === 'bank_walk' || this.spinFlaxState === 'withdraw'
+            : this.phase === 1 ? this.p1State === 'bank_walk' || this.p1State === 'bank' : this.p2State === 'bank_walk' || this.p2State === 'withdraw' || this.p2State === 'bank_return';
 
         if (this.watchdog.check(player, banking)) {
             player.clearWaypoints();
@@ -144,7 +170,9 @@ export class CraftingTask extends BotTask {
             return;
         }
 
-        if (this.phase === 1) {
+        if (this.step.action === 'spin_flax') {
+            this._tickSpinFlax(player);
+        } else if (this.phase === 1) {
             this._tickPhase1(player);
         } else if (this.step.action.startsWith('craft_leather_') || this.step.action === 'craft_hard_leather_body') {
             this._tickLeather(player);
@@ -154,6 +182,130 @@ export class CraftingTask extends BotTask {
             this._tickPottery(player);
         } else {
             this._tickPhase2(player);
+        }
+    }
+
+    // ── Standalone flax spinning (flax → bow string) ─────────────────────────
+    // Routed here directly by BotGoalPlanner._findCraftingTask once enough flax
+    // is banked. Distinct from the phase-1 'spin_flax' state below, which only
+    // mops up incidental flax a wool-spinning bot happens to be carrying.
+
+    private _tickSpinFlax(player: Player): void {
+        switch (this.spinFlaxState) {
+            case 'bank_walk': {
+                const result = advanceBankWalk(player, this.stuck);
+                if (result === 'walk') return;
+                this.cooldown = result === 'ready' ? 3 : 0;
+                this.spinFlaxState = 'withdraw';
+                return;
+            }
+
+            case 'withdraw': {
+                const bid = bankInvId();
+                const inv = player.getInventory(InvType.INV);
+                const bank = bid !== -1 ? player.getInventory(bid) : null;
+
+                if (inv && bank) {
+                    // Bank bow strings spun on a previous cycle before withdrawing more flax.
+                    for (let i = 0; i < inv.capacity; i++) {
+                        const item = inv.get(i);
+                        if (item?.id === Items.BOW_STRING) {
+                            const moved = inv.remove(item.id, item.count);
+                            if (moved.completed > 0) bank.add(item.id, moved.completed);
+                        }
+                    }
+
+                    if (!hasItem(player, Items.FLAX)) {
+                        for (let i = 0; i < bank.capacity; i++) {
+                            if (bank.get(i)?.id === Items.FLAX) {
+                                const moved = bank.remove(Items.FLAX, FLAX_WITHDRAW_BATCH);
+                                inv.add(Items.FLAX, moved.completed);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!hasItem(player, Items.FLAX)) {
+                    // Out of flax — stop so the planner can send the bot back to
+                    // FlaxPickingTask instead of looping here with nothing to spin.
+                    this.done = true;
+                    this.interrupt();
+                    return;
+                }
+
+                this.spinFlaxState = 'spin';
+                return;
+            }
+
+            case 'spin': {
+                const [ax, az] = Locations.LUMBRIDGE_CASTLE_APPROACH;
+                const [wx, wz, wl] = Locations.LUMBRIDGE_POTTERS_WHEEL;
+
+                // Same teleJump pattern phase-1 wool spinning already uses to reach
+                // the 2nd-floor wheel — approach outside, then jump up.
+                if (player.level !== wl) {
+                    if (!isNear(player, ax, az, 10, 0)) {
+                        teleportNear(player, ax, az);
+                        return;
+                    }
+                    botTeleport(player, wx, wz, wl);
+                    return;
+                }
+
+                const flaxCount = countItem(player, Items.FLAX);
+                if (flaxCount === 0) {
+                    // Batch spun — head back down to bank the bow strings.
+                    botTeleport(player, ax, az, 0);
+                    this.spinFlaxState = 'bank_walk';
+                    return;
+                }
+
+                if (!isNear(player, wx, wz, 1, wl)) {
+                    walkTo(player, wx, wz);
+                    return;
+                }
+
+                const wheel = findLocByName(player.x, player.z, player.level, 'spinning_wheel', 20) ?? findLocByPrefix(player.x, player.z, player.level, 'spinning', 25);
+                if (!wheel) {
+                    this.failTicks++;
+                    if (this.failTicks >= FAIL_LIMIT) {
+                        botTeleport(player, ax, az, 0);
+                        this.spinFlaxState = 'bank_walk';
+                        this.failTicks = 0;
+                    }
+                    return;
+                }
+
+                const inv = player.getInventory(InvType.INV);
+                if (!inv) return;
+                let flaxSlot = -1;
+                for (let i = 0; i < inv.capacity; i++) {
+                    if (inv.get(i)?.id === Items.FLAX) { flaxSlot = i; break; }
+                }
+                if (flaxSlot === -1) {
+                    botTeleport(player, ax, az, 0);
+                    this.spinFlaxState = 'bank_walk';
+                    return;
+                }
+
+                const ok = interactUseLocOp(player, wheel, Items.FLAX, flaxSlot);
+                if (ok) {
+                    // spinning.rs2 [oplocu,_spinning_wheel] grants Crafting XP via
+                    // stat_advance() server-side — do not also credit it here.
+                    this.watchdog.notifyActivity();
+                    this.failTicks = 0;
+                    this.cooldown = randInt(3, 6);
+                } else {
+                    this.failTicks++;
+                    if (this.failTicks >= FAIL_LIMIT) {
+                        botTeleport(player, ax, az, 0);
+                        this.spinFlaxState = 'bank_walk';
+                        this.failTicks = 0;
+                    }
+                }
+                return;
+            }
         }
     }
 
@@ -324,9 +476,8 @@ export class CraftingTask extends BotTask {
 
                 const ok = interactUseLocOp(player, wheel, Items.WOOL, woolSlot);
                 if (ok) {
-                    // Manual XP tracking to drive ProgressWatchdog
-                    // (RuneScript handles actual stat_advance server-side)
-                    player.stats[PlayerStat.CRAFTING] += this.step.xpPerAction;
+                    // spinning.rs2 [oplocu,_spinning_wheel] grants Crafting XP via
+                    // stat_advance() server-side — do not also credit it here.
                     this.watchdog.notifyActivity();
                     this.failTicks = 0;
                     this.cooldown = randInt(3, 6);
@@ -380,7 +531,8 @@ export class CraftingTask extends BotTask {
 
                 const ok = interactUseLocOp(player, wheel, Items.FLAX, flaxSlot);
                 if (ok) {
-                    player.stats[PlayerStat.CRAFTING] += this.step.xpPerAction;
+                    // spinning.rs2 grants Crafting XP via stat_advance() server-side —
+                    // do not also credit it here.
                     this.watchdog.notifyActivity();
                     this.failTicks = 0;
                     this.cooldown = randInt(3, 6);
@@ -710,21 +862,38 @@ export class CraftingTask extends BotTask {
                     return;
                 }
 
-                const ok = interactUseLocOp(player, furnace, Items.GOLD_BAR, barSlot);
-                if (ok) {
-                    // Manual XP tracking (RuneScript handles actual stat_advance)
-                    player.stats[PlayerStat.CRAFTING] += this.step.xpPerAction;
+                // jewellery.rs2's [oplocu,_smithing_furnace] gold_bar case only opens
+                // the ring-making interface (craft_gold_interface) — the actual
+                // inv_del/inv_add/stat_advance happens inside the inv_button click
+                // handler, which a headless bot cannot press. Fire the real
+                // interaction for animation/visual parity, then fall back to a
+                // manual transformation via 'wait_ring' if no XP shows up (same
+                // pattern as wait_leather/wait_gem for their own UI-gated crafts).
+                interactUseLocOp(player, furnace, Items.GOLD_BAR, barSlot);
+                this.p2State = 'wait_ring';
+                this.lastBallWool = player.stats[PlayerStat.CRAFTING];
+                this.cooldown = 1;
+                return;
+            }
+
+            case 'wait_ring': {
+                if (player.stats[PlayerStat.CRAFTING] > this.lastBallWool) {
                     this.watchdog.notifyActivity();
+                    this.p2State = 'craft';
                     this.failTicks = 0;
-                    this.cooldown = randInt(4, 8);
-                } else {
-                    this.failTicks++;
-                    if (this.failTicks >= FAIL_LIMIT) {
-                        this.p2State = 'bank_return';
-                        this.failTicks = 0;
-                    } else {
-                        this.cooldown = 1;
+                    return;
+                }
+                this.failTicks++;
+                if (this.failTicks > 3) {
+                    const inv = player.getInventory(InvType.INV);
+                    if (inv && hasItem(player, Items.GOLD_BAR)) {
+                        inv.remove(Items.GOLD_BAR, 1);
+                        inv.add(this.step.itemGained!, 1);
+                        addXp(player, PlayerStat.CRAFTING, this.step.xpPerAction);
+                        this.watchdog.notifyActivity();
                     }
+                    this.p2State = 'craft';
+                    this.failTicks = 0;
                 }
                 return;
             }
