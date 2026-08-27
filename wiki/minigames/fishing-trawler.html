@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Fishing Trawler guide for the 7 September 2004 RuneScape snapshot and 2004scape Progressive build 254, including Port Khazard access, leaks, bailing, net repairs, ten-minute trips and the complete build reward table.">
+  <title>Fishing Trawler — Minigame Guide — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="../assets/wiki.css">
+  <link rel="stylesheet" href="../assets/quest-guide.css">
+</head>
+<body class="manual-page guide-page">
+<header class="topbar guide-topbar">
+  <a class="brandlink" href="../../wiki.html" aria-label="2004scape Progressive Wiki homepage"><span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span></a>
+  <nav class="header-links" aria-label="Featured wiki pages"><a href="../../wiki.html">Main page</a><a href="../quests.html">Quests</a><a href="../skills.html">Skills</a><a href="../minigames.html">Minigames</a></nav>
+</header>
+<div class="guide-shell"><main class="page"><article class="article-card">
+  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../minigames.html">Minigames</a> &rsaquo; Fishing Trawler</p>
+  <h1 class="pagetitle">Fishing Trawler</h1>
+  <p class="byline guide-meta">Minigame guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Fishing Trawler</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Introduced</dt><dd>28 July 2003</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members</dd></div>
+    <div class="row"><dt>Location</dt><dd>Port Khazard, east of the Fight Arena</dd></div>
+    <div class="row"><dt>Starting NPC</dt><dd>Murphy</dd></div>
+    <div class="row"><dt>Fishing requirement</dt><dd>No build entry gate; 15 current Fishing to claim catch</dd></div>
+    <div class="row"><dt>Trip length</dt><dd>About 10 minutes of active trawling</dd></div>
+    <div class="row"><dt>Core supplies</dt><dd>Swamp paste, rope, bailing bucket</dd></div>
+    <div class="row"><dt>Reward shop</dt><dd>None</dd></div>
+    <div class="row"><dt>Build folder</dt><dd><code>game_trawler</code></dd></div>
+    <div class="row"><dt>Audit status</dt><dd>AUDITED</dd></div>
+  </div>
+
+  <p class="lede">Fishing Trawler is a cooperative members minigame run by <strong>Murphy at Port Khazard</strong>. Board the trawler, keep its leaking hull under control with <strong>swamp paste</strong>, bail accumulated water with a <strong>bailing bucket</strong>, and repair a ripped net with <strong>rope</strong>. If the boat remains afloat for the full trip, Murphy returns to Port Khazard and each player can inspect the landed net for a level-dependent catch. Build 254 has <strong>no contribution meter, no points currency and no reward shop</strong>.</p>
+
+  <div class="callout"><p><strong>Historical/build split:</strong> Fishing Trawler was released on <strong>28 July 2003</strong> and therefore predates the 7 September 2004 cutoff. A RuneScape FAQ updated on <strong>14 July 2004</strong> records the activity north of Yanille, the level-15 minimum, and the level-79/81 Sea turtle and Manta ray rewards at 105/115 Fishing XP. Build 254 reconstructs the same old-style repair-and-bail activity, but some internal probability formulas are explicitly guesses and some intermediate reward thresholds differ from period ordinary-Fishing tables. Those deviations are labelled below rather than silently treated as historical fact.</p></div>
+
+  <h3>Getting there</h3>
+  <p>The trawler is moored at <strong>Port Khazard</strong> on Kandarin's east coast, <strong>north-east of Yanille, south of East Ardougne and immediately east of the Khazard Fight Arena</strong>. Murphy stands by the docks beside the boat.</p>
+  <ul>
+    <li><strong>From East Ardougne:</strong> leave the city to the south and follow the coast/road south toward the Fight Arena and Port Khazard. This is a straightforward period-valid walking route.</li>
+    <li><strong>From Yanille:</strong> leave Yanille to the north-east and walk toward the coast, then continue north to Port Khazard.</li>
+    <li><strong>From the Fight Arena:</strong> walk directly east to the coast; the Port Khazard docks and Murphy are beside the trawler.</li>
+  </ul>
+  <div class="table-wrap"><table><thead><tr><th>Requirement</th><th>7 September 2004 / build-254 rule</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>Membership</td><td><strong>Required.</strong></td><td>Fishing Trawler and its Port Khazard activity content are members-only.</td></tr>
+    <tr><td>Fishing</td><td><strong>No entry check in the build; 15 current Fishing is required when claiming the landed net.</strong></td><td>Murphy warns that level 15 is needed to catch fish. Period July-2004 evidence also records 15 as the minimum. Because <code>trawler_win.rs2</code> checks <code>stat(fishing)</code> only when the player inspects the returned net, temporary boosts affect the build's claim/reward thresholds.</td></tr>
+    <tr><td>Quest / quest points</td><td>None.</td><td>No quest or quest-point gate exists in <code>game_trawler</code>.</td></tr>
+    <tr><td>Entry fee</td><td>None.</td><td>There is no admission charge; costs come from consumable repair supplies.</td></tr>
+    <tr><td>Swamp paste</td><td><strong>Strongly recommended and consumed one per successful leak repair.</strong></td><td>Without it, leaks continually raise the flooding state. The Port Khazard general store stocks it in the build.</td></tr>
+    <tr><td>Rope</td><td><strong>Strongly recommended and consumed on a successful net repair.</strong></td><td>A failed build repair attempt does not consume rope. The Port Khazard general store stocks rope.</td></tr>
+    <tr><td>Bailing bucket</td><td><strong>Strongly recommended; reusable.</strong></td><td>This is the special Bailing bucket, not an ordinary bucket. It fills with seawater below deck and becomes reusable after the full bucket is emptied.</td></tr>
+  </tbody></table></div>
+
+  <h3>Getting the supplies</h3>
+  <ul>
+    <li><strong>Port Khazard general store:</strong> the build shop near the docks stocks rope, pots of flour, Bailing buckets and Swamp paste. Murphy's own dialogue tells the player to get supplies from the shop at the end of the pier.</li>
+    <li><strong>Making swamp paste:</strong> Murphy describes the period recipe as <strong>swamp tar mixed with flour, then heated over a fire</strong>. His dialogue points to the swamps below Lumbridge as the tar source.</li>
+    <li><strong>Recommended rather than required:</strong> there is no script that checks for a fixed amount of rope, paste or buckets before boarding. Bring enough for the whole team; a trip can technically begin with none and then fail quickly.</li>
+  </ul>
+
+  <h3>Starting a trip</h3>
+  <ol>
+    <li>Talk to <strong>Murphy</strong> for the period instructions. He explains the level-15 catch minimum, ripped nets, rope, Crafting difficulty and swamp paste.</li>
+    <li>Cross the <strong>gangplank</strong> to board the waiting trawler. Build 254 does not actually require the Murphy dialogue flag before boarding, so speaking to him is instructional rather than a hard entry gate.</li>
+    <li>When the first player boards and no trip is already active, the lobby schedules departure after <strong>100 game ticks, about one minute</strong>. Other players can board during that window.</li>
+    <li>The sailing cutscene moves the boarded group to the active trawler and opens the old <strong>How to play</strong> panel showing rope, swamp paste and bailing instructions.</li>
+    <li>After the departure setup finishes, Murphy's five-tick control timer starts the ten-minute active trip.</li>
+  </ol>
+  <p>If another trip is already in progress, the gangplank reports that someone is already on a fishing trip. The build keeps the dock/lobby separate from the active ship state and does not start a second simultaneous trip.</p>
+
+  <h3>How to keep the trawler afloat</h3>
+  <div class="table-wrap"><table><thead><tr><th>Problem / control</th><th>What to do</th><th>Build-254 effect</th></tr></thead><tbody>
+    <tr><td><strong>Hull leak</strong></td><td>Click <strong>Fill</strong> on the leak while carrying Swamp paste, or use Swamp paste on it.</td><td>The leak becomes a repaired hull patch and exactly one paste is consumed. Each unrepaired leak adds one flooding unit every control cycle.</td></tr>
+    <tr><td><strong>Ripped Trawler net</strong></td><td>Go to the upper/rear net and inspect/click the ripped net while carrying rope.</td><td>While ripped, the catch procedure returns immediately, so <strong>no fish-roll progress is accumulated</strong>. The repair uses a Crafting success check; failure costs no rope, success consumes one rope and awards <strong>5 Crafting XP</strong>.</td></tr>
+    <tr><td><strong>Water in the hold</strong></td><td>Go below deck and click a Bailing bucket to fill it, then click the full bucket to tip the water out.</td><td>Filling a bucket in the flooded hold removes <strong>one flooding unit</strong>. The bucket itself is not consumed.</td></tr>
+    <tr><td><strong>Ship's ladders</strong></td><td>Use the ladders to move between the main/hold deck and upper deck.</td><td>Needed to reach the net repair position and the flooded hold.</td></tr>
+    <tr><td><strong>Winch</strong></td><td>No useful action.</td><td><code>winch.rs2</code> only says the winch is jammed. It does not control catch success or rewards in build 254.</td></tr>
+  </tbody></table></div>
+
+  <h3>Flooding, sinking and the timer</h3>
+  <p>The authoritative trip controller runs every <strong>5 game ticks</strong>. Its trip counter ends successfully at <strong>200 cycles = 1,000 ticks</strong>, which is about <strong>10 minutes</strong> of active trawling. Murphy announces remaining minutes every 20 cycles. Preserved Trawler documentation likewise records a ten-minute successful trip; later interfaces that displayed other times are outside this target.</p>
+  <ul>
+    <li><strong>Leak scaling:</strong> the build allows up to <code>min(players &times; 3 + 1, 9)</code> simultaneous leaks. The leak-spawn chance also scales with player count, but the source labels the exact probability as a reconstruction guess.</li>
+    <li><strong>Flood transition:</strong> when the flooding state reaches <strong>30</strong>, players are shifted to the visibly flooded version of the ship.</li>
+    <li><strong>Recovery:</strong> fixing leaks stops their repeated flooding gain; bailing actively subtracts water. If flooding drops below 1, the build moves players back to the non-flooded ship state.</li>
+    <li><strong>Failure:</strong> at <strong>100 flooding</strong>, the controller sinks the trawler and moves all players on the active ship to the wreck state.</li>
+    <li><strong>Logout:</strong> <code>trawler_login</code> teleports a player who logs back in inside an active-game or wreck zone to the shore escape point rather than restoring them to the trip.</li>
+  </ul>
+
+  <h3>Catch accumulation and multiplayer behaviour</h3>
+  <p>Fishing Trawler's build reward system is cooperative but not contribution-based. While the net is intact, every five-tick control cycle performs <strong>one 1-in-10 catch-progress roll for each player currently counted on the trip</strong>. Each success increments one shared catch counter. At the successful end, the build divides that shared total by the current player count using integer division and assigns the resulting number of reward rolls to <strong>every player</strong>.</p>
+  <ul>
+    <li><strong>No personal contribution score:</strong> patching more holes, bailing more water or repairing the net does not increase an individual player's share. There is no activity bar in build 254.</li>
+    <li><strong>Net state matters to everyone:</strong> when the net is ripped, the shared catch counter stops increasing until someone repairs it.</li>
+    <li><strong>Expected full-trip scale:</strong> with an intact net for all 200 cycles, the 1-in-10 per-player progress roll averages about 20 shared successes per player before the final equal division. This is an expectation, not a guaranteed catch size.</li>
+    <li><strong>Player-count edge case:</strong> the divisor is taken from players present when the control timer completes. Leaving/logging out can therefore change the final division for the remaining group; the source has no separate locked-in crew list.</li>
+  </ul>
+
+  <h3>Success, failure, leaving and recovery</h3>
+  <ul>
+    <li><strong>Successful trip:</strong> survive the full 200 control cycles. Murphy turns the boat toward shore, the return cutscene plays and each player is teleported back beside the docked catch net.</li>
+    <li><strong>Zero catch:</strong> a trip can survive but accumulate zero reward rolls if the net stayed ripped or random catch progress was exceptionally poor. In that case the landed net cannot give you items.</li>
+    <li><strong>Sunk trip:</strong> there is <strong>no catch payout</strong>. Players appear swimming around the wreck and must climb onto a reachable floating barrel to return to shore.</li>
+    <li><strong>Escape damage:</strong> build 254 deals <strong>2 damage</strong> after the barrel escape and says the player reaches shore tired and weary. The Trawler module does not define a special death-protection rule; it simply performs the escape and damage sequence.</li>
+    <li><strong>Asking Murphy to return early:</strong> at sea, Murphy offers an “I've had enough” conversation. If the player insists, the build queues that player into the wreck/sinking state. It does <strong>not</strong> implement a clean personal return-without-failure path.</li>
+    <li><strong>Implementation oddity:</strong> the early-return dialogue only queues the insisting player rather than calling the global sink procedure, so other crew members can remain on the active trip. Treat this as a build-specific multiplayer quirk, not historical instructions.</li>
+  </ul>
+
+  <h3>Claiming the catch</h3>
+  <ol>
+    <li>After a successful return, inspect the <strong>Trawler net</strong> on the dock.</li>
+    <li>The build checks your <strong>current Fishing level</strong>. Below 15, it refuses the claim but leaves the saved catch state intact.</li>
+    <li>At 15+, the game opens the 40-slot <strong>Trawler Catch</strong> reward inventory and generates one reward item for each roll assigned at trip completion.</li>
+    <li>Withdraw items individually or use the all-withdraw option. Closing/Dump Items causes any remaining reward slots to be <strong>dropped on the ground</strong> for a shortened loot duration.</li>
+    <li>After the reward list is generated, your saved catch-roll count is cleared and the trip state is changed back to the sailed state so the same catch cannot be generated twice.</li>
+  </ol>
+  <div class="callout"><p><strong>Boost-sensitive rewards:</strong> because the build reads <code>stat(fishing)</code> at the landed net, not when the voyage begins, a temporary Fishing boost used before claiming can unlock a higher reward branch. This behaviour is also consistent with preserved later Trawler documentation, but the exact build thresholds below are authoritative for build 254.</p></div>
+
+  <h3>Complete build-254 reward table</h3>
+  <p>Every assigned reward roll produces <strong>one item</strong>. The script first performs a Fishing-stat junk gate; if that passes, it checks the eligible fish/non-fish branches below in order. Because those checks use the project's level-sensitive <code>stat_random</code> procedure, there is no single level-independent percentage for each reward. The table records the exact branch gate and XP actually used by <code>trawler_win.rs2</code>.</p>
+  <div class="table-wrap"><table><thead><tr><th>Reward</th><th>Build claim level</th><th>Quantity</th><th>Fishing XP</th><th>Build roll / historical note</th></tr></thead><tbody>
+    <tr><td>Raw Manta ray</td><td><strong>81</strong></td><td>1</td><td><strong>115</strong></td><td>First fish branch; <code>stat_random(fishing, 3, 40)</code>. July-2004 period evidence directly confirms level 81 and 115 XP for Trawler Manta rays.</td></tr>
+    <tr><td>Raw Sea turtle</td><td><strong>79</strong></td><td>1</td><td><strong>105</strong></td><td>Second branch; <code>stat_random(fishing, 3, 40)</code>. July-2004 period evidence directly confirms level 79 and 105 XP.</td></tr>
+    <tr><td>Raw Shark</td><td><strong>76</strong></td><td>1</td><td>110</td><td><code>stat_random(fishing, 3, 40)</code>. Level/XP match the period Fishing table.</td></tr>
+    <tr><td>Raw Swordfish</td><td><strong>60</strong></td><td>1</td><td>100</td><td><code>stat_random(fishing, 4, 48)</code>. <strong>Build deviation:</strong> the July-2004 ordinary Fishing table records Swordfish at level 50; this Trawler reward path requires 60.</td></tr>
+    <tr><td>Raw Lobster</td><td><strong>40</strong></td><td>1</td><td>90</td><td><code>stat_random(fishing, 6, 95)</code>; level/XP match the period Fishing table.</td></tr>
+    <tr><td>Raw Tuna</td><td><strong>35</strong></td><td>1</td><td>80</td><td><code>stat_random(fishing, 8, 64)</code>; level/XP match the July-2004 Fishing table.</td></tr>
+    <tr><td>Oyster</td><td><strong>16</strong></td><td>1</td><td>10</td><td>Shared level-16 branch uses <code>stat_random(fishing, 10, 80)</code>, then chooses Oyster / Seaweed / Edible seaweed uniformly.</td></tr>
+    <tr><td>Seaweed</td><td><strong>16</strong></td><td>1</td><td><strong>1.2</strong></td><td>Same one-of-three branch. Build script advances 12 internal tenth-XP units; preserved tables normally report 1 XP, so this is a small build mismatch.</td></tr>
+    <tr><td>Edible seaweed</td><td><strong>16</strong></td><td>1</td><td><strong>1.2</strong></td><td>Same one-of-three branch; Trawler-specific non-fish reward.</td></tr>
+    <tr><td>Raw Anchovies</td><td><strong>15</strong></td><td>1</td><td>40</td><td><code>stat_random(fishing, 24, 128)</code>. The global landed-net check makes level 15 the effective minimum.</td></tr>
+    <tr><td>Raw Sardine</td><td><strong>15 effective</strong></td><td>1</td><td>20</td><td><code>stat_random(fishing, 32, 192)</code>. Ordinary Fishing can catch Sardines below 15, but build Trawler claims are blocked below 15.</td></tr>
+    <tr><td>Raw Shrimps</td><td><strong>15 effective</strong></td><td>1</td><td>10</td><td><code>stat_random(fishing, 48, 200)</code>. Ordinary Fishing can catch Shrimps below 15, but the Trawler claim gate raises the effective reward minimum.</td></tr>
+    <tr><td>Broken arrow</td><td>15 effective</td><td>1</td><td>1.2</td><td>One of eight equally selected <code>randomjunk</code> items whenever either junk branch is reached.</td></tr>
+    <tr><td>Broken glass</td><td>15 effective</td><td>1</td><td>1.2</td><td>One of eight equally selected junk items.</td></tr>
+    <tr><td>Broken staff</td><td>15 effective</td><td>1</td><td>1.2</td><td>One of eight equally selected junk items.</td></tr>
+    <tr><td>Buttons</td><td>15 effective</td><td>1</td><td>1.2</td><td>One of eight equally selected junk items.</td></tr>
+    <tr><td>Damaged armour</td><td>15 effective</td><td>1</td><td>1.2</td><td>One of eight equally selected junk items.</td></tr>
+    <tr><td>Old boot</td><td>15 effective</td><td>1</td><td>1.2</td><td>One of eight equally selected junk items. The source comment notes old documentation reported 2 XP for boots and 1 for other junk; build 254 instead awards the same guessed 1.2 XP to every junk result.</td></tr>
+    <tr><td>Empty pot</td><td>15 effective</td><td>1</td><td>1.2</td><td>One of eight equally selected junk items.</td></tr>
+    <tr><td>Rusty sword</td><td>15 effective</td><td>1</td><td>1.2</td><td>One of eight equally selected junk items.</td></tr>
+  </tbody></table></div>
+  <p>The first operation inside each reward roll is <code>stat_random(fishing, 150, 200)</code>; failure immediately gives random junk. If every later fish/non-fish branch also fails, the fallback is random junk again. This is why junk remains possible at every Fishing level. Exact total reward probabilities are level-dependent and should not be replaced with modern OSRS rates.</p>
+
+  <h3>No reward shop or points exchange</h3>
+  <p>Fishing Trawler has <strong>no tickets, points, reward currency, exchange NPC, stock-based prize shop, XP-for-points option or purchase cooldown</strong>. Rewards come directly from the landed Trawler net after a successful trip. The nearby Port Khazard general store sells activity supplies for coins, but it is an ordinary supply shop and <strong>not</strong> a minigame reward exchange.</p>
+
+  <h3>Build-254 implementation audit</h3>
+  <p>The complete <code>Content/scripts/minigames/game_trawler/</code> module was inventoried for this guide: <strong>21 files</strong> total &mdash; 13 scripts, 6 config files and 2 interfaces. The global Trawler player variables/reward inventory, shared junk table and Port Khazard supply shop were also traced.</p>
+  <div class="table-wrap"><table><thead><tr><th>Area audited</th><th>Build-254 finding</th></tr></thead><tbody>
+    <tr><td>Murphy / requirements</td><td><code>murphy.rs2</code> explains level 15, rope/net repairs, Crafting difficulty and swamp paste. It does not hard-block low-level players from boarding.</td></tr>
+    <tr><td>Boarding / lobby</td><td><code>trawler_gangplank.rs2</code> starts a roughly one-minute departure countdown when the first player boards and no active trip exists.</td></tr>
+    <tr><td>Trip start</td><td><code>trawler_start.rs2</code> moves all players in the lobby zones into the game map, sets their Trawler state to sailed, plays the ship journey and opens <code>trawler_help.if</code>.</td></tr>
+    <tr><td>Trip controller</td><td><code>trawler_control.rs2</code> runs every 5 ticks, ends successfully when its counter reaches 200, manages leaks/flooding/net rips and accumulates shared catch progress.</td></tr>
+    <tr><td>Leak state</td><td>Up to 16 hull coordinates are tracked across dry/flooded map copies. Unrepaired leaks add flooding every cycle; leak spawning scales with player count and is explicitly labelled partly guessed in source.</td></tr>
+    <tr><td>Flood state</td><td><code>trawler_flood.rs2</code> swaps players between dry and flooded map copies at 30 / below 1 water state while carrying the controller counters across to the matching Murphy NPC.</td></tr>
+    <tr><td>Swamp-paste repair</td><td>Clicking a leak with paste changes it to <code>filledhole</code> and consumes one Swamp paste. Fixing a leak does not directly subtract accumulated water.</td></tr>
+    <tr><td>Bailing</td><td><code>trawler_bailing_bucket.rs2</code> only permits filling the special bucket below deck in the flooded-zone map. Each fill subtracts one flood unit; emptying converts the full bucket back to the reusable empty Bailing bucket.</td></tr>
+    <tr><td>Net state</td><td><code>trawler_net.rs2</code> can rip either half of the net. <code>trawler_catch_fish</code> returns immediately while any ripped-net state is present.</td></tr>
+    <tr><td>Net repair</td><td>The repair uses <code>stat_random(crafting, 30, 300)</code>. Success consumes one Rope and advances Crafting by 50 internal units = 5 XP; failure consumes nothing.</td></tr>
+    <tr><td>Winch</td><td><code>winch.rs2</code> is intentionally inert: the only interaction reports that it is jammed.</td></tr>
+    <tr><td>Catch progress</td><td>For each currently counted player, each five-tick cycle with an intact net has a 1/10 chance to add one to the shared <code>%npc_trawler_fish_caught</code> counter.</td></tr>
+    <tr><td>Team share</td><td>At successful completion the controller passes <code>floor(shared catch / player count)</code> into <code>trawler_win</code>; every player receives that same number of saved reward rolls.</td></tr>
+    <tr><td>Failure / sinking</td><td>At 100 flooding, <code>trawler_sink.rs2</code> queues all players to the wreck map. Two of the configured floating barrels are actionable escape objects; the third has no op handler in this module.</td></tr>
+    <tr><td>Early Murphy exit</td><td><code>murphy_at_sea.rs2</code> lets an insisting player abandon the trip by entering the wreck/sink sequence, but does not call the global sink procedure for the other crew.</td></tr>
+    <tr><td>Successful return</td><td><code>trawler_win.rs2</code> saves the equal roll count per player, plays the return journey and teleports participants to the Port Khazard catch-net area.</td></tr>
+    <tr><td>Level gate</td><td>The landed net checks current <code>stat(fishing)</code> and refuses reward generation below 15. The state variables <code>%trawler</code> and <code>%trawler_catch</code> are permanent.</td></tr>
+    <tr><td>Reward generation</td><td><code>trawler_reward</code> is the authoritative reward path. It generates exactly one item per saved roll and directly awards the Fishing XP listed above.</td></tr>
+    <tr><td>Junk table</td><td>The shared <code>randomjunk</code> procedure uniformly selects Broken arrow, Broken glass, Broken staff, Buttons, Damaged armour, Old boot, Empty pot or Rusty sword.</td></tr>
+    <tr><td>Reward interface</td><td><code>trawler_catch.if</code> exposes a 40-slot transmitted reward inventory. Withdrawing moves items to normal inventory; closing drops remaining reward slots on the ground.</td></tr>
+    <tr><td>Supply shop</td><td><code>port_khazard.inv</code> defines a shared, restocking general store with Rope, Pot of flour, Bailing bucket and Swamp paste among its stock. Its source note is based on later surviving stock evidence, so exact stock/restock quantities are build evidence rather than claimed September-2004 shop counts.</td></tr>
+  </tbody></table></div>
+
+  <h3>Build deviations and reconstruction notes</h3>
+  <ul>
+    <li><strong>No contribution system:</strong> later RuneScape/OSRS Trawler versions added anti-leech activity/contribution mechanics. Build 254 has none and must not be documented as requiring a minimum personal contribution.</li>
+    <li><strong>Swordfish threshold:</strong> the build's Trawler reward path requires level 60 for Swordfish, while the July-2004 Fishing table records level 50 for ordinary Swordfish. The guide preserves the actual build gate and flags the mismatch.</li>
+    <li><strong>Junk XP:</strong> the source comment says preserved old material gave 1 XP for junk except 2 for boots; the implementation deliberately guesses 1.2 XP for every junk result.</li>
+    <li><strong>Leak probabilities:</strong> <code>trawler_control.rs2</code> explicitly marks its leak chance as a “complete guess”. The leak/flood state machine is build fact; the exact probability is reconstruction.</li>
+    <li><strong>Net repair probability:</strong> the Crafting check is also source-labelled mostly guessed from later observations. The one-rope cost on success and 5 Crafting XP are direct build behaviour.</li>
+    <li><strong>Current-level reward roll:</strong> all fish quality is generated when the landed net is inspected. This makes boosts apply at claim time and means a sub-15 successful player can leave the saved catch unclaimed until reaching/boosting to 15.</li>
+    <li><strong>Early-abandon multiplayer bug:</strong> insisting that Murphy return queues only the speaking player into the wreck state rather than terminating the shared trip.</li>
+    <li><strong>Port Khazard shop quantities:</strong> the current Content config is annotated from September-2005 surviving stock evidence. The presence of the classic Trawler supplies is useful build evidence, but exact stock counts/restock timing are not projected back to 7 September 2004.</li>
+  </ul>
+
+  <h3>Post-cutoff content to exclude</h3>
+  <ul>
+    <li><strong>Activity/contribution bars and anti-leech thresholds:</strong> later additions; absent from build 254.</li>
+    <li><strong>Angler outfit / Trawler outfit rewards:</strong> later content; not in the build reward script.</li>
+    <li><strong>Kraken events, broken rails and related contribution actions:</strong> later Trawler mechanics; absent here.</li>
+    <li><strong>Ardougne Diary catch bonuses, pets and modern reward multipliers:</strong> later systems; not part of the September-2004 activity.</li>
+    <li><strong>Tiger sharks, shark teeth and shell bonus items:</strong> later RuneScape Trawler rewards; none are reachable from build 254's reward path.</li>
+  </ul>
+
+  <h3>Historical evidence and cutoff notes</h3>
+  <ul>
+    <li><strong>Release history:</strong> Fishing Trawler, Murphy and its wreck/escape scenery date to <strong>28 July 2003</strong>, placing the activity well before the 7 September 2004 cutoff.</li>
+    <li><strong>14 July 2004 RuneScape FAQ:</strong> locates the Trawler north of Yanille/south of Ardougne, recommends a team, records level 15 as the minimum to fish on the trip, and records Trawler Sea turtles at 79/105 XP and Manta rays at 81/115 XP.</li>
+    <li><strong>Preserved Trawler guides:</strong> retain the one-minute boarding window, ten-minute trip, swamp-paste leak repair, rope net repair, bailing-bucket recovery, wreck/barrel escape and landed-net reward flow. Later additions on those pages are not used as target-period evidence.</li>
+    <li><strong>Build-254 source:</strong> all 21 files under <code>Content/scripts/minigames/game_trawler/</code>, plus the Trawler varps/reward inventory, shared <code>randomjunk</code> helper and Port Khazard supply-shop config.</li>
+  </ul>
+
+  <nav class="page-navigation" aria-label="Previous and next minigame guides"><a class="prev" href="treasure-trails.html">&larr; Treasure Trails</a><a class="next" href="../minigames.html#minigames">Minigames overview &rarr;</a></nav>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 implementation. Historical instructions are kept separate from build-specific reconstruction and later Trawler additions. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+</article></main></div>
+</body>
+</html>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Runecrafting skill guide for 2004scape Progressive build 254, including rune unlocks and membership requirements.">
-  <title>Runecrafting — Skill Guide — 2004scape Progressive Wiki</title>
+  <meta name="description" content="Runecraft skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering Rune Mysteries, rune essence, talismans, all ten cutoff runes through Law, multiple-rune thresholds, training, altar access and implementation differences.">
+  <title>Runecraft — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
 </head>
@@ -14,27 +14,152 @@
   <nav class="header-links" aria-label="Featured wiki pages"><a href="../../wiki.html">Main page</a><a href="../quests.html">Quests</a><a href="../skills.html">Skills</a><a href="../bugs.html">Known bugs</a></nav>
 </header>
 <div class="guide-shell"><main class="page"><article class="article-card">
-  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Runecrafting</p>
-  <h1 class="pagetitle">Runecrafting</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Runecrafting</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Artisan</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete for target</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 54</dd></div></div>
-  <p class="lede">Runecrafting turns rune essence into runes at elemental and higher-level altars. The active level-up list is deliberately limited to runes available by the September 2004 target.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>2</td><td>Craft Mind runes.</td><td class="member-no">No</td></tr>
-    <tr><td>5</td><td>Craft Water runes.</td><td class="member-no">No</td></tr>
-    <tr><td>9</td><td>Craft Earth runes.</td><td class="member-no">No</td></tr>
-    <tr><td>14</td><td>Craft Fire runes.</td><td class="member-no">No</td></tr>
-    <tr><td>20</td><td>Craft Body runes.</td><td class="member-no">No</td></tr>
-    <tr><td>27</td><td>Craft Cosmic runes.<span class="requirement-note"><a href="../quests/lost-city.html">Lost City</a> completion to reach the Cosmic Altar in Zanaris.</span></td><td class="member-yes">Yes</td></tr>
-    <tr><td>35</td><td>Craft Chaos runes.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>44</td><td>Craft Nature runes.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>54</td><td>Craft Law runes.<span class="requirement-note">Access to Entrana; the Port Sarim monks will not take weapons or armour to the island.</span></td><td class="member-yes">Yes</td></tr>
+  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Runecraft</p>
+  <h1 class="pagetitle">Runecraft</h1>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Runecraft</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Released</dt><dd>29 March 2004</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Practical prerequisite</dt><dd><a href="../quests/rune-mysteries.html">Rune Mysteries</a></dd></div>
+    <div class="row"><dt>Free-to-play runes</dt><dd>Air, Mind, Water, Earth, Fire, Body</dd></div>
+    <div class="row"><dt>Members' runes at cutoff</dt><dd>Cosmic, Chaos, Nature, Law</dd></div>
+    <div class="row"><dt>Highest cutoff rune</dt><dd>Level 54 — Law</dd></div>
+  </div>
+
+  <p class="lede"><strong>Runecraft</strong> turns Rune essence into Magic runes at hidden rune temples. It was the newest skill in RuneScape on the <strong>7 September 2004</strong> cutoff, having arrived with RuneScape 2 on 29 March. The target-period skill contains <strong>ten craftable rune types</strong>: Air through Body for free-to-play, then Cosmic, Chaos, Nature and the newly added Law rune for members.</p>
+
+  <h3>How Runecraft works</h3>
+  <div class="callout"><p><strong>Basic loop:</strong> complete <a href="../quests/rune-mysteries.html">Rune Mysteries</a>, obtain Rune essence and the correct talisman, locate the matching mysterious ruins, use the talisman on the ruins, and craft the essence at the altar inside.</p></div>
+  <ul>
+    <li><strong>Rune essence is the raw material.</strong> At this cutoff there is no Rune/Pure-essence split: ordinary <strong>Rune essence</strong> is used for both free-to-play and members' runes. Pure essence was introduced much later and does not belong in a September-2004 guide.</li>
+    <li><strong>Rune Mysteries provides normal access to the essence mine.</strong> The quest rewards the Air talisman and access to the guarded teleport spell used by Sedridor and Aubury. Build 254 hard-gates that teleport routine on quest completion.</li>
+    <li><strong>Mining essence is a Mining action.</strong> In build 254 the essence rock requires level 1 <a href="mining.html">Mining</a> and a usable pickaxe. Each essence mined gives <strong>5 Mining XP</strong>; the essence deposit does not deplete.</li>
+    <li><strong>Talismans locate and enter temples.</strong> Selecting <em>Locate</em> gives a compass direction toward the corresponding ruins. Using the matching talisman on those ruins transports you to the restored temple. The talisman is <strong>not consumed</strong>.</li>
+    <li><strong>The altar converts the essence.</strong> In build 254 one craft action binds all Rune essence currently in the inventory, awards Runecraft XP for each essence consumed, and produces the appropriate rune.</li>
+    <li><strong>Extra runes do not give extra XP.</strong> Higher Runecraft levels can produce two or more runes from each essence, but the build awards XP according to the number of essence consumed, not the number of finished runes produced.</li>
+    <li><strong>Portals take you back outside.</strong> After crafting, use the glowing portal in the temple to return to the exterior ruins.</li>
+    <li><strong>Members' altars are world-gated.</strong> Build 254 refuses Cosmic, Chaos, Nature and Law temple entry/crafting on a free-to-play world.</li>
+  </ul>
+
+  <h3>Runes available at the 7 September 2004 cutoff</h3>
+  <p>The altar locations below follow a preserved period Runecraft guide. XP values are checked against build 254's Runecraft database; the build stores them in tenths, so <code>50</code> is displayed here as 5 XP.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Rune / altar</th><th>Members</th><th>Other requirements / notes</th></tr></thead><tbody>
+    <tr><td>1</td><td><strong>Air rune</strong> — 5 XP per essence; ruins south of Falador.</td><td class="member-no">No</td><td><a href="../quests/rune-mysteries.html">Rune Mysteries</a> returns the Air talisman at completion and unlocks normal essence-mine access.</td></tr>
+    <tr><td>2</td><td><strong>Mind rune</strong> — 5.5 XP per essence; ruins between Ice Mountain and Goblin Village.</td><td class="member-no">No</td><td>Mind talisman and Rune essence.</td></tr>
+    <tr><td>5</td><td><strong>Water rune</strong> — 6 XP per essence; ruins in Lumbridge Swamp.</td><td class="member-no">No</td><td>Water talisman and Rune essence.</td></tr>
+    <tr><td>9</td><td><strong>Earth rune</strong> — 6.5 XP per essence; ruins north-east of Varrock.</td><td class="member-no">No</td><td>Earth talisman and Rune essence.</td></tr>
+    <tr><td>14</td><td><strong>Fire rune</strong> — 7 XP per essence; ruins north-east of Al Kharid, outside the Duel Arena entrance.</td><td class="member-no">No</td><td>Fire talisman and Rune essence.</td></tr>
+    <tr><td>20</td><td><strong>Body rune</strong> — 7.5 XP per essence; ruins between Ice Mountain and Barbarian Village.</td><td class="member-no">No</td><td>Body talisman and Rune essence. This is the highest basic rune available to free-to-play players at the cutoff.</td></tr>
+    <tr><td>27</td><td><strong>Cosmic rune</strong> — 8 XP per essence; altar in southern Zanaris.</td><td class="member-yes">Yes</td><td>Cosmic talisman plus completion of <a href="../quests/lost-city.html">Lost City</a> for normal access to Zanaris. Build 254's Cosmic talisman first points toward the Lost City shack when used outside Zanaris.</td></tr>
+    <tr><td>35</td><td><strong>Chaos rune</strong> — 8.5 XP per essence; ruins in level-9 Wilderness, south-east of the Dark Warriors' Fortress.</td><td class="member-yes">Yes</td><td>Chaos talisman. The exterior route is in the Wilderness, so other players are a period-appropriate risk.</td></tr>
+    <tr><td>44</td><td><strong>Nature rune</strong> — 9 XP per essence; ruins on Karamja, north of Shilo Village.</td><td class="member-yes">Yes</td><td>Nature talisman and Rune essence.</td></tr>
+    <tr><td>54</td><td><strong>Law rune</strong> — 9.5 XP per essence; ruins on Entrana.</td><td class="member-yes">Yes</td><td>Law talisman from <a href="../quests/troll-stronghold.html">Troll Stronghold</a> in the target-period/build progression. Entrana's travel rules prevent bringing weapons or armour onto the island.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The source contains later multiple-rune and Death-rune level-up cases as comments only; they are not active target-period unlocks. Active milestones are transcribed from <code>levelup_unlocks_runecrafting.rs2</code>.</p></div>
+
+  <h3>Multiple-rune unlocks</h3>
+  <p>Multiple-rune crafting was already part of Runecraft by the September-2004 target. In build 254, each rune with a multiplier uses the player's current Runecraft level to determine how many finished runes are produced from each essence. The active data produces the same target-period thresholds shown below.</p>
+  <div class="callout"><p><strong>XP stays per essence.</strong> For example, crafting two Air runes from one essence at level 11 still awards the Air rune's normal <strong>5 Runecraft XP</strong> for that essence, not 10 XP.</p></div>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements / notes</th></tr></thead><tbody>
+    <tr><td>11</td><td>Produce <strong>2 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access.</td></tr>
+    <tr><td>14</td><td>Produce <strong>2 Mind runes</strong> per essence.</td><td class="member-no">No</td><td>Mind altar access.</td></tr>
+    <tr><td>19</td><td>Produce <strong>2 Water runes</strong> per essence.</td><td class="member-no">No</td><td>Water altar access.</td></tr>
+    <tr><td>22</td><td>Produce <strong>3 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access.</td></tr>
+    <tr><td>26</td><td>Produce <strong>2 Earth runes</strong> per essence.</td><td class="member-no">No</td><td>Earth altar access.</td></tr>
+    <tr><td>28</td><td>Produce <strong>3 Mind runes</strong> per essence.</td><td class="member-no">No</td><td>Mind altar access.</td></tr>
+    <tr><td>33</td><td>Produce <strong>4 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access.</td></tr>
+    <tr><td>35</td><td>Produce <strong>2 Fire runes</strong> per essence.</td><td class="member-no">No</td><td>Fire altar access.</td></tr>
+    <tr><td>38</td><td>Produce <strong>3 Water runes</strong> per essence.</td><td class="member-no">No</td><td>Water altar access.</td></tr>
+    <tr><td>42</td><td>Produce <strong>4 Mind runes</strong> per essence.</td><td class="member-no">No</td><td>Mind altar access.</td></tr>
+    <tr><td>44</td><td>Produce <strong>5 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access.</td></tr>
+    <tr><td>46</td><td>Produce <strong>2 Body runes</strong> per essence.</td><td class="member-no">No</td><td>Body altar access.</td></tr>
+    <tr><td>52</td><td>Produce <strong>3 Earth runes</strong> per essence.</td><td class="member-no">No</td><td>Earth altar access.</td></tr>
+    <tr><td>55</td><td>Produce <strong>6 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access.</td></tr>
+    <tr><td>56</td><td>Produce <strong>5 Mind runes</strong> per essence.</td><td class="member-no">No</td><td>Mind altar access.</td></tr>
+    <tr><td>57</td><td>Produce <strong>4 Water runes</strong> per essence.</td><td class="member-no">No</td><td>Water altar access.</td></tr>
+    <tr><td>59</td><td>Produce <strong>2 Cosmic runes</strong> per essence.</td><td class="member-yes">Yes</td><td>Cosmic altar access and <a href="../quests/lost-city.html">Lost City</a>.</td></tr>
+    <tr><td>66</td><td>Produce <strong>7 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access.</td></tr>
+    <tr><td>70</td><td>Produce <strong>6 Mind runes</strong> per essence.</td><td class="member-no">No</td><td>Mind altar access.</td></tr>
+    <tr><td>70</td><td>Produce <strong>3 Fire runes</strong> per essence.</td><td class="member-no">No</td><td>Fire altar access.</td></tr>
+    <tr><td>74</td><td>Produce <strong>2 Chaos runes</strong> per essence.</td><td class="member-yes">Yes</td><td>Chaos altar access.</td></tr>
+    <tr><td>76</td><td>Produce <strong>5 Water runes</strong> per essence.</td><td class="member-no">No</td><td>Water altar access.</td></tr>
+    <tr><td>77</td><td>Produce <strong>8 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access.</td></tr>
+    <tr><td>78</td><td>Produce <strong>4 Earth runes</strong> per essence.</td><td class="member-no">No</td><td>Earth altar access.</td></tr>
+    <tr><td>84</td><td>Produce <strong>7 Mind runes</strong> per essence.</td><td class="member-no">No</td><td>Mind altar access.</td></tr>
+    <tr><td>88</td><td>Produce <strong>9 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access.</td></tr>
+    <tr><td>91</td><td>Produce <strong>2 Nature runes</strong> per essence.</td><td class="member-yes">Yes</td><td>Nature altar access.</td></tr>
+    <tr><td>92</td><td>Produce <strong>3 Body runes</strong> per essence.</td><td class="member-no">No</td><td>Body altar access.</td></tr>
+    <tr><td>95</td><td>Produce <strong>6 Water runes</strong> per essence.</td><td class="member-no">No</td><td>Water altar access. Build 254 does <strong>not</strong> give multiple Law runes at this level.</td></tr>
+    <tr><td>98</td><td>Produce <strong>8 Mind runes</strong> per essence.</td><td class="member-no">No</td><td>Mind altar access.</td></tr>
+    <tr><td>99</td><td>Produce <strong>10 Air runes</strong> per essence.</td><td class="member-no">No</td><td>Air altar access; highest target-period multiple-rune threshold.</td></tr>
+  </tbody></table></div>
+
+  <h3>Obtaining and using Rune essence</h3>
+  <ul>
+    <li><strong>Complete Rune Mysteries first for the normal route.</strong> Sedridor in the Wizards' Tower basement and Aubury in south-east Varrock can then teleport you to the Rune Essence Mine.</li>
+    <li><strong>Bring a pickaxe.</strong> Build 254's Mining wrapper requires a pickaxe that your Mining level can use. The Rune Essence rock itself only requires level 1 Mining.</li>
+    <li><strong>Mine until your inventory is full.</strong> Each successful build-254 essence cycle adds one Rune essence and 5 Mining XP; unlike ordinary ore rocks, the source itself does not deplete.</li>
+    <li><strong>Use the mine portal to leave.</strong> Build 254 returns you to the wizard who sent you. If the stored return location is unavailable on a free-to-play world, the fallback is Sedridor.</li>
+    <li><strong>Do not import the later Pure essence rule.</strong> On 7 September 2004 there was only Rune essence, and that same item supplied members' Cosmic, Chaos, Nature and Law crafting.</li>
+  </ul>
+
+  <h3>Training at the cutoff</h3>
+  <p>Runecraft training is dominated by travel: essence must be mined or otherwise obtained, banked/carried, taken to the relevant ruins and bound. The table therefore records verified XP per essence and practical access conditions rather than inventing modern XP-per-hour rates.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Access</th><th>Runecraft XP</th><th>Requirements / practical notes</th></tr></thead><tbody>
+    <tr><td>1+</td><td><strong>Air runes</strong></td><td>Free-to-play + members</td><td>5 XP / essence in build</td><td>Air talisman; ruins south of Falador. Rune Mysteries supplies the first Air talisman and normal essence access.</td></tr>
+    <tr><td>2+</td><td><strong>Mind runes</strong></td><td>Free-to-play + members</td><td>5.5 XP / essence in build</td><td>Mind talisman; ruins by Ice Mountain/Goblin Village.</td></tr>
+    <tr><td>5+</td><td><strong>Water runes</strong></td><td>Free-to-play + members</td><td>6 XP / essence in build</td><td>Water talisman; Lumbridge Swamp.</td></tr>
+    <tr><td>9+</td><td><strong>Earth runes</strong></td><td>Free-to-play + members</td><td>6.5 XP / essence in build</td><td>Earth talisman; north-east of Varrock.</td></tr>
+    <tr><td>14+</td><td><strong>Fire runes</strong></td><td>Free-to-play + members</td><td>7 XP / essence in build</td><td>Fire talisman; north-east of Al Kharid.</td></tr>
+    <tr><td>20+</td><td><strong>Body runes</strong></td><td>Free-to-play + members</td><td>7.5 XP / essence in build</td><td>Body talisman; between Ice Mountain and Barbarian Village. Highest-XP F2P rune type per essence at this cutoff.</td></tr>
+    <tr><td>27+</td><td><strong>Cosmic runes</strong></td><td>Members</td><td>8 XP / essence in build</td><td>Cosmic talisman and <a href="../quests/lost-city.html">Lost City</a>; altar in Zanaris.</td></tr>
+    <tr><td>35+</td><td><strong>Chaos runes</strong></td><td>Members</td><td>8.5 XP / essence in build</td><td>Chaos talisman; exterior ruins are in the Wilderness.</td></tr>
+    <tr><td>44+</td><td><strong>Nature runes</strong></td><td>Members</td><td>9 XP / essence in build</td><td>Nature talisman; Karamja.</td></tr>
+    <tr><td>54+</td><td><strong>Law runes</strong></td><td>Members</td><td>9.5 XP / essence in build</td><td>Law talisman from <a href="../quests/troll-stronghold.html">Troll Stronghold</a>; Entrana access restrictions apply.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Higher XP per essence is not automatically faster training.</strong> Temple distance, banking, talisman access, Wilderness exposure and quest/location requirements all affect the practical rate. Multiple-rune thresholds improve output only; they do not improve XP per essence.</p></div>
+
+  <h3>Relevant quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Runecraft relevance at the cutoff</th></tr></thead><tbody>
+    <tr><td><a href="../quests/rune-mysteries.html">Rune Mysteries</a></td><td>Free-to-play</td><td>The practical skill prerequisite. Rewards an Air talisman and normal access to the Rune Essence Mine through Sedridor/Aubury. It awards <strong>no Runecraft XP</strong> in build 254.</td></tr>
+    <tr><td><a href="../quests/lost-city.html">Lost City</a></td><td>Members</td><td>Provides normal access to Zanaris, where the level-27 Cosmic Altar is located.</td></tr>
+    <tr><td><a href="../quests/troll-stronghold.html">Troll Stronghold</a></td><td>Members</td><td>Released with the Law Altar on 24 August 2004. Its target-period/build reward includes the <strong>Law talisman</strong>, making it the practical progression gate for level-54 Law crafting.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <div class="callout"><p><strong>Core implementation:</strong> <code>Content/scripts/skill_runecraft/configs/runecraft.dbrow</code> stores rune level, membership, XP, talisman and multiplier data; <code>runecraft.rs2</code> handles locating ruins, temple entry and crafting; <code>essence_mine.rs2</code> handles quest-gated mine travel; and the Mining table/scripts produce Rune essence.</p></div>
+  <ul>
+    <li><strong>Ten target-period runes:</strong> the in-game skill-guide inventory lists Air, Mind, Water, Earth, Fire, Body, Cosmic, Chaos, Nature and Law. These are the ten runes presented in this page.</li>
+    <li><strong>Rune Mysteries gate is indirect at altars:</strong> the shared essence-mine teleport routine and Genie-lamp Runecraft selection require Rune Mysteries completion, but <code>runecraft.rs2</code> itself does not test the quest flag when binding essence. If a character somehow owns Rune essence and a valid talisman beforehand, the altar script checks the Runecraft level/world rather than the quest.</li>
+    <li><strong>Multiple-rune crafting is active:</strong> the old local guide incorrectly treated the commented multiple-rune <em>level-up messages</em> as evidence that the mechanic was later or disabled. The actual Runecraft database contains active multipliers and the crafting script uses them.</li>
+    <li><strong>Law runes are a special cutoff edge:</strong> Law was added only two weeks before this wiki's target date. Build 254 has an active level-54 Law row, 9.5 XP per essence, an Entrana altar and a Law talisman supplied through Troll Stronghold. It has no active multiple-Law multiplier.</li>
+    <li><strong>Death content is present but post-cutoff:</strong> the current source tree contains a level-65 Death-rune database row and Death altar/talisman objects, but the target skill guide does not list Death, its level-up case is commented, and the authentic Death Altar arrived with Mourning's End Part II on 17 October 2005. Its presence in the checkout is not evidence that Death crafting belonged to September 2004.</li>
+    <li><strong>Cosmic multiple conflict:</strong> the preserved period LostHQ table prints a third Cosmic-rune threshold at level 92. Build 254 only has a multiplier of 59, which gives two Cosmic runes from level 59 and cannot reach three before 99; later preserved lineage agrees on the level-59 double-Cosmic threshold. The stray 92 is therefore treated as a period guide transcription error, not as an unlock.</li>
+  </ul>
+
+  <h3>Cutoff exclusions</h3>
+  <div class="callout warn"><p><strong>Several familiar Runecraft systems are later than 7 September 2004.</strong> They must not be used to plan a target-period training route.</p></div>
+  <ul>
+    <li><strong>Death runes / Death Altar:</strong> the craftable Death Altar arrived with Mourning's End Part II on <strong>17 October 2005</strong>, so level-65 Death crafting is outside the cutoff.</li>
+    <li><strong>The Abyss, essence pouches, runecrafting tiaras and combination runes:</strong> these systems belong to the <strong>13 June 2005</strong> Runecrafting update and are not target-period shortcuts, storage or altar-entry methods.</li>
+    <li><strong>Pure essence:</strong> the Rune/Pure essence split was introduced on <strong>20 April 2006</strong>. In September 2004 ordinary Rune essence crafts every rune available on this page.</li>
+    <li><strong>Runecrafting Guild, skillcape and later training activities:</strong> none existed at this cutoff and they are deliberately omitted.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Period skill evidence:</strong> the preserved LostHQ/RuneHQ <em>Runecraft Skill Guide</em> records Rune Mysteries as the practical prerequisite, the ten Air-through-Law altar levels/locations and the multiple-rune system, including the level-99 ten-Air-runes threshold.</li>
+    <li><strong>Period quest evidence:</strong> the preserved Rune Mysteries guide records free Rune Essence Mine teleport access from Aubury/Sedridor; the audited local <a href="../quests/rune-mysteries.html">Rune Mysteries</a>, <a href="../quests/lost-city.html">Lost City</a> and <a href="../quests/troll-stronghold.html">Troll Stronghold</a> guides keep quest dependencies consistent across the wiki.</li>
+    <li><strong>Build rune data:</strong> <code>Content/scripts/skill_runecraft/configs/runecraft.dbrow</code>, <code>runecraft.dbtable</code>, <code>runecraft.obj</code>, <code>runecraft.loc</code> and <code>Content/scripts/player/configs/skill_guide.inv</code>.</li>
+    <li><strong>Build mechanics:</strong> <code>Content/scripts/skill_runecraft/scripts/runecraft.rs2</code>, <code>essence_mine.rs2</code>, <code>Content/scripts/levelup/scripts/levelup_unlocks_runecrafting.rs2</code> and <code>Content/scripts/general/scripts/xplamp/xplamp.rs2</code>.</li>
+    <li><strong>Essence mining:</strong> <code>Content/scripts/skill_mining/configs/mine.dbrow</code>, <code>ores.obj</code>, <code>rocks.loc</code> and <code>Content/scripts/skill_mining/scripts/mining.rs2</code>.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="thieving.html">&larr; Thieving</a><a class="next" href="fletching.html">Fletching &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's Runecraft and essence-mining implementation. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Strength skill guide for 2004scape Progressive build 254, including level progression and membership requirements.">
+  <meta name="description" content="Historically audited Strength skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering melee max-hit mechanics, combat styles, boosts, quest requirements, quest XP, and cutoff-safe progression.">
   <title>Strength — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,17 +16,137 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Strength</p>
   <h1 class="pagetitle">Strength</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Strength</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Combat</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>None</dd></div></div>
-  <p class="lede">Strength controls melee damage. Unlike Attack and Defence, the build does not define equipment or activity unlock milestones for this skill: every level contributes directly to combat effectiveness.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. This skill has no discrete content-unlock levels, so the progression effect is listed instead.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>1–99</td><td>No discrete content unlock; higher Strength increases melee damage potential through the combat formulas.</td><td class="member-no">No</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Strength</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Combat</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Released</dt><dd>4 January 2001</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main purpose</dt><dd>Melee maximum damage</dd></div>
+    <div class="row"><dt>Hard cutoff requirement</dt><dd>50 Strength for Legends' Quest</dd></div>
+    <div class="row"><dt>Strength-gated weapons</dt><dd>None by 7 September 2004</dd></div>
+  </div>
+
+  <p class="lede">Strength is a free-to-play combat skill that primarily determines how much damage a player can deal with melee attacks. Raising Strength increases melee maximum-hit potential; it does <strong>not</strong> make attacks more likely to connect, which is the role of <a href="attack.html">Attack</a>. At the 7 September 2004 cutoff there are no weapons whose equip requirement is Strength: ordinary warhammers still use Attack, while the first Strength-gated weapon family, halberds, arrives with <em>Regicide</em> on 20 September 2004.</p>
+
+  <h3>Mechanics</h3>
+  <div class="callout"><p><strong>Direct Strength training:</strong> choose an <strong>aggressive</strong> melee style. In build 254, an ordinary aggressive hit awards <strong>4 Strength XP per point of credited damage</strong> and applies an invisible <strong>+3 Strength</strong> style modifier. A <strong>controlled</strong> style instead awards about <strong>1.33 Strength XP per point of damage</strong>, together with the same amount of Attack and Defence XP, and applies an invisible +1 modifier to all three melee skills.</p></div>
+  <ul>
+    <li><strong>Maximum hit:</strong> build 254 combines current Strength, active Strength prayer, the selected combat-style modifier and the equipment's melee strength bonus to calculate melee maximum damage.</li>
+    <li><strong>Accuracy is separate:</strong> Strength does not improve the chance that a melee attack lands. <a href="attack.html">Attack</a> level and the weapon's stab, slash or crush attack bonus are used for accuracy.</li>
+    <li><strong>Equipment strength bonus matters:</strong> two players with the same Strength level can have different maximum hits if their worn equipment provides different strength bonuses.</li>
+    <li><strong>Aggressive versus controlled:</strong> aggressive is the direct Strength style; controlled spreads the combat-skill XP among Attack, Strength and <a href="defence.html">Defence</a>.</li>
+    <li><strong>Hitpoints XP:</strong> ordinary damaging melee attacks also award <a href="hitpoints.html">Hitpoints</a> XP separately from the Strength XP assigned by the combat style.</li>
+    <li><strong>Temporary boosts:</strong> Strength potions, Super strength potions, certain drinks and Strength prayers can raise current/effective Strength. These boosts affect combat damage but do not turn a temporary boosted level into a permanent base-level quest completion requirement unless the activity itself explicitly permits boosts.</li>
+    <li><strong>Combat level:</strong> build 254 combines base Attack and base Strength in the melee component of the combat-level formula. Raising Strength can therefore raise combat level when melee is the dominant combat style.</li>
+  </ul>
+
+  <h3>Build-254 maximum-hit calculation</h3>
+  <p>The build makes the parts of the melee Strength calculation explicit. This is useful for understanding why a Strength level alone does not determine the displayed maximum hit.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Stage</th><th>Build-254 behaviour</th><th>Members</th><th>What affects it</th></tr></thead><tbody>
+    <tr><td>1</td><td>Start from the player's <strong>current Strength</strong>.</td><td class="member-no">No</td><td>Temporary boosts and drains can change current Strength without changing the base level.</td></tr>
+    <tr><td>2</td><td>Apply the active Strength-prayer percentage.</td><td class="member-no">No</td><td>Burst of Strength +5%, Superhuman Strength +10%, or Ultimate Strength +15%.</td></tr>
+    <tr><td>3</td><td>Add <strong>8</strong> plus the combat-style modifier.</td><td class="member-no">No</td><td>Aggressive adds +3 Strength; controlled adds +1; accurate/defensive add no Strength style bonus.</td></tr>
+    <tr><td>4</td><td>Multiply effective Strength by <strong>equipment strength bonus + 64</strong>.</td><td class="member-no">No</td><td>Weapon and worn-equipment melee strength bonuses.</td></tr>
+    <tr><td>5</td><td>Convert that melee-strength term into the attack's maximum hit.</td><td class="member-no">No</td><td>Build 254 uses its <code>combat_maxhit</code> integer calculation after the previous steps.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The build's <code>levelup_unlocks_strength</code> list is empty, so there are no special unlock-message levels to catalogue.</p></div>
+  <div class="callout"><p><strong>Practical consequence:</strong> a stronger weapon can improve damage even without a Strength-level requirement because its equipment strength bonus feeds the same maximum-hit calculation. This is why Strength progression in September 2004 is mostly continuous rather than a ladder of equipment unlocks.</p></div>
+
+  <h3>Level progression at the 7 September 2004 cutoff</h3>
+  <div class="callout warn"><p><strong>Cutoff warning:</strong> do not import the modern Strength level-up table. On the target date, <strong>warhammers still require Attack</strong>. Halberds, which introduce Strength requirements on the stronger tiers, are released with <em>Regicide</em> on <strong>20 September 2004</strong>, thirteen days after this snapshot.</p></div>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock / progression effect</th><th>Members</th><th>Other requirements</th></tr></thead><tbody>
+    <tr><td>1&ndash;49</td><td>Each Strength level increases melee damage potential through the combat formula; there is no discrete Strength-gated weapon tier at the cutoff.</td><td class="member-no">No</td><td>Actual maximum hit also depends on combat style, boosts/prayers and equipment strength bonus.</td></tr>
+    <tr><td>50</td><td>Meets the Strength requirement for <a href="../quests/legends-quest.html">Legends' Quest</a>.</td><td class="member-yes">Yes</td><td>The quest also requires 107 Quest Points, numerous prerequisite quests, and several other level-50-or-higher skills; see the quest guide for the full requirement set.</td></tr>
+    <tr><td>50&ndash;99</td><td>Continued increases to melee damage potential; no additional discrete Strength-gated weapon or guild unlock is present by 7 September 2004.</td><td class="member-no">No</td><td>Level 50 remains relevant to Legends' Quest; later Strength-gated equipment is outside the cutoff.</td></tr>
+  </tbody></table></div>
+
+  <h3>Warhammers and the September-2004 boundary</h3>
+  <p>Warhammers are easy to misclassify because modern Old School RuneScape uses Strength requirements for them. That is a much later rule. In the target-era build, bronze and iron through rune warhammers are ordinary Attack-gated melee weapons, matching the metal Attack tiers.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Weapon tier</th><th>Target-date equip requirement</th><th>Members</th><th>Strength relevance</th></tr></thead><tbody>
+    <tr><td>Bronze / Iron</td><td>1 Attack</td><td class="member-no">No</td><td>No Strength requirement.</td></tr>
+    <tr><td>Steel</td><td>5 Attack</td><td class="member-no">No</td><td>No Strength requirement.</td></tr>
+    <tr><td>Black</td><td>10 Attack</td><td class="member-no">No</td><td>No Strength requirement.</td></tr>
+    <tr><td>Mithril</td><td>20 Attack</td><td class="member-no">No</td><td>No Strength requirement.</td></tr>
+    <tr><td>Adamant</td><td>30 Attack</td><td class="member-no">No</td><td>No Strength requirement.</td></tr>
+    <tr><td>Rune</td><td>40 Attack</td><td class="member-no">No</td><td>No Strength requirement.</td></tr>
+  </tbody></table></div>
+  <p>Old School RuneScape did not change ordinary warhammers from Attack requirements to Strength requirements until 21 April 2021. That modern change must not be projected backward into a September-2004 guide.</p>
+
+  <h3>Training methods</h3>
+  <p class="lede">Strength is primarily trained through melee combat. The key decision is the combat style: use aggressive when Strength itself is the priority, or controlled when you deliberately want balanced melee progression.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Verified XP</th><th>Requirements and practical notes</th></tr></thead><tbody>
+    <tr><td>1</td><td><strong>Aggressive melee combat</strong></td><td>4 Strength XP per point of credited damage</td><td>Available in free-to-play. Select an aggressive style on a melee weapon and fight targets you can damage consistently and survive against.</td></tr>
+    <tr><td>1</td><td><strong>Controlled melee combat</strong></td><td>About 1.33 Strength XP per damage, plus the same Attack and Defence XP</td><td>Use a weapon with a controlled style. Useful for balanced melee progression, but Strength rises more slowly than with aggressive.</td></tr>
+    <tr><td>Quest-dependent</td><td><strong>Quest reward XP</strong></td><td>875&ndash;30,600 Strength XP in the verified rewards below</td><td>One-time or choice-based rewards. Each quest has its own membership, combat, skill, item and prerequisite requirements.</td></tr>
+  </tbody></table></div>
+  <div class="callout warn"><p><strong>Special build exception:</strong> the Black Knight Titan in <a href="../quests/holy-grail.html">Holy Grail</a> uses a special build-254 combat-XP branch. Against that NPC, the normal 4-XP-per-damage melee-style rate is replaced by 1 XP per damage in the relevant melee skill, while controlled awards 1 XP per damage to each of Attack, Strength and Defence. Do not use that boss as a normal Strength-training benchmark.</p></div>
+
+  <h3>Verified Strength XP quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Strength relevance</th></tr></thead><tbody>
+    <tr><td><a href="../quests/dragon-slayer.html">Dragon Slayer</a></td><td>Free-to-play</td><td><strong>18,650 Strength XP.</strong> Also awards the same amount of Defence XP.</td></tr>
+    <tr><td><a href="../quests/scorpion-catcher.html">Scorpion Catcher</a></td><td>Members</td><td><strong>6,625 Strength XP</strong>, plus Thormac's post-quest battlestaff-to-mystic-staff service.</td></tr>
+    <tr><td><a href="../quests/waterfall-quest.html">Waterfall Quest</a></td><td>Members</td><td><strong>13,750 Strength XP</strong> and 13,750 Attack XP.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Members</td><td><strong>3,075 Strength XP</strong> as part of its broad skill reward.</td></tr>
+    <tr><td><a href="../quests/observatory-quest.html">Observatory Quest</a></td><td>Members</td><td><strong>875 Strength XP</strong> only if the random constellation reward is Capricorn; this reward is not guaranteed.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>Members</td><td>Strength is one of the <strong>7,650-XP training choices</strong>. Build 254 allows all four selections to be assigned to Strength for up to <strong>30,600 Strength XP</strong>.</td></tr>
+  </tbody></table></div>
+
+  <h3>Strength requirements and quest progression</h3>
+  <ul>
+    <li><a href="../quests/legends-quest.html"><strong>Legends' Quest</strong></a> is the important hard Strength gate at the cutoff: it requires <strong>50 Strength</strong> as part of a much larger prerequisite set. The quest later uses that Strength requirement when forcing the heavy metal doors.</li>
+    <li><a href="../quests/dragon-slayer.html"><strong>Dragon Slayer</strong></a> is the largest fixed free-to-play Strength XP reward in the audited cutoff quest set, awarding 18,650 XP.</li>
+    <li><a href="../quests/waterfall-quest.html"><strong>Waterfall Quest</strong></a> supplies a large early members reward of 13,750 Strength XP alongside the same Attack XP.</li>
+    <li><a href="../quests/scorpion-catcher.html"><strong>Scorpion Catcher</strong></a> awards 6,625 Strength XP and has no Strength requirement of its own.</li>
+    <li><a href="../quests/heroes-quest.html"><strong>Heroes' Quest</strong></a> awards 3,075 Strength XP among its many skill rewards.</li>
+    <li><a href="../quests/observatory-quest.html"><strong>Observatory Quest</strong></a> can randomly award 875 Strength XP for Capricorn.</li>
+  </ul>
+
+  <h3>Boosts and drains</h3>
+  <p>Strength can be temporarily moved above or below the base level. Because build 254 uses the <em>current</em> Strength value when calculating melee maximum hit, these changes affect combat immediately.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Effect</th><th>Build-254 Strength change</th><th>Members</th><th>Notes</th></tr></thead><tbody>
+    <tr><td><strong>Burst of Strength</strong></td><td>+5% effective Strength</td><td class="member-no">No</td><td>Level 4 <a href="prayer.html">Prayer</a>.</td></tr>
+    <tr><td><strong>Superhuman Strength</strong></td><td>+10% effective Strength</td><td class="member-no">No</td><td>Level 13 Prayer.</td></tr>
+    <tr><td><strong>Ultimate Strength</strong></td><td>+15% effective Strength</td><td class="member-no">No</td><td>Level 31 Prayer.</td></tr>
+    <tr><td><strong>Strength potion</strong></td><td>Base increase encoded as +3 plus 10% of the stat</td><td class="member-no">No</td><td>Free-to-play players can obtain a four-dose potion from the Varrock Apothecary for 5 coins, a limpwurt root and red spiders' eggs; members can also make the three-dose potion at level 12 <a href="herblore.html">Herblore</a>.</td></tr>
+    <tr><td><strong>Super strength potion</strong></td><td>Base increase encoded as +5 plus 15% of the stat</td><td class="member-yes">Yes</td><td>Made at level 55 Herblore.</td></tr>
+    <tr><td><strong>Alcohol / special consumables</strong></td><td>Varies</td><td>Varies</td><td>Build 254 includes both Strength-raising and Strength-draining drinks. Their Attack/Defence side effects mean they are not interchangeable with potions.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <ul>
+    <li><strong>Empty level-up list:</strong> <code>levelup_unlocks_strength</code> contains no level values at ref 254. The source even carries a comment pointing toward September-2004 warhammers, but the actual ref-254 equip scripts still gate rune and lower warhammers by Attack, not Strength.</li>
+    <li><strong>Maximum-hit inputs:</strong> <code>player_combat_stat.rs2</code> uses current Strength, Strength prayer, +8, the combat-style modifier and the worn equipment strength bonus before calculating <code>%com_maxhit</code>.</li>
+    <li><strong>Style bonuses:</strong> aggressive contributes +3 effective Strength; controlled contributes +1 Strength, +1 Attack and +1 Defence.</li>
+    <li><strong>Combat XP:</strong> ordinary aggressive melee awards 4 Strength XP per credited damage; controlled awards about 1.33 Strength XP per damage alongside Attack and Defence; ordinary damage also awards 1.33 Hitpoints XP.</li>
+    <li><strong>Combat level:</strong> the build's melee component uses base Attack + base Strength. Ranged or Magic can dominate the final offensive component instead, so not every Strength level necessarily changes the visible combat level.</li>
+    <li><strong>Black Knight Titan exception:</strong> build 254 gives the Titan its own reduced combat-XP branch rather than using the normal melee XP rate.</li>
+  </ul>
+
+  <h3>Cutoff exclusions</h3>
+  <ul>
+    <li><strong>Halberds:</strong> excluded. They arrive with <em>Regicide</em> on 20 September 2004, after the 7 September snapshot, and are the first weapon family to introduce Strength equip requirements.</li>
+    <li><strong>Granite maul:</strong> excluded. It arrives with Slayer in January 2005 and therefore cannot be a September-2004 Strength unlock.</li>
+    <li><strong>Barrows Strength-gated weapons:</strong> excluded. Barrows is May 2005 content.</li>
+    <li><strong>Warriors' Guild and defenders:</strong> excluded. The Burthorpe Warriors' Guild is June 2006 content, not a target-date Strength guild.</li>
+    <li><strong>Modern warhammer Strength requirements:</strong> excluded. Old School RuneScape changed standard warhammers from Attack to Strength requirements in April 2021.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Historical identity:</strong> Strength is one of RuneScape's original combat skills from 4 January 2001 and is available to free-to-play players.</li>
+    <li><strong>Cutoff equipment boundary:</strong> preserved Strength/halberd histories place the first Strength-gated weapon family with <em>Regicide</em> on 20 September 2004. That is thirteen days after the target date, so target-period warhammers remain Attack-gated and halberds are excluded.</li>
+    <li><strong>Modern-warhammer boundary:</strong> preserved Old School RuneScape item change histories record the switch from Attack to Strength requirements for ordinary warhammers on 21 April 2021.</li>
+    <li><strong>Build-254 combat mechanics:</strong> <code>scripts/skill_combat/scripts/combat.rs2</code> and <code>scripts/skill_combat/scripts/player/player_combat_stat.rs2</code> at ref <code>254</code> establish the aggressive/controlled XP allocation, style modifiers, prayer-adjusted Strength, equipment-strength contribution and max-hit calculation.</li>
+    <li><strong>Build-254 level-up/equipment checks:</strong> <code>scripts/levelup/configs/levelup_unlocks.enum</code> has no Strength values, while the ref-254 tier equip scripts continue to call Attack requirements for warhammers.</li>
+    <li><strong>Build-254 boosts:</strong> <code>scripts/player/configs/consumption/consume_effects.dbrow</code> defines Strength and Super strength potion stat changes; the audited <a href="prayer.html">Prayer</a> and <a href="herblore.html">Herblore</a> guides provide the cutoff-safe prayer and potion unlock levels.</li>
+    <li><strong>Local quest cross-checks:</strong> the already-audited Dragon Slayer, Scorpion Catcher, Waterfall Quest, Heroes' Quest, Observatory Quest and Legends' Quest pages provide the exact Strength XP rewards and the 50-Strength Legends' Quest gate used above.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="defence.html">&larr; Defence</a><a class="next" href="hitpoints.html">Hitpoints &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's exact build-254 combat, level-up, equipment, quest and consumable behaviour. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

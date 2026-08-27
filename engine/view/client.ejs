@@ -256,7 +256,6 @@
         }
     </script>
 </head>
-
 <body>
     <center>
         <div id="game">
@@ -304,7 +303,8 @@
             clans: <%= typeof clansEnabled !== 'undefined' && clansEnabled ? 'true' : 'false' %>,
             middleMouseRotation: <%= typeof middleMouseRotationEnabled !== 'undefined' && middleMouseRotationEnabled ? 'true' : 'false' %>,
             compassReset: <%= typeof compassResetEnabled !== 'undefined' && compassResetEnabled ? 'true' : 'false' %>,
-            antiMacroRotation: <%= typeof antiMacroRotationEnabled === 'undefined' || !antiMacroRotationEnabled ? 'true' : 'false' %>
+            antiMacroRotation: <%= typeof antiMacroRotationEnabled === 'undefined' || !antiMacroRotationEnabled ? 'true' : 'false' %>,
+            scrollwheelZoom: <%= typeof scrollwheelZoomEnabled !== 'undefined' && scrollwheelZoomEnabled ? 'true' : 'false' %>
         };
 
         const canvas = document.getElementById('canvas');
@@ -323,7 +323,7 @@
     </script>
 
     <script type="module">
-        import { Client } from './client/client.js?v=public-clan-filter-11';
+        import { Client } from './client/client.js?v=scrollwheel-zoom-1';
 
         function resetCompassAndCamera(client) {
             client.tw = 0;

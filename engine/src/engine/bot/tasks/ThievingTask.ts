@@ -1,23 +1,36 @@
 /**
- * ThievingTask.ts — Pickpocket NPCs (Man/Woman), bank loot, handle stun/damage.
+ * ThievingTask.ts — Pickpocket NPCs (Man/Woman/warrior/guard/knight/paladin/hero)
+ * and steal from market stalls (baker/silk/fur/silver/spice/gem), bank loot,
+ * handle stun/damage/retaliation.
  *
- * NPCs: Man/Woman in Lumbridge and Varrock
- * Failure: NPC attacks player, player takes damage (stun)
- * Stop condition: HP too low → switch to other task or heal
+ * Two step actions, both driven by SkillProgression.THIEVING in BotKnowledge.ts:
+ *   'thieve'       — pickpocket an NPC. op3 on the NPC (extra.npcName/npcType).
+ *   'thieve_stall' — steal from a market stall. op2 on the stall LOC
+ *                    (extra.locName — see content/scripts/skill_thieving/
+ *                    configs/stalls/stealing.dbrow for the real debugnames).
+ *
+ * Failure: NPC/stall owner or a nearby guard retaliates, player takes damage.
+ * Stop condition: HP too low → switch to other task or heal.
  */
 
 import {
     BotTask,
     Player,
     Npc,
+    Loc,
     InvType,
     walkTo,
     interactNpcOp,
+    interactLocOp,
     findNpcByName,
     findNpcByPrefix,
+    findLocByName,
+    findLocByPrefix,
     hasItem,
     countItem,
     isNear,
+    isAdjacentToLoc,
+    isInventoryFull,
     getBaseLevel,
     PlayerStat,
     Items,
@@ -28,7 +41,8 @@ import {
     INTERACT_TIMEOUT,
     StuckDetector,
     ProgressWatchdog,
-    advanceBankWalk
+    advanceBankWalk,
+    hasStrayItems
 } from '#/engine/bot/tasks/BotTaskBase.js';
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
 import { getNpcCombatLevel, findAggressorNpc, interactHeldOp } from '#/engine/bot/BotAction.js';
@@ -55,7 +69,13 @@ export class ThievingTask extends BotTask {
     private interactTicks = 0;
     private stunTicks = 0;
     private currentNpc: Npc | null = null;
+    private currentLoc: Loc | null = null;
     private done = false;
+
+    /** True for 'thieve_stall' steps — interact with a stall LOC (op2) instead of an NPC (op3). */
+    private get isStall(): boolean {
+        return this.step.action === 'thieve_stall';
+    }
 
     private readonly stuck = new StuckDetector(30, 4, 2);
     private readonly watchdog = new ProgressWatchdog();
@@ -129,6 +149,29 @@ export class ThievingTask extends BotTask {
             return;
         }
 
+        // ── Inventory full: bank the stolen loot before continuing ──────────
+        // Stealing from a stall with a full inventory just silently fails
+        // server-side (inv_freespace(inv) = 0 check in stealing.rs2) — without
+        // this, a bot would keep retrying every cooldown forever, gaining no
+        // XP and never banking anything it already stole.
+        if (this.state !== 'flee' && this.state !== 'bank_walk' && this.state !== 'bank_done' && this.state !== 'eat') {
+            if (isInventoryFull(player)) {
+                this.debug(player, 'inventory full; banking loot');
+                this.state = 'bank_walk';
+                this.currentNpc = null;
+                this.currentLoc = null;
+                return;
+            }
+        }
+
+        // Carrying leftovers from a previous task — bank them before heading
+        // out so the trip starts with a clean slate.
+        if (this.state === 'walk' && hasStrayItems(player, [])) {
+            this.debug(player, 'stray items from a previous task; banking first');
+            this.state = 'bank_walk';
+            return;
+        }
+
         // ── Soft HP check: stop pickpocketing and bank/heal if HP is low ────
         if (this.state !== 'flee' && this.state !== 'bank_walk' && this.state !== 'bank_done' && this.state !== 'eat') {
             const hp = player.stats[PlayerStat.HITPOINTS];
@@ -136,6 +179,7 @@ export class ThievingTask extends BotTask {
                 this.debug(player, `HP low (${hp}); banking to recover`);
                 this.state = 'bank_walk';
                 this.currentNpc = null;
+                this.currentLoc = null;
                 return;
             }
         }
@@ -199,8 +243,25 @@ export class ThievingTask extends BotTask {
             return;
         }
 
-        // ── Approach and find NPC ────────────────────────────────────────
+        // ── Approach and find NPC/stall ───────────────────────────────────
         if (this.state === 'approach') {
+            if (this.isStall) {
+                const stall = this._findStall(player);
+                if (!stall) {
+                    this.debug(player, `no stall found`);
+                    this._stuckWalk(player, this.step.location[0], this.step.location[1]);
+                    return;
+                }
+                this.currentLoc = stall;
+                if (!isAdjacentToLoc(player, stall)) {
+                    walkTo(player, stall.x, stall.z);
+                    return;
+                }
+                this.state = 'pickpocket';
+                this.interactTicks = 0;
+                return;
+            }
+
             const npc = this._findNpc(player);
             if (!npc) {
                 this.debug(player, `no npc found`);
@@ -217,17 +278,22 @@ export class ThievingTask extends BotTask {
             return;
         }
 
-        // ── Pickpocket loop ──────────────────────────────────────────
+        // ── Pickpocket / steal-from-stall loop ────────────────────────────
         if (this.state === 'pickpocket') {
-            // If no NPC, find one
-            if (!this.currentNpc) {
+            // If no target, go find one
+            if (this.isStall ? !this.currentLoc : !this.currentNpc) {
                 this.state = 'approach';
                 return;
             }
 
-            // If not close enough, walk to NPC
-            if (!isNear(player, this.currentNpc.x, this.currentNpc.z, 3)) {
-                walkTo(player, this.currentNpc.x, this.currentNpc.z);
+            // If not close enough, walk back to the target
+            if (this.isStall) {
+                if (!isAdjacentToLoc(player, this.currentLoc!)) {
+                    walkTo(player, this.currentLoc!.x, this.currentLoc!.z);
+                    return;
+                }
+            } else if (!isNear(player, this.currentNpc!.x, this.currentNpc!.z, 3)) {
+                walkTo(player, this.currentNpc!.x, this.currentNpc!.z);
                 return;
             }
 
@@ -265,14 +331,18 @@ export class ThievingTask extends BotTask {
             this.lastHp = player.stats[PlayerStat.HITPOINTS];
 
             this.interactTicks++;
-            interactNpcOp(player, this.currentNpc, 3); // op 3 = pickpocket
+            if (this.isStall) {
+                interactLocOp(player, this.currentLoc!, 2); // op 2 = steal-from-stall
+            } else {
+                interactNpcOp(player, this.currentNpc!, 3); // op 3 = pickpocket
+            }
 
             // Save XP before cooldown - we'll check this after cooldown
             this.lastXp = player.stats[PlayerStat.THIEVING];
 
             this.watchdog.notifyActivity();
             this.cooldown = randInt(THIEVE_COOLDOWN_MIN, THIEVE_COOLDOWN_MAX);
-            this.debug(player, `pickpocket sent`);
+            this.debug(player, this.isStall ? `steal-from-stall sent` : `pickpocket sent`);
 
             return;
         }
@@ -320,6 +390,7 @@ export class ThievingTask extends BotTask {
         this.interactTicks = 0;
         this.stunTicks = 0;
         this.currentNpc = null;
+        this.currentLoc = null;
         this.done = false;
         this.stuck.reset();
         this.watchdog.reset();
@@ -329,7 +400,7 @@ export class ThievingTask extends BotTask {
 
     private _findNpc(player: Player): Npc | null {
         // Try to find the npc based on step's extra data
-        const npcName = (this.step.extra?.npcName as string) ?? 'man';
+        const npcName = (this.step.extra?.npcName as string) ?? (this.step.extra?.npcType as string) ?? 'man';
 
         // First try exact name
         let npc = findNpcByName(player.x, player.z, player.level, npcName, 15);
@@ -338,6 +409,19 @@ export class ThievingTask extends BotTask {
         // Try prefix (e.g., "man" as prefix for "man", "farmer", etc.)
         npc = findNpcByPrefix(player.x, player.z, player.level, npcName, 15);
         return npc;
+    }
+
+    private _findStall(player: Player): Loc | null {
+        const locName = this.step.extra?.locName as string | undefined;
+        if (!locName) return null;
+
+        // Exact debugname first (e.g. 'bakers_stall_stealing', 'tea_stall').
+        let stall = findLocByName(player.x, player.z, player.level, locName, 15);
+        if (stall) return stall;
+
+        // Prefix fallback in case the debugname carries a numeric/variant suffix.
+        stall = findLocByPrefix(player.x, player.z, player.level, locName, 15);
+        return stall;
     }
 
     private _shouldHeal(player: Player): boolean {
