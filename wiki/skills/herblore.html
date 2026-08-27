@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Herblore skill guide for 2004scape Progressive build 254, including herb and potion unlocks and membership requirements.">
+  <meta name="description" content="Historically audited Herblore skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering herb identification, potion recipes, XP, quest recipes, decanting, training and implementation differences.">
   <title>Herblore — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,45 +16,203 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Herblore</p>
   <h1 class="pagetitle">Herblore</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Herblore</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Artisan</dd></div><div class="row"><dt>Access</dt><dd>Members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 78</dd></div></div>
-  <p class="lede">Herblore identifies herbs and combines cleaned herbs with secondary ingredients to make potions. The build implements the identify, grind, brew, and decant pipeline.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Herblore itself is members-only in this build, so every unlock below is marked Yes.<span class="requirement-note"><a href="../quests/druidic-ritual.html">Druidic Ritual</a> must be completed before the Herblore skill can be used.</span></p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>3</td><td>Make Attack potions; identify Guam leaf, Snake weed, and Rogue's purse.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>5</td><td>Make Antipoison potions; identify Marrentill.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>11</td><td>Identify Tarromin.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>12</td><td>Make Strength potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>20</td><td>Identify Harralander.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>22</td><td>Make Stat restore potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>25</td><td>Identify Ranarr weed.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>26</td><td>Make Energy potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>30</td><td>Make Defence potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>34</td><td>Make Agility potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>38</td><td>Make Prayer restore potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>40</td><td>Identify Irit leaf.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>45</td><td>Make Super attack potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>48</td><td>Make Super antipoison potions; identify Avantoe.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>50</td><td>Make Fishing potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>52</td><td>Make Super energy potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>54</td><td>Identify Kwuarm.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>55</td><td>Make Super strength potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>60</td><td>Make Weapon poison.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>63</td><td>Make Super restore potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>65</td><td>Identify Cadantine.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>66</td><td>Make Super defence potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>67</td><td>Identify Lantadyme.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>69</td><td>Make Anti-firebreath potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>70</td><td>Identify Dwarf weed.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>72</td><td>Make Ranging potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>75</td><td>Identify Torstol.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>76</td><td>Make Magic potions.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>78</td><td>Make Zamorak potions.</td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Herblore</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Artisan</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members only</dd></div>
+    <div class="row"><dt>Released</dt><dd>27 February 2002</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Historical entry</dt><dd><a href="../quests/druidic-ritual.html">Druidic Ritual</a></dd></div>
+    <div class="row"><dt>Main tools</dt><dd>Vials of water; pestle and mortar</dd></div>
+    <div class="row"><dt>Highest core potion</dt><dd>Level 78 — Zamorak potion</dd></div>
+    <div class="row"><dt>Newest cutoff potion</dt><dd>Level 76 — Magic potion</dd></div>
+  </div>
+
+  <p class="lede">Herblore is the members-only skill used to identify herbs and combine them with vials of water and secondary ingredients to make potions. This guide targets RuneScape as it stood on <strong>7 September 2004</strong>: it keeps the contemporary unidentified-herb system and period potion names, includes the July and September 2004 additions that had already arrived, and separates the reconstructed build-254 mechanics wherever they disagree with surviving period material.</p>
+
+  <h3>Starting Herblore</h3>
+  <div class="callout"><p><strong>Historical route:</strong> contemporary RuneScape 2 material presents <a href="../quests/druidic-ritual.html">Druidic Ritual</a> as the way to begin Herblore. The quest awards <strong>250 Herblore XP</strong>, taking a fresh level-1 skill to level 3, and Kaqemeex explains herbs, vials, secondary ingredients and the pestle and mortar.</p></div>
+  <div class="callout warn"><p><strong>2004scape build-254 difference:</strong> the generic herb-identifying and potion-brewing routines do <em>not</em> check Druidic Ritual completion. They check membership and the player's current Herblore level. The build source even notes this missing quest gate when explaining why sub-level-3 Herblore accounts can exist. Treat Druidic Ritual as the historical access route, not as a universal mechanical gate in build 254.</p></div>
+
+  <h3>How Herblore works</h3>
+  <ul>
+    <li><strong>Identify herbs:</strong> herbs normally arrive as unidentified herbs in the 2004 system. Use the inventory <em>Identify</em> action once your Herblore level meets the herb's threshold. The later "grimy" and "clean" terminology did not replace this system until years after this cutoff.</li>
+    <li><strong>Make an unfinished potion:</strong> use an identified herb with a vial of water. Build 254 checks the potion's Herblore level here and does not award XP for this first mixing step.</li>
+    <li><strong>Add the secondary ingredient:</strong> use the required secondary ingredient on the unfinished potion. This produces the finished three-dose potion and awards the recipe's Herblore XP.</li>
+    <li><strong>Grind ingredients when needed:</strong> a pestle and mortar turns Unicorn horns into Unicorn horn dust and Blue dragon scales into Dragon scale dust in build 254. Period guides describe the same preparation for antipoison and dragon-related recipes.</li>
+    <li><strong>Decant partial potions:</strong> build 254 lets two partial potions of the same type be combined. The result is filled up to four doses, with any excess left as a remainder potion. A four-dose potion itself cannot be used as an input to the build's decant routine.</li>
+  </ul>
+
+  <h3>Core potion recipes at the cutoff</h3>
+  <p>The April-2004 RuneScape 2 Herblore FAQ is used as the dated baseline for the older recipes. Recipes added later in the summer are checked against their dated updates and build 254. Where the period FAQ and build disagree, both values are shown instead of silently treating reconstruction data as historical fact.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Potion</th><th>Herb</th><th>Secondary ingredient</th><th>XP / audit note</th></tr></thead><tbody>
+    <tr><td>3</td><td>Attack potion</td><td>Guam leaf</td><td>Eye of newt</td><td>25 XP in the April-2004 guide and build 254.</td></tr>
+    <tr><td>5</td><td>Antipoison</td><td>Marrentill</td><td>Unicorn horn dust</td><td>37.5 XP. The April guide calls it a <em>Cure Poison Potion</em>; the build item is <em>Antipoison</em>.</td></tr>
+    <tr><td>12</td><td>Strength potion</td><td>Tarromin</td><td>Limpwurt root</td><td>50 XP in both sources.</td></tr>
+    <tr><td>22</td><td>Stat restore potion</td><td>Harralander</td><td>Red spiders' eggs</td><td>62.5 XP in both sources.</td></tr>
+    <tr><td>26</td><td>Energy potion</td><td>Harralander</td><td>Chocolate dust</td><td>Added 1 September 2004; build 254 awards 67.5 XP.</td></tr>
+    <tr><td>30</td><td>Defence potion</td><td>Ranarr weed</td><td>White berries</td><td>75 XP in both sources.</td></tr>
+    <tr><td>34</td><td>Agility potion</td><td>Toadflax</td><td>Toad's legs</td><td>Added 27 July 2004; build 254 awards 80 XP.</td></tr>
+    <tr><td>38</td><td>Prayer restore potion</td><td>Ranarr weed</td><td>Snape grass</td><td>87.5 XP in both sources.</td></tr>
+    <tr><td>45</td><td>Super attack potion</td><td>Irit leaf</td><td>Eye of newt</td><td>100 XP in both sources.</td></tr>
+    <tr><td>48</td><td>Super antipoison</td><td>Irit leaf</td><td>Unicorn horn dust</td><td><strong>105 XP</strong> in the April-2004 guide; <strong>106.3 XP</strong> in build 254.</td></tr>
+    <tr><td>50</td><td>Fishing potion</td><td>Avantoe</td><td>Snape grass</td><td>112.5 XP in both sources.</td></tr>
+    <tr><td>52</td><td>Super energy potion</td><td>Avantoe</td><td>Mort Myre fungi</td><td>Added 1 September 2004; build 254 awards 117.5 XP. <a href="../quests/nature-spirit.html">Nature Spirit</a> is needed to obtain the fungi.</td></tr>
+    <tr><td>55</td><td>Super strength potion</td><td>Kwuarm</td><td>Limpwurt root</td><td>125 XP in both sources.</td></tr>
+    <tr><td>60</td><td>Weapon poison</td><td>Kwuarm</td><td>Dragon scale dust</td><td><strong>137.5 XP</strong> in the April-2004 guide; <strong>127.5 XP</strong> at build ref 254.</td></tr>
+    <tr><td>63</td><td>Super restore potion</td><td>Snapdragon</td><td>Red spiders' eggs</td><td>Added 27 July 2004; build 254 awards 142.5 XP.</td></tr>
+    <tr><td>66</td><td>Super defence potion</td><td>Cadantine</td><td>White berries</td><td>150 XP in both sources.</td></tr>
+    <tr><td>68 / 69</td><td>Anti-firebreath potion</td><td>Lantadyme</td><td>Dragon scale dust</td><td>The April-2004 guide lists <strong>68</strong>; build 254 requires <strong>69</strong> and awards 157.5 XP.</td></tr>
+    <tr><td>72</td><td>Ranging potion</td><td>Dwarf weed</td><td>Wine of Zamorak</td><td>Level 72 in both sources; build 254 awards 162.5 XP.</td></tr>
+    <tr><td>76</td><td>Magic potion</td><td>Lantadyme</td><td>Potato cactus</td><td>Released on the <strong>7 September 2004 cutoff date</strong>; 172.5 XP in build 254.</td></tr>
+    <tr><td>78</td><td>Zamorak potion</td><td>Torstol</td><td>Jangerberries</td><td>Level 78 in both sources; build 254 awards 175 XP.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>Druidic Ritual unlocks the skill. Level milestones are transcribed from <code>levelup_unlocks_herblore.rs2</code>.</p></div>
+
+  <div class="callout"><p><strong>Period name:</strong> this guide uses <strong>Zamorak potion</strong> for the level-78 recipe. The item was not renamed to <em>Zamorak brew</em> until after this wiki's cutoff. Build 254's level-up popup nevertheless says "Zamorak Brews", so that wording is treated as a reconstruction/UI anachronism rather than the September-2004 public name.</p></div>
+
+  <h3>Identifying ordinary herbs</h3>
+  <p>The 24 April 2004 FAQ provides a useful dated RuneScape 2 identification table. Build 254 contains several small XP differences and two visible level disagreements. Toadflax and Snapdragon were added later, on 27 July, so they are shown from build 254 rather than retrofitted into the April table.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Herb</th><th>April-2004 level / XP</th><th>Build-254 level / XP</th><th>Audit note</th></tr></thead><tbody>
+    <tr><td>Guam leaf</td><td>3 / 2.5</td><td>No explicit item level / 2.5</td><td>The level-up popup places Guam identification at 3, but the generic build check reads the absent item parameter as its default, enabling the build's below-level-3 edge case.</td></tr>
+    <tr><td>Marrentill</td><td>5 / 3.75</td><td>5 / 3.8</td><td>Small reconstruction rounding difference.</td></tr>
+    <tr><td>Tarromin</td><td><strong>10</strong> / 5</td><td><strong>11</strong> / 5</td><td>Level conflict retained. Build 254's level-up popup also says 11.</td></tr>
+    <tr><td>Harralander</td><td>20 / 6</td><td>20 / 6.3</td><td>XP differs.</td></tr>
+    <tr><td>Ranarr weed</td><td>25 / 8</td><td>25 / 7.5</td><td>XP differs.</td></tr>
+    <tr><td>Toadflax</td><td>Not yet in April table</td><td>30 / 8</td><td>Added 27 July 2004; omitted from build 254's level-up popup.</td></tr>
+    <tr><td>Irit leaf</td><td>40 / 9</td><td>40 / 8.8</td><td>The April guide misspells the herb name; the build uses Irit leaf.</td></tr>
+    <tr><td>Avantoe</td><td>48 / 10</td><td>48 / 10</td><td>Core match.</td></tr>
+    <tr><td>Kwuarm</td><td>54 / 11.25</td><td>54 / 11.3</td><td>Small reconstruction rounding difference.</td></tr>
+    <tr><td>Snapdragon</td><td>Not yet in April table</td><td>59 / 11.8</td><td>Added 27 July 2004; omitted from build 254's level-up popup.</td></tr>
+    <tr><td>Cadantine</td><td>65 / 12.5</td><td>65 / 12.5</td><td>Core match.</td></tr>
+    <tr><td>Lantadyme</td><td>67 / unknown</td><td>67 / 13.1</td><td>Level agrees.</td></tr>
+    <tr><td>Dwarf weed</td><td>70 / 13.75</td><td>70 / 13.8</td><td>Small reconstruction rounding difference.</td></tr>
+    <tr><td>Torstol</td><td><strong>77</strong> / unknown</td><td><strong>75</strong> / 15</td><td>Level conflict retained. Build 254's level-up popup also says 75.</td></tr>
+  </tbody></table></div>
+
+  <h3>Jungle Potion herbs</h3>
+  <p><a href="../quests/jungle-potion.html">Jungle Potion</a> uses five special Karamja herbs. In build 254 every one of them has an inventory <em>Identify</em> action, requires level 3 Herblore, and awards 2.5 Herblore XP when identified.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Herb</th><th>Build-254 identify level</th><th>Build-254 XP</th><th>Level-up popup</th></tr></thead><tbody>
+    <tr><td>Snake weed</td><td>3</td><td>2.5</td><td>Named at level 3.</td></tr>
+    <tr><td>Ardrigal</td><td>3</td><td>2.5</td><td>Omitted.</td></tr>
+    <tr><td>Sito foil</td><td>3</td><td>2.5</td><td>Omitted.</td></tr>
+    <tr><td>Volencia moss</td><td>3</td><td>2.5</td><td>Omitted.</td></tr>
+    <tr><td>Rogue's purse</td><td>3</td><td>2.5</td><td>Named at level 3.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Why this matters:</strong> the build's level-up popup is a convenience message, not a complete Herblore database. Recipe and herb configuration must be audited alongside it.</p></div>
+
+  <h3>Quest and special Herblore uses</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Quest / activity</th><th>Herblore relevance</th><th>Level / reward</th><th>Cutoff note</th></tr></thead><tbody>
+    <tr><td><a href="../quests/druidic-ritual.html">Druidic Ritual</a></td><td>Historical introduction to Herblore.</td><td>250 Herblore XP; 4 Quest Points.</td><td>Historical access route; build 254 does not universally gate ordinary Herblore actions behind the quest state.</td></tr>
+    <tr><td><a href="../quests/jungle-potion.html">Jungle Potion</a></td><td>Identify five special level-3 herbs and prepare Trufitus's potion ingredients.</td><td>775 Herblore XP; 1 Quest Point.</td><td>All five special herbs are implemented with 2.5 identify XP in build 254.</td></tr>
+    <tr><td><a href="../quests/watchtower.html">Watchtower</a></td><td>Herblore is used while preparing the quest's ogre potion.</td><td>14 Herblore required.</td><td>Inside the cutoff and already audited separately.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Make Blamish oil from a Harralander unfinished potion and Blamish snail slime.</td><td>25 Herblore for Blamish oil; build awards 80 XP for the mix. Quest reward includes 1,325 Herblore XP.</td><td>The level-25 Blamish-oil recipe is real build content but is omitted from the generic Herblore level-up popup.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>Herblore is one of the required skills and is used in the bravery-potion sequence.</td><td>45 Herblore required.</td><td>Quest-specific state gates remain separate from the ordinary potion system.</td></tr>
+    <tr><td><a href="../quests/nature-spirit.html">Nature Spirit</a></td><td>Unlocks access to Mort Myre fungi used by the Super energy potion.</td><td>No Herblore level requirement from the quest itself.</td><td>The 1 September 2004 Herblore update explicitly requires Nature Spirit completion to obtain this ingredient.</td></tr>
+  </tbody></table></div>
+
+  <h3>Useful ingredients and tools</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Item</th><th>Use</th><th>Members</th><th>Period / build note</th></tr></thead><tbody>
+    <tr><td><strong>Vial of water</strong></td><td>Base solvent for ordinary unfinished potions.</td><td class="member-yes">Yes for Herblore use</td><td>The April-2004 guide describes buying/filling vials before adding an herb.</td></tr>
+    <tr><td><strong>Pestle and mortar</strong></td><td>Grinds selected secondary ingredients.</td><td class="member-yes">Yes for Herblore use</td><td>Build 254 supports Unicorn horn &rarr; Unicorn horn dust and Blue dragon scale &rarr; Dragon scale dust.</td></tr>
+    <tr><td><strong>Eye of newt</strong></td><td>Attack and Super attack.</td><td class="member-yes">Yes for Herblore use</td><td>Period guide records shop purchase as a basic early secondary.</td></tr>
+    <tr><td><strong>Unicorn horn dust</strong></td><td>Antipoison and Super antipoison.</td><td class="member-yes">Yes</td><td>Grind a Unicorn horn with a pestle and mortar.</td></tr>
+    <tr><td><strong>Limpwurt root</strong></td><td>Strength and Super strength.</td><td class="member-yes">Yes for Herblore use</td><td>Can be supplied separately; no extra Herblore processing step.</td></tr>
+    <tr><td><strong>Red spiders' eggs</strong></td><td>Stat restore and Super restore.</td><td class="member-yes">Yes for Herblore use</td><td>Super restore was added 27 July 2004.</td></tr>
+    <tr><td><strong>White berries</strong></td><td>Defence and Super defence.</td><td class="member-yes">Yes</td><td>Used directly.</td></tr>
+    <tr><td><strong>Snape grass</strong></td><td>Prayer restore and Fishing potion.</td><td class="member-yes">Yes</td><td>Used directly.</td></tr>
+    <tr><td><strong>Dragon scale dust</strong></td><td>Weapon poison and Anti-firebreath potion.</td><td class="member-yes">Yes</td><td>Grind a Blue dragon scale with a pestle and mortar.</td></tr>
+    <tr><td><strong>Wine of Zamorak</strong></td><td>Ranging potion.</td><td class="member-yes">Yes for Herblore use</td><td>Period guide describes obtaining it from the Zamorak temple north of Falador.</td></tr>
+    <tr><td><strong>Jangerberries</strong></td><td>Zamorak potion.</td><td class="member-yes">Yes</td><td>Used with a Torstol unfinished potion.</td></tr>
+    <tr><td><strong>Toad's legs</strong></td><td>Agility potion.</td><td class="member-yes">Yes</td><td>27 July 2004 addition.</td></tr>
+    <tr><td><strong>Chocolate dust</strong></td><td>Energy potion.</td><td class="member-yes">Yes</td><td>1 September 2004 update instructs players to grind chocolate with a pestle and mortar.</td></tr>
+    <tr><td><strong>Mort Myre fungi</strong></td><td>Super energy potion.</td><td class="member-yes">Yes</td><td><a href="../quests/nature-spirit.html">Nature Spirit</a> access is required to obtain it.</td></tr>
+    <tr><td><strong>Potato cactus</strong></td><td>Magic potion.</td><td class="member-yes">Yes</td><td>Added on 7 September 2004 and therefore included exactly at this guide's cutoff.</td></tr>
+  </tbody></table></div>
+
+  <h3>Level-up milestones in build 254</h3>
+  <p>The build's popup is useful for a quick progression view, but it must not be mistaken for a complete recipe list. This table reproduces the popup's milestones while the fuller tables above supply omitted herbs and quest recipes.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Build-254 popup</th><th>Members</th></tr></thead><tbody>
+    <tr><td>3</td><td>Attack potion; identify Guam leaf, Snake weed and Rogue's purse.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>5</td><td>Antipoison; identify Marrentill.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>11</td><td>Identify Tarromin.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>12</td><td>Strength potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>20</td><td>Identify Harralander.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>22</td><td>Stat restore potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>25</td><td>Identify Ranarr weed.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>26</td><td>Energy potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>30</td><td>Defence potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>34</td><td>Agility potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>38</td><td>Prayer restore potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>40</td><td>Identify Irit leaf.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>45</td><td>Super attack potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>48</td><td>Super antipoison; identify Avantoe.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>50</td><td>Fishing potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>52</td><td>Super energy potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>54</td><td>Identify Kwuarm.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>55</td><td>Super strength potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>60</td><td>Weapon poison.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>63</td><td>Super restore potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>65</td><td>Identify Cadantine.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>66</td><td>Super defence potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>67</td><td>Identify Lantadyme.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>69</td><td>Anti-firebreath potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>70</td><td>Identify Dwarf weed.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>72</td><td>Ranging potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>75</td><td>Identify Torstol.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>76</td><td>Magic potion.</td><td class="member-yes">Yes</td></tr>
+    <tr><td>78</td><td>"Zamorak Brews" in the popup; target-period item name is Zamorak potion.</td><td class="member-yes">Yes</td></tr>
+  </tbody></table></div>
+
+  <h3>Period training approach</h3>
+  <p>The April-2004 guide describes Herblore as a gradual, supply-limited skill rather than an activity with a fixed modern efficiency route. Its beginner advice is to complete the introductory quest, collect unidentified herbs from monsters such as druids, identify every herb you can, and turn early Guam leaves into Attack potions before moving to Marrentill and antipoison at level 5.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Stage</th><th>Practical method</th><th>Supplies</th><th>Verified XP basis</th><th>Note</th></tr></thead><tbody>
+    <tr><td>Fresh account</td><td><strong><a href="../quests/druidic-ritual.html">Druidic Ritual</a></strong></td><td>Quest supplies</td><td>250 Herblore XP</td><td>Historical route directly to level 3. Build 254's generic actions lack the universal quest gate.</td></tr>
+    <tr><td>Level 3+</td><td><strong>Identify Guam + Attack potions</strong></td><td>Unidentified Guam, vials of water, Eyes of newt</td><td>2.5 XP per Guam identification in both dated/build evidence; 25 XP per Attack potion</td><td>The April guide explicitly uses this as the beginner method.</td></tr>
+    <tr><td>Level 5+</td><td><strong>Marrentill + Antipoison</strong></td><td>Marrentill, vials, Unicorn horns, pestle and mortar</td><td>37.5 XP per finished Antipoison</td><td>Requires grinding the horn to dust.</td></tr>
+    <tr><td>Higher levels</td><td><strong>Identify everything available and brew to ingredient supply</strong></td><td>Higher herbs + matching secondaries</td><td>Use the verified action XP in the recipe table above</td><td>The target-period economy and herb supply make a single modern-style optimal route misleading.</td></tr>
+    <tr><td>Late July–September additions</td><td><strong>Agility, Energy, Super energy, Super restore and Magic potions</strong></td><td>New herbs/secondaries introduced before or on the cutoff</td><td>Build-254 action XP shown above</td><td>These recipes are valid for the 7 September snapshot even though an April guide cannot list them.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>No invented XP/hour:</strong> period Herblore rates depend heavily on herb drops, ingredient gathering, shops, banking and trading. This guide records verified action XP and dated training advice instead of importing modern market assumptions or efficiency figures.</p></div>
+
+  <h3>2004scape implementation notes</h3>
+  <ul>
+    <li><strong>No universal Druidic Ritual gate:</strong> build 254's generic identify and brew routines check membership and Herblore level but not the Druidic Ritual quest state. This is the most important correction to the old local page.</li>
+    <li><strong>Guam can expose the low-level edge case:</strong> the Guam item has no explicit identification-level parameter at ref 254 even though the level-up popup advertises it at level 3. That lines up with the build source's explicit comment about sub-level-3 Herblore accounts.</li>
+    <li><strong>The popup is incomplete:</strong> it omits Toadflax at 30, Snapdragon at 59, three of the five Jungle Potion herbs and quest recipes such as level-25 Blamish oil.</li>
+    <li><strong>Weapon-poison XP differs materially:</strong> the 24 April 2004 guide records 137.5 XP; build ref 254 awards 127.5 XP. A newer local Content checkout contains 137.5, but that later correction is not backported into the build-254 audit.</li>
+    <li><strong>Other retained conflicts:</strong> build 254 uses Tarromin identification at 11 rather than the April guide's 10, Torstol identification at 75 rather than 77, Anti-firebreath at 69 rather than 68, and 106.3 XP for Super antipoison rather than the April guide's 105.</li>
+    <li><strong>Decanting is implemented:</strong> compatible partial doses can be combined up to four doses, with excess preserved in the second vial. Four-dose inputs are rejected by the build routine.</li>
+    <li><strong>Terminology quirk:</strong> the build level-up popup says "Zamorak Brews" at 78 while the target-period item is still named Zamorak potion.</li>
+  </ul>
+
+  <h3>Cutoff and uncertainty notes</h3>
+  <div class="callout warn"><p><strong>Do not let later Herblore content leak backward into build 254.</strong> The active Content repository contains recipes from later 2004 quests, so this audit uses the project's exact <code>254</code> ref for implementation values.</p></div>
+  <ul>
+    <li><strong>27 July 2004 is included:</strong> Toadflax, Snapdragon, Agility potion and Super restore are already inside the cutoff.</li>
+    <li><strong>1 September 2004 is included:</strong> Energy and Super energy potions are inside the cutoff; the same update expanded Super restore so it also restores non-combat stats.</li>
+    <li><strong>7 September 2004 is included:</strong> Magic potion and Potato cactus arrive on the cutoff date and are therefore part of this guide.</li>
+    <li><strong>Post-cutoff quest recipes are excluded from the core guide:</strong> later September/October additions visible in newer source revisions — including recipes tied to quests released after 7 September — are not treated as target-period Herblore content.</li>
+    <li><strong>Period/build disagreements stay visible:</strong> the audit does not assume every reconstruction value is a correction to surviving 2004 documentation, nor that every April value remained unchanged through September.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Direct period community evidence:</strong> Fraghappy's <em>RuneScape Herblore FAQ</em> v1.1.0, updated 24 April 2004. It explicitly says it was updated for RuneScape 2 and supplies the members status, Druidic Ritual entry route, beginner method, herb identification table, secondary ingredients and the pre-summer potion table.</li>
+    <li><strong>27 July 2004 update evidence:</strong> the preserved <em>Agility, Potions and Parties!</em> update establishes the Brimhaven-era Herblore additions. Build ref 254 supplies the exact Toadflax/Snapdragon identification and Agility/Super-restore recipe values used here.</li>
+    <li><strong>1 September 2004 update evidence:</strong> the preserved <em>Herblore Additions</em> post gives level 26 Harralander + Chocolate dust for Energy potion and level 52 Avantoe + Mort Myre fungi for Super energy, including the Nature Spirit ingredient-access note.</li>
+    <li><strong>7 September 2004 cutoff evidence:</strong> Magic potion and Potato cactus are dated to 7 September 2004; build 254 contains the level-76 Lantadyme + Potato cactus recipe for 172.5 XP.</li>
+    <li><strong>Build-254 herb data:</strong> <code>scripts/skill_herblore/configs/herbs.obj</code> at Content ref <code>254</code>.</li>
+    <li><strong>Build-254 brewing data:</strong> <code>scripts/skill_herblore/configs/brewing/brew_potion.struct</code> and <code>scripts/skill_herblore/scripts/brewing/brew_potion.rs2</code> at ref <code>254</code>.</li>
+    <li><strong>Build-254 identify gate:</strong> <code>scripts/skill_herblore/scripts/identifying/identify.rs2</code> at ref <code>254</code>, including the explicit absence of a Druidic Ritual state check.</li>
+    <li><strong>Build-254 grinding / decanting:</strong> <code>configs/grinding/grindables.obj</code> and <code>scripts/decanting/decant_potion.rs2</code> at ref <code>254</code>.</li>
+    <li><strong>Build-254 level-up text:</strong> <code>scripts/levelup/scripts/levelup_unlocks_herblore.rs2</code> at ref <code>254</code>. It is used as a popup transcript, not as the sole recipe authority.</li>
+    <li><strong>Cross-checked quest evidence:</strong> the already-audited <a href="../quests/druidic-ritual.html">Druidic Ritual</a>, <a href="../quests/jungle-potion.html">Jungle Potion</a>, <a href="../quests/watchtower.html">Watchtower</a>, <a href="../quests/heroes-quest.html">Heroes' Quest</a>, <a href="../quests/legends-quest.html">Legends' Quest</a> and <a href="../quests/nature-spirit.html">Nature Spirit</a> guides.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="mining.html">&larr; Mining</a><a class="next" href="agility.html">Agility &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's Herblore implementation at build 254. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

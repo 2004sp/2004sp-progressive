@@ -38,6 +38,12 @@ export class ShopTripTask extends BotTask {
         VARROCK_RUNES:       'aubury',
         AL_KHARID_SCIMITARS: 'zeke',
         LUMBRIDGE_GENERAL:   'generalshopkeeper1',
+        // Was missing entirely — fell back to using the shop KEY itself as the
+        // NPC name ("AL_KHARID_CRAFTING", not a real NPC), so findNpcByName()
+        // in the 'find' state could never find anyone and bots paced at
+        // (3285,3183) forever. Real debugname confirmed via
+        // content/scripts/areas/area_alkharid/scripts/dommik.rs2.
+        AL_KHARID_CRAFTING:  'dommik',
     };
 
     constructor(shopKey: string, itemId: number, quantity: number, costEach: number) {

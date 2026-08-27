@@ -3,6 +3,9 @@ import {
     Player,
     walkTo,
     removeItem,
+    addItem,
+    countItem,
+    hasItem,
     isNear,
     getBaseLevel,
     getProgressionStep,
@@ -17,6 +20,8 @@ import {
     openNearbyGate,
     teleportNear,
     nearestBank,
+    findNpcByName,
+    interactNpcOp,
 } from '#/engine/bot/tasks/BotTaskBase.js';
 
 import type { SkillStep } from '#/engine/bot/tasks/BotTaskBase.js';
@@ -25,14 +30,20 @@ import World from '#/engine/World.js';
 import { EntityLifeCycle } from '#/engine/entity/EntityLifeCycle.js';
 import { interactHeldOpU } from '#/engine/bot/BotAction.js';
 
+/** Tinderbox price + shopkeeper at Lumbridge General Store (BotKnowledge.Shops.LUMBRIDGE_GENERAL). */
+const TINDERBOX_COST = 13;
+const GENERAL_STORE_NPC = 'generalshopkeeper1';
 
 export class FiremakingTask extends BotTask {
     private step: SkillStep;
 
-    private state: 'walk' | 'burn' | 'move' | 'bank_walk' | 'bank' = 'walk';
+    private state: 'walk' | 'burn' | 'wait_burn' | 'move' | 'bank_walk' | 'bank' | 'shop_walk' | 'shop_buy' = 'walk';
 
     private lastXp = 0;
     private bankLocked = false;
+    private shopWaitTicks = 0;
+    private xpBeforeBurn = 0;
+    private burnWaitTicks = 0;
 
     private readonly stuck = new StuckDetector(30, 4, 2);
     private readonly watchdog = new ProgressWatchdog();
@@ -43,47 +54,65 @@ export class FiremakingTask extends BotTask {
         this.watchdog.destination = step.location;
     }
 
-    shouldRun(): boolean {
+    shouldRun(player: Player): boolean {
+        const logId = this.step.itemConsumed;
+        if (!logId || logId === -1) return false;
+        if (!hasItem(player, logId) && !this._inBank(player, logId)) return false;
+        // No tinderbox in hand or bank — still fine as long as there's enough
+        // coin (inv + bank) to buy one; the 'bank' state routes to 'shop_walk'
+        // for that. Only block if the bot genuinely can't get one at all.
+        if (!hasItem(player, Items.TINDERBOX) && !this._inBank(player, Items.TINDERBOX)) {
+            const coins = countItem(player, Items.COINS) + this._bankCount(player, Items.COINS);
+            if (coins < TINDERBOX_COST) return false;
+        }
         return true;
     }
 
     // ───────────────── LOG HELPERS ─────────────────
-        private getItemSlot(player: Player, itemId: number): number | null {
+
+    private getItemSlot(player: Player, itemId: number): number | null {
         const inv = player.getInventory(InvType.INV);
         if (!inv) return null;
-
         for (let i = 0; i < inv.capacity; i++) {
             const item = inv.get(i);
             if (item && item.id === itemId) return i;
         }
-
         return null;
     }
 
-    private isLog(id: number): boolean {
-        return (
-            id === Items.LOGS ||
-            id === Items.OAK_LOGS ||
-            id === Items.WILLOW_LOGS ||
-            id === Items.MAPLE_LOGS ||
-            id === Items.YEW_LOGS
-        );
-    }
-
+    /** Returns the step's required log ID if the bot has one in inventory, else null. */
     private getFirstLog(player: Player): number | null {
-        const inv = player.getInventory(InvType.INV);
-        if (!inv) return null;
-
-        for (let i = 0; i < inv.capacity; i++) {
-            const item = inv.get(i);
-            if (item && this.isLog(item.id)) return item.id;
-        }
-
-        return null;
+        const logId = this.step.itemConsumed;
+        if (!logId || logId === -1) return null;
+        return this.getItemSlot(player, logId) !== null ? logId : null;
     }
 
     private hasLogs(player: Player): boolean {
         return this.getFirstLog(player) !== null;
+    }
+
+    private _inBank(player: Player, itemId: number): boolean {
+        const bid = bankInvId();
+        if (bid === -1) return false;
+        const bank = player.getInventory(bid);
+        if (!bank) return false;
+        for (let i = 0; i < bank.capacity; i++) {
+            if (bank.get(i)?.id === itemId) return true;
+        }
+        return false;
+    }
+
+    private _bankCount(player: Player, itemId: number): number {
+        const bid = bankInvId();
+        if (bid === -1) return 0;
+        const bank = player.getInventory(bid);
+        if (!bank) return 0;
+        let count = 0;
+        for (let i = 0; i < bank.capacity; i++) {
+            const item = bank.get(i);
+            if (item?.id === itemId) count += item.count;
+        }
+        return count;
     }
 
     private static FIRE_ID = 2732;
@@ -116,7 +145,7 @@ private spawnFire(player: Player): void {
     tick(player: Player): void {
         if (this.interrupted) return;
 
-        const banking = this.state === 'bank_walk' || this.state === 'bank';
+        const banking = this.state === 'bank_walk' || this.state === 'bank' || this.state === 'shop_walk' || this.state === 'shop_buy';
 
         if (this.watchdog.check(player, banking)) {
             player.clearWaypoints();
@@ -141,11 +170,13 @@ private spawnFire(player: Player): void {
         }
 
         // ───────────────── FORCE BANK FIX ─────────────────
-        if (!this.hasLogs(player)) {
-            if (!banking) {
-                console.log(`[Firemaking] 📦 No logs → bank`);
-                this.state = 'bank_walk';
-            }
+        // Also checks for a tinderbox in hand — without this, a bot that has
+        // logs but only has its tinderbox in the bank (or nowhere at all)
+        // would walk straight out to 'burn' and silently stall forever there
+        // (see the o_slot === null guard below).
+        if ((!this.hasLogs(player) || !hasItem(player, Items.TINDERBOX)) && !banking) {
+            console.log(`[Firemaking] 📦 No logs or no tinderbox → bank`);
+            this.state = 'bank_walk';
         }
 
         // ───────────────── BANK WALK ─────────────────
@@ -166,35 +197,113 @@ private spawnFire(player: Player): void {
         // ───────────────── BANK ─────────────────
 
         if (this.state === 'bank') {
-            const bank = player.getInventory(bankInvId());
+            const bid = bankInvId();
+            const bank = bid !== -1 ? player.getInventory(bid) : null;
             const inv = player.getInventory(InvType.INV);
-
             if (!bank || !inv) return;
 
-            let withdrew = false;
+            const logId = this.step.itemConsumed;
+            if (!logId || logId === -1) { this.interrupt(); return; }
 
-            for (let i = 0; i < bank.capacity; i++) {
-                const item = bank.get(i);
+            // 1. Deposit everything that isn't the correct log or tinderbox.
+            for (let i = 0; i < inv.capacity; i++) {
+                const item = inv.get(i);
+                if (!item) continue;
+                if (item.id === logId || item.id === Items.TINDERBOX) continue;
+                const moved = inv.remove(item.id, item.count);
+                if (moved.completed > 0) bank.add(item.id, moved.completed);
+            }
 
-                if (item && this.isLog(item.id)) {
-                    console.log(`[Firemaking] 📤 Withdrawing logs`);
-                    bank.remove(item.id, item.count);
-                    inv.add(item.id, item.count);
-                    withdrew = true;
+            // 2. Ensure tinderbox is in inventory; withdraw from bank if needed.
+            if (!hasItem(player, Items.TINDERBOX)) {
+                for (let i = 0; i < bank.capacity; i++) {
+                    const it = bank.get(i);
+                    if (it?.id !== Items.TINDERBOX) continue;
+                    const removed = bank.remove(Items.TINDERBOX, 1);
+                    if (removed.completed > 0) inv.add(Items.TINDERBOX, 1);
                     break;
+                }
+                if (!hasItem(player, Items.TINDERBOX)) {
+                    console.log(`[Firemaking] 🛒 No tinderbox in bank → shop trip to Lumbridge General`);
+                    this.state = 'shop_walk';
+                    this.shopWaitTicks = 0;
+                    return;
                 }
             }
 
-            if (!withdrew) {
-                console.log(`[Firemaking] ❌ NO LOGS IN BANK → STOP`);
+            // 3. Withdraw correct logs (fill remaining inventory space).
+            if (!hasItem(player, logId)) {
+                let withdrew = false;
+                for (let i = 0; i < bank.capacity; i++) {
+                    const item = bank.get(i);
+                    if (!item || item.id !== logId) continue;
+                    const moved = bank.remove(logId, item.count);
+                    if (moved.completed > 0) {
+                        inv.add(logId, moved.completed);
+                        withdrew = true;
+                    }
+                    break;
+                }
+                if (!withdrew) {
+                    console.log(`[Firemaking] ❌ No correct logs in bank → STOP`);
+                    this.interrupt();
+                    return;
+                }
+            }
+
+            this.bankLocked = false;
+            this.state = 'walk';
+            return;
+        }
+
+        // ───────────────── SHOP: buy a tinderbox from Lumbridge General ─────────────────
+
+        if (this.state === 'shop_walk') {
+            const [sx, sz, sl] = Locations.LUMBRIDGE_GENERAL;
+
+            if (!isNear(player, sx, sz, 8, sl)) {
+                this._stuckWalk(player, sx, sz);
+                return;
+            }
+
+            const shopNpc = findNpcByName(player.x, player.z, player.level, GENERAL_STORE_NPC, 10);
+            if (!shopNpc) return;
+
+            interactNpcOp(player, shopNpc, 3); // op3 = Trade
+            this.state = 'shop_buy';
+            this.shopWaitTicks = 0;
+            this.cooldown = 2;
+            return;
+        }
+
+        if (this.state === 'shop_buy') {
+            // Give the shop interface a couple of ticks to open before buying.
+            if (this.shopWaitTicks < 2) {
+                this.shopWaitTicks++;
+                return;
+            }
+
+            if (countItem(player, Items.COINS) < TINDERBOX_COST) {
+                console.log(`[Firemaking] ❌ Can't afford a tinderbox (need ${TINDERBOX_COST}gp) → STOP`);
                 this.interrupt();
                 return;
             }
 
-            // 🔥 FIX: DO NOT LOCK FOREVER
-            this.bankLocked = false;
+            removeItem(player, Items.COINS, TINDERBOX_COST);
+            if (!addItem(player, Items.TINDERBOX, 1)) {
+                // Inventory full — refund and let the FORCE BANK FIX route us
+                // back through a normal bank trip to free space.
+                addItem(player, Items.COINS, TINDERBOX_COST);
+                this.state = 'bank_walk';
+                return;
+            }
 
-            this.state = 'walk';
+            console.log(`[Firemaking] 🛒 Bought a tinderbox`);
+            // Route back through 'bank_walk' (not straight to 'bank') — the
+            // bot is standing at Lumbridge General here, not at a bank, and
+            // 'bank_walk' is what actually walks it to the nearest one before
+            // 'bank' re-verifies everything (deposits stray items, tops up logs).
+            this.state = 'bank_walk';
             return;
         }
 
@@ -223,30 +332,59 @@ private spawnFire(player: Player): void {
                 this.state = 'bank_walk';
                 return;
             }
-            if(!inv) {
+            if (!inv) {
                 return;
             }
-            const before = player.stats[PlayerStat.FIREMAKING];
             const slot = this.getItemSlot(player, logId);
-            if(!slot) return;
+            if (slot === null) return;
             const o_slot = this.getItemSlot(player, Items.TINDERBOX);
-            if(!o_slot) return;
-            const success: boolean = interactHeldOpU(player, inv, logId, slot, Items.TINDERBOX, o_slot); //Simulate a real use item on item action
-            if(success) {
-                const xp = this.getXp(logId);
-                //this.spawnFire(player); <- no longer needed
-                player.stats[PlayerStat.FIREMAKING] = before + xp;
-
-                this.lastXp = player.stats[PlayerStat.FIREMAKING];
-
-                this.watchdog.notifyActivity();
-                //Delay this, or may not even need it?
-                console.log(
-                    '[Firemaking] 🔥 burned log +${xp} XP (total=${this.lastXp})'
-                );
+            if (o_slot === null) {
+                // Defense in depth — the FORCE BANK FIX above should already
+                // catch a missing tinderbox before we ever get here, but if a
+                // tinderbox is somehow lost mid-task, don't silently stall
+                // forever: go get another instead.
+                console.log('[Firemaking] 🔥❌ no tinderbox in hand → bank');
+                this.state = 'bank_walk';
+                return;
             }
-            this.cooldown = randInt(2, 12);
-            this.state = 'move';
+
+            // firemaking.rs2's [opheldu,tinderbox] -> light_logs_inv already
+            // grants XP itself via stat_advance(firemaking, ...) inside
+            // firemaking_success() once the ignite roll succeeds — do not
+            // also credit it here (see wait_burn below).
+            interactHeldOpU(player, inv, logId, slot, Items.TINDERBOX, o_slot);
+            this.xpBeforeBurn = player.stats[PlayerStat.FIREMAKING];
+            this.burnWaitTicks = 0;
+            this.state = 'wait_burn';
+            return;
+        }
+
+        // ───────────────── WAIT FOR BURN RESULT ─────────────────
+        // The real script rolls for success on a delay (~3-4 ticks) and keeps
+        // retrying itself automatically (p_opobj(4)) if it misses, so this
+        // polls for real XP instead of crediting immediately.
+        if (this.state === 'wait_burn') {
+            if (player.stats[PlayerStat.FIREMAKING] > this.xpBeforeBurn) {
+                this.lastXp = player.stats[PlayerStat.FIREMAKING];
+                this.watchdog.notifyActivity();
+                console.log(`[Firemaking] 🔥 log burned (real XP confirmed, total=${this.lastXp})`);
+                this.cooldown = randInt(2, 12);
+                this.state = 'move';
+                return;
+            }
+
+            this.burnWaitTicks++;
+            if (this.burnWaitTicks > 8) {
+                // Real stat_advance never landed in time (e.g. the ignite roll
+                // kept failing, or the interaction never queued). No manual
+                // credit — trust the real script the same way a real player
+                // would get nothing for a failed/incomplete attempt. The log
+                // was already dropped by light_logs_inv regardless, so just
+                // move on and try the next one.
+                console.log('[Firemaking] 🔥 no XP confirmed in time — moving on');
+                this.cooldown = randInt(2, 12);
+                this.state = 'move';
+            }
             return;
         }
 
@@ -271,6 +409,9 @@ private spawnFire(player: Player): void {
         this.cooldown = 0;
         this.lastXp = 0;
         this.bankLocked = false;
+        this.shopWaitTicks = 0;
+        this.xpBeforeBurn = 0;
+        this.burnWaitTicks = 0;
 
         this.stuck.reset();
         this.watchdog.reset();
@@ -307,18 +448,5 @@ private spawnFire(player: Player): void {
 
     isComplete(): boolean {
         return false;
-    }
-
-    // ───────────────── XP TABLE ─────────────────
-
-    private getXp(log: number): number {
-        switch (log) {
-            case Items.LOGS: return 40;
-            case Items.OAK_LOGS: return 60;
-            case Items.WILLOW_LOGS: return 90;
-            case Items.MAPLE_LOGS: return 135;
-            case Items.YEW_LOGS: return 202;
-            default: return 40;
-        }
     }
 }

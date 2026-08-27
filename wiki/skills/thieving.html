@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Thieving skill guide for 2004scape Progressive build 254, including pickpocket, stall, chest unlocks and membership requirements.">
+  <meta name="description" content="Historically audited Thieving skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering pickpocketing, stalls, chests, quest requirements, XP and cutoff-safe unlocks.">
   <title>Thieving — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,36 +16,156 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Thieving</p>
   <h1 class="pagetitle">Thieving</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Thieving</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Utility</dd></div><div class="row"><dt>Access</dt><dd>Members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 80</dd></div></div>
-  <p class="lede">Thieving includes pickpocketing NPCs, stealing from market stalls, looting trapped or locked chests, and opening locked doors. The build's unlock script provides a detailed ladder of targets and locations.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Thieving itself is members-only in this build, so every unlock below is marked Yes.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>5</td><td>Steal from Cake stalls and Tea stalls.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>10</td><td>Pickpocket Farmers.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>13</td><td>Steal from certain chests in Ardougne and the Wilderness.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>20</td><td>Steal from Silk stalls.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>25</td><td>Pickpocket Warriors.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>32</td><td>Pickpocket Rogues.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>35</td><td>Steal from Fur stalls.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>40</td><td>Pickpocket City Guards.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>42</td><td>Steal from Fish stalls.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>43</td><td>Steal from certain upstairs chests in Ardougne.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>45</td><td>Pickpocket Fremenniks.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>47</td><td>Steal from certain Hemenster chests with a lockpick.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>50</td><td>Steal from Silver stalls.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>55</td><td>Pickpocket Knights of Ardougne.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>59</td><td>Steal from chests beneath the Chaos Druid Tower near Ardougne.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>65</td><td>Steal from Spice stalls and pickpocket Watchmen.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>70</td><td>Pickpocket Paladins.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>72</td><td>Steal from certain chests in Ardougne Castle.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>75</td><td>Steal from Gem stalls and pickpocket Gnomes.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>80</td><td>Pickpocket Heroes.</td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Thieving</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Utility</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members only</dd></div>
+    <div class="row"><dt>Released</dt><dd>30 April 2002</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main methods</dt><dd>Pickpocketing, stalls, chests, doors and traps</dd></div>
+    <div class="row"><dt>Highest target unlock</dt><dd>Level 80 Heroes</dd></div>
+    <div class="row"><dt>Hard quest gates</dt><dd>15&ndash;50 Thieving</dd></div>
+  </div>
+
+  <p class="lede">Thieving is a members-only skill used to pickpocket NPCs, steal from market stalls, open or loot certain locked and trapped objects, and bypass Thieving checks during quests. It entered RuneScape on 30 April 2002 with pickpocketing, lock-picking, trap-disarming and market-stall theft already part of the skill. This guide stops at the <strong>7 September 2004</strong> snapshot, so later additions are excluded even when later source trees contain their level-up text.</p>
+
+  <h3>Mechanics</h3>
+  <ul>
+    <li><strong>Pickpocketing:</strong> click an eligible NPC and attempt to steal its configured loot. The target has a Thieving requirement and success chance. A failed attempt can make the NPC react, stun the player briefly and deal damage.</li>
+    <li><strong>Market stalls:</strong> a stall has its own level requirement, XP award, loot and respawn delay. In the reconstructed server implementation, nearby owners or guards can catch the attempt instead of letting the theft complete.</li>
+    <li><strong>Chests and traps:</strong> some chests require a Thieving level and may need a lockpick or trap-disarming interaction. Failed trap handling can deal damage; particular scripted traps can also move the player elsewhere.</li>
+    <li><strong>Locked doors and quest traps:</strong> Thieving is also checked directly by quest and location scripts. These checks are not all generic training methods and may award no Thieving XP.</li>
+    <li><strong>Membership:</strong> Thieving itself is members-only at the target date. Every ordinary skill unlock below therefore requires membership even when the surrounding area has other access rules.</li>
+  </ul>
+  <div class="callout warn"><p><strong>Cutoff warning:</strong> <strong>fish stalls</strong> and <strong>Fremennik pickpocketing</strong> are not September-2004 content. They arrive with <em>The Fremennik Trials</em> on <strong>2 November 2004</strong>, so the level-42 fish-stall and level-45 Fremennik rows from the old stub have been removed.</p></div>
+
+  <h3>Pickpocket targets</h3>
+  <p>The following target ladder matches the pre-Fremennik implementation set preserved by the reconstructed early-2004 server archive. XP and ordinary failure damage are shown as implemented there; the target-date level-up ladder agrees on these pre-cutoff target levels.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Target</th><th>Level</th><th>XP per success</th><th>Typical implemented loot</th><th>Failure damage</th></tr></thead><tbody>
+    <tr><td>Man / Woman</td><td>1</td><td>8.0</td><td>3 coins</td><td>1</td></tr>
+    <tr><td>Farmer</td><td>10</td><td>14.5</td><td>9 coins</td><td>1</td></tr>
+    <tr><td>Warrior</td><td>25</td><td>26.0</td><td>18 coins</td><td>2</td></tr>
+    <tr><td>Rogue</td><td>32</td><td>36.5</td><td>25&ndash;40 coins or assorted items</td><td>2</td></tr>
+    <tr><td>City Guard</td><td>40</td><td>46.8</td><td>30 coins</td><td>2</td></tr>
+    <tr><td>Knight of Ardougne</td><td>55</td><td>84.3</td><td>50 coins</td><td>3</td></tr>
+    <tr><td>Watchman</td><td>65</td><td>137.5</td><td>60 coins and bread</td><td>3</td></tr>
+    <tr><td>Paladin</td><td>70</td><td>151.8</td><td>80 coins and 2 chaos runes</td><td>3</td></tr>
+    <tr><td>Gnome</td><td>75</td><td>198.3</td><td>Assorted loot including 300 coins, runes, ore or food ingredients</td><td>1</td></tr>
+    <tr><td>Hero</td><td>80</td><td>273.3</td><td>Assorted loot including 200&ndash;300 coins, runes, gems or ore</td><td>4</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>Commented-out later targets in the source are intentionally omitted. Active milestones are transcribed from <code>levelup_unlocks_thieving.rs2</code>.</p></div>
+  <div class="callout"><p><strong>Failure timing:</strong> higher targets are not just larger XP drops. The implementation gives targets their own success parameters and stun behaviour; Heroes, for example, use a longer configured stun than ordinary low-level targets. Treat repeated failure damage as part of the training cost.</p></div>
+
+  <h3>Market stalls</h3>
+  <p>At the cutoff, the standard stall progression runs from baker/tea through gem stalls. The reconstructed server configuration stores XP in tenths, so an internal value such as 160 is <strong>16 displayed XP</strong>.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Stall</th><th>Level</th><th>XP</th><th>Implemented loot</th><th>Practical note</th></tr></thead><tbody>
+    <tr><td>Baker's stall</td><td>5</td><td>16</td><td>Cake, bread or chocolate slice</td><td>Owner/Ardougne-guard checks; 8-tick respawn in the reconstructed config.</td></tr>
+    <tr><td>Tea stall</td><td>5</td><td>16</td><td>Cup of tea</td><td>Owner check; 16-tick respawn in the reconstructed config.</td></tr>
+    <tr><td>Silk stall</td><td>20</td><td>24</td><td>Silk</td><td>Owner and nearby guard/knight checks.</td></tr>
+    <tr><td>Fur stall</td><td>35</td><td>36</td><td>Grey wolf fur</td><td>Owner and nearby guard/knight checks.</td></tr>
+    <tr><td>Silver stall</td><td>50</td><td>54</td><td>Silver ore</td><td>Owner plus guard, knight and paladin checks.</td></tr>
+    <tr><td>Spice stall</td><td>65</td><td>81</td><td>Spice</td><td>Owner plus guard, knight and paladin checks.</td></tr>
+    <tr><td>Gem stall</td><td>75</td><td>16</td><td>Uncut sapphire, emerald, ruby or diamond</td><td>The reconstructed 2004scape config intentionally uses 16 XP rather than the later 160-XP value.</td></tr>
+  </tbody></table></div>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <div class="callout"><p><strong>Members column:</strong> because Thieving is members-only, all skill-specific rows are Yes. Quest rows still have their own additional prerequisites, which are summarized rather than duplicated in full here.</p></div>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements</th></tr></thead><tbody>
+    <tr><td>1</td><td>Pickpocket Men and Women.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>5</td><td>Steal from Baker's stalls.</td><td class="member-yes">Yes</td><td>A suitable stall; nearby witnesses can stop the attempt.</td></tr>
+    <tr><td>5</td><td>Steal from Tea stalls.</td><td class="member-yes">Yes</td><td>A suitable stall.</td></tr>
+    <tr><td>10</td><td>Pickpocket Farmers.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>13</td><td>Loot certain low-level chests in Ardougne and the Wilderness.</td><td class="member-yes">Yes</td><td>Chest-specific access and trap rules still apply.</td></tr>
+    <tr><td>15</td><td>Meets the Thieving check used during <a href="../quests/watchtower.html">Watchtower</a>.</td><td class="member-yes">Yes</td><td>Other Watchtower requirements still apply.</td></tr>
+    <tr><td>20</td><td>Steal from Silk stalls.</td><td class="member-yes">Yes</td><td>A suitable stall; nearby witnesses can stop the attempt.</td></tr>
+    <tr><td>21</td><td>Disarm the staircase trap required by <a href="../quests/tribal-totem.html">Tribal Totem</a>.</td><td class="member-yes">Yes</td><td>The quest must be in progress.</td></tr>
+    <tr><td>25</td><td>Pickpocket Warriors.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>25</td><td>Meets the Thieving requirement for <a href="../quests/the-dig-site.html">The Dig Site</a>.</td><td class="member-yes">Yes</td><td>Also 10 Agility and 10 Herblore, plus quest-specific steps.</td></tr>
+    <tr><td>30</td><td>Optional sleeping-guard pickpocket route in <a href="../quests/troll-stronghold.html">Troll Stronghold</a>.</td><td class="member-yes">Yes</td><td>Optional route, not a hard quest-start requirement.</td></tr>
+    <tr><td>32</td><td>Pickpocket Rogues.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>35</td><td>Steal from Fur stalls.</td><td class="member-yes">Yes</td><td>A suitable stall; nearby witnesses can stop the attempt.</td></tr>
+    <tr><td>40</td><td>Pickpocket City Guards.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>42</td><td>Disarm the dungeon trap used by <a href="../quests/temple-of-ikov.html">Temple of Ikov</a>.</td><td class="member-yes">Yes</td><td>The quest also lists 40 Ranged; the Thieving check is enforced at the trap.</td></tr>
+    <tr><td>43</td><td>Loot certain upstairs chests in Ardougne.</td><td class="member-yes">Yes</td><td>Chest-specific trap and respawn rules apply.</td></tr>
+    <tr><td>47</td><td>Loot certain Hemenster chests.</td><td class="member-yes">Yes</td><td>Lockpick required.</td></tr>
+    <tr><td>50</td><td>Steal from Silver stalls.</td><td class="member-yes">Yes</td><td>A suitable stall; nearby witnesses can stop the attempt.</td></tr>
+    <tr><td>50</td><td>Meets the Thieving requirement for <a href="../quests/legends-quest.html">Legends' Quest</a>.</td><td class="member-yes">Yes</td><td>Legends' Quest has a large additional quest, Quest Point and skill prerequisite set.</td></tr>
+    <tr><td>55</td><td>Pickpocket Knights of Ardougne.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>59</td><td>Loot chests beneath the Chaos Druid Tower near Ardougne.</td><td class="member-yes">Yes</td><td>Chest-specific trap and access rules apply.</td></tr>
+    <tr><td>65</td><td>Steal from Spice stalls.</td><td class="member-yes">Yes</td><td>A suitable stall; nearby witnesses can stop the attempt.</td></tr>
+    <tr><td>65</td><td>Pickpocket Watchmen.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>70</td><td>Pickpocket Paladins.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>72</td><td>Loot certain chests in Ardougne Castle.</td><td class="member-yes">Yes</td><td>Chest-specific trap and access rules apply.</td></tr>
+    <tr><td>75</td><td>Steal from Gem stalls.</td><td class="member-yes">Yes</td><td>A suitable stall; nearby witnesses can stop the attempt.</td></tr>
+    <tr><td>75</td><td>Pickpocket Gnomes.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+    <tr><td>80</td><td>Pickpocket Heroes.</td><td class="member-yes">Yes</td><td>None.</td></tr>
+  </tbody></table></div>
+
+  <h3>Training approach</h3>
+  <p class="lede">There is no single mandatory route. Pickpocketing is portable but carries stun/damage failures, while stall training depends on stall respawns and whether an owner or guard can see the theft. Chests can be useful for particular locations or loot but are less universal as a level-by-level route.</p>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Period-safe methods</th><th>Verified XP examples</th><th>Practical notes</th></tr></thead><tbody>
+    <tr><td>1&ndash;4</td><td>Pickpocket Men or Women.</td><td>8.0 XP per success</td><td>Only the basic pickpocket targets are available at level 1.</td></tr>
+    <tr><td>5&ndash;19</td><td>Baker's/Tea stalls; Farmers from 10.</td><td>16 XP per stall theft; Farmers 14.5 XP</td><td>Stalls avoid pickpocket stun damage on a successful unseen theft but have respawn and witness constraints.</td></tr>
+    <tr><td>20&ndash;34</td><td>Silk stalls; Warriors from 25; Rogues from 32.</td><td>24 XP per silk; 26.0 Warrior; 36.5 Rogue</td><td>Choose between predictable stall loot and repeated NPC attempts.</td></tr>
+    <tr><td>35&ndash;49</td><td>Fur stalls; City Guards from 40; relevant chests from 43/47.</td><td>36 XP per fur; 46.8 Guard</td><td>Hemenster's level-47 chest route needs a lockpick.</td></tr>
+    <tr><td>50&ndash;64</td><td>Silver stalls; Knights from 55; Chaos Druid Tower chests from 59.</td><td>54 XP per silver; 84.3 Knight</td><td>Higher-level failures deal more damage, so food can matter for sustained pickpocketing.</td></tr>
+    <tr><td>65&ndash;74</td><td>Spice stalls, Watchmen, then Paladins at 70.</td><td>81 XP per spice; 137.5 Watchman; 151.8 Paladin</td><td>Watchmen and Paladins are higher-value pickpocket targets but still carry failure risk.</td></tr>
+    <tr><td>75&ndash;99</td><td>Gem stalls, Gnomes, and Heroes from 80.</td><td>16 XP per gem stall in the reconstructed config; 198.3 Gnome; 273.3 Hero</td><td>The gem stall's implemented XP is deliberately low in this reconstruction; Heroes have the largest pickpocket XP drop but harsher failures.</td></tr>
+  </tbody></table></div>
+
+  <h3>Quest requirements and special uses</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Quest / use</th><th>Thieving level</th><th>Members</th><th>Role of the level</th></tr></thead><tbody>
+    <tr><td><a href="../quests/watchtower.html">Watchtower</a></td><td>15</td><td class="member-yes">Yes</td><td>Required to steal the rock cake used during the quest.</td></tr>
+    <tr><td><a href="../quests/tribal-totem.html">Tribal Totem</a></td><td>21</td><td class="member-yes">Yes</td><td>Required to identify and disable Handelmort's trapped staircase.</td></tr>
+    <tr><td><a href="../quests/the-dig-site.html">The Dig Site</a></td><td>25</td><td class="member-yes">Yes</td><td>Used to pickpocket a Dig Site workman for the first-exam sample.</td></tr>
+    <tr><td><a href="../quests/troll-stronghold.html">Troll Stronghold</a></td><td>30</td><td class="member-yes">Yes</td><td>Optional route: pickpocket the sleeping prison guard. Not a hard quest requirement.</td></tr>
+    <tr><td><a href="../quests/temple-of-ikov.html">Temple of Ikov</a></td><td>42</td><td class="member-yes">Yes</td><td>Required at the dungeon trap; the quest also lists 40 Ranged.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>50</td><td class="member-yes">Yes</td><td>One of the quest's hard skill requirements.</td></tr>
+  </tbody></table></div>
+
+  <h3>Verified Thieving XP quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Thieving reward at build 254 / audited implementation</th></tr></thead><tbody>
+    <tr><td><a href="../quests/biohazard.html">Biohazard</a></td><td>Members</td><td><strong>1,250 Thieving XP.</strong></td></tr>
+    <tr><td><a href="../quests/hazeel-cult.html">Hazeel Cult</a></td><td>Members</td><td><strong>1,500 Thieving XP.</strong> The surviving July-2004 guide listed 1,000, so the local quest audit records this as a historical/build difference.</td></tr>
+    <tr><td><a href="../quests/tribal-totem.html">Tribal Totem</a></td><td>Members</td><td><strong>1,775 Thieving XP.</strong> The surviving August-2004 guide listed 1,250; build 254 awards 1,775.</td></tr>
+    <tr><td><a href="../quests/fight-arena.html">Fight Arena</a></td><td>Members</td><td><strong>2,175 Thieving XP.</strong> The surviving March/April-2004 guide listed 3,375; build 254 awards 2,175.</td></tr>
+    <tr><td><a href="../quests/the-tourist-trap.html">The Tourist Trap</a></td><td>Members</td><td>Two <strong>4,650-XP choices</strong>; Thieving may be selected for either or both, for up to <strong>9,300 Thieving XP</strong>.</td></tr>
+    <tr><td><a href="../quests/legends-quest.html">Legends' Quest</a></td><td>Members</td><td>Thieving is one of the <strong>7,650-XP training choices</strong>; build 254 permits repeated choices, allowing up to <strong>30,600 Thieving XP</strong> if all four are assigned to it.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <ul>
+    <li><strong>Unlock-script boundary:</strong> the old page was built from active level-up entries but mixed the target-date ladder with later content. The September cutoff removes fish stalls and Fremenniks even if a later/current progressive source tree exposes those level-up entries.</li>
+    <li><strong>Pickpocket configuration:</strong> the reconstructed early-2004 server snapshot gives each NPC its own level, XP, chance parameters, loot, stun behaviour and failure damage rather than using one generic reward table.</li>
+    <li><strong>Stall configuration:</strong> the same source snapshot defines baker, tea, silk, fur, silver, spice and gem stalls with their own levels, XP, loot and respawn ticks. Stall scripts check configured owners/guards before granting the theft.</li>
+    <li><strong>Gem-stall quirk:</strong> the reconstructed configuration explicitly uses <strong>16 XP</strong> for gem stalls and comments that this differs from the later 160-XP value.</li>
+    <li><strong>Chest/trap behaviour:</strong> scripted trapped chests are members-gated and can damage the player on failure; some trap scripts can teleport the player. Chest requirements therefore need to be read per object rather than treated as a single universal rule.</li>
+    <li><strong>Quest XP is implementation-sensitive:</strong> Hazeel Cult, Tribal Totem and Fight Arena have documented differences between surviving 2004 guide values and the audited build-254 quest scripts. This page uses the build values while flagging the disagreement.</li>
+  </ul>
+
+  <h3>Cutoff exclusions</h3>
+  <ul>
+    <li><strong>Fish stalls:</strong> excluded. They are introduced with <em>The Fremennik Trials</em> on 2 November 2004, after the target snapshot.</li>
+    <li><strong>Fremennik pickpocketing:</strong> excluded for the same 2 November 2004 boundary.</li>
+    <li><strong>Blackjacking:</strong> excluded. It belongs to later desert quest/content progression and is not part of the 7 September 2004 skill set.</li>
+    <li><strong>Pyramid Plunder:</strong> excluded. The minigame is post-cutoff content.</li>
+    <li><strong>Farming-era Master Farmer progression and later Thieving additions:</strong> excluded unless independently present by the target date.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Historical release:</strong> the preserved 30 April 2002 Thieving update introduces the members skill with pickpocketing, lock-picking, trap-disarming and market-stall theft, and introduces Tribal Totem with a 21-Thieving requirement.</li>
+    <li><strong>Period manual:</strong> the preserved 2003 official manual describes Thieving as members-only and documents the same core method families, including pickpocketing, locks, traps and stalls.</li>
+    <li><strong>Build-254 cutoff:</strong> this wiki targets 7 September 2004 / build 254. Post-cutoff unlock text is filtered against historical release dates rather than accepted merely because it exists in a later source tree.</li>
+    <li><strong>Reconstructed server mechanics:</strong> the archived <code>2004Scape/Server</code> snapshot dated 18 May 2004 supplies the detailed pickpocket, stall and trapped-chest mechanics used above. Because that archive predates build 254, it is treated as implementation evidence, not silently relabelled as the September ref.</li>
+    <li><strong>Local quest cross-checks:</strong> the already-audited Watchtower, Tribal Totem, The Dig Site, Troll Stronghold, Temple of Ikov, Legends' Quest, Biohazard, Hazeel Cult, Fight Arena and The Tourist Trap pages provide the quest requirements and reward values summarized above.</li>
+    <li><strong>November boundary:</strong> preserved release records for <em>The Fremennik Trials</em> place the quest, Fremennik pickpocketing and fish stalls on 2 November 2004, which is why both old-stub rows are excluded.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="agility.html">&larr; Agility</a><a class="next" href="runecrafting.html">Runecrafting &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against preserved period documentation, the build-254 unlock/quest evidence available to this project, and the reconstructed early-2004 Thieving implementation. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

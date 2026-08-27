@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Firemaking skill guide for 2004scape Progressive build 254, including log unlocks and membership requirements.">
+  <meta name="description" content="Firemaking skill guide for the 7 September 2004 snapshot and 2004scape Progressive build 254, covering log requirements, XP, fire-lighting mechanics, tinderbox uses, quests, and implementation differences.">
   <title>Firemaking — Skill Guide — 2004scape Progressive Wiki</title>
   <link rel="stylesheet" href="../assets/wiki.css">
   <link rel="stylesheet" href="../assets/quest-guide.css">
@@ -16,21 +16,114 @@
 <div class="guide-shell"><main class="page"><article class="article-card">
   <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../skills.html">Skills</a> &rsaquo; Firemaking</p>
   <h1 class="pagetitle">Firemaking</h1>
-  <p class="byline guide-meta">Skill guide &middot; 2004scape Progressive build 254</p>
-  <div class="infobox guide-infobox"><div class="ibhead">Firemaking</div><div class="ibicon" aria-hidden="true"></div><div class="row"><dt>Category</dt><dd>Artisan</dd></div><div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div><div class="row"><dt>Status</dt><dd>Complete</dd></div><div class="row"><dt>Highest listed unlock</dt><dd>Level 75</dd></div></div>
-  <p class="lede">Firemaking burns logs with a tinderbox. Its progression is a simple ladder of log types, with Maple and Magic logs belonging to members content in this period.</p>
-  <h3>Level unlocks</h3>
-  <div class="callout"><p><strong>Members</strong> shows whether that specific unlock requires membership. Mixed level-up messages are split into separate rows so every unlock has a clear Yes or No.</p></div>
-  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th></tr></thead><tbody>
-    <tr><td>15</td><td>Burn Oak logs.</td><td class="member-no">No</td></tr>
-    <tr><td>30</td><td>Burn Willow logs.</td><td class="member-no">No</td></tr>
-    <tr><td>45</td><td>Burn Maple logs.</td><td class="member-yes">Yes</td></tr>
-    <tr><td>60</td><td>Burn Yew logs.</td><td class="member-no">No</td></tr>
-    <tr><td>75</td><td>Burn Magic logs.</td><td class="member-yes">Yes</td></tr>
+  <p class="byline guide-meta">Skill guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Firemaking</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Category</dt><dd>Artisan / utility</dd></div>
+    <div class="row"><dt>Access</dt><dd>Free-to-play + members</dd></div>
+    <div class="row"><dt>Starting level</dt><dd>1</dd></div>
+    <div class="row"><dt>Maximum level</dt><dd>99</dd></div>
+    <div class="row"><dt>Main tool</dt><dd>Tinderbox</dd></div>
+    <div class="row"><dt>Main resource</dt><dd>Logs</dd></div>
+    <div class="row"><dt>Highest standard-log unlock</dt><dd>Level 75 — Magic logs</dd></div>
+  </div>
+
+  <p class="lede">Firemaking is the skill used to light logs with a tinderbox, creating temporary fires that can also be used for Cooking. At the 7 September 2004 cutoff, the standard progression ran from normal logs at level 1 through Magic logs at level 75, with members also having Achey tree logs. <strong>Maple logs themselves are not members-only to burn:</strong> the period source trees were in members' areas, but build 254 does not mark the logs as members-only. Magic logs are the members-only standard tier.</p>
+
+  <h3>How Firemaking works</h3>
+  <div class="callout"><p><strong>Basic loop:</strong> use a tinderbox with a supported log in the inventory, or choose the ground log's <em>Light</em> option. The build checks the player's current Firemaking level against the log's requirement. An ignition attempt can fail and be retried; a successful attempt consumes the log, awards the configured XP, creates a temporary fire, and eventually leaves ashes.</p></div>
+  <ul>
+    <li><strong>Current level is checked:</strong> the standard handler reads the current Firemaking stat, not just the unboosted base value. The unlock table below still records the normal base-level requirements.</li>
+    <li><strong>Lighting can take more than one attempt:</strong> qualifying for a log does not guarantee that the first ignition roll catches. The script repeats the lighting attempt until it succeeds or the action is interrupted.</li>
+    <li><strong>Some tiles reject fires:</strong> the handler checks the map for blocked or restricted placements before allowing a fire to be lit, so not every standing tile is a valid Firemaking spot.</li>
+    <li><strong>Fire duration is not a log-tier bonus:</strong> build 254 uses the same random duration range for the supported logs rather than making higher-level logs burn longer.</li>
+    <li><strong>Movement after lighting:</strong> once a fire is created, the player is moved away from the occupied square when a neighbouring tile is available. The implementation has a preferred direction order and a special Duel Arena case.</li>
+    <li><strong>Fires are utility objects:</strong> ordinary supported raw food can be cooked on a player-made fire. When the fire expires, it is replaced by ashes.</li>
+  </ul>
+
+  <h3>Level unlocks at the 7 September 2004 cutoff</h3>
+  <div class="callout"><p>The standard-log rows agree with build 254's skill-guide data and level-up messages. Achey tree logs are a period members item from Big Chompy Bird Hunting content; their historical level-1 requirement is listed separately because the current checkout has an implementation-data discrepancy for that log.</p></div>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Level</th><th>Unlock</th><th>Members</th><th>Other requirements</th></tr></thead><tbody>
+    <tr><td>1</td><td>Burn normal logs.</td><td class="member-no">No</td><td>Tinderbox.</td></tr>
+    <tr><td>1</td><td>Burn Achey tree logs.</td><td class="member-yes">Yes</td><td>Tinderbox; access to members' Ogre / Big Chompy content for the normal source of the logs. See the implementation note below.</td></tr>
+    <tr><td>15</td><td>Burn Oak logs.</td><td class="member-no">No</td><td>Tinderbox.</td></tr>
+    <tr><td>30</td><td>Burn Willow logs.</td><td class="member-no">No</td><td>Tinderbox.</td></tr>
+    <tr><td>45</td><td>Burn Maple logs.</td><td class="member-no">No</td><td>Tinderbox. The logs can be burned in free-to-play; in this period the trees that normally supply them are members-area content.</td></tr>
+    <tr><td>60</td><td>Burn Yew logs.</td><td class="member-no">No</td><td>Tinderbox.</td></tr>
+    <tr><td>75</td><td>Burn Magic logs.</td><td class="member-yes">Yes</td><td>Tinderbox.</td></tr>
   </tbody></table></div>
-  <h3>Notes</h3><div class="callout"><p>The level-up cases come from <code>levelup_unlocks_firemaking.rs2</code>. The Members column describes access to the log/content, not whether Firemaking itself can be trained on a members account.</p></div>
+
+  <h3>Log experience</h3>
+  <p>Firemaking XP is awarded when the fire successfully catches. The standard values below are represented in build 254's x10 skill scale — for example, <code>productexp=400</code> means 40 Firemaking XP.</p>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Level</th><th>Log</th><th>Members</th><th>XP per successful fire</th><th>Build-254 status</th></tr></thead><tbody>
+    <tr><td>1</td><td>Normal logs</td><td class="member-no">No</td><td>40</td><td>Configured directly.</td></tr>
+    <tr><td>1</td><td>Achey tree logs</td><td class="member-yes">Yes</td><td>40 historically</td><td>The dedicated handler exists, but the current object configuration omits Firemaking requirement and XP parameters; see implementation notes.</td></tr>
+    <tr><td>15</td><td>Oak logs</td><td class="member-no">No</td><td>60</td><td>Configured directly.</td></tr>
+    <tr><td>30</td><td>Willow logs</td><td class="member-no">No</td><td>90</td><td>Configured directly.</td></tr>
+    <tr><td>45</td><td>Maple logs</td><td class="member-no">No</td><td>135</td><td>Configured directly; no members flag on the log.</td></tr>
+    <tr><td>60</td><td>Yew logs</td><td class="member-no">No</td><td>202.5</td><td>Configured directly.</td></tr>
+    <tr><td>75</td><td>Magic logs</td><td class="member-yes">Yes</td><td>303.8</td><td>Configured directly and marked members-only.</td></tr>
+  </tbody></table></div>
+
+  <h3>Training methods</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-training-table"><thead><tr><th>Level</th><th>Method</th><th>Access</th><th>Items / tools</th><th>XP per fire</th><th>Practical notes</th></tr></thead><tbody>
+    <tr><td>1&ndash;14</td><td><strong>Normal logs</strong></td><td>Free-to-play</td><td>Tinderbox + logs</td><td>40</td><td>The universal starting method. Open rows of walkable tiles make repeated fires easier because each lit fire occupies the player's previous square.</td></tr>
+    <tr><td>15&ndash;29</td><td><strong>Oak logs</strong></td><td>Free-to-play</td><td>Tinderbox + Oak logs</td><td>60</td><td>More XP per successful fire than normal logs. Banking versus cutting nearby is a resource-choice tradeoff rather than a mechanical difference.</td></tr>
+    <tr><td>30&ndash;44</td><td><strong>Willow logs</strong></td><td>Free-to-play</td><td>Tinderbox + Willow logs</td><td>90</td><td>A common repeatable tier because Willow logs are obtainable in free-to-play and award substantially more XP than Oak.</td></tr>
+    <tr><td>45&ndash;59</td><td><strong>Maple logs</strong></td><td>Free-to-play to burn</td><td>Tinderbox + Maple logs</td><td>135</td><td>The burn action is not members-only. At the target date, normal Maple-tree sourcing is members-side, so a free player would depend on logs entering free-to-play through trade.</td></tr>
+    <tr><td>60&ndash;74</td><td><strong>Yew logs</strong></td><td>Free-to-play</td><td>Tinderbox + Yew logs</td><td>202.5</td><td>Higher XP per log, but usually a more valuable resource. The game does not compensate with a longer-lasting fire.</td></tr>
+    <tr><td>75+</td><td><strong>Magic logs</strong></td><td>Members</td><td>Tinderbox + Magic logs</td><td>303.8</td><td>The highest standard-log Firemaking tier at the cutoff and the only standard log explicitly members-only in build 254.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>No invented XP/hour:</strong> build evidence gives exact XP per successful fire but does not by itself establish a period-correct banking route, player click rate, interruption rate, or hourly throughput. This guide therefore compares per-log XP and practical constraints rather than presenting unsupported XP/hour figures.</p></div>
+
+  <h3>Equipment, fires and special tinderbox uses</h3>
+  <div class="table-wrap"><table class="skill-unlock-table skill-requirements-table"><thead><tr><th>Feature</th><th>Firemaking relevance</th><th>Members</th><th>Requirements / XP</th></tr></thead><tbody>
+    <tr><td><strong>Tinderbox</strong></td><td>The standard tool used to light logs and several quest/special objects.</td><td class="member-no">No</td><td>No Firemaking level to use the tool itself.</td></tr>
+    <tr><td><strong>Player-made fire</strong></td><td>Temporary world object created by successfully burning a log; usable as a Cooking fire.</td><td class="member-no">No</td><td>Requires a valid tile and an appropriate log tier.</td></tr>
+    <tr><td><strong>Ashes</strong></td><td>Remain after an ordinary player-made fire expires.</td><td class="member-no">No</td><td>No additional Firemaking XP when they appear.</td></tr>
+    <tr><td><strong>Candles and other light sources</strong></td><td>Build 254 has a separate tinderbox-lighting path for supported unlit light-source objects.</td><td>Varies</td><td>The generic light-source handler does not award Firemaking XP or impose a Firemaking level check.</td></tr>
+    <tr><td><strong>Underground Pass fire arrows</strong></td><td>Cloth-wrapped arrows can be lit for the quest sequence.</td><td class="member-yes">Yes</td><td>No Firemaking level check or Firemaking XP in the quest lighting handler.</td></tr>
+  </tbody></table></div>
+
+  <h3>Relevant quests</h3>
+  <div class="table-wrap"><table class="skill-unlock-table"><thead><tr><th>Quest</th><th>Access</th><th>Firemaking relevance at the cutoff</th></tr></thead><tbody>
+    <tr><td><a href="../quests/sea-slug.html">Sea Slug</a></td><td>Members</td><td>The dry-stick torch sequence requires <strong>30 Firemaking</strong>. Build 254 performs a Firemaking skill roll for the action; the successful quest action does not award ordinary Firemaking XP.</td></tr>
+    <tr><td><a href="../quests/heroes-quest.html">Heroes' Quest</a></td><td>Members</td><td>Quest completion awards <strong>1,575 Firemaking XP</strong> in build 254.</td></tr>
+    <tr><td><a href="../quests/underground-pass.html">Underground Pass</a></td><td>Members</td><td>Uses a tinderbox to light prepared fire arrows. This is a quest item interaction rather than a Firemaking training method: the handler has no Firemaking level gate or XP award.</td></tr>
+    <tr><td><a href="../quests/merlins-crystal.html">Merlin's Crystal</a></td><td>Members</td><td>Uses tinderbox/light-source interactions during the quest. These light-source actions are not standard log burning and do not award Firemaking XP through the generic light-source handler.</td></tr>
+    <tr><td><a href="../quests/big-chompy-bird-hunting.html">Big Chompy Bird Hunting</a></td><td>Members</td><td>Achey trees and Achey tree logs are part of the Ogre-region content available before the cutoff. Historically the logs are a level-1, 40-XP Firemaking option; the current build data for their Firemaking parameters is incomplete.</td></tr>
+  </tbody></table></div>
+
+  <h3>2004scape implementation notes</h3>
+  <div class="callout"><p><strong>Standard log implementation:</strong> <code>scripts/skill_firemaking/scripts/firemaking.rs2</code> performs the placement, level, ignition, XP, fire and ash behaviour. <code>scripts/skill_firemaking/configs/firemaking.obj</code> supplies the standard logs' level requirements, XP and membership flags. The fuller in-game Firemaking guide in <code>scripts/player/configs/skill_guide.dbrow</code> independently lists the normal, Oak, Willow, Maple, Yew and members-only Magic progression.</p></div>
+  <ul>
+    <li><strong>Maple correction:</strong> the old wiki page labelled Maple logs as members-only. The build's Maple-log object has no <code>members=yes</code> flag, and the skill-guide row simply says <em>Maple logs</em>; the corresponding Magic row explicitly says <em>Members: Magic logs</em>. The rewritten table therefore marks Maple burning as free-to-play.</li>
+    <li><strong>XP scale:</strong> standard <code>productexp</code> values are stored at ten times the displayed skill XP. Normal through Magic are 400, 600, 900, 1350, 2025 and 3038 respectively, yielding 40, 60, 90, 135, 202.5 and 303.8 XP.</li>
+    <li><strong>Achey discrepancy:</strong> <code>scripts/skill_firemaking/scripts/achey.rs2</code> has a dedicated lighting handler that reads the object's <code>levelrequire</code> and <code>productexp</code>. The current <code>achey_tree_logs</code> object, however, supplies neither parameter. The relevant parameter defaults are zero, so the checkout appears to treat Achey logs as requiring no effective Firemaking level and awarding no Firemaking XP. Historical progression is level 1 / 40 XP, so this page records the historical value and flags the build mismatch instead of silently treating the current data as authoritative history.</li>
+    <li><strong>Light-source distinction:</strong> <code>light_source.rs2</code> lights configured candles/torches without using the standard log XP routine. The Sea Slug script separately applies its own 30-Firemaking dry-stick check.</li>
+    <li><strong>Quest fire arrows:</strong> the Underground Pass handler converts prepared unlit arrows to lit arrows but neither checks Firemaking nor advances the skill.</li>
+  </ul>
+
+  <h3>Cutoff exclusions</h3>
+  <div class="callout warn"><p><strong>Current checkout does not equal the historical snapshot:</strong> later content can exist in the source tree and still fall outside this wiki's 7 September 2004 target. The following systems are intentionally excluded from the period unlock/training tables.</p></div>
+  <ul>
+    <li><strong>Tai Bwo Wannai Trio / jogre-bone Firemaking:</strong> released 14 September 2004, one week after the cutoff.</li>
+    <li><strong>Shades of Mort'ton funeral pyres:</strong> released 18 October 2004, after the cutoff.</li>
+    <li><strong>Coloured firelighters and later Firemaking additions:</strong> these belong to later updates and are not presented as September 2004 features.</li>
+  </ul>
+
+  <h3>Source notes</h3>
+  <ul>
+    <li><strong>Build-254 core:</strong> <code>scripts/skill_firemaking/scripts/firemaking.rs2</code>, <code>scripts/skill_firemaking/configs/firemaking.obj</code>, <code>scripts/player/configs/skill_guide.dbrow</code>, and <code>scripts/levelup/scripts/levelup_unlocks_firemaking.rs2</code>.</li>
+    <li><strong>Achey logs:</strong> <code>scripts/skill_firemaking/scripts/achey.rs2</code>, <code>scripts/skill_fletching/configs/ogre/ogre_arrows.obj</code>, and the relevant parameter definitions used to establish the missing-data/default-value discrepancy.</li>
+    <li><strong>Special tinderbox actions:</strong> <code>scripts/skill_firemaking/scripts/light_source.rs2</code>, the Sea Slug quest script, and <code>scripts/quests/quest_upass/scripts/upass_bridge.rs2</code>.</li>
+    <li><strong>Quest reward cross-check:</strong> the Heroes' Quest completion script advances Firemaking by 15,750 internal units, equal to 1,575 displayed XP.</li>
+    <li><strong>Historical scope:</strong> release chronology is used to keep post-7-September systems out of the target-period tables even where their code is present in the current checkout.</li>
+  </ul>
+
   <nav class="page-navigation" aria-label="Previous and next skill guides"><a class="prev" href="woodcutting.html">&larr; Woodcutting</a><a class="next" href="crafting.html">Crafting &rarr;</a></nav>
-  <p class="pagefooter">Source-checked against the project's build-254 skill and level-up scripts. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 Firemaking implementation. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
 </article></main></div>
 </body>
 </html>

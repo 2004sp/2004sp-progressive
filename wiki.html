@@ -27,8 +27,6 @@
     <option value="../wiki.html" selected>Home</option>
 <option value="quests.html">1. Quests</option>
 <option value="skills.html">2. Skills</option>
-<option value="magic-prayer.html">3. Magic &amp; Prayer</option>
-<option value="npcs.html">4. NPCs &amp; dialogue</option>
 <option value="shops.html">5. Shops &amp; economy</option>
 <option value="drops.html">6. Drop tables</option>
 <option value="minigames.html">7. Minigames</option>
@@ -50,8 +48,6 @@
       <li data-title="Overview homepage"><a class="home-item active" href="../wiki.html">Home &amp; overview</a></li>
 <li data-title="1 Quests"><a class="" href="quests.html">1&ensp;Quests</a></li>
 <li data-title="2 Skills"><a class="" href="skills.html">2&ensp;Skills</a></li>
-<li data-title="3 Magic &amp; Prayer"><a class="" href="magic-prayer.html">3&ensp;Magic &amp; Prayer</a></li>
-<li data-title="4 NPCs &amp; dialogue"><a class="" href="npcs.html">4&ensp;NPCs &amp; dialogue</a></li>
 <li data-title="5 Shops &amp; economy"><a class="" href="shops.html">5&ensp;Shops &amp; economy</a></li>
 <li data-title="6 Drop tables"><a class="" href="drops.html">6&ensp;Drop tables</a></li>
 <li data-title="7 Minigames"><a class="" href="minigames.html">7&ensp;Minigames</a></li>
@@ -68,9 +64,9 @@
     <div class="factbox">
       <div class="frow"><dt>Target build</dt><dd>254</dd></div>
       <div class="frow"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
-      <div class="frow"><dt>Quests</dt><dd>56 / 56</dd></div>
+      <div class="frow"><dt>Quests</dt><dd>57 / 57</dd></div>
       <div class="frow"><dt>Skills</dt><dd>19 / 19</dd></div>
-      <div class="frow"><dt>Prayers</dt><dd>15 / 18</dd></div>
+      <div class="frow"><dt>Prayers</dt><dd>15 / 15</dd></div>
       <div class="frow"><dt>Minigames</dt><dd>7 / 7</dd></div>
     </div>
   </nav>
@@ -80,21 +76,19 @@
 <h1 class="pagetitle">What's really in the 254 cache</h1>
 <p class="byline">From the 2004scape Progressive Coverage Wiki &mdash; a fan-made recreation audit, not affiliated with Jagex.</p>
 <div class="audit-dashboard" aria-label="Coverage summary">
-  <div class="audit-stat"><span class="asset-icon scroll" aria-hidden="true"></span><b>56 / 56</b><span>Cutoff-date quests implemented and reward-complete.</span></div>
+  <div class="audit-stat"><span class="asset-icon scroll" aria-hidden="true"></span><b>57 / 57</b><span>Cutoff-date quests implemented and reward-complete.</span></div>
   <div class="audit-stat"><span class="asset-icon skill" aria-hidden="true"></span><b>19 / 19</b><span>Period skills present, with post-2004 slots disabled.</span></div>
-  <div class="audit-stat"><span class="asset-icon prayer" aria-hidden="true"></span><b>15 / 18</b><span>Classic prayers present; three Paterdomus prayers missing.</span></div>
-  <div class="audit-stat"><span class="asset-icon npc" aria-hidden="true"></span><b>~89%</b><span>Talkable NPCs covered by exact or shared dialogue.</span></div>
+  <div class="audit-stat"><span class="asset-icon prayer" aria-hidden="true"></span><b>15 / 15</b><span>All prayers in the 7 September 2004 standard prayer book are present.</span></div>
   <div class="audit-stat"><span class="asset-icon warn" aria-hidden="true"></span><b>1 flag</b><span>Anachronism called out for a faithful Sept 2004 target.</span></div>
 </div>
 <div class="audit-primer">
   <div class="callout">
-    <p><strong>Summary:</strong> the build is strongest where scripts matter: quests, skills, shops, drops, minigames, and most world systems are real implementations rather than cache-name placeholders. The remaining notes are more specific: three missing late-2004 prayers, some NPC dialogue dead ends, one anachronism, and a short list of known bugs.</p>
+    <p><strong>Summary:</strong> the build is strongest where scripts matter: quests, skills, shops, drops, minigames, and most world systems are real implementations rather than cache-name placeholders. The remaining notes are more specific: one anachronism and a short list of known bugs.</p>
   </div>
   <div class="read-first">
     <h2>Start with</h2>
     <a href="quests.html">Quest proof</a>
-    <a href="magic-prayer.html">Prayer gap</a>
-    <a href="npcs.html">Dialogue coverage</a>
+    <a href="skills/prayer.html">Prayer coverage</a>
     <a href="bugs.html">Known bugs</a>
   </div>
 </div>
@@ -106,17 +100,16 @@
 <div class="row"><dt>Engine</dt><dd>Lost City (TS)</dd></div>
 <div class="row"><dt>Target build</dt><dd>254</dd></div>
 <div class="row"><dt>Target date</dt><dd>7 Sep 2004</dd></div>
-<div class="row"><dt>Quests</dt><dd style="color:var(--complete)">56 / 56</dd></div>
+<div class="row"><dt>Quests</dt><dd style="color:var(--complete)">57 / 57</dd></div>
 <div class="row"><dt>Skills</dt><dd style="color:var(--complete)">19 / 19</dd></div>
-<div class="row"><dt>Prayers</dt><dd style="color:var(--partial)">15 / 18</dd></div>
+<div class="row"><dt>Prayers</dt><dd style="color:var(--complete)">15 / 15</dd></div>
 <div class="row"><dt>Minigames</dt><dd style="color:var(--complete)">7 / 7</dd></div>
 <div class="row"><dt>Stocked shops</dt><dd>~74</dd></div>
 <div class="row"><dt>Attackable drop defs</dt><dd>362</dd></div>
-<div class="row"><dt>NPC dialogue</dt><dd>~89%</dd></div>
 <div class="row"><dt>Anachronisms</dt><dd style="color:var(--flag)">1 flagged</dd></div>
 </div>
 <p><strong>2004scape Progressive</strong> is a Lost City–based recreation of RuneScape 2 as it stood at <strong>revision 254</strong>, dated <strong>7 September 2004</strong> by the project's own setup notes, with a bot-AI and hiscores mod ("Progressive") layered on top. This page audits what's implemented, partial, or missing versus the real game on that date.</p>
-<p><code>content/pack/*.pack</code> (obj/npc/loc/seq/etc.) are text tables extracted wholesale from the real 254 cache — 3,169 items, 1,174 NPC names, 3,855 scenery objects — so the game's <em>definitions</em> are already essentially complete by construction. The meaningful question is <em>behavior</em>: which of those definitions have a script behind them — a quest chain, a dialogue tree, a shop till, a drop table, a working minigame — versus sitting inert. That's what this audit spent its effort on, read directly from the file tree and cross-checked against a verified chronological list of every quest RuneScape had shipped by 7 September 2004.</p>
+<p><code>content/pack/*.pack</code> (obj/npc/loc/seq/etc.) are text tables extracted wholesale from the real 254 cache — 3,169 items, 1,162 NPC ID-to-symbol mappings, 3,855 scenery objects — so the game's <em>definitions</em> are already essentially complete by construction. The meaningful question is <em>behavior</em>: which of those definitions have a script behind them — a quest chain, a dialogue tree, a shop till, a drop table, a working minigame — versus sitting inert. That's what this audit spent its effort on, read directly from the file tree and cross-checked against a verified chronological list of every quest RuneScape had shipped by 7 September 2004.</p>
 </div>
 <h2 class="home-section-title">Coverage index</h2>
 <p class="lede">Each contents section now has its own dedicated page. Use the cards below, the sidebar, or the search box to move through the audit.</p>
@@ -129,22 +122,10 @@
   <p>Every quest folder was opened and read — not just listed — to identify which real quest it implements (via in-game journal title strings) and whether its dialogue chain, item/level gates, and…</p>
   <span class="open-link">Open this page &rarr;</span>
 </a>
-<a class="section-card" href="skills.html" data-search="2 Skills All 19 skills that existed by Sept 2004 are present (7 combat + 4 gathering + 6 artisan + 2 misc) — confirmed both by content folder coverage and by the engine&#x27;s PlayerStat enum, which has exactly 21 slots…">
+<a class="section-card" href="skills.html" data-search="2 Skills The 7 Sept 2004 target has 19 skills: 15 available to free-to-play players and four members-only, with Runecraft the newest cutoff skill.">
   <span class="section-number">Section 2</span>
   <h2>Skills</h2>
-  <p>All 19 skills that existed by Sept 2004 are present (7 combat + 4 gathering + 6 artisan + 2 misc) — confirmed both by content folder coverage and by the engine&#x27;s PlayerStat enum, which has exactly 21 slots…</p>
-  <span class="open-link">Open this page &rarr;</span>
-</a>
-<a class="section-card" href="magic-prayer.html" data-search="3 Magic &amp; Prayer 21 non-combat spells are defined in magic_spells.dbrow : Enchant levels 1–5, the six teleports available by 2004 (Varrock, Lumbridge, Falador, Camelot, Ardougne, Watchtower), 4 elemental orb-charges,…">
-  <span class="section-number">Section 3</span>
-  <h2>Magic &amp; Prayer</h2>
-  <p>21 non-combat spells are defined in magic_spells.dbrow : Enchant levels 1–5, the six teleports available by 2004 (Varrock, Lumbridge, Falador, Camelot, Ardougne, Watchtower), 4 elemental orb-charges,…</p>
-  <span class="open-link">Open this page &rarr;</span>
-</a>
-<a class="section-card" href="npcs.html" data-search="4 NPCs &amp; dialogue 988 of the cache&#x27;s 1,174 named NPCs are actually placed somewhere in the world (the other 379 names are reserved for quest-exclusive spawns). Dialogue resolves two ways: an exact-name script ( bob.rs2 ,…">
-  <span class="section-number">Section 4</span>
-  <h2>NPCs &amp; dialogue</h2>
-  <p>988 of the cache&#x27;s 1,174 named NPCs are actually placed somewhere in the world (the other 379 names are reserved for quest-exclusive spawns). Dialogue resolves two ways: an exact-name script ( bob.rs2 ,…</p>
+  <p>The 7 Sept 2004 target has 19 skills: 15 available to free-to-play players and four members-only, with Runecraft the newest cutoff skill.</p>
   <span class="open-link">Open this page &rarr;</span>
 </a>
 <a class="section-card" href="shops.html" data-search="5 Shops &amp; economy The generic shop engine (dynamic buy/sell pricing, haggle multipliers, stock depletion/restock, member-item gating, even a hardcoded Al Kharid silk-selling exception) is fully implemented in…">

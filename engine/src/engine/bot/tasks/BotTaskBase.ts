@@ -24,6 +24,7 @@ import {
     findNpcByPrefix,
     findNpcBySuffix,
     findLocByPrefix,
+    findLocByPrefixWhere,
     findLocByName,
     findLocByNameWhere,
     hasItem,
@@ -37,6 +38,7 @@ import {
     addXp,
     setCombatStyle,
     setAutocastWindStrike,
+    setAutocastSpell,
     openNearbyGate,
     isAdjacentToLoc,
     botTeleport
@@ -46,6 +48,8 @@ import { isMapBlocked, isZoneAllocated } from '#/engine/GameMap.js';
 import type { SkillStep } from '#/engine/bot/BotKnowledge.js';
 import { getMissingPurchases, STARTING_COINS } from '#/engine/bot/BotNeeds.js';
 import type { Purchase } from '#/engine/bot/BotNeeds.js';
+import type { BotTaskDebugInfo } from '#/engine/bot/debug/BotDebugTypes.js';
+import { BotDebugService } from '#/engine/bot/debug/BotDebugService.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -202,6 +206,16 @@ export abstract class BotTask {
     abstract tick(player: Player): void;
     abstract isComplete(player: Player): boolean;
 
+    /**
+     * Optional structured diagnostics for the bot debugger. Tasks are not
+     * required to implement this — BotDebugService falls back to reading a
+     * `.state` field off the instance when it's absent. Override this on
+     * tasks where richer diagnostics (target, destination, extra details)
+     * are worth exposing. Never called from gameplay code, only from the
+     * debug snapshot builder, and always wrapped in try/catch by the caller.
+     */
+    getDebugInfo?(player: Player): BotTaskDebugInfo;
+
     interrupt(): void {
         this.interrupted = true;
     }
@@ -230,6 +244,7 @@ export {
     findNpcByPrefix,
     findNpcBySuffix,
     findLocByPrefix,
+    findLocByPrefixWhere,
     findLocByName,
     findLocByNameWhere,
     hasItem,
@@ -243,6 +258,7 @@ export {
     addXp,
     setCombatStyle,
     setAutocastWindStrike,
+    setAutocastSpell,
     Items,
     Shops,
     Locations,
@@ -257,6 +273,8 @@ export {
     findNpcByNameExcluding,
     botTeleport
 };
+export type { WindSpellTier, ToolRequirement } from '#/engine/bot/BotKnowledge.js';
+export { WIND_SPELLS, pickBestWindSpell, RangedBowsByLevel, bestRangedBow, RangedArrowsByCost, bestAffordableArrow } from '#/engine/bot/BotKnowledge.js';
 
 // ── Shared banking helper ─────────────────────────────────────────────────────
 
@@ -297,6 +315,12 @@ export function advanceBankWalk(
         } else if (stuckDetector.desperatelyStuck) {
             teleportNear(player, bx, bz, bl);
             stuckDetector.reset();
+            try {
+                const bot = (player as any)._bot;
+                if (bot?.name) BotDebugService.noteRecovery(bot.name, 'teleport');
+            } catch {
+                /* debug hook must never affect gameplay */
+            }
         } else {
             // Clear existing (bad) waypoints so the hasWaypoints guard in
             // walkTo() doesn't block the detour recalculation.
@@ -419,6 +443,19 @@ export class StuckDetector {
         return this.escapeCount >= this.escapeLimit;
     }
 
+    /** Read-only diagnostic snapshot for the bot debugger — never used by gameplay logic. */
+    getDebugSnapshot(): { ticks: number; window: number; minProgress: number; snapshotDist: number; escapeCount: number; escapeLimit: number; desperatelyStuck: boolean } {
+        return {
+            ticks: this.ticks,
+            window: this.window,
+            minProgress: this.minProgress,
+            snapshotDist: this.snapshotDist,
+            escapeCount: this.escapeCount,
+            escapeLimit: this.escapeLimit,
+            desperatelyStuck: this.desperatelyStuck
+        };
+    }
+
     reset(): void {
         this.ticks = 0;
         this.snapshotDist = -1;
@@ -463,7 +500,7 @@ export class ProgressWatchdog {
      *                        Short enough to rescue stuck bots quickly, but long enough
      *                        to cover legitimate bank trips and mid-walk delays.
      */
-    constructor(stallTickLimit = 100) {
+    constructor(stallTickLimit = 300) {
         this.limit = stallTickLimit;
     }
 
@@ -515,4 +552,55 @@ export function cleanGrimyHerbs(player: Player): void {
             addXp(player, PlayerStat.HERBLORE, xp * removed.completed);
         }
     }
+}
+
+/**
+ * True if the inventory holds anything other than coins or an item in
+ * keepIds (tools, an in-flight consumable). Used by gathering tasks to spot
+ * leftover junk from a previous task — a leftover pickaxe, ore, loot, etc. —
+ * before heading out to a fresh location, so the bot banks it first instead
+ * of carrying dead weight around for an entire trip.
+ */
+export function hasStrayItems(player: Player, keepIds: number[]): boolean {
+    const inv = player.getInventory(InvType.INV);
+    if (!inv) return false;
+    for (let slot = 0; slot < inv.capacity; slot++) {
+        const item = inv.get(slot);
+        if (!item) continue;
+        if (item.id === Items.COINS) continue;
+        if (keepIds.includes(item.id)) continue;
+        return true;
+    }
+    return false;
+}
+
+// ── Loc claim registry ───────────────────────────────────────────────────────
+//
+// Trees/rocks have no per-bot "target" field the way NPCs do (CombatTask uses
+// npc.target to detect an NPC already being fought), so without this, every
+// bot searching from roughly the same spot deterministically finds the exact
+// same nearest tree/rock — findLocByPrefix always returns the single closest
+// match. Multiple bots then converge on one resource, block each other from
+// the one reachable adjacent tile, and cycle approach-timeout/retry forever,
+// which from the outside looks like bots "stuck" standing next to a tree.
+//
+// Mirrors CombatTask's CLAIMED_NPCS pattern, but for Locs.
+const CLAIMED_LOCS = new Set<string>();
+
+function _locKey(loc: Loc): string {
+    return `${loc.level}:${loc.x}:${loc.z}`;
+}
+
+/** Register a Loc as claimed so other bots' searches skip it. */
+export function claimLoc(loc: Loc): void {
+    CLAIMED_LOCS.add(_locKey(loc));
+}
+
+/** Release a previously-claimed Loc (felled/depleted, task reset, moved on). */
+export function releaseLoc(loc: Loc | null): void {
+    if (loc) CLAIMED_LOCS.delete(_locKey(loc));
+}
+
+export function isLocClaimed(loc: Loc): boolean {
+    return CLAIMED_LOCS.has(_locKey(loc));
 }
