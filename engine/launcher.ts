@@ -37,6 +37,7 @@ const customContent: readonly CustomContentToggle[] = [
     ['Make-X Skill Actions', 'NODE_FEATURE_MAKEX'],
     ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
     ['Left Click Compass Reset', 'NODE_QOL_COMPASS_RESET'],
+    ['Random / AFK Events', 'NODE_QOL_AFK_EVENTS', true],
     ['Anti-Macro Camera Rotation', 'NODE_QOL_ANTI_MACRO_ROTATION', false],
     ['Auto-Open Web Client', 'NODE_QOL_AUTO_OPEN_WEBCLIENT', false],
     ['Auto-Open Hiscores', 'NODE_QOL_AUTO_OPEN_HISCORES', false],
