@@ -35,6 +35,8 @@ export default {
     NODE_PRODUCTION: tryParseBoolean(process.env.NODE_PRODUCTION, false),
     // optional clan system (::clan menu, clan chat). Off by default = fully hidden.
     NODE_FEATURE_CLANS: tryParseBoolean(process.env.NODE_FEATURE_CLANS, false),
+    // disables automatic anti-macro/random events when enabled
+    NODE_ANTI_RANDOM_EVENTS: tryParseBoolean(process.env.NODE_ANTI_RANDOM_EVENTS, false),
     // custom QOL browser controls
     NODE_QOL_MIDDLE_MOUSE_ROTATION: tryParseBoolean(process.env.NODE_QOL_MIDDLE_MOUSE_ROTATION, false),
     NODE_QOL_COMPASS_RESET: tryParseBoolean(process.env.NODE_QOL_COMPASS_RESET, false),
