@@ -1,3 +1,4 @@
 /node_modules
 /engine/.env
 /engine/.build_complete
+/engine/node_modules
