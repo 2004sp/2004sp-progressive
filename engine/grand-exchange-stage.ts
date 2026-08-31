@@ -22,6 +22,21 @@ const GE_INTERFACE_ROOT = 8990;
 const GE_COMPONENT_BASE = 9000;
 const GE_COMPONENT_MAX_SOURCE_ID = 213;
 
+// r481 IF3 can tile a sprite across a component rectangle; the r254 IF1
+// renderer only plots the sprite once at its natural dimensions. Materialize
+// the tiled group-105 graphics into exact-size temporary media during option 2
+// so the source geometry can be preserved without changing the native client.
+const OVERVIEW_TILED_SPRITES = [
+    { name: 'r481_ge_component_1', sourceId: 297, width: 485, height: 300 },
+    { name: 'r481_ge_component_2', sourceId: 955, width: 7, height: 241 },
+    { name: 'r481_ge_component_4', sourceId: 957, width: 32, height: 243 },
+    { name: 'r481_ge_component_5', sourceId: 954, width: 424, height: 7 },
+    { name: 'r481_ge_component_6', sourceId: 956, width: 423, height: 32 },
+    { name: 'r481_ge_component_10', sourceId: 962, width: 465, height: 6 },
+    { name: 'r481_ge_slot_h_47x32', sourceId: 1074, width: 47, height: 32 },
+    { name: 'r481_ge_slot_v_32x45', sourceId: 1075, width: 32, height: 45 },
+] as const;
+
 // Only outputs/runtime sources touched by adding .if/.rs2/sprite sources need
 // to be restored. The whole server pack is backed up because the RuneScript
 // compiler owns its exact output set and can change more than script.dat.
@@ -246,6 +261,8 @@ async function stageSprites() {
     const spriteDir = path.join(STAGED_CONTENT_DIR, 'sprites');
     fs.mkdirSync(spriteDir, { recursive: true });
 
+    const spritesBySourceId = new Map(manifest.sprites.map(sprite => [sprite.source_id, sprite]));
+
     for (const sprite of manifest.sprites) {
         const sourcePath = path.join(PLUGIN_DIR, sprite.file);
         const actualHash = crypto.createHash('sha256').update(fs.readFileSync(sourcePath)).digest('hex');
@@ -273,6 +290,36 @@ async function stageSprites() {
         }
 
         await image.write(path.join(spriteDir, `r481_ge_sprite_${sprite.source_id}.png`));
+    }
+
+    for (const tiledSprite of OVERVIEW_TILED_SPRITES) {
+        const source = spritesBySourceId.get(tiledSprite.sourceId);
+        if (!source) {
+            throw new Error(`Grand Exchange tiled sprite source ${tiledSprite.sourceId} is not present in overview-assets.json`);
+        }
+
+        const sourceImage = await Jimp.read(path.join(PLUGIN_DIR, source.file));
+        const image = new Jimp({ width: tiledSprite.width, height: tiledSprite.height, color: 0x00000000 });
+
+        for (let y = 0; y < tiledSprite.height; y += sourceImage.bitmap.height) {
+            for (let x = 0; x < tiledSprite.width; x += sourceImage.bitmap.width) {
+                image.composite(sourceImage, x, y);
+            }
+        }
+
+        // Derived tiled media is temporary too, so apply the same IF1 palette
+        // transparency conversion before it enters the r254 media pack.
+        for (let offset = 0; offset < image.bitmap.data.length; offset += 4) {
+            const alpha = image.bitmap.data[offset + 3];
+            if (alpha < 128) {
+                image.bitmap.data[offset + 0] = 0xff;
+                image.bitmap.data[offset + 1] = 0x00;
+                image.bitmap.data[offset + 2] = 0xff;
+            }
+            image.bitmap.data[offset + 3] = 0xff;
+        }
+
+        await image.write(path.join(spriteDir, `${tiledSprite.name}.png`));
     }
 }
 
