@@ -1,0 +1,214 @@
+{
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "interface": {
+    "source_group_id": 105,
+    "synthetic_if1_root_local_id": 8990,
+    "source_component_block_base": 9000,
+    "component_formula": "local = 9000 + source_component_id",
+    "canvas": {
+      "width": 512,
+      "height": 334
+    },
+    "offer_slots": [
+      {
+        "container_source_component": 18,
+        "x": 30,
+        "y": 80,
+        "width": 140,
+        "height": 110,
+        "buy_action_source_component": 30,
+        "sell_action_source_component": 31
+      },
+      {
+        "container_source_component": 34,
+        "x": 186,
+        "y": 80,
+        "width": 140,
+        "height": 110,
+        "buy_action_source_component": 46,
+        "sell_action_source_component": 47
+      },
+      {
+        "container_source_component": 50,
+        "x": 342,
+        "y": 80,
+        "width": 140,
+        "height": 110,
+        "buy_action_source_component": 62,
+        "sell_action_source_component": 63
+      },
+      {
+        "container_source_component": 69,
+        "x": 30,
+        "y": 200,
+        "width": 140,
+        "height": 110,
+        "buy_action_source_component": 81,
+        "sell_action_source_component": 82
+      },
+      {
+        "container_source_component": 88,
+        "x": 186,
+        "y": 200,
+        "width": 140,
+        "height": 110,
+        "buy_action_source_component": 100,
+        "sell_action_source_component": 101
+      },
+      {
+        "container_source_component": 107,
+        "x": 342,
+        "y": 200,
+        "width": 140,
+        "height": 110,
+        "buy_action_source_component": 119,
+        "sell_action_source_component": 120
+      }
+    ],
+    "font_compatibility": [
+      {
+        "source_font_id": 494,
+        "candidate_native_font": "p11",
+        "status": "candidate"
+      },
+      {
+        "source_font_id": 496,
+        "candidate_native_font": "b12",
+        "status": "candidate"
+      }
+    ]
+  },
+  "sprites": [
+    {
+      "source_id": 297,
+      "file": "assets/sprites/297.png",
+      "width": 88,
+      "height": 60,
+      "sha256": "3053cb85ff31f7b6e63554d8d69201e81e429fe6d3660f8555288d17fd4307da"
+    },
+    {
+      "source_id": 831,
+      "file": "assets/sprites/831.png",
+      "width": 16,
+      "height": 16,
+      "sha256": "ca692e426ffb15a15e798ef0d0facfaa1ea4a4340532925854349ff7ad84d054"
+    },
+    {
+      "source_id": 954,
+      "file": "assets/sprites/954.png",
+      "width": 32,
+      "height": 7,
+      "sha256": "d6b290b5102f615a19559391746baefcbe98043eda36fe0f8975ff85ac8bd0c2"
+    },
+    {
+      "source_id": 955,
+      "file": "assets/sprites/955.png",
+      "width": 7,
+      "height": 32,
+      "sha256": "2e66915f589dde346576d107f314942a193d46eed62569384448bda28f781978"
+    },
+    {
+      "source_id": 956,
+      "file": "assets/sprites/956.png",
+      "width": 32,
+      "height": 7,
+      "sha256": "a8c018a3e56b5e645cd2c56d24bffc5b5b2c09282cd9357b841a06725c61d653"
+    },
+    {
+      "source_id": 957,
+      "file": "assets/sprites/957.png",
+      "width": 7,
+      "height": 32,
+      "sha256": "56cf57df62796bab6ba9cd2ef8f1aa4804895b2d5db8795105239b66fe9c147d"
+    },
+    {
+      "source_id": 958,
+      "file": "assets/sprites/958.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "5bc595b38b27ad787c78930e6ac8591db6a119fe2f8b05b728cc4165064a508b"
+    },
+    {
+      "source_id": 959,
+      "file": "assets/sprites/959.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "c3720de0d4a6765db511e97eebf40437d841c25626fb588c04dcc5f91034c34e"
+    },
+    {
+      "source_id": 960,
+      "file": "assets/sprites/960.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "00039031dfd95505767ee4a17b33759573fcdc627de487d9b167d175cb6f3fdb"
+    },
+    {
+      "source_id": 961,
+      "file": "assets/sprites/961.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "55a1a387a0abcbc32ac80650b9786c6b1e066b74f692f02018afaf83b419f67b"
+    },
+    {
+      "source_id": 962,
+      "file": "assets/sprites/962.png",
+      "width": 32,
+      "height": 6,
+      "sha256": "0d5879d9858f6059bebb94af4d5f110e13dc80a04cfeff1d5d107ba16cd133d9"
+    },
+    {
+      "source_id": 963,
+      "file": "assets/sprites/963.png",
+      "width": 11,
+      "height": 12,
+      "sha256": "76df395c69e09bc7211e298537ac7ae4ab7b1917cdf8e1875c77732c76db33f1"
+    },
+    {
+      "source_id": 964,
+      "file": "assets/sprites/964.png",
+      "width": 11,
+      "height": 12,
+      "sha256": "b91187e1f23724449a0aa2b1d3545e7dbbfeddd154a1fb245d1d7250cd6c1e29"
+    },
+    {
+      "source_id": 1074,
+      "file": "assets/sprites/1074.png",
+      "width": 32,
+      "height": 2,
+      "sha256": "f16555a48c8c2a4d332470e808968d0f35d7bfa9b76832ca7ba90e22a7c995e4"
+    },
+    {
+      "source_id": 1075,
+      "file": "assets/sprites/1075.png",
+      "width": 2,
+      "height": 32,
+      "sha256": "5b3713f56592675be9f2a5c3626cc005adcf1b33930f79f913352f780d3e1bd5"
+    },
+    {
+      "source_id": 1164,
+      "file": "assets/sprites/1164.png",
+      "width": 20,
+      "height": 18,
+      "sha256": "2b2ce88db2f01f7a5326b4dab7c57e9f13f1c4a3b2740c09b5352535f60b7d32"
+    },
+    {
+      "source_id": 1168,
+      "file": "assets/sprites/1168.png",
+      "width": 26,
+      "height": 35,
+      "sha256": "4d039b4f762b77db372c22f277bf0ead2551e6f25f23c68da3fb4393f390c846"
+    },
+    {
+      "source_id": 1170,
+      "file": "assets/sprites/1170.png",
+      "width": 26,
+      "height": 35,
+      "sha256": "a7f764ad8fea73e097bbc1a30e64e02404deb71540a0bc1f875bc13d857693ba"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+// Phase 2 debug entry point. This script is only staged into the option-2
+// custom-content build when the Grand Exchange plugin is enabled.
+[debugproc,ge]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+if_openmain(grand_exchange_overview);
