@@ -6,6 +6,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import kleur from 'kleur';
 
+import { prepareGrandExchangeStage, restoreGrandExchangeStage } from './grand-exchange-stage.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ENV_PATH = path.join(__dirname, '.env');
 
@@ -32,6 +34,7 @@ const customContent: readonly CustomContentToggle[] = [
     ['Custom Shops', 'NODE_FEATURE_CUSTOMSHOPS'],
     ['Boss Pets', 'NODE_FEATURE_BOSSPETS'],
     ['Custom Weapons', 'NODE_FEATURE_CUSTOMWEAPONS'],
+    ['Grand Exchange (option 2 only)', 'NODE_FEATURE_GRANDEXCHANGE', false],
     ['X-Amount Shop Input', 'NODE_FEATURE_XAMOUNT'],
     ['Make-X Skill Actions', 'NODE_FEATURE_MAKEX'],
     ['Middle-Mouse Button Rotation', 'NODE_QOL_MIDDLE_MOUSE_ROTATION'],
@@ -44,8 +47,8 @@ const customContent: readonly CustomContentToggle[] = [
 ];
 
 const customContentCategories = [
-    ['Custom', customContent.slice(0, 5)],
-    ['QOL (Quality of Life)', customContent.slice(5)],
+    ['Custom', customContent.slice(0, 6)],
+    ['QOL (Quality of Life)', customContent.slice(6)],
 ] as const;
 
 const runningProcesses: Record<string, ChildProcess> = {};
@@ -398,6 +401,7 @@ async function runServer(showComplete = true) {
         'quickstart',
         { from: 80, to: 99, message: 'Starting game server' },
         {
+            NODE_FEATURE_GRANDEXCHANGE: 'false',
             NODE_QOL_ANTI_MACRO_ROTATION: 'false',
             NODE_ANTI_RANDOM_EVENTS: 'false',
             NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
@@ -425,42 +429,67 @@ async function runCustomServer() {
         BUILD_VERIFY: 'false',
     });
 
-    progress(55, 'Building content');
-    const code = await runScriptAndWait('build', { from: 55, to: 74, message: 'Building content' });
-    if (code !== 0) {
-        console.log('Build failed; server not started.');
-        return;
-    }
+    const grandExchangeEnabled = getEnvValue('NODE_FEATURE_GRANDEXCHANGE', false);
+    let stagedBuildSrc: string | undefined;
 
-    progress(75, 'Refreshing packed scripts');
-    const scriptDat = path.join(__dirname, 'data', 'pack', 'server', 'script.dat');
-    fs.rmSync(scriptDat, { force: true });
-    console.log('Deleted data/pack/server/script.dat');
-
-    const openHiscores = getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false);
-    const openWebClient = getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false);
-    console.log(`Option 2 auto-open settings: hiscores=${openHiscores}, webclient=${openWebClient}`);
-
-    progress(82, 'Preparing hiscores on the main web server');
-    if (openHiscores || openWebClient) {
-        void autoOpenCustomPages(openHiscores, openWebClient).catch(error => {
-            console.log(`Auto-open failed: ${error instanceof Error ? error.message : String(error)}`);
-        });
-    }
-    progress(85, 'Starting custom game server');
-    const serverCode = await runScriptAndWait(
-        'quickstart',
-        { from: 85, to: 99, message: 'Starting custom game server' },
-        {
-            NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', false)),
-            NODE_ANTI_RANDOM_EVENTS: String(getEnvValue('NODE_ANTI_RANDOM_EVENTS', false))
+    try {
+        if (grandExchangeEnabled) {
+            progress(50, 'Staging Grand Exchange overlay');
+            stagedBuildSrc = await prepareGrandExchangeStage();
+            console.log(`Option 2 Grand Exchange overlay staged at ${stagedBuildSrc}`);
+        } else {
+            console.log('Option 2 Grand Exchange: disabled');
         }
-    );
-    if (serverCode !== 0) {
-        console.log('Server stopped with an error.');
-        return;
+
+        const option2Env: ScriptEnvOverrides = {
+            NODE_FEATURE_GRANDEXCHANGE: String(grandExchangeEnabled),
+            ...(stagedBuildSrc ? { BUILD_SRC_DIR: stagedBuildSrc } : {}),
+        };
+
+        progress(55, 'Building content');
+        const code = await runScriptAndWait('build', { from: 55, to: 74, message: 'Building content' }, option2Env);
+        if (code !== 0) {
+            console.log('Build failed; server not started.');
+            return;
+        }
+
+        progress(75, 'Refreshing packed scripts');
+        const scriptDat = path.join(__dirname, 'data', 'pack', 'server', 'script.dat');
+        fs.rmSync(scriptDat, { force: true });
+        console.log('Deleted data/pack/server/script.dat');
+
+        const openHiscores = getEnvValue('NODE_QOL_AUTO_OPEN_HISCORES', false);
+        const openWebClient = getEnvValue('NODE_QOL_AUTO_OPEN_WEBCLIENT', false);
+        console.log(`Option 2 auto-open settings: hiscores=${openHiscores}, webclient=${openWebClient}`);
+
+        progress(82, 'Preparing hiscores on the main web server');
+        if (openHiscores || openWebClient) {
+            void autoOpenCustomPages(openHiscores, openWebClient).catch(error => {
+                console.log(`Auto-open failed: ${error instanceof Error ? error.message : String(error)}`);
+            });
+        }
+        progress(85, 'Starting custom game server');
+        const serverCode = await runScriptAndWait(
+            'quickstart',
+            { from: 85, to: 99, message: 'Starting custom game server' },
+            {
+                ...option2Env,
+                NODE_QOL_ANTI_MACRO_ROTATION: String(getEnvValue('NODE_QOL_ANTI_MACRO_ROTATION', false)),
+                NODE_ANTI_RANDOM_EVENTS: String(getEnvValue('NODE_ANTI_RANDOM_EVENTS', false))
+            }
+        );
+        if (serverCode !== 0) {
+            console.log('Server stopped with an error.');
+            return;
+        }
+        progress(100, 'Custom server stopped');
+    } catch (error) {
+        console.log(`Grand Exchange custom-content staging failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+        if (grandExchangeEnabled && restoreGrandExchangeStage()) {
+            console.log('Restored native packed cache after Grand Exchange option-2 run.');
+        }
     }
-    progress(100, 'Custom server stopped');
 }
 
 // For processes that need full stdin control (interactive prompts).
@@ -521,7 +550,7 @@ ${kleur.green('Recommended:')} Use ${kleur.bold('3')} for normal play. Use ${kle
 
 ${kleur.bold().green('Play')}
   ${kleur.green('1.')}  Start Server ${kleur.gray('(skips npm install after first run)')}
-  ${kleur.green('2.')}  Custom Server + Hiscores ${kleur.gray('(patch .env -> build -> delete script.dat -> start; hiscores at /index.html)')}
+  ${kleur.green('2.')}  Custom Server + Hiscores ${kleur.gray('(stage enabled custom content -> build -> start; hiscores at /index.html)')}
   ${kleur.green('3.')}  Start Server + Hiscores ${recommended}
 
 ${kleur.bold().cyan('Services')}
@@ -574,6 +603,7 @@ async function handleInput(input: string) {
                 'quickstart',
                 { from: 92, to: 99, message: 'Starting game server' },
                 {
+                    NODE_FEATURE_GRANDEXCHANGE: 'false',
                     NODE_QOL_ANTI_MACRO_ROTATION: 'false',
                     NODE_ANTI_RANDOM_EVENTS: 'false',
                     NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
@@ -847,5 +877,8 @@ async function changePassword() {
     }
 }
 
+if (restoreGrandExchangeStage()) {
+    console.log('Restored native packed cache from an interrupted Grand Exchange option-2 run.');
+}
 showMenu();
 createReadline();
