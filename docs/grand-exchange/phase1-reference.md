@@ -11,11 +11,9 @@ Phase 1 is frozen against the user-supplied cache archive rather than an inferre
 - Provided timestamp: 2007-12-12
 - Cache format: versioned JS5 (`main_file_cache.dat2`, `idx0..idx15`, `idx255`)
 
-### Revision mismatch
+### Revision confirmation
 
-PR #21 currently says r479. The supplied archive is OpenRS2 cache #568 and is labelled b481. OpenRS2's cache record combines a 2007-12-12 source with unspecified build and a 2007-12-15 source identified as build 481. Do not relabel this frozen input as r479.
-
-Until the PR wording is intentionally changed, treat `r481` in these Phase 1 manifests as the authoritative source label for the uploaded cache.
+PR #21 is now scoped to r481, matching the supplied OpenRS2 #568 / b481-family cache. OpenRS2's cache record combines a 2007-12-12 source with unspecified build and a 2007-12-15 source identified as build 481; the uploaded archive and its SHA-256 above are the authoritative frozen input for this backport.
 
 ## Grand Exchange interface family
 
