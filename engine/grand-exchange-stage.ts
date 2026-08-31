@@ -22,14 +22,15 @@ const GE_INTERFACE_ROOT = 8990;
 const GE_COMPONENT_BASE = 9000;
 const GE_COMPONENT_MAX_SOURCE_ID = 213;
 
-// Only outputs touched by adding .if/.rs2/sprite sources need to be restored.
-// The whole server pack is backed up because the RuneScript compiler owns its
-// exact output set and can change more than script.dat between compiler builds.
+// Only outputs/config touched by adding .if/.rs2/sprite sources need to be
+// restored. The whole server pack is backed up because the RuneScript compiler
+// owns its exact output set and can change more than script.dat between builds.
 const MANAGED_NATIVE_OUTPUTS = [
     'data/pack/client/interface',
     'data/pack/client/media',
     'data/pack/server',
     'data/symbols',
+    'neptune.toml',
 ] as const;
 
 type BackupManifest = {
@@ -203,6 +204,25 @@ function injectScriptMapping() {
     fs.writeFileSync(packPath, `${normalized}${maxId + 1}=${triggerName}\n`, 'utf8');
 }
 
+function pointRuneScriptCompilerAtStage() {
+    // The native TypeScript packer honors BUILD_SRC_DIR. Neptune (the
+    // RuneScript compiler) reads its source roots from neptune.toml instead,
+    // so option 2 temporarily points that source list at the same staged tree.
+    const configPath = path.join(ENGINE_DIR, 'neptune.toml');
+    if (!fs.existsSync(configPath)) {
+        return;
+    }
+
+    const content = fs.readFileSync(configPath, 'utf8');
+    const stagedScripts = path.join(STAGED_CONTENT_DIR, 'scripts').replace(/\\/g, '/') + '/';
+    const sourceLine = /^\s*sources\s*=.*$/m;
+    if (!sourceLine.test(content)) {
+        throw new Error('neptune.toml does not contain a sources = [...] entry for isolated Grand Exchange staging');
+    }
+
+    fs.writeFileSync(configPath, content.replace(sourceLine, `sources = ["${stagedScripts}"]`), 'utf8');
+}
+
 async function stageSprites() {
     const manifest = JSON.parse(fs.readFileSync(OVERVIEW_ASSETS_PATH, 'utf8')) as OverviewAssetManifest;
     const spriteDir = path.join(STAGED_CONTENT_DIR, 'sprites');
@@ -267,6 +287,7 @@ export async function prepareGrandExchangeStage() {
 
         injectInterfaceMappings();
         injectScriptMapping();
+        pointRuneScriptCompilerAtStage();
         await stageSprites();
         return STAGED_CONTENT_DIR;
     } catch (error) {
