@@ -1,4 +1,4 @@
-// r481 GE group 105 -> r254 IF1 geometry scaffold.
+// r481 GE group 105 -> r254 IF1 overview scaffold.
 // This file is staged only by the Grand Exchange custom-content build.
 // Source component IDs are retained in section names where practical.
 
@@ -23,18 +23,17 @@ shadowed=yes
 text=Grand Exchange
 colour=0xFF981F
 
+// r481 group-105 close sprite. The media name is produced only in the
+// temporary option-2 build source by grand-exchange-stage.ts.
 [com_13]
-type=text
-x=452
+type=graphic
+x=475
 y=31
-width=37
-height=12
+width=16
+height=16
 buttontype=close
-font=p11
-shadowed=yes
-text=Close
-colour=0xFF0000
-overcolour=0xFFFFFF
+graphic=r481_ge_sprite_831,0
+activegraphic=r481_ge_sprite_831,0
 
 [com_17]
 type=text
@@ -48,6 +47,10 @@ shadowed=yes
 text=Shown below is a summary of all your current offers.
 colour=0xFF981F
 
+// Empty offer slots keep native IF1 geometry for this first vertical slice.
+// The r481 buy/sell action sprites make the overview recognisable while the
+// remaining group-105 component states are translated in later slices.
+
 // Offer 1: source container 18, source action areas 30/31.
 [com_18]
 type=rect
@@ -58,28 +61,20 @@ height=110
 colour=0x726451
 
 [com_30]
-type=text
-x=42
-y=130
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xFFFF00
+type=graphic
+x=54
+y=121
+width=26
+height=35
+graphic=r481_ge_sprite_1168,0
 
 [com_31]
-type=text
-x=105
-y=130
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xFFFF00
+type=graphic
+x=117
+y=121
+width=26
+height=35
+graphic=r481_ge_sprite_1170,0
 
 // Offer 2: source container 34, source action areas 46/47.
 [com_34]
@@ -91,28 +86,20 @@ height=110
 colour=0x726451
 
 [com_46]
-type=text
-x=198
-y=130
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xFFFF00
+type=graphic
+x=210
+y=121
+width=26
+height=35
+graphic=r481_ge_sprite_1168,0
 
 [com_47]
-type=text
-x=261
-y=130
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xFFFF00
+type=graphic
+x=273
+y=121
+width=26
+height=35
+graphic=r481_ge_sprite_1170,0
 
 // Offer 3: source container 50, source action areas 62/63.
 [com_50]
@@ -124,28 +111,20 @@ height=110
 colour=0x726451
 
 [com_62]
-type=text
-x=354
-y=130
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xFFFF00
+type=graphic
+x=366
+y=121
+width=26
+height=35
+graphic=r481_ge_sprite_1168,0
 
 [com_63]
-type=text
-x=417
-y=130
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xFFFF00
+type=graphic
+x=429
+y=121
+width=26
+height=35
+graphic=r481_ge_sprite_1170,0
 
 // Offer 4: source container 69, source action areas 81/82.
 [com_69]
@@ -157,28 +136,20 @@ height=110
 colour=0x726451
 
 [com_81]
-type=text
-x=42
-y=250
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xFFFF00
+type=graphic
+x=54
+y=241
+width=26
+height=35
+graphic=r481_ge_sprite_1168,0
 
 [com_82]
-type=text
-x=105
-y=250
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xFFFF00
+type=graphic
+x=117
+y=241
+width=26
+height=35
+graphic=r481_ge_sprite_1170,0
 
 // Offer 5: source container 88, source action areas 100/101.
 [com_88]
@@ -190,28 +161,20 @@ height=110
 colour=0x726451
 
 [com_100]
-type=text
-x=198
-y=250
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xFFFF00
+type=graphic
+x=210
+y=241
+width=26
+height=35
+graphic=r481_ge_sprite_1168,0
 
 [com_101]
-type=text
-x=261
-y=250
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xFFFF00
+type=graphic
+x=273
+y=241
+width=26
+height=35
+graphic=r481_ge_sprite_1170,0
 
 // Offer 6: source container 107, source action areas 119/120.
 [com_107]
@@ -223,25 +186,17 @@ height=110
 colour=0x726451
 
 [com_119]
-type=text
-x=354
-y=250
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xFFFF00
+type=graphic
+x=366
+y=241
+width=26
+height=35
+graphic=r481_ge_sprite_1168,0
 
 [com_120]
-type=text
-x=417
-y=250
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xFFFF00
+type=graphic
+x=429
+y=241
+width=26
+height=35
+graphic=r481_ge_sprite_1170,0
