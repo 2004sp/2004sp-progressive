@@ -181,7 +181,7 @@ export function botTeleport(player: Player, x: number, z: number, level: number)
 type GatewayRegion = {
     readonly name: string;
     /** Destination is in the gated area. */
-    readonly destInRegion: (x: number, z: number) => boolean;
+    readonly destInRegion: (x: number, z: number, l: number) => boolean;
     /**
      * Tile outside the region to approach from so the bot faces the gate from
      * the correct side. A second tile can be provided to create an area.
@@ -194,6 +194,14 @@ type GatewayRegion = {
      * Keep the area small, for example a line that is one tile wide.
      */
     readonly exit: number[][];
+    /**
+     * If set, floor of the approach. Defaults to 0 (ground floor).
+     */
+    readonly approachLevel?: number;
+    /**
+     * If set, floor of the exit. Defaults to 0 (ground floor).
+     */
+    readonly exitLevel?: number;
     /**
      * If set, the bot is teleported instead of interacting with the gate.
      * Use for gates that require a toll or complex dialog that bots cannot
@@ -216,7 +224,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Fix: Force bots to enter and leave through the north of the castle.
         // If they head for Draynor, they automatically pick the west most tile.
         name: 'Lumbridge',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Lumbridge',
             'MisthalinEast',
             'Desert']),
@@ -229,7 +237,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Bots walking directly to the interior hit the fence unless they
         // approach from the east side and open the gate.
         name: 'LumbridgeSheep',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'LumbridgeSheep']),
         approach: [[3213, 3261], [3213, 3262]],
         exit: [[3212, 3261], [3212, 3262]]
@@ -238,7 +246,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Lumbridge ↔ Toll Gate ─────────────────────────────────────────────
         // South bridge over River Lum.
         name: 'RiverLumSouth',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'MisthalinEast',
             'Desert',
             'Wilderness',
@@ -250,7 +258,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Lumbridge ↔ Varrock ───────────────────────────────────────────────
         // Second south bridge over River Lum near furnace.
         name: 'RiverLumSouth2',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'MisthalinEast',
             'Desert',
             'Wilderness',
@@ -262,7 +270,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Barbarian Village ↔ Varrock ───────────────────────────────────────
         // Bridge over River Lum near Barbarian Village.
         name: 'RiverLumBarb',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'MisthalinEast',
             'Desert',
             'Morytania']),
@@ -273,7 +281,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Edgeville ↔ Varrock North ─────────────────────────────────────────
         // North bridge over River Lum near Wilderness.
         name: 'RiverLumNorth',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'MisthalinEast',
             'Wilderness',
             'Morytania']),
@@ -286,7 +294,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Bots walking directly to the interior ([3255, 3276]) hit the south
         // fence unless they approach through the gate tile.
         name: 'LumbridgeCow',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'LumbridgeCow']),
         approach: [[3252, 3266], [3252, 3267]],
         exit: [[3253, 3266], [3253, 3267]]
@@ -297,7 +305,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // only by navigating through the city. Routing through the Varrock
         // south road entry gives the pathfinder a clear corridor to follow.
         name: 'VarrockPalace',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'VarrockPalace']),
         approach: [[3212, 3438], [3213, 3438]],
         exit: [[3212, 3439], [3213, 3439]]
@@ -306,7 +314,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Varrock East ↔ Varrock Palace ─────────────────────────────────────
         // East entrance to Varrock Palace.
         name: 'VarrockPalaceEast',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'VarrockPalace']),
         approach: [[3235, 3464], [3235, 3467]],
         exit: [[3234, 3465], [3234, 3466]]
@@ -324,7 +332,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // handle.  Once the bot reaches the approach tile it is teleported
         // directly to the inside (3268, 3227) — the first open tile past the wall.
         name: 'AlKharid',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Desert']),
         approach: [[3267, 3227], [3267, 3228]],
         exit:     [[3268, 3227], [3268, 3228]],
@@ -335,7 +343,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Bots from Varrock should go through the opening in the fence to
         // the north instead of going to the south gate.
         name: 'AlKharidNorth',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Desert']),
         approach: [[3279, 3330], [3285, 3330]],
         exit: [[3279, 3329], [3285, 3329]]
@@ -345,7 +353,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Access to the Kharidian desert via Shantay Pass. Requires a toll/pass
         // so bots teleport through the gate.
         name: 'ShantayPass',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'DesertSouth']),
         approach: [[3303, 3118], [3304, 3118]],
         exit: [[3303, 3115], [3304, 3115]],
@@ -360,7 +368,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // 3261. Via (3070, 3277) — just north of the fence top — the bot rounds
         // the corner and then has a clear westward run.
         name: 'DraynorFence',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Misthalin',
             'Desert',
             'Wilderness',
@@ -374,7 +382,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // current revision we can ensure better compatilibty between revisions.
         // This gateway automatically gets disabled after that.
         name: 'BarbFence',
-        destInRegion: (x, z) => Environment.ENGINE_REVISION < 360 && checkRegion(x, z, [
+        destInRegion: (x, z, l) => Environment.ENGINE_REVISION < 360 && checkRegion(x, z, l, [
             'Misthalin',
             'Desert',
             'Wilderness',
@@ -387,7 +395,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Only enabled after revision 360. We still need a gateway otherwise
         // the bots walk all the way to the Draynor gateway.
         name: 'BarbFenceRemoved',
-        destInRegion: (x, z) => Environment.ENGINE_REVISION >= 360 && checkRegion(x, z, [
+        destInRegion: (x, z, l) => Environment.ENGINE_REVISION >= 360 && checkRegion(x, z, l, [
             'Misthalin',
             'Desert',
             'Wilderness',
@@ -400,7 +408,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Bots heading to Entrana (gathering herblore supplies or woodcutting)
         // walk to the Port Sarim northern docks and teleport to Entrana.
         name: 'Entrana',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Entrana']),
         approach: [[3048, 3234]],
         exit: [[2834, 3335]],
@@ -410,7 +418,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Falador ↔ Taverley (gate) ─────────────────────────────────────────
         // The long wall between Falador and Taverley.
         name: 'Taverley',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Taverley',
             'Kandarin',
             'Feldip',
@@ -424,7 +432,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Port Sarim ↔ Taverley (gate) ──────────────────────────────────────
         // Taverley south gate near Dark Wizards' Tower.
         name: 'TaverleySouth',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Taverley',
             'Kandarin',
             'Feldip',
@@ -440,7 +448,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // (x < 2800) must route through the mountain pass.
         // The BFS often gets lost in the mountain crags.
         name: 'WhiteWolf',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'WhiteWolf',
             'Kandarin',
             'Feldip',
@@ -453,7 +461,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── White Wolf Mountain East ↔ White Wolf Mountain West ────────────────
         // Top of the mountain near the gnome glider.
         name: 'WhiteWolfWest',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'WhiteWolfWest',
             'Kandarin',
             'Feldip',
@@ -469,7 +477,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // (2956, 3146). The boat costs 30 coins and triggers a dialog that
         // bots cannot handle natively, so teleport is used instead.
         name: 'MusaPointBoat',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Karamja',
             'Kandarin',
             'Feldip',
@@ -483,13 +491,13 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Musa Point ↔ Brimhaven (gate) ─────────────────────────────────────
         // Fence between Musa Point and Brimhaven.
         name: 'BrimhavenFence',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Karamja',
             'Kandarin',
             'Feldip',
             'Tirannwn',
             'Fremennik']) &&
-            !checkRegion(x, z, [
+            !checkRegion(x, z, l, [
                 'MusaPoint']),
         approach: [[2816, 3182], [2816, 3183]],
         exit: [[2815, 3182], [2815, 3183]]
@@ -500,7 +508,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // revision 456 where the Ditch is added. Coordinates will still be
         // correct but interaction would need to be added.
         name: 'WildernessVarrock',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Wilderness']),
         approach: [[3135, 3520], [3327, 3520]],
         exit: [[3135, 3523], [3327, 3523]]
@@ -509,7 +517,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Edgeville ↔ Wilderness ────────────────────────────────────────────
         // Also includes the stretch with the Monastery.
         name: 'WildernessEdgeville',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Wilderness']),
         approach: [[3042, 3520], [3123, 3520]],
         exit: [[3041, 3523], [3122, 3523]]
@@ -518,7 +526,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Ice Mountain ↔ Wilderness ─────────────────────────────────────────
         // Small passage connecting Ice Mountain with the Wilderness.
         name: 'WildernessIceMountain',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Wilderness']),
         approach: [[2998, 3529], [2998, 3533]],
         exit: [[2995, 3529], [2995, 3534]]
@@ -528,7 +536,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Only enabled prior to revision 249 for backwards compatiblity.
         // After that it opens up to include the Chaos Temple.
         name: 'WildernessWestOld',
-        destInRegion: (x, z) => Environment.ENGINE_REVISION < 249 && checkRegion(x, z, [
+        destInRegion: (x, z, l) => Environment.ENGINE_REVISION < 249 && checkRegion(x, z, l, [
             'Wilderness']),
         approach: [[2967, 3520], [2992, 3520]],
         exit: [[2967, 3523], [2992, 3523]]
@@ -537,7 +545,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Mind Altar ↔ Wilderness ───────────────────────────────────────────
         // Also connected to the new stretch with the Chaos Temple.
         name: 'WildernessWest',
-        destInRegion: (x, z) => Environment.ENGINE_REVISION >= 249 && checkRegion(x, z, [
+        destInRegion: (x, z, l) => Environment.ENGINE_REVISION >= 249 && checkRegion(x, z, l, [
             'Wilderness']),
         approach: [[2945, 3520], [2992, 3520]],
         exit: [[2945, 3523], [2992, 3523]]
@@ -546,7 +554,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── White Wolf Mountain ↔ Catherby ────────────────────────────────────
         // West exit from the mountain connecting to Kandarin.
         name: 'Catherby',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Kandarin',
             'Feldip',
             'Tirannwn',
@@ -559,7 +567,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Gate to the Tree Gnome Stronghold. Bots should have auto completed to
         // help Femi (var 152) so they can open the gate without dialog.
         name: 'GnomeStronghold',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'GnomeStronghold']),
         approach: [[2460, 3382], [2462, 3382]],
         exit: [[2460, 3385], [2462, 3385]]
@@ -570,7 +578,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // The boat costs 30 coins and triggers a dialog that
         // bots cannot handle natively, so teleport is used instead.
         name: 'BrimhavenBoat',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Kandarin',
             'Feldip',
             'Tirannwn',
@@ -583,7 +591,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Legends' Guild ↔ Ardougne Docks ───────────────────────────────────
         // Docks entrance to Ardougne.
         name: 'ArdougneDocks',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Ardougne',
             'KandarinSouth',
             'Feldip']),
@@ -594,7 +602,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Legends' Guild ↔ Ardougne Market ──────────────────────────────────
         // East entrance to Ardougne.
         name: 'ArdougneMarket',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Ardougne',
             'KandarinSouth',
             'Feldip']),
@@ -605,7 +613,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Hemenster ↔ Ardougne ──────────────────────────────────────────────
         // Main north entrance to Ardougne.
         name: 'ArdougneNorth',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Ardougne',
             'KandarinSouth',
             'Feldip']),
@@ -616,7 +624,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Fishing Guild ↔ Ardougne ──────────────────────────────────────────
         // Entrance to Ardougne closest to north bank.
         name: 'ArdougneNorthBank',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Ardougne',
             'KandarinSouth',
             'Feldip']),
@@ -627,7 +635,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Fishing Guild ↔ Ardougne ──────────────────────────────────────────
         // Entrance to Ardougne, north of castle.
         name: 'ArdougneNorthCastle',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Ardougne',
             'KandarinSouth',
             'Feldip']),
@@ -638,7 +646,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Tree Gnome Stronghold ↔ Ardougne ──────────────────────────────────
         // Small entrance to Ardougne, northwest corner.
         name: 'ArdougneNorthWest',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'Ardougne',
             'KandarinSouth',
             'Feldip']),
@@ -649,7 +657,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Ardougne ↔ Battlefield ────────────────────────────────────────────
         // Southwest exit from Ardougne.
         name: 'ArdougneSouthWest',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'KandarinSouth',
             'Feldip']),
         approach: [[2559, 3264], [2663, 3264]],
@@ -659,7 +667,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Ardougne zoo ↔ Monastery ──────────────────────────────────────────
         // Main south exit from Ardougne.
         name: 'ArdougneZoo',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'KandarinSouth',
             'Feldip']),
         approach: [[2602, 3264], [2603, 3264]],
@@ -669,7 +677,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Ardougne ↔ Monastery ──────────────────────────────────────────────
         // Southeast exit from Ardougne closest to south bank.
         name: 'ArdougneSouthEast',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'KandarinSouth',
             'Feldip']),
         approach: [[2640, 3264], [2641, 3264]],
@@ -679,7 +687,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // ── Ardougne Market ↔ Ardougne Castle ─────────────────────────────────
         // Bridge to Ardougne Castle.
         name: 'ArdougneRiverWest',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'ArdougneRiverWest']),
         approach: [[2599, 3295], [2599, 3297]],
         exit: [[2598, 3295], [2598, 3297]]
@@ -689,7 +697,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Gate to West Ardougne, requires completion of Plague City which
         // the bots should have auto completed.
         name: 'WestArdougne',
-        destInRegion: (x, z) => checkRegion(x, z, [
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'WestArdougne']),
         approach: [[2559, 3299], [2559, 3300]],
         exit: [[2556, 3299], [2556, 3300]]
@@ -710,6 +718,11 @@ type Region = {
      * be provided to precisely define a region as a polygon.
      */
     readonly coords: number[][];
+    /**
+     * If set, limit this region to a floor.
+     * Otherwise all floors are inside the region.
+     */
+    readonly level?: number;
     /**
      * If set, names of regions that should also be part of this region
      * but could not be included in `coords`.
@@ -1398,15 +1411,17 @@ const REGIONS: Region[] = [
  * they can be added to the `contains` field of the main region if desired.
  * If the point was not found in any of the regions, return false.
  */
-function checkRegion(x: number, z: number, names: string[]): boolean {
+function checkRegion(x: number, z: number, level: number, names: string[]): boolean {
     for (const name of names) {
         const region = REGIONS.find(r => r.name === name);
         if (!region) continue;
+        if (region.level && region.level !== level) continue;
         if (isInside(region.coords, x, z)) return true;
         if (!region.contains) continue;
         for (const i of region.contains) {
             const contained = REGIONS.find(r => r.name === i);
             if (!contained) continue;
+            if (contained.level && contained.level !== level) continue;
             if (isInside(contained.coords, x, z)) return true;
         }
     }
@@ -1569,10 +1584,10 @@ function _pathTowards(player: Player, destX: number, destZ: number): void {
  * Must set moveSpeed=WALK first — updateMovement() skips its reset when
  * moveSpeed is INSTANT, permanently blocking headless player movement.
  */
-export function walkTo(player: Player, destX: number, destZ: number): void {
+export function walkTo(player: Player, destX: number, destZ: number, level = 0): void {
     try {
         const botName = _debugBotName(player);
-        if (botName) BotDebugService.noteDestination(botName, destX, destZ, player.level);
+        if (botName) BotDebugService.noteDestination(botName, destX, destZ, level);
     } catch {
         // debug hook must never affect gameplay
     }
@@ -1611,7 +1626,7 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
 
     player.moveSpeed = MoveSpeed.WALK; // guard against INSTANT; processMovement overrides via defaultMoveSpeed()
 
-    if (Math.abs(player.x - destX) < 1 && Math.abs(player.z - destZ) < 1) return;
+    if (Math.abs(player.x - destX) < 1 && Math.abs(player.z - destZ) < 1 && player.level === level) return;
 
     // ── Gateway routing ─────────────────────────────────────────────────────
     // If the destination is inside a gated region and the bot is outside,
@@ -1623,21 +1638,20 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
     // Repeat until no gateways are left so we know our first destination.
     let gw: GatewayRegion | null = null;
     let gwExit: number[][] | null = null;
-    let nextDestX = destX;
-    let nextDestZ = destZ;
-    let nextExit = [destX, destZ];
+    let next = [destX, destZ, level];
+    let nextExit = next;
     const currRegions = [...GATEWAY_REGIONS];
     for (const _i of GATEWAY_REGIONS) {
-        let best: GatewayRegion | null = null;
+        let bestgw: GatewayRegion | null = null;
         let bestDist = Infinity;
         let bestDist2 = Infinity;
-        let bestXZ = [nextDestX, nextDestZ];
+        let best = next;
 
         // Check whether the destination requires more diagonal or
         // vertical/horizontal movement. For use later.
         let diagonal = true;
-        const dx = nextDestX - player.x;
-        const dz = nextDestZ - player.z;
+        const dx = next[0] - player.x;
+        const dz = next[1] - player.z;
         if (dx > 2 * dz || dz > 2 * dx) diagonal = false;
 
         for (const curr of currRegions) {
@@ -1646,26 +1660,30 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
             // Approach or exit not properly defined.
             if (approach.length < 1 || exit.length < 1) continue;
             if (approach[0].length < 2 || exit[0].length < 2) continue;
+            let approachLevel = curr.approachLevel ?? 0;
+            let exitLevel = curr.exitLevel ?? 0;
 
             // Only consider gateways where the destination
             // is in the region and the bot is outside.
             // Or the destination is outside but the bot inside.
-            if (curr.destInRegion(nextDestX, nextDestZ)) {
-                if (curr.destInRegion(player.x, player.z)) {
+            if (curr.destInRegion(next[0], next[1], next[2])) {
+                if (curr.destInRegion(player.x, player.z, player.level)) {
                     continue;
                 }
             } else {
-                if (!curr.destInRegion(player.x, player.z)) {
+                if (!curr.destInRegion(player.x, player.z, player.level)) {
                     continue;
                 } else {
                     // Swap values when exiting for easier calculation.
                     approach = curr.exit;
                     exit = curr.approach;
+                    approachLevel = curr.exitLevel ?? 0;
+                    exitLevel = curr.approachLevel ?? 0;
                 }
             }
 
             // If an approach/exit area is defined, check for the optimal tile.
-            const bestApproach = closestBetween(approach, [player.x, player.z], [nextDestX, nextDestZ]);
+            const bestApproach = closestBetween(approach, [player.x, player.z], [next[0], next[1]]);
             let bestExit = [exit[0][0], exit[0][1]];
             if (exit.length > 1) {
                 // If teleport area is defined, use the average.
@@ -1673,7 +1691,7 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
                     bestExit[0] = (exit[0][0] + exit[1][0]) / 2;
                     bestExit[1] = (exit[0][1] + exit[1][1]) / 2;
                 } else {
-                    bestExit = closestBetween(exit, bestApproach, [nextDestX, nextDestZ]);
+                    bestExit = closestBetween(exit, bestApproach, [next[0], next[1]]);
                 }
             }
 
@@ -1687,8 +1705,8 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
             // use Euclidean distance to find the one closest to our path.
             const dx1 = Math.abs(bestApproach[0] - player.x);
             const dz1 = Math.abs(bestApproach[1] - player.z);
-            const dx2 = Math.abs(nextDestX - bestExit[0]);
-            const dz2 = Math.abs(nextDestZ - bestExit[1]);
+            const dx2 = Math.abs(next[0] - bestExit[0]);
+            const dz2 = Math.abs(next[1] - bestExit[1]);
             let dx3 = 0;
             let dz3 = 0;
             if (!curr.teleport) {
@@ -1707,11 +1725,11 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
                 Math.sqrt(dx2 * dx2 + dz2 * dz2) +
                 Math.sqrt(dx3 * dx3 + dz3 * dz3);
             if (currDist < bestDist || (currDist === bestDist && currDist2 < bestDist2)) {
-                best      = curr;
+                bestgw    = curr;
                 bestDist  = currDist;
                 bestDist2 = currDist2;
-                bestXZ    = bestApproach;
-                nextExit  = bestExit;
+                best      = [bestApproach[0], bestApproach[1], approachLevel];
+                nextExit  = [bestExit[0], bestExit[1], exitLevel];
                 gwExit    = exit;
             }
         }
@@ -1719,13 +1737,12 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
         // Found gateway is set as new destination so we go back and find
         // a route to it first until there are no more prior gateways.
         // In which case we can finally path to this gateway.
-        if (best) {
-            gw = best;
-            nextDestX = bestXZ[0];
-            nextDestZ = bestXZ[1];
+        if (bestgw) {
+            gw = bestgw;
+            next = best;
 
             // Ensure each gateway is only used once in the calculated route.
-            const index = currRegions.indexOf(best);
+            const index = currRegions.indexOf(bestgw);
             if (index > -1) {
                 currRegions.splice(index, 1);
             }
@@ -1739,23 +1756,23 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
     // 2. If teleport is set, teleport to exit area.
     // 3. Otherwise walk to exit area.
     if (gw && gwExit) {
-        const gwDist = Math.max(Math.abs(player.x - nextDestX), Math.abs(player.z - nextDestZ)); // Chebyshev distance
+        const gwDist = Math.max(Math.abs(player.x - next[0]), Math.abs(player.z - next[1])); // Chebyshev distance
 
         if (gwDist > 5) {
             // Not yet at the approach tile — walk toward it first.
             // If the requested destination is CSV-blocked or WALK_BLOCKED,
             // find the nearest walkable tile.
-            if (BotCollisionMap.isCsvBlocked(player.level, nextDestX, nextDestZ)) {
-                const alt = findNearestWalkableTile(player.level, nextDestX, nextDestZ, 5);
+            if (BotCollisionMap.isCsvBlocked(next[2], next[0], next[1])) {
+                const alt = findNearestWalkableTile(next[2], next[0], next[1], 5);
                 if (!alt) return; // nowhere reachable near this destination
-                nextDestX = alt.x;
-                nextDestZ = alt.z;
+                next[0] = alt.x;
+                next[1] = alt.z;
             }
-            _pathTowards(player, nextDestX, nextDestZ);
+            _pathTowards(player, next[0], next[1]);
 
             try {
                 const botName = _debugBotName(player);
-                if (botName) BotDebugService.event(botName, 'movement', `approach gateway ${gw.name} (${nextDestX},${nextDestZ},${player.level})`);
+                if (botName) BotDebugService.event(botName, 'movement', `approach gateway ${gw.name} (${next[0]},${next[1]},${next[2]})`);
             } catch {
                 // debug hook must never affect gameplay
             }
@@ -1778,27 +1795,27 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
             }
             // If the requested destination is CSV-blocked or WALK_BLOCKED,
             // find the nearest walkable tile before teleporting.
-            if (BotCollisionMap.isCsvBlocked(player.level, teleportDestX, teleportDestZ)) {
-                const alt = findNearestWalkableTile(player.level, teleportDestX, teleportDestZ, 5);
+            if (BotCollisionMap.isCsvBlocked(nextExit[2], teleportDestX, teleportDestZ)) {
+                const alt = findNearestWalkableTile(nextExit[2], teleportDestX, teleportDestZ, 5);
                 if (!alt) return; // nowhere reachable near this destination
                 teleportDestX = alt.x;
                 teleportDestZ = alt.z;
             }
-            botTeleport(player, teleportDestX, teleportDestZ, player.level);
+            botTeleport(player, teleportDestX, teleportDestZ, nextExit[2]);
             return;
         }
 
         // Walk inside the exit area as we may need to get through
         // more gateways before the last destination is reachable.
         // Make sure we actually get a walkable tile in the exit area.
-        if (BotCollisionMap.isCsvBlocked(player.level, nextExit[0], nextExit[1])) {
-            nextExit = closestBetween(gwExit, [player.x, player.z], [destX, destZ], true);
+        if (BotCollisionMap.isCsvBlocked(nextExit[2], nextExit[0], nextExit[1])) {
+            nextExit = closestBetween(gwExit, [player.x, player.z], [destX, destZ], nextExit[2]);
         }
         _pathTowards(player, nextExit[0], nextExit[1]);
 
         try {
             const botName = _debugBotName(player);
-            if (botName) BotDebugService.event(botName, 'movement', `exiting gateway ${gw.name} (${nextExit[0]},${nextExit[1]},${player.level})`);
+            if (botName) BotDebugService.event(botName, 'movement', `exiting gateway ${gw.name} (${nextExit[0]},${nextExit[1]},${nextExit[2]})`);
         } catch {
             // debug hook must never affect gameplay
         }
@@ -1809,8 +1826,8 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
     // ── Destination validation ───────────────────────────────────────────────
     // If the requested destination is CSV-blocked or WALK_BLOCKED
     // find the nearest walkable tile.
-    if (BotCollisionMap.isCsvBlocked(player.level, destX, destZ)) {
-        const alt = findNearestWalkableTile(player.level, destX, destZ, 5);
+    if (BotCollisionMap.isCsvBlocked(level, destX, destZ)) {
+        const alt = findNearestWalkableTile(level, destX, destZ, 5);
         if (!alt) return; // nowhere reachable near this destination
         destX = alt.x;
         destZ = alt.z;
@@ -1826,7 +1843,7 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
  * and from point `b` to that point in the area.
  * Returning the point in the area with the least distance.
  */
-function closestBetween(area: number[][], a: number[], b: number[], walkable?: boolean): number[] {
+function closestBetween(area: number[][], a: number[], b: number[], csvLevel?: number): number[] {
     let best = [area[0][0], area[0][1]];
     // Only caculate if area actually consists of more than one tile.
     if (area.length > 1) {
@@ -1838,7 +1855,7 @@ function closestBetween(area: number[][], a: number[], b: number[], walkable?: b
         for (let x = xMin; x <= xMax; x++) {
             for (let z = zMin; z <= zMax; z++) {
                 // If set, make sure we get in the area on a walkable tile.
-                if (walkable && BotCollisionMap.isCsvBlocked(0, x, z)) continue;
+                if (csvLevel && BotCollisionMap.isCsvBlocked(csvLevel, x, z)) continue;
                 const dxa = x - a[0];
                 const dza = z - a[1];
                 const dxb = x - b[0];

@@ -139,7 +139,7 @@ export class WalkTask extends BotTask {
     tick(player: Player): void {
         if (this.interrupted) return;
         if (!this.started || !hasWaypoints(player)) {
-            walkTo(player, this.destX, this.destZ);
+            walkTo(player, this.destX, this.destZ, this.level);
             this.started = true;
         }
     }
@@ -178,7 +178,7 @@ export class BankTask extends BotTask {
 
         if (this.state === 'walk') {
             if (!isNear(player, bx, bz, 8, bl)) {
-                walkTo(player, bx, bz);
+                walkTo(player, bx, bz, bl);
                 return;
             }
             this.state = 'find';
@@ -191,7 +191,7 @@ export class BankTask extends BotTask {
                         ?? findNpcByPrefix(player.x, player.z, player.level, 'kharidbanker', 8);
             if (!banker) {
                 // Keep walking closer
-                walkTo(player, bx, bz);
+                walkTo(player, bx, bz, bl);
                 return;
             }
             interactNpcOp(player, banker, 3); // op3 = Bank
@@ -306,7 +306,7 @@ export class ShopTripTask extends BotTask {
                     this.stuckTicks++;
                     if (this.stuckTicks >= 10) {
                         // Try random offset around destination to route around obstacle
-                        walkTo(player, sx + randInt(-5, 5), sz + randInt(-5, 5));
+                        walkTo(player, sx + randInt(-5, 5), sz + randInt(-5, 5), sl);
                         this.stuckTicks = 0;
                         return;
                     }
@@ -315,7 +315,7 @@ export class ShopTripTask extends BotTask {
                 }
                 this.lastX = player.x;
                 this.lastZ = player.z;
-                walkTo(player, sx, sz);
+                walkTo(player, sx, sz, sl);
                 return;
             }
             this.state = 'find';
@@ -325,7 +325,7 @@ export class ShopTripTask extends BotTask {
         if (this.state === 'find') {
             const npc = findNpcByName(player.x, player.z, player.level, this.npcName, 10);
             if (!npc) {
-                walkTo(player, sx, sz);
+                walkTo(player, sx, sz, sl);
                 return;
             }
             interactNpcOp(player, npc, 3); // op3 = Trade on all shops
@@ -460,7 +460,7 @@ export class SkillTask extends BotTask {
                         const ddz = lz - player.z;
                         const perpX = player.x + (Math.abs(ddz) > Math.abs(ddx) ? randInt(-8, 8) : (ddz > 0 ? 8 : -8));
                         const perpZ = player.z + (Math.abs(ddx) > Math.abs(ddz) ? randInt(-8, 8) : (ddx > 0 ? 8 : -8));
-                        walkTo(player, perpX, perpZ);
+                        walkTo(player, perpX, perpZ, ll);
                         this.walkStuckTicks = 0;
                     }
                 } else {
@@ -468,7 +468,7 @@ export class SkillTask extends BotTask {
                 }
                 this.walkLastX = player.x;
                 this.walkLastZ = player.z;
-                walkTo(player, lx, lz);
+                walkTo(player, lx, lz, ll);
                 return;
             }
             this.state = 'scan';
@@ -483,8 +483,8 @@ export class SkillTask extends BotTask {
                 this.scanFailTicks++;
                 // If we can't find a target for a while, re-walk into the area
                 if (this.scanFailTicks > 10) {
-                    const [lx, lz] = this.step.location;
-                    walkTo(player, lx + randInt(-3, 3), lz + randInt(-3, 3));
+                    const [lx, lz, ll] = this.step.location;
+                    walkTo(player, lx + randInt(-3, 3), lz + randInt(-3, 3), ll);
                     this.scanFailTicks = 0;
                 }
                 return;
@@ -696,7 +696,7 @@ export class CombatTask extends BotTask {
         if (this.state === 'walk') {
             const [lx, lz, ll] = this.step.location;
             if (!isNear(player, lx, lz, 12, ll)) {
-                walkTo(player, lx, lz);
+                walkTo(player, lx, lz, ll);
                 return;
             }
             this.state = 'scan';
@@ -709,8 +709,8 @@ export class CombatTask extends BotTask {
             if (!npc) {
                 this.scanFail++;
                 if (this.scanFail > 8) {
-                    const [lx, lz] = this.step.location;
-                    walkTo(player, lx + randInt(-4, 4), lz + randInt(-4, 4));
+                    const [lx, lz, ll] = this.step.location;
+                    walkTo(player, lx + randInt(-4, 4), lz + randInt(-4, 4), ll);
                     this.scanFail = 0;
                 }
                 return;
