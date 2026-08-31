@@ -23,15 +23,15 @@ Because a regular r254 IF1 interface needs an opening/root component while the r
 `engine/grand-exchange-stage.ts` implements the isolated build path used by launcher option 2:
 
 1. recover/restore any native pack snapshot left by an interrupted previous GE run;
-2. snapshot the native `media`, `interface`, server pack, compiler symbols and `neptune.toml`;
+2. snapshot the native `media`, `interface`, server pack, compiler symbols and installed RuneScript compiler wrapper;
 3. copy normal `content/` into `engine/.custom-content-stage/grand-exchange/content`;
 4. overlay this plugin's `.if` and `.rs2` sources into that copy;
 5. inject the synthetic root and only the currently implemented group-105 component names at their frozen local IDs;
 6. append `[debugproc,ge]` to the staged script name map;
-7. point Neptune's temporary `sources` entry at the staged scripts;
+7. temporarily add `sourcePaths` to the installed `@lostcityrs/runescript` wrapper so it compiles from `BUILD_SRC_DIR/scripts` instead of its native `../content/scripts` default;
 8. convert and copy the frozen PNGs into the staged native sprite source directory;
 9. build and start option 2 with `BUILD_SRC_DIR` pointing at the stage;
-10. restore the native pack/config after the option-2 server exits.
+10. restore the native pack and compiler wrapper after the option-2 server exits.
 
 Launcher options 1 and 3 explicitly force `NODE_FEATURE_GRANDEXCHANGE=false`. The launcher also restores a stale snapshot on its next start if an option-2 run was interrupted before its `finally` cleanup could run.
 
