@@ -20,7 +20,10 @@ const BACKUP_MANIFEST = path.join(BACKUP_DIR, 'manifest.json');
 const GE_INTERFACE_NAME = 'grand_exchange_overview';
 const GE_INTERFACE_ROOT = 8990;
 const GE_COMPONENT_BASE = 9000;
-const GE_COMPONENT_MAX_SOURCE_ID = 213;
+// Source group 105 ends at component 213. The remaining offsets in its reserved
+// 256-ID block are available for IF1-only visual helpers that stand in for
+// decoration/text normally created at runtime by the r481 IF3/CS2 path.
+const GE_COMPONENT_MAX_SOURCE_ID = 255;
 
 // r481 IF3 can tile a sprite across a component rectangle; the r254 IF1
 // renderer only plots the sprite once at its natural dimensions. Materialize
