@@ -132,11 +132,21 @@ function injectInterfaceMappings() {
     const packPath = path.join(STAGED_CONTENT_DIR, 'pack', 'interface.pack');
     const orderPath = path.join(STAGED_CONTENT_DIR, 'pack', 'interface.order');
     const interfacePath = path.join(STAGED_CONTENT_DIR, 'scripts', 'grand_exchange', 'interfaces', `${GE_INTERFACE_NAME}.if`);
+    const interfaceSource = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
+
+    const sourceComponentIds: number[] = [];
+    for (const match of interfaceSource.matchAll(/^\[com_(\d+)\]$/gm)) {
+        const sourceId = Number.parseInt(match[1], 10);
+        if (sourceId < 0 || sourceId > GE_COMPONENT_MAX_SOURCE_ID) {
+            throw new Error(`Grand Exchange overview component com_${sourceId} is outside the reserved group-105 block`);
+        }
+        sourceComponentIds.push(sourceId);
+    }
 
     const { content: originalPack, values } = readPack(packPath);
     const mappings = new Map<number, string>();
     mappings.set(GE_INTERFACE_ROOT, GE_INTERFACE_NAME);
-    for (let sourceId = 0; sourceId <= GE_COMPONENT_MAX_SOURCE_ID; sourceId++) {
+    for (const sourceId of sourceComponentIds) {
         mappings.set(GE_COMPONENT_BASE + sourceId, `${GE_INTERFACE_NAME}:com_${sourceId}`);
     }
 
@@ -163,19 +173,9 @@ function injectInterfaceMappings() {
     const normalizedPack = originalPack.endsWith('\n') ? originalPack : `${originalPack}\n`;
     fs.writeFileSync(packPath, normalizedPack + additions.join('\n') + (additions.length ? '\n' : ''), 'utf8');
 
-    const interfaceSource = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
-    const orderedIds = [GE_INTERFACE_ROOT];
-    for (const match of interfaceSource.matchAll(/^\[com_(\d+)\]$/gm)) {
-        const sourceId = Number.parseInt(match[1], 10);
-        if (sourceId < 0 || sourceId > GE_COMPONENT_MAX_SOURCE_ID) {
-            throw new Error(`Grand Exchange overview component com_${sourceId} is outside the reserved group-105 block`);
-        }
-        orderedIds.push(GE_COMPONENT_BASE + sourceId);
-    }
-
     const orderLines = fs.readFileSync(orderPath, 'utf8').replace(/\r/g, '').split('\n').filter(Boolean);
     const existingOrder = new Set(orderLines.map(value => Number.parseInt(value, 10)));
-    for (const id of orderedIds) {
+    for (const id of [GE_INTERFACE_ROOT, ...sourceComponentIds.map(sourceId => GE_COMPONENT_BASE + sourceId)]) {
         if (!existingOrder.has(id)) {
             orderLines.push(String(id));
             existingOrder.add(id);
@@ -210,7 +210,7 @@ function pointRuneScriptCompilerAtStage() {
     // so option 2 temporarily points that source list at the same staged tree.
     const configPath = path.join(ENGINE_DIR, 'neptune.toml');
     if (!fs.existsSync(configPath)) {
-        return;
+        throw new Error('neptune.toml was not found; refusing to compile Grand Exchange scripts outside the isolated stage');
     }
 
     const content = fs.readFileSync(configPath, 'utf8');
