@@ -304,14 +304,14 @@ export function advanceBankWalk(
         ? nearestBankTo(activityCoord[0], activityCoord[1])
         : nearestBank(player);
 
-    if (!isNear(player, bx, bz, 3)) {
+    if (!isNear(player, bx, bz, 3, bl)) {
         // Still walking — drive bot all the way to the bank coord (which should be
         // inside the building) before the booth search activates.
 
 
 
         if (!stuckDetector.check(player, bx, bz)) {
-            walkTo(player, bx, bz);
+            walkTo(player, bx, bz, bl);
         } else if (stuckDetector.desperatelyStuck) {
             teleportNear(player, bx, bz, bl);
             stuckDetector.reset();
@@ -325,7 +325,7 @@ export function advanceBankWalk(
             // Clear existing (bad) waypoints so the hasWaypoints guard in
             // walkTo() doesn't block the detour recalculation.
             player.clearWaypoints();
-            walkTo(player, bx + randInt(-4, 4), bz + randInt(-4, 4));
+            walkTo(player, bx + randInt(-4, 4), bz + randInt(-4, 4), bl);
         }
         return 'walk';
     }
@@ -336,8 +336,8 @@ export function advanceBankWalk(
     // The bot is already at the interior coord so no wall-pierce is possible.
     const booth = findLocByName(player.x, player.z, player.level, 'bankbooth', 6);
     if (booth) {
-        if (!isNear(player, booth.x, booth.z, 1)) {
-            walkTo(player, booth.x, booth.z);
+        if (!isNear(player, booth.x, booth.z, 1, booth.level)) {
+            walkTo(player, booth.x, booth.z, booth.level);
             return 'walk';
         }
         interactLocOp(player, booth, 2); // op2 = Use-quickly → @openbank, no dialog
@@ -348,8 +348,8 @@ export function advanceBankWalk(
     // Al Kharid bankers have debug names starting with 'kharidbanker', not 'banker'.
     const banker = findNpcByPrefix(player.x, player.z, player.level, 'banker', 10) ?? findNpcByPrefix(player.x, player.z, player.level, 'kharidbanker', 10);
     if (banker) {
-        if (!isNear(player, banker.x, banker.z, 3)) {
-            walkTo(player, banker.x, banker.z);
+        if (!isNear(player, banker.x, banker.z, 3, banker.level)) {
+            walkTo(player, banker.x, banker.z, banker.level);
             return 'walk';
         }
         interactNpcOp(player, banker, 3); // op3 = Bank on standard bankers
