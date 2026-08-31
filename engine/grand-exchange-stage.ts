@@ -22,15 +22,15 @@ const GE_INTERFACE_ROOT = 8990;
 const GE_COMPONENT_BASE = 9000;
 const GE_COMPONENT_MAX_SOURCE_ID = 213;
 
-// Only outputs/config touched by adding .if/.rs2/sprite sources need to be
-// restored. The whole server pack is backed up because the RuneScript compiler
-// owns its exact output set and can change more than script.dat between builds.
+// Only outputs/runtime sources touched by adding .if/.rs2/sprite sources need
+// to be restored. The whole server pack is backed up because the RuneScript
+// compiler owns its exact output set and can change more than script.dat.
 const MANAGED_NATIVE_OUTPUTS = [
     'data/pack/client/interface',
     'data/pack/client/media',
     'data/pack/server',
     'data/symbols',
-    'neptune.toml',
+    'tools/pack/Compiler.ts',
 ] as const;
 
 type BackupManifest = {
@@ -205,22 +205,40 @@ function injectScriptMapping() {
 }
 
 function pointRuneScriptCompilerAtStage() {
-    // The native TypeScript packer honors BUILD_SRC_DIR. Neptune (the
-    // RuneScript compiler) reads its source roots from neptune.toml instead,
-    // so option 2 temporarily points that source list at the same staged tree.
-    const configPath = path.join(ENGINE_DIR, 'neptune.toml');
-    if (!fs.existsSync(configPath)) {
-        throw new Error('neptune.toml was not found; refusing to compile Grand Exchange scripts outside the isolated stage');
+    // This progressive base uses @lostcityrs/runescript. Its engine wrapper
+    // loads symbols from BUILD_SRC_DIR but, unless sourcePaths is supplied,
+    // the package itself defaults to ../content/scripts. Temporarily teach the
+    // installed wrapper to read the same staged scripts as the rest of option 2.
+    const compilerPath = path.join(ENGINE_DIR, 'tools', 'pack', 'Compiler.ts');
+    if (!fs.existsSync(compilerPath)) {
+        throw new Error(`RuneScript compiler wrapper was not found at ${compilerPath}`);
     }
 
-    const content = fs.readFileSync(configPath, 'utf8');
-    const stagedScripts = path.join(STAGED_CONTENT_DIR, 'scripts').replace(/\\/g, '/') + '/';
-    const sourceLine = /^\s*sources\s*=.*$/m;
-    if (!sourceLine.test(content)) {
-        throw new Error('neptune.toml does not contain a sources = [...] entry for isolated Grand Exchange staging');
+    const content = fs.readFileSync(compilerPath, 'utf8');
+    const marker = 'CompileServerScript({';
+    const callStart = content.indexOf(marker);
+    if (callStart === -1) {
+        throw new Error('Could not find CompileServerScript({ in tools/pack/Compiler.ts');
     }
 
-    fs.writeFileSync(configPath, content.replace(sourceLine, `sources = ["${stagedScripts}"]`), 'utf8');
+    const callEnd = content.indexOf('});', callStart);
+    const callPreview = content.slice(callStart, callEnd === -1 ? callStart + 4000 : callEnd);
+    if (/\bsourcePaths\s*:/.test(callPreview)) {
+        return;
+    }
+
+    const afterMarker = content.slice(callStart + marker.length);
+    const newline = afterMarker.startsWith('\r\n') ? '\r\n' : afterMarker.startsWith('\n') ? '\n' : '';
+    if (!newline) {
+        throw new Error('Unexpected CompileServerScript formatting in tools/pack/Compiler.ts');
+    }
+
+    const indentMatch = afterMarker.match(/^\r?\n([ \t]*)/);
+    const indent = indentMatch?.[1] ?? '        ';
+    const insertAt = callStart + marker.length + newline.length;
+    const sourcePathsLine = `${indent}sourcePaths: [process.env.BUILD_SRC_DIR ? process.env.BUILD_SRC_DIR + '/scripts' : '../content/scripts'],${newline}`;
+    const patched = content.slice(0, insertAt) + sourcePathsLine + content.slice(insertAt);
+    fs.writeFileSync(compilerPath, patched, 'utf8');
 }
 
 async function stageSprites() {
