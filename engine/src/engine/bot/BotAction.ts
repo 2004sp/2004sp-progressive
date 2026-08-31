@@ -164,9 +164,16 @@ export function botTeleport(player: Player, x: number, z: number, level: number)
  * specific approach tile / gate before reaching the interior destination.
  *
  * When walkTo() is called with a destination inside one of these regions and
- * the bot is currently outside, it walks to `approachX/Z` first, then tries
- * to open the gate before continuing.  Once the bot is inside the region
- * (playerInRegion = true) normal pathfinding resumes.
+ * the bot is currently outside, it walks to `approach` first, then tries
+ * to open the gate before walking to `exit`. Once the bot is inside
+ * the region normal pathfinding resumes. When leaving the region,
+ * the bot will instead first go to `exit` and then to `approach`.
+ * So only one gateway needs to be defined to handle both entry and exit.
+ *
+ * When adding a gateway to a region, bots will no longer enter/exit that
+ * region through other means so make sure to also add a gateway to other
+ * entrances even if they are open-ended and would otherwise not be required.
+ * For readability, gateways are grouped by the region they are part of.
  *
  * Coordinate bounds are conservative on purpose — when in doubt keep them tight
  * so ordinary nearby destinations are never accidentally re-routed.
@@ -175,25 +182,137 @@ type GatewayRegion = {
     readonly name: string;
     /** Destination is in the gated area. */
     readonly destInRegion: (x: number, z: number) => boolean;
-    /** Bot is already inside — skip gateway routing. */
-    readonly playerInRegion: (x: number, z: number) => boolean;
-    /** Tile to walk to so the bot faces the gate from the correct side. */
-    readonly approachX: number;
-    readonly approachZ: number;
-    /** How close (Chebyshev) to the approach tile before trying to open the gate. */
-    readonly arrivalRadius: number;
     /**
-     * If set, the bot is teleported to this tile instead of interacting with the
-     * gate.  Use for gates that require a toll or complex dialog that bots cannot
-     * handle (e.g. the Al Kharid toll gate).
+     * Tile outside the region to approach from so the bot faces the gate from
+     * the correct side. A second tile can be provided to create an area.
+     * Keep the area small, for example a line that is one tile wide.
      */
-    readonly teleportDestX?: number;
-    readonly teleportDestZ?: number;
+    readonly approach: number[][];
+    /**
+     * Tile inside the region to exit from so the bot faces the gate from
+     * the correct side. A second tile can be provided to create an area.
+     * Keep the area small, for example a line that is one tile wide.
+     */
+    readonly exit: number[][];
+    /**
+     * If set, the bot is teleported instead of interacting with the gate.
+     * Use for gates that require a toll or complex dialog that bots cannot
+     * handle (e.g. the Al Kharid toll gate). Teleport location is
+     * a random tile in the exit area (or approach area when leaving).
+     */
+    readonly teleport?: boolean;
 };
 
 const GATEWAY_REGIONS: GatewayRegion[] = [
     {
-        // ── Al Kharid south ───────────────────────────────────────────────────
+        // ── Lumbridge castle ──────────────────────────────────────────────────
+        // Bots anywhere in the castle band (x > 3200, including Lumbridge spawn
+        // at 3222,3219) heading west toward Draynor village (x < 3185) have the
+        // castle walls across their straight-line path.  The BFS can route
+        // around the castle, but the 90-tile midpoint often lands on the wrong
+        // side of the walls and returns empty, leaving the bot looping on the
+        // compass fallback.
+        //
+        // Fix: Force bots to enter and leave through the north of the castle.
+        // If they head for Draynor, they automatically pick the west most tile.
+        name: 'Lumbridge',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Lumbridge',
+            'MisthalinEast',
+            'Desert']),
+        approach: [[3200, 3238], [3228, 3238]],
+        exit: [[3201, 3237], [3228, 3237]]
+    },
+    {
+        // ── Lumbridge sheep pen (gate) ────────────────────────────────────────
+        // Fenced enclosure NE of Lumbridge castle. East gate at ~[3213, 3261].
+        // Bots walking directly to the interior hit the fence unless they
+        // approach from the east side and open the gate.
+        name: 'LumbridgeSheep',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'LumbridgeSheep']),
+        approach: [[3213, 3261], [3213, 3262]],
+        exit: [[3212, 3261], [3212, 3262]]
+    },
+    {
+        // ── Lumbridge ↔ Toll Gate ─────────────────────────────────────────────
+        // South bridge over River Lum.
+        name: 'RiverLumSouth',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'MisthalinEast',
+            'Desert',
+            'Wilderness',
+            'Morytania']),
+        approach: [[3244, 3225], [3244, 3226]],
+        exit: [[3245, 3225], [3245, 3226]]
+    },
+    {
+        // ── Lumbridge ↔ Varrock ───────────────────────────────────────────────
+        // Second south bridge over River Lum near furnace.
+        name: 'RiverLumSouth2',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'MisthalinEast',
+            'Desert',
+            'Wilderness',
+            'Morytania']),
+        approach: [[3234, 3261], [3234, 3262]],
+        exit: [[3235, 3261], [3235, 3262]]
+    },
+    {
+        // ── Barbarian Village ↔ Varrock ───────────────────────────────────────
+        // Bridge over River Lum near Barbarian Village.
+        name: 'RiverLumBarb',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'MisthalinEast',
+            'Desert',
+            'Morytania']),
+        approach: [[3104, 3420], [3104, 3421]],
+        exit: [[3105, 3420], [3105, 3421]]
+    },
+    {
+        // ── Edgeville ↔ Varrock North ─────────────────────────────────────────
+        // North bridge over River Lum near Wilderness.
+        name: 'RiverLumNorth',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'MisthalinEast',
+            'Wilderness',
+            'Morytania']),
+        approach: [[3131, 3516], [3131, 3518]],
+        exit: [[3132, 3516], [3132, 3518]]
+    },
+    {
+        // ── Lumbridge cow pen (gate) ──────────────────────────────────────────
+        // Fenced enclosure north of Lumbridge castle.  South gate at ~[3253, 3265].
+        // Bots walking directly to the interior ([3255, 3276]) hit the south
+        // fence unless they approach through the gate tile.
+        name: 'LumbridgeCow',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'LumbridgeCow']),
+        approach: [[3252, 3266], [3252, 3267]],
+        exit: [[3253, 3266], [3253, 3267]]
+    },
+    {
+        // ── Varrock Square ↔ Varrock Palace ───────────────────────────────────
+        // The yews at [3204, 3499] are north of Varrock palace and reachable
+        // only by navigating through the city. Routing through the Varrock
+        // south road entry gives the pathfinder a clear corridor to follow.
+        name: 'VarrockPalace',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'VarrockPalace']),
+        approach: [[3212, 3438], [3213, 3438]],
+        exit: [[3212, 3439], [3213, 3439]]
+    },
+    {
+        // ── Varrock East ↔ Varrock Palace ─────────────────────────────────────
+        // East entrance to Varrock Palace.
+        name: 'VarrockPalaceEast',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'VarrockPalace']),
+        approach: [[3235, 3464], [3235, 3467]],
+        exit: [[3234, 3465], [3234, 3466]]
+    },
+    {
+        // ── Lumbridge ↔ Al Kharid (gate) ──────────────────────────────────────
         // The Lumbridge-AlKharid wall runs at x ≈ 3268, z ≈ 3197..3244.
         // Gate tile: ~[3268, 3227].  Destinations inside: warriors, bank,
         // scimitar shop, furnace, etc.  Bots must approach from the west side
@@ -203,318 +322,1134 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         //
         // The gate charges a 10-coin toll and opens a dialog that bots cannot
         // handle.  Once the bot reaches the approach tile it is teleported
-        // directly to the inside (3269, 3227) — the first open tile past the wall.
-        //
-        // Bug fix: approach tile must be at x=3264 (west of the wall), NOT x=3267.
-        // playerInRegion used x >= 3267 which matched the old approach tile itself,
-        // so the bot arrived at the approach, was immediately classified as "already
-        // inside", and the teleport never fired.
+        // directly to the inside (3268, 3227) — the first open tile past the wall.
         name: 'AlKharid',
-        destInRegion: (x, z) => x >= 3269 && z >= 3155 && z <= 3242,
-        playerInRegion: (x, _z) => x >= 3269,
-        approachX: 3265,
-        approachZ: 3227,
-        arrivalRadius: 3,
-        teleportDestX: 3275,
-        teleportDestZ: 3227
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Desert']),
+        approach: [[3267, 3227], [3267, 3228]],
+        exit:     [[3268, 3227], [3268, 3228]],
+        teleport: true
     },
     {
-        // ── Al Kharid exit (inside → Lumbridge) ──────────────────────────────
-        // Reverse of AlKharid: bots inside Al Kharid (x >= 3269) heading west
-        // back toward Lumbridge or Draynor hit the same toll wall.  Approach
-        // the inside gate tile (3270, 3227) and teleport to the Lumbridge side
-        // (3264, 3227) — four tiles west of the wall.
-        //
-        // No z-range constraint on destInRegion: a bot heading to any destination
-        // with x < 3269 (e.g. Barbarian Village via waypoint z=3340, Draynor bank
-        // z=3245) must still exit through the west gate regardless of how far
-        // north the final destination is.
-        name: 'AlKharidExit',
-        destInRegion: (x, _z) => x <= 3267,
-        playerInRegion: (x, _z) => x <= 3267,
-        approachX: 3270,
-        approachZ: 3227,
-        arrivalRadius: 4,
-        teleportDestX: 3261,
-        teleportDestZ: 3227
+        // ── Varrock ↔ Al Kharid ───────────────────────────────────────────────
+        // Bots from Varrock should go through the opening in the fence to
+        // the north instead of going to the south gate.
+        name: 'AlKharidNorth',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Desert']),
+        approach: [[3279, 3330], [3285, 3330]],
+        exit: [[3279, 3329], [3285, 3329]]
     },
     {
-        // ── Port Sarim → Karamja (boat) ───────────────────────────────────────
-        // Bots heading to Karamja fishing spots (x < 2970) walk to the Port
-        // Sarim docks (~3030, 3218) and are teleported to the Karamja landing
-        // (2956, 3143).  The boat costs 30 coins and triggers a dialog that
-        // bots cannot handle natively, so teleport is used instead.
-        name: 'PortSarimToKaramja',
-        destInRegion: (x, z) => x < 2970 && z < 3250,
-        playerInRegion: (x, z) => x < 2970 && z < 3250,
-        approachX: 3031,
-        approachZ: 3217,
-        arrivalRadius: 5,
-        teleportDestX: 2956,
-        teleportDestZ: 3147
-    },
-    {
-        // ── Karamja → Port Sarim (boat return) ───────────────────────────────
-        // Bots on Karamja (x < 2970) heading back to the mainland (x >= 2990,
-        // e.g. to bank) walk to the Karamja dock (2956, 3145) and are
-        // teleported to the Port Sarim arrival tile (3047, 3235).
-        name: 'KaramjaToPortSarim',
-        destInRegion: (x, _z) => x >= 2990,
-        playerInRegion: (x, z) => x >= 2990 || z > 3250,
-        approachX: 2956,
-        approachZ: 3145,
-        arrivalRadius: 5,
-        teleportDestX: 3047,
-        teleportDestZ: 3235
-    },
-    {
-        // ── Port Sarim → Entrana (boat) ───────────────────────────────────────
-        // Bots heading to Entrana (gathering herblore supplies or woodcutting)
-        // walk to the Port Sarim northern docks and teleport to Entrana.
-        name: 'PortSarimToEntrana',
-        destInRegion: (x, z) => x >= 2800 && x <= 2870 && z >= 3320 && z <= 3390,
-        playerInRegion: (x, z) => x >= 2800 && x <= 2870 && z >= 3320 && z <= 3390,
-        approachX: 3048,
-        approachZ: 3234,
-        arrivalRadius: 5,
-        teleportDestX: 2834,
-        teleportDestZ: 3335
-    },
-    {
-        // ── Entrana → Port Sarim (boat return) ────────────────────────────────
-        name: 'EntranaToPortSarim',
-        destInRegion: (x, z) => x > 2870 || x < 2800 || z > 3390 || z < 3320,
-        playerInRegion: (x, z) => x > 2870 || x < 2800 || z > 3390 || z < 3320,
-        approachX: 2834,
-        approachZ: 3335,
-        arrivalRadius: 5,
-        teleportDestX: 3048,
-        teleportDestZ: 3234
-    },
-    {
-        // ── Shantay Pass (Mainland → Desert) ──────────────────────────────────
-        // Access to the Kharidian desert via Shantay Pass.  Requires a toll/pass
+        // ── Al Kharid ↔ Desert (gate) ─────────────────────────────────────────
+        // Access to the Kharidian desert via Shantay Pass. Requires a toll/pass
         // so bots teleport through the gate.
         name: 'ShantayPass',
-        destInRegion: (x, z) => x >= 3200 && x <= 3400 && z <= 3115,
-        playerInRegion: (x, z) => z <= 3115,
-        approachX: 3303,
-        approachZ: 3123,
-        arrivalRadius: 4,
-        teleportDestX: 3303,
-        teleportDestZ: 3115
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'DesertSouth']),
+        approach: [[3303, 3118], [3304, 3118]],
+        exit: [[3303, 3115], [3304, 3115]],
+        teleport: true
     },
     {
-        // ── Shantay Pass Exit (Desert → Mainland) ─────────────────────────────
-        name: 'ShantayPassExit',
-        destInRegion: (x, z) => z >= 3117,
-        playerInRegion: (x, z) => z >= 3117,
-        approachX: 3303,
-        approachZ: 3116,
-        arrivalRadius: 4,
-        teleportDestX: 3303,
-        teleportDestZ: 3123
-    },
-    {
-        // ── Taverley Gate (Falador → Taverley) ────────────────────────────────
-        // The long wall between Falador and Taverley.
-        name: 'TaverleyGate',
-        destInRegion: (x, z) => x < 2933 && z > 3250,
-        playerInRegion: (x, z) => x < 2933 && z > 3250,
-        approachX: 2936,
-        approachZ: 3450,
-        arrivalRadius: 4
-    },
-    {
-        // ── Taverley Gate Exit (Taverley → Falador) ───────────────────────────
-        name: 'TaverleyGateExit',
-        destInRegion: (x, _z) => x >= 2933,
-        playerInRegion: (x, _z) => x >= 2933,
-        approachX: 2932,
-        approachZ: 3450,
-        arrivalRadius: 4
-    },
-    {
-        // ── Ardougne North Gate (East → West) ─────────────────────────────────
-        name: 'ArdougneNorthGate',
-        destInRegion: (x, z) => x < 2634 && x > 2551 && z > 3250,
-        playerInRegion: (x, z) => x < 2634 && x > 2551 && z > 3250,
-        approachX: 2636,
-        approachZ: 3333,
-        arrivalRadius: 4
-    },
-    {
-        // ── Ardougne North Gate Exit (West → East) ────────────────────────────
-        name: 'ArdougneNorthGateExit',
-        destInRegion: (x, _z) => x >= 2634,
-        playerInRegion: (x, _z) => x >= 2634,
-        approachX: 2633,
-        approachZ: 3333,
-        arrivalRadius: 4
-    },
-    {
-        // ── West Ardougne Gate (East → West) ──────────────────────────────────
-        // Gate between East and West Ardougne.
-        name: 'WestArdougneGate',
-        destInRegion: (x, z) => x < 2551 && z >= 3260 && z <= 3350,
-        playerInRegion: (x, z) => x < 2551 && z >= 3260 && z <= 3350,
-        approachX: 2555,
-        approachZ: 3320,
-        arrivalRadius: 4
-    },
-    {
-        // ── West Ardougne Exit (West → East) ──────────────────────────────────
-        name: 'WestArdougneExit',
-        destInRegion: (x, z) => x >= 2551,
-        playerInRegion: (x, z) => x >= 2551,
-        approachX: 2551,
-        approachZ: 3320,
-        arrivalRadius: 4
-    },
-    {
-        // ── Draynor Manor (Mainland → Manor) ──────────────────────────────────
-        // Fenced grounds of Draynor Manor.
-        name: 'DraynorManor',
-        destInRegion: (x, z) => x >= 3070 && x <= 3130 && z >= 3330 && z <= 3385,
-        playerInRegion: (x, z) => x >= 3070 && x <= 3130 && z >= 3330 && z <= 3385,
-        approachX: 3108,
-        approachZ: 3329,
-        arrivalRadius: 4
-    },
-    {
-        // ── Hemenster (Mainland → Hemenster) ──────────────────────────────────
-        // Fenced fishing village.
-        name: 'Hemenster',
-        destInRegion: (x, z) => x >= 2625 && x <= 2650 && z >= 3435 && z <= 3450,
-        playerInRegion: (x, z) => x >= 2625 && x <= 2650 && z >= 3435 && z <= 3450,
-        approachX: 2643,
-        approachZ: 3433,
-        arrivalRadius: 4
-    },
-    {
-        // ── Lumbridge sheep pen ───────────────────────────────────────────────
-        // Fenced enclosure NE of Lumbridge castle.  East gate at ~[3199, 3282].
-        // Bots walking directly to the interior hit the east fence unless they
-        // approach from the east side and open the gate.
-        name: 'SheepPen',
-        destInRegion: (x, z) => x >= 3182 && x <= 3199 && z >= 3267 && z <= 3291,
-        playerInRegion: (x, z) => x >= 3182 && x <= 3199 && z >= 3267 && z <= 3291,
-        approachX: 3202,
-        approachZ: 3282,
-        arrivalRadius: 3
-    },
-    {
-        // ── Lumbridge cow pen ─────────────────────────────────────────────────
-        // Fenced enclosure north of Lumbridge castle.  South gate at ~[3253, 3265].
-        // Bots walking directly to the interior ([3255, 3276]) hit the south
-        // fence unless they approach through the gate tile.
-        name: 'CowPen',
-        destInRegion: (x, z) => x >= 3248 && x <= 3265 && z >= 3266 && z <= 3296,
-        playerInRegion: (x, z) => x >= 3248 && x <= 3265 && z >= 3266 && z <= 3296,
-        approachX: 3253,
-        approachZ: 3263,
-        arrivalRadius: 4
-    },
-    {
-        // ── Varrock north (yew trees behind palace) ───────────────────────────
-        // The yews at [3204, 3499] are north of Varrock palace and reachable
-        // only by navigating through the city.  Routing through the Varrock
-        // south road entry gives the pathfinder a clear corridor to follow.
-        name: 'VarrockNorth',
-        destInRegion: (x, z) => x >= 3180 && x <= 3240 && z >= 3470,
-        playerInRegion: (x, z) => x >= 3180 && x <= 3240 && z >= 3430,
-        approachX: 3212,
-        approachZ: 3432,
-        arrivalRadius: 10
-    }
-];
-
-// ── Route corridors ───────────────────────────────────────────────────────────
-
-/**
- * Terrain corridors — solid obstacles (buildings, castle walls) that the BFS
- * pathfinder can technically route around, but where the obstacle is large
- * enough that long-distance midpoint calculations consistently land on the
- * wrong side of the wall and leave the bot looping.
- *
- * When walkTo() detects the player is in a source zone heading to a destination
- * beyond the obstacle, it first steers toward `viaX/Z` — a known-clear
- * intermediate tile on the correct side of the obstacle.  Once the bot reaches
- * or passes the obstacle (`playerCleared` = true) normal pathfinding resumes.
- *
- * Only active on the ground floor (level 0).
- */
-type RouteCorridor = {
-    readonly name: string;
-    /** Bot is stuck on the near side of the obstacle. */
-    readonly playerInZone: (x: number, z: number) => boolean;
-    /** Destination is on the far side — corridor routing is needed. */
-    readonly destBeyond: (x: number, z: number) => boolean;
-    /** Bot has cleared the obstacle — resume normal pathfinding. */
-    readonly playerCleared: (x: number, z: number) => boolean;
-    /** Safe intermediate tile on the near side of the obstacle. */
-    readonly viaX: number;
-    readonly viaZ: number;
-};
-
-const ROUTE_CORRIDORS: RouteCorridor[] = [
-    {
-        // ── Lumbridge castle — westbound bypass ───────────────────────────────
-        // Bots anywhere in the castle band (x > 3200, including Lumbridge spawn
-        // at 3222,3219) heading west toward Draynor village (x < 3185) have the
-        // castle walls across their straight-line path.  The BFS can route
-        // around the castle, but the 90-tile midpoint often lands on the wrong
-        // side of the walls and returns empty, leaving the bot looping on the
-        // compass fallback.
-        //
-        // Fix: redirect to (3194, 3226) — the open field west of the castle —
-        // first.  From there any Draynor destination is ≤ 110 tiles with a
-        // completely clear westward run.  Previously capped at x > 3226 which
-        // missed bots spawning at Lumbridge (3222, 3219).
-        name: 'LumbridgeCastleWest',
-        playerInZone: (x, z) => x > 3200 && z >= 3200 && z <= 3260,
-        destBeyond: (x, _z) => x < 3185,
-        playerCleared: (x, _z) => x <= 3200,
-        viaX: 3194,
-        viaZ: 3226
-    },
-    {
-        // ── Draynor market fence — northbound bypass ──────────────────────────
+        // ── Port Sarim ↔ Draynor ──────────────────────────────────────────────
         // The Draynor market has a fence on its east side (x ≈ 3083, z ≈ 3248–
         // 3261). Bots leaving the Draynor bank (3092, 3245) heading northwest
         // toward Falador furnace, Falador range, or Barbarian Village willows
         // find the fence blocking the direct westward path through z ≈ 3248–
-        // 3261. Via (3090, 3263) — just north of the fence top — the bot rounds
+        // 3261. Via (3070, 3277) — just north of the fence top — the bot rounds
         // the corner and then has a clear westward run.
-        name: 'DraynorMarketFence',
-        playerInZone: (x, z) => x >= 3083 && x <= 3097 && z >= 3243 && z <= 3262,
-        destBeyond: (x, z) => x <= 3082 && z >= 3258,
-        playerCleared: (_x, z) => z >= 3262,
-        viaX: 3090,
-        viaZ: 3263,
+        name: 'DraynorFence',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Misthalin',
+            'Desert',
+            'Wilderness',
+            'Morytania']),
+        approach: [[3069, 3276], [3069, 3278]],
+        exit: [[3070, 3276], [3070, 3278]]
     },
     {
-        // ── White Wolf Mountain — westbound bypass ────────────────────────────
+        // ── Falador ↔ Barbarian Village ───────────────────────────────────────
+        // The fence gets largely removed in revision 360. By checking the
+        // current revision we can ensure better compatilibty between revisions.
+        // This gateway automatically gets disabled after that.
+        name: 'BarbFence',
+        destInRegion: (x, z) => Environment.ENGINE_REVISION < 360 && checkRegion(x, z, [
+            'Misthalin',
+            'Desert',
+            'Wilderness',
+            'Morytania']),
+        approach: [[3068, 3417], [3068, 3418]],
+        exit: [[3069, 3416], [3069, 3418]]
+    },
+    {
+        // ── Falador ↔ Barbarian Village ───────────────────────────────────────
+        // Only enabled after revision 360. We still need a gateway otherwise
+        // the bots walk all the way to the Draynor gateway.
+        name: 'BarbFenceRemoved',
+        destInRegion: (x, z) => Environment.ENGINE_REVISION >= 360 && checkRegion(x, z, [
+            'Misthalin',
+            'Desert',
+            'Wilderness',
+            'Morytania']),
+        approach: [[3068, 3327], [3068, 3446]],
+        exit: [[3069, 3328], [3069, 3445]]
+    },
+    {
+        // ── Port Sarim ↔ Entrana (boat) ───────────────────────────────────────
+        // Bots heading to Entrana (gathering herblore supplies or woodcutting)
+        // walk to the Port Sarim northern docks and teleport to Entrana.
+        name: 'Entrana',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Entrana']),
+        approach: [[3048, 3234]],
+        exit: [[2834, 3335]],
+        teleport: true
+    },
+    {
+        // ── Falador ↔ Taverley (gate) ─────────────────────────────────────────
+        // The long wall between Falador and Taverley.
+        name: 'Taverley',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Taverley',
+            'Kandarin',
+            'Feldip',
+            'Troll',
+            'Tirannwn',
+            'Fremennik']),
+        approach: [[2936, 3450], [2936, 3451]],
+        exit: [[2935, 3450], [2935, 3451]]
+    },
+    {
+        // ── Port Sarim ↔ Taverley (gate) ──────────────────────────────────────
+        // Taverley south gate near Dark Wizards' Tower.
+        name: 'TaverleySouth',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Taverley',
+            'Kandarin',
+            'Feldip',
+            'Troll',
+            'Tirannwn',
+            'Fremennik']),
+        approach: [[2933, 3319], [2934, 3319]],
+        exit: [[2933, 3320], [2934, 3320]]
+    },
+    {
+        // ── Taverley ↔ White Wolf Mountain ────────────────────────────────────
         // Bots heading from Taverley/Falador (x > 2870) toward Catherby/Seers
-        // (x < 2800) must route through the mountain pass at (2848, 3497).
+        // (x < 2800) must route through the mountain pass.
         // The BFS often gets lost in the mountain crags.
-        name: 'WhiteWolfMountainWest',
-        playerInZone: (x, z) => x > 2860 && x < 3000 && z > 3400 && z < 3550,
-        destBeyond: (x, _z) => x < 2810,
-        playerCleared: (x, _z) => x <= 2850,
-        viaX: 2848,
-        viaZ: 3497
+        name: 'WhiteWolf',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'WhiteWolf',
+            'Kandarin',
+            'Feldip',
+            'Tirannwn',
+            'Fremennik']),
+        approach: [[2864, 3441], [2868, 3441]],
+        exit: [[2864, 3442], [2868, 3442]]
     },
     {
-        // ── White Wolf Mountain — eastbound bypass ────────────────────────────
-        name: 'WhiteWolfMountainEast',
-        playerInZone: (x, z) => x < 2830 && x > 2700 && z > 3400 && z < 3550,
-        destBeyond: (x, _z) => x > 2880,
-        playerCleared: (x, _z) => x >= 2845,
-        viaX: 2848,
-        viaZ: 3497
+        // ── White Wolf Mountain East ↔ White Wolf Mountain West ────────────────
+        // Top of the mountain near the gnome glider.
+        name: 'WhiteWolfWest',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'WhiteWolfWest',
+            'Kandarin',
+            'Feldip',
+            'Tirannwn',
+            'Fremennik']),
+        approach: [[2853, 3508], [2853, 3510]],
+        exit: [[2852, 3508], [2852, 3510]]
+    },
+    {
+        // ── Port Sarim ↔ Karamja (boat) ───────────────────────────────────────
+        // Bots heading to Karamja fishing spots (x < 2970) walk to the Port
+        // Sarim docks (~3029, 3217) and are teleported to the Karamja landing
+        // (2956, 3146). The boat costs 30 coins and triggers a dialog that
+        // bots cannot handle natively, so teleport is used instead.
+        name: 'MusaPointBoat',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Karamja',
+            'Kandarin',
+            'Feldip',
+            'Tirannwn',
+            'Fremennik']),
+        approach: [[3029, 3217]],
+        exit: [[2956, 3146]],
+        teleport: true
+    },
+    {
+        // ── Musa Point ↔ Brimhaven (gate) ─────────────────────────────────────
+        // Fence between Musa Point and Brimhaven.
+        name: 'BrimhavenFence',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Karamja',
+            'Kandarin',
+            'Feldip',
+            'Tirannwn',
+            'Fremennik']) &&
+            !checkRegion(x, z, [
+                'MusaPoint']),
+        approach: [[2816, 3182], [2816, 3183]],
+        exit: [[2815, 3182], [2815, 3183]]
+    },
+    {
+        // ── Varrock ↔ Wilderness ──────────────────────────────────────────────
+        // Longest stretch of the Wilderness border. This is compatible until
+        // revision 456 where the Ditch is added. Coordinates will still be
+        // correct but interaction would need to be added.
+        name: 'WildernessVarrock',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Wilderness']),
+        approach: [[3135, 3520], [3327, 3520]],
+        exit: [[3135, 3523], [3327, 3523]]
+    },
+    {
+        // ── Edgeville ↔ Wilderness ────────────────────────────────────────────
+        // Also includes the stretch with the Monastery.
+        name: 'WildernessEdgeville',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Wilderness']),
+        approach: [[3042, 3520], [3123, 3520]],
+        exit: [[3041, 3523], [3122, 3523]]
+    },
+    {
+        // ── Ice Mountain ↔ Wilderness ─────────────────────────────────────────
+        // Small passage connecting Ice Mountain with the Wilderness.
+        name: 'WildernessIceMountain',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Wilderness']),
+        approach: [[2998, 3529], [2998, 3533]],
+        exit: [[2995, 3529], [2995, 3534]]
+    },
+    {
+        // ── Mind Altar ↔ Wilderness ───────────────────────────────────────────
+        // Only enabled prior to revision 249 for backwards compatiblity.
+        // After that it opens up to include the Chaos Temple.
+        name: 'WildernessWestOld',
+        destInRegion: (x, z) => Environment.ENGINE_REVISION < 249 && checkRegion(x, z, [
+            'Wilderness']),
+        approach: [[2967, 3520], [2992, 3520]],
+        exit: [[2967, 3523], [2992, 3523]]
+    },
+    {
+        // ── Mind Altar ↔ Wilderness ───────────────────────────────────────────
+        // Also connected to the new stretch with the Chaos Temple.
+        name: 'WildernessWest',
+        destInRegion: (x, z) => Environment.ENGINE_REVISION >= 249 && checkRegion(x, z, [
+            'Wilderness']),
+        approach: [[2945, 3520], [2992, 3520]],
+        exit: [[2945, 3523], [2992, 3523]]
+    },
+    {
+        // ── White Wolf Mountain ↔ Catherby ────────────────────────────────────
+        // West exit from the mountain connecting to Kandarin.
+        name: 'Catherby',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Kandarin',
+            'Feldip',
+            'Tirannwn',
+            'Fremennik']),
+        approach: [[2855, 3441]],
+        exit: [[2855, 3440]]
+    },
+    {
+        // ── Ardougne ↔ Tree Gnome Stronghold (gate) ───────────────────────────
+        // Gate to the Tree Gnome Stronghold. Bots should have auto completed to
+        // help Femi (var 152) so they can open the gate without dialog.
+        name: 'GnomeStronghold',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'GnomeStronghold']),
+        approach: [[2460, 3382], [2462, 3382]],
+        exit: [[2460, 3385], [2462, 3385]]
+    },
+    {
+        // ── Brimhaven ↔ Ardougne (boat) ───────────────────────────────────────
+        // Bots heading to Ardougne can take the boat from Karamja.
+        // The boat costs 30 coins and triggers a dialog that
+        // bots cannot handle natively, so teleport is used instead.
+        name: 'BrimhavenBoat',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Kandarin',
+            'Feldip',
+            'Tirannwn',
+            'Fremennik']),
+        approach: [[2772, 3234]],
+        exit: [[2683, 3271]],
+        teleport: true
+    },
+    {
+        // ── Legends' Guild ↔ Ardougne Docks ───────────────────────────────────
+        // Docks entrance to Ardougne.
+        name: 'ArdougneDocks',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Ardougne',
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2688, 3275], [2688, 3276]],
+        exit: [[2687, 3275], [2687, 3276]]
+    },
+    {
+        // ── Legends' Guild ↔ Ardougne Market ──────────────────────────────────
+        // East entrance to Ardougne.
+        name: 'ArdougneMarket',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Ardougne',
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2688, 3304], [2688, 3306]],
+        exit: [[2687, 3303], [2687, 3306]]
+    },
+    {
+        // ── Hemenster ↔ Ardougne ──────────────────────────────────────────────
+        // Main north entrance to Ardougne.
+        name: 'ArdougneNorth',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Ardougne',
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2635, 3340], [2637, 3340]],
+        exit: [[2635, 3339], [2637, 3339]]
+    },
+    {
+        // ── Fishing Guild ↔ Ardougne ──────────────────────────────────────────
+        // Entrance to Ardougne closest to north bank.
+        name: 'ArdougneNorthBank',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Ardougne',
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2612, 3342], [2613, 3342]],
+        exit: [[2612, 3341], [2613, 3341]]
+    },
+    {
+        // ── Fishing Guild ↔ Ardougne ──────────────────────────────────────────
+        // Entrance to Ardougne, north of castle.
+        name: 'ArdougneNorthCastle',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Ardougne',
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2587, 3342], [2588, 3342]],
+        exit: [[2587, 3341], [2588, 3341]]
+    },
+    {
+        // ── Tree Gnome Stronghold ↔ Ardougne ──────────────────────────────────
+        // Small entrance to Ardougne, northwest corner.
+        name: 'ArdougneNorthWest',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'Ardougne',
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2559, 3337]],
+        exit: [[2559, 3336]]
+    },
+    {
+        // ── Ardougne ↔ Battlefield ────────────────────────────────────────────
+        // Southwest exit from Ardougne.
+        name: 'ArdougneSouthWest',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2559, 3264], [2663, 3264]],
+        exit: [[2558, 3263], [2662, 3263]]
+    },
+    {
+        // ── Ardougne zoo ↔ Monastery ──────────────────────────────────────────
+        // Main south exit from Ardougne.
+        name: 'ArdougneZoo',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2602, 3264], [2603, 3264]],
+        exit: [[2602, 3263], [2603, 3263]]
+    },
+    {
+        // ── Ardougne ↔ Monastery ──────────────────────────────────────────────
+        // Southeast exit from Ardougne closest to south bank.
+        name: 'ArdougneSouthEast',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'KandarinSouth',
+            'Feldip']),
+        approach: [[2640, 3264], [2641, 3264]],
+        exit: [[2639, 3263], [2640, 3263]]
+    },
+    {
+        // ── Ardougne Market ↔ Ardougne Castle ─────────────────────────────────
+        // Bridge to Ardougne Castle.
+        name: 'ArdougneRiverWest',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'ArdougneRiverWest']),
+        approach: [[2599, 3295], [2599, 3297]],
+        exit: [[2598, 3295], [2598, 3297]]
+    },
+    {
+        // ── East Ardougne ↔ West Ardougne (gate) ──────────────────────────────
+        // Gate to West Ardougne, requires completion of Plague City which
+        // the bots should have auto completed.
+        name: 'WestArdougne',
+        destInRegion: (x, z) => checkRegion(x, z, [
+            'WestArdougne']),
+        approach: [[2559, 3299], [2559, 3300]],
+        exit: [[2556, 3299], [2556, 3300]]
     }
 ];
+
+/**
+ * Regions used as destination for gateways. Defined separately so they
+ * can be used for multiple gateways. For readability, regions are grouped
+ * under a bigger region that they are part of. The westernmost coordinate
+ * is listed first and then drawn clockwise.
+ */
+type Region = {
+    readonly name: string;
+    /** 
+     * Each [x, z] tile creates a line to the next tile.
+     * A triangle is created with 3 tiles and more tiles can
+     * be provided to precisely define a region as a polygon.
+     */
+    readonly coords: number[][];
+    /**
+     * If set, names of regions that should also be part of this region
+     * but could not be included in `coords`.
+     * This applies to dungeons and other separated regions.
+     */
+    readonly contains?: string[];
+};
+
+const REGIONS: Region[] = [
+    // ── Kingdom of Misthalin ──────────────────────────────────────────────────
+    {
+        name: 'Misthalin',
+        coords: [
+            [3025, 3071],
+            [3070, 3273],
+            [3070, 3285],
+            [3069, 3327],
+            [3069, 3453],
+            [3066, 3453],
+            [3066, 3520],
+            [3408, 3520],
+            [3408, 3505],
+            [3418, 3496],
+            [3418, 3484],
+            [3423, 3479],
+            [3423, 3475],
+            [3403, 3451],
+            [3394, 3330],
+            [3274, 3330],
+            [3267, 3323],
+            [3267, 3209],
+            [3252, 3179],
+            [3250, 3140],
+            [3197, 3131],
+            [3130, 3045]]
+    },
+    {
+        name: 'Lumbridge',
+        coords: [
+            [3201, 3199],
+            [3201, 3237],
+            [3238, 3237],
+            [3238, 3234],
+            [3244, 3227],
+            [3244, 3223],
+            [3258, 3213],
+            [3260, 3197],
+            [3256, 3191],
+            [3238, 3191],
+            [3218, 3199]]
+    },
+    {
+        name: 'LumbridgeSheep',
+        coords: [
+            [3193, 3257],
+            [3193, 3276],
+            [3204, 3276],
+            [3210, 3275],
+            [3212, 3269],
+            [3212, 3257]]
+    },
+    {
+        name: 'MisthalinEast',
+        coords: [
+            [3102, 3473],
+            [3108, 3487],
+            [3114, 3493],
+            [3124, 3498],
+            [3132, 3514],
+            [3132, 3520],
+            [3408, 3520],
+            [3408, 3505],
+            [3418, 3496],
+            [3418, 3484],
+            [3423, 3479],
+            [3423, 3475],
+            [3403, 3451],
+            [3394, 3330],
+            [3274, 3330],
+            [3267, 3323],
+            [3267, 3209],
+            [3261, 3197],
+            [3259, 3214],
+            [3245, 3224],
+            [3245, 3228],
+            [3239, 3235],
+            [3235, 3259],
+            [3235, 3267],
+            [3220, 3287],
+            [3213, 3320],
+            [3197, 3341],
+            [3179, 3349],
+            [3157, 3349],
+            [3142, 3388],
+            [3118, 3389],
+            [3105, 3417],
+            [3105, 3424],
+            [3113, 3432],
+            [3103, 3446]]
+    },
+    {
+        name: 'LumbridgeCow',
+        coords: [
+            [3242, 3282],
+            [3242, 3298],
+            [3265, 3298],
+            [3265, 3255],
+            [3253, 3255],
+            [3253, 3271]]
+    },
+    {
+        name: 'VarrockPalace',
+        coords: [
+            [3186, 3458],
+            [3186, 3461],
+            [3188, 3463],
+            [3188, 3475],
+            [3191, 3478],
+            [3191, 3496],
+            [3200, 3507],
+            [3228, 3507],
+            [3234, 3501],
+            [3234, 3454],
+            [3219, 3439],
+            [3208, 3439],
+            [3189, 3458]]
+    },
+    // ── Kharidian Desert ──────────────────────────────────────────────────────
+    {
+        name: 'Desert',
+        coords: [
+            [2980, 2794],
+            [3198, 3130],
+            [3251, 3139],
+            [3253, 3178],
+            [3268, 3208],
+            [3268, 3322],
+            [3275, 3329],
+            [3394, 3329],
+            [3432, 3178],
+            [3619, 3077],
+            [3377, 2465]]
+    },
+    {
+        name: 'DesertSouth',
+        coords: [
+            [2980, 2794],
+            [3198, 3130],
+            [3251, 3139],
+            [3296, 3131],
+            [3296, 3116],
+            [3314, 3116],
+            [3314, 3135],
+            [3333, 3135],
+            [3333, 3158],
+            [3354, 3157],
+            [3357, 3143],
+            [3374, 3133],
+            [3380, 3125],
+            [3395, 3149],
+            [3393, 3165],
+            [3409, 3161],
+            [3421, 3188],
+            [3432, 3178],
+            [3619, 3077],
+            [3377, 2465]]
+    },
+    // ── Kingdom of Asgarnia ───────────────────────────────────────────────────
+    {
+        name: 'Asgarnia',
+        coords: [
+            [2784, 3326],
+            [2800, 3398],
+            [2837, 3429],
+            [2846, 3428],
+            [2859, 3415],
+            [2864, 3420],
+            [2864, 3436],
+            [2857, 3441],
+            [2854, 3441],
+            [2840, 3449],
+            [2843, 3458],
+            [2834, 3466],
+            [2829, 3491],
+            [2815, 3496],
+            [2796, 3488],
+            [2788, 3502],
+            [2802, 3551],
+            [2833, 3551],
+            [2840, 3577],
+            [2879, 3577],
+            [2892, 3585],
+            [2940, 3583],
+            [2940, 3520],
+            [2992, 3520],
+            [2998, 3526],
+            [2998, 3534],
+            [3006, 3543],
+            [3023, 3543],
+            [3040, 3520],
+            [3065, 3520],
+            [3065, 3452],
+            [3068, 3452],
+            [3068, 3326],
+            [3069, 3284],
+            [3069, 3274],
+            [3024, 3071],
+            [2962, 3114],
+            [2963, 3177],
+            [2883, 3218],
+            [2886, 3324]]
+    },
+    {
+        name: 'Entrana',
+        coords: [
+            [2784, 3326],
+            [2800, 3398],
+            [2870, 3396],
+            [2886, 3324]]
+    },
+    {
+        name: 'Taverley',
+        coords: [
+            [2788, 3502],
+            [2802, 3551],
+            [2833, 3551],
+            [2840, 3577],
+            [2879, 3577],
+            [2892, 3585],
+            [2940, 3583],
+            [2940, 3520],
+            [2929, 3520],
+            [2929, 3509],
+            [2936, 3509],
+            [2936, 3475],
+            [2940, 3471],
+            [2940, 3454],
+            [2935, 3454],
+            [2935, 3448],
+            [2940, 3448],
+            [2944, 3444],
+            [2944, 3413],
+            [2936, 3387],
+            [2936, 3320],
+            [2928, 3320],
+            [2928, 3328],
+            [2911, 3328],
+            [2911, 3320],
+            [2887, 3324],
+            [2871, 3397],
+            [2800, 3399],
+            [2837, 3429],
+            [2846, 3428],
+            [2859, 3415],
+            [2864, 3420],
+            [2864, 3436],
+            [2857, 3441],
+            [2854, 3441],
+            [2840, 3449],
+            [2843, 3458],
+            [2834, 3466],
+            [2829, 3491],
+            [2815, 3496],
+            [2796, 3488]]
+    },
+    {
+        name: 'WhiteWolf',
+        coords: [
+            [2788, 3502],
+            [2802, 3551],
+            [2852, 3528],
+            [2868, 3531],
+            [2879, 3524],
+            [2879, 3497],
+            [2871, 3484],
+            [2877, 3458],
+            [2877, 3442],
+            [2862, 3442],
+            [2864, 3436],
+            [2857, 3441],
+            [2854, 3441],
+            [2840, 3449],
+            [2843, 3458],
+            [2834, 3466],
+            [2829, 3491],
+            [2815, 3496],
+            [2796, 3488]]
+    },
+    {
+        name: 'WhiteWolfWest',
+        coords: [
+            [2788, 3502],
+            [2802, 3551],
+            [2852, 3528],
+            [2852, 3507],
+            [2858, 3501],
+            [2858, 3492],
+            [2852, 3484],
+            [2852, 3451],
+            [2862, 3442],
+            [2864, 3436],
+            [2857, 3441],
+            [2854, 3441],
+            [2840, 3449],
+            [2843, 3458],
+            [2834, 3466],
+            [2829, 3491],
+            [2815, 3496],
+            [2796, 3488]]
+    },
+    // ── Karamja ───────────────────────────────────────────────────────────────
+    {
+        name: 'Karamja',
+        coords: [
+            [2672, 3205],
+            [2709, 3246],
+            [2807, 3257],
+            [2784, 3325],
+            [2885, 3323],
+            [2882, 3217],
+            [2962, 3176],
+            [2961, 3113],
+            [3024, 3070],
+            [3008, 2857],
+            [2729, 2852],
+            [2727, 3103]]
+    },
+    {
+        name: 'MusaPoint',
+        coords: [
+            [2816, 3144],
+            [2816, 3217],
+            [2882, 3217],
+            [2962, 3176],
+            [2961, 3113]]
+    },
+    // ── Wilderness ────────────────────────────────────────────────────────────
+    {
+        name: 'Wilderness',
+        coords: [
+            [2941, 3521],
+            [2941, 3663],
+            [2950, 3678],
+            [2941, 3687],
+            [2941, 4003],
+            [3384, 4001],
+            [3700, 3584],
+            [3391, 3584],
+            [3391, 3534],
+            [3408, 3521],
+            [3041, 3521],
+            [3024, 3544],
+            [3005, 3544],
+            [2997, 3535],
+            [2997, 3527],
+            [2991, 3521]]
+    },
+    // ── Kingdom of Kandarin ───────────────────────────────────────────────────
+    {
+        name: 'Kandarin',
+        coords: [
+            [2176, 3636],
+            [2331, 3741],
+            [2490, 3596],
+            [2532, 3596],
+            [2567, 3583],
+            [2651, 3597],
+            [2657, 3597],
+            [2662, 3600],
+            [2668, 3597],
+            [2676, 3599],
+            [2681, 3604],
+            [2686, 3600],
+            [2717, 3594],
+            [2728, 3594],
+            [2744, 3587],
+            [2754, 3590],
+            [2801, 3551],
+            [2787, 3502],
+            [2796, 3487],
+            [2816, 3495],
+            [2828, 3490],
+            [2833, 3465],
+            [2842, 3457],
+            [2839, 3448],
+            [2853, 3440],
+            [2856, 3440],
+            [2863, 3435],
+            [2863, 3421],
+            [2858, 3416],
+            [2847, 3429],
+            [2836, 3430],
+            [2799, 3399],
+            [2783, 3326],
+            [2806, 3257],
+            [2708, 3247],
+            [2671, 3206],
+            [2726, 3102],
+            [2680, 3066],
+            [2516, 3066],
+            [2455, 3060],
+            [2455, 3009],
+            [2305, 3021],
+            [2326, 3078],
+            [2365, 3080],
+            [2365, 3142],
+            [2408, 3335],
+            [2346, 3335],
+            [2334, 3392],
+            [2178, 3392]]
+    },
+    {
+        name: 'KandarinNorth',
+        coords: [
+            [2176, 3636],
+            [2331, 3741],
+            [2490, 3596],
+            [2532, 3596],
+            [2567, 3583],
+            [2651, 3597],
+            [2657, 3597],
+            [2662, 3600],
+            [2668, 3597],
+            [2676, 3599],
+            [2681, 3604],
+            [2686, 3600],
+            [2717, 3594],
+            [2728, 3594],
+            [2744, 3587],
+            [2754, 3590],
+            [2801, 3551],
+            [2787, 3502],
+            [2796, 3487],
+            [2816, 3495],
+            [2828, 3490],
+            [2833, 3465],
+            [2842, 3457],
+            [2839, 3448],
+            [2853, 3440],
+            [2856, 3440],
+            [2863, 3435],
+            [2863, 3421],
+            [2858, 3416],
+            [2847, 3429],
+            [2836, 3430],
+            [2799, 3399],
+            [2783, 3326],
+            [2806, 3257],
+            [2688, 3264],
+            [2688, 3328],
+            [2681, 3335],
+            [2674, 3335],
+            [2669, 3340],
+            [2617, 3340],
+            [2615, 3342],
+            [2563, 3342],
+            [2559, 3337],
+            [2461, 3337],
+            [2461, 3325],
+            [2433, 3325],
+            [2408, 3335],
+            [2346, 3335],
+            [2334, 3392],
+            [2178, 3392]]
+    },
+    {
+        name: 'GnomeStronghold',
+        coords: [
+            [2369, 3423],
+            [2369, 3431],
+            [2371, 3433],
+            [2371, 3442],
+            [2375, 3446],
+            [2375, 3457],
+            [2381, 3464],
+            [2381, 3473],
+            [2374, 3486],
+            [2374, 3532],
+            [2472, 3532],
+            [2495, 3511],
+            [2495, 3430],
+            [2497, 3428],
+            [2497, 3418],
+            [2493, 3403],
+            [2505, 3391],
+            [2467, 3391],
+            [2465, 3389],
+            [2465, 3384],
+            [2457, 3384],
+            [2457, 3389],
+            [2455, 3391],
+            [2442, 3391],
+            [2438, 3388],
+            [2435, 3388],
+            [2427, 3393],
+            [2421, 3393],
+            [2414, 3400],
+            [2414, 3408],
+            [2410, 3412],
+            [2392, 3412],
+            [2386, 3407],
+            [2380, 3408],
+            [2376, 3411],
+            [2375, 3417]]
+    },
+    {
+        name: 'Ardougne',
+        coords: [
+            [2433, 3305],
+            [2433, 3324],
+            [2462, 3324],
+            [2462, 3336],
+            [2560, 3336],
+            [2564, 3341],
+            [2614, 3341],
+            [2616, 3339],
+            [2668, 3339],
+            [2673, 3334],
+            [2680, 3334],
+            [2687, 3327],
+            [2687, 3264],
+            [2509, 3264],
+            [2509, 3279],
+            [2459, 3279],
+            [2459, 3305]]
+    },
+    {
+        name: 'ArdougneRiverWest',
+        coords: [
+            [2433, 3305],
+            [2433, 3324],
+            [2462, 3324],
+            [2462, 3336],
+            [2560, 3336],
+            [2564, 3341],
+            [2600, 3341],
+            [2600, 3320],
+            [2592, 3312],
+            [2598, 3302],
+            [2598, 3290],
+            [2586, 3264],
+            [2509, 3264],
+            [2509, 3279],
+            [2459, 3279],
+            [2459, 3305]]
+    },
+    {
+        name: 'WestArdougne',
+        coords: [
+            [2433, 3305],
+            [2433, 3324],
+            [2462, 3324],
+            [2462, 3336],
+            [2558, 3336],
+            [2558, 3264],
+            [2509, 3264],
+            [2509, 3279],
+            [2459, 3279],
+            [2459, 3305]]
+    },
+    {
+        name: 'KandarinSouth',
+        coords: [
+            [2305, 3021],
+            [2326, 3078],
+            [2365, 3080],
+            [2365, 3142],
+            [2408, 3334],
+            [2432, 3324],
+            [2432, 3304],
+            [2458, 3304],
+            [2458, 3278],
+            [2508, 3278],
+            [2508, 3263],
+            [2686, 3263],
+            [2805, 3256],
+            [2708, 3247],
+            [2671, 3206],
+            [2726, 3102],
+            [2680, 3066],
+            [2516, 3066],
+            [2455, 3060],
+            [2455, 3009]]
+    },
+    // ── Feldip Hills ──────────────────────────────────────────────────────────
+    {
+        name: 'Feldip',
+        coords: [
+            [2456, 3008],
+            [2456, 3059],
+            [2516, 3065],
+            [2680, 3065],
+            [2640, 2793],
+            [2289, 2798]]
+    },
+    // ── Morytania ─────────────────────────────────────────────────────────────
+    {
+        name: 'Morytania',
+        coords: [
+            [3392, 3535],
+            [3392, 3583],
+            [3900, 3583],
+            [3900, 2800],
+            [3619, 2800],
+            [3620, 3078],
+            [3433, 3179],
+            [3395, 3330],
+            [3404, 3450],
+            [3424, 3474],
+            [3424, 3480],
+            [3419, 3485],
+            [3419, 3497],
+            [3409, 3506],
+            [3409, 3522]]
+    },
+    // ── Troll Country ─────────────────────────────────────────────────────────
+    {
+        name: 'Troll',
+        coords: [
+            [2750, 3712],
+            [2750, 3911],
+            [2940, 4003],
+            [2940, 3686],
+            [2949, 3678],
+            [2940, 3664],
+            [2940, 3584],
+            [2891, 3586],
+            [2878, 3578],
+            [2839, 3578],
+            [2832, 3552],
+            [2802, 3552],
+            [2802, 3637],
+            [2822, 3650],
+            [2822, 3712]]
+    },
+    // ── Tirannwn ──────────────────────────────────────────────────────────────
+    {
+        name: 'Tirannwn',
+        coords: [
+            [2038, 3019],
+            [2179, 3391],
+            [2333, 3391],
+            [2345, 3334],
+            [2407, 3334],
+            [2364, 3143],
+            [2364, 3081],
+            [2326, 3079],
+            [2304, 3021]]
+    },
+    // ── Fremennik Province ────────────────────────────────────────────────────
+    {
+        name: 'Fremennik',
+        coords: [
+            [2052, 3809],
+            [2052, 3957],
+            [2779, 4145],
+            [2749, 3912],
+            [2749, 3711],
+            [2821, 3711],
+            [2821, 3651],
+            [2801, 3638],
+            [2801, 3552],
+            [2754, 3591],
+            [2744, 3588],
+            [2729, 3595],
+            [2718, 3595],
+            [2687, 3601],
+            [2681, 3605],
+            [2675, 3600],
+            [2668, 3598],
+            [2662, 3601],
+            [2656, 3598],
+            [2652, 3598],
+            [2567, 3584],
+            [2533, 3597],
+            [2491, 3597],
+            [2331, 3742]]
+    }
+];
+
+/**
+ * For each region, check if point (x, z) is inside.
+ * Return true if the point is in any of the regions.
+ * If the region contains more regions, check if the point is in any of those.
+ * But don't further check if those regions contain even more regions,
+ * they can be added to the `contains` field of the main region if desired.
+ * If the point was not found in any of the regions, return false.
+ */
+function checkRegion(x: number, z: number, names: string[]): boolean {
+    for (const name of names) {
+        const region = REGIONS.find(r => r.name === name);
+        if (!region) continue;
+        if (isInside(region.coords, x, z)) return true;
+        if (!region.contains) continue;
+        for (const i of region.contains) {
+            const contained = REGIONS.find(r => r.name === i);
+            if (!contained) continue;
+            if (isInside(contained.coords, x, z)) return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Given a point (x, z) and a polygon represented by its vertices,
+ * determine whether the point lies inside the polygon.
+ * The polygon is represented by an array arr[][],
+ * where arr[i] = [xi, zi] denotes the coordinates of the i-th vertex.
+ * Return true if the point lies inside the polygon; otherwise, return false.
+ * Note: A point lying on the boundary (edge or vertex) of the polygon
+ * is also considered inside the polygon.
+ */
+function isInside(arr: number[][], x: number, z: number): boolean {
+    const n = arr.length;
+    let inside = false;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+        const [x1, z1] = arr[i];
+        const [x2, z2] = arr[j];
+
+        // Point lies on the current edge
+        if (onSegment(x1, z1, x2, z2, x, z)) return true;
+
+        // Check whether the horizontal ray from (x, z)
+        // intersects the current edge
+        const intersect =
+            ((z1 > z) !== (z2 > z)) &&
+            (x < (x2 - x1) * (z - z1) / (z2 - z1) + x1);
+
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+function onSegment(x1: number, z1: number, x2: number, z2: number, x: number, z: number): boolean {
+    const c = (x - x1) * (z2 - z1) - (z - z1) * (x2 - x1);
+    if (c !== 0) return false;
+
+    return Math.min(x1, x2) <= x && x <= Math.max(x1, x2) &&
+        Math.min(z1, z2) <= z && z <= Math.max(z1, z2);
+}
 
 /**
  * Raw pathfinding toward a single tile: accurate → relaxed → swept-angle → naive.
@@ -678,9 +1613,202 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
 
     if (Math.abs(player.x - destX) < 1 && Math.abs(player.z - destZ) < 1) return;
 
+    // ── Gateway routing ─────────────────────────────────────────────────────
+    // If the destination is inside a gated region and the bot is outside,
+    // walk to the approach area first, then open the gate, then proceed
+    // to the exit area. If there are multiple gateways to the destination,
+    // try to find the most optimal route before selecting the next gateway.
+    // Working backwards through the gateways from destination to the bot,
+    // find the optimal gateway and set it as new destination.
+    // Repeat until no gateways are left so we know our first destination.
+    let gw: GatewayRegion | null = null;
+    let gwExit: number[][] | null = null;
+    let nextDestX = destX;
+    let nextDestZ = destZ;
+    let nextExit = [destX, destZ];
+    const currRegions = [...GATEWAY_REGIONS];
+    for (const _i of GATEWAY_REGIONS) {
+        let best: GatewayRegion | null = null;
+        let bestDist = Infinity;
+        let bestDist2 = Infinity;
+        let bestXZ = [nextDestX, nextDestZ];
+
+        // Check whether the destination requires more diagonal or
+        // vertical/horizontal movement. For use later.
+        let diagonal = true;
+        const dx = nextDestX - player.x;
+        const dz = nextDestZ - player.z;
+        if (dx > 2 * dz || dz > 2 * dx) diagonal = false;
+
+        for (const curr of currRegions) {
+            let approach = curr.approach;
+            let exit = curr.exit;
+            // Approach or exit not properly defined.
+            if (approach.length < 1 || exit.length < 1) continue;
+            if (approach[0].length < 2 || exit[0].length < 2) continue;
+
+            // Only consider gateways where the destination
+            // is in the region and the bot is outside.
+            // Or the destination is outside but the bot inside.
+            if (curr.destInRegion(nextDestX, nextDestZ)) {
+                if (curr.destInRegion(player.x, player.z)) {
+                    continue;
+                }
+            } else {
+                if (!curr.destInRegion(player.x, player.z)) {
+                    continue;
+                } else {
+                    // Swap values when exiting for easier calculation.
+                    approach = curr.exit;
+                    exit = curr.approach;
+                }
+            }
+
+            // If an approach/exit area is defined, check for the optimal tile.
+            const bestApproach = closestBetween(approach, [player.x, player.z], [nextDestX, nextDestZ]);
+            let bestExit = [exit[0][0], exit[0][1]];
+            if (exit.length > 1) {
+                // If teleport area is defined, use the average.
+                if (curr.teleport) {
+                    bestExit[0] = (exit[0][0] + exit[1][0]) / 2;
+                    bestExit[1] = (exit[0][1] + exit[1][1]) / 2;
+                } else {
+                    bestExit = closestBetween(exit, bestApproach, [nextDestX, nextDestZ]);
+                }
+            }
+
+            // Combine distance from bot to gateway and distance from
+            // gateway to destination. If no teleport, also add distance from
+            // approach to exit. The best gateway has the least total distance.
+            // Use Chebyshev distance if the destination requires more
+            // vertical/horizontal movement and Manhattan distance for diagonal.
+            // This better ensures that we don't pick a gateway behind the bot.
+            // If this results in gateways having the same distance,
+            // use Euclidean distance to find the one closest to our path.
+            const dx1 = Math.abs(bestApproach[0] - player.x);
+            const dz1 = Math.abs(bestApproach[1] - player.z);
+            const dx2 = Math.abs(nextDestX - bestExit[0]);
+            const dz2 = Math.abs(nextDestZ - bestExit[1]);
+            let dx3 = 0;
+            let dz3 = 0;
+            if (!curr.teleport) {
+                dx3 = Math.abs(bestExit[0] - bestApproach[0]);
+                dz3 = Math.abs(bestExit[1] - bestApproach[1]);
+            }
+
+            let currDist = 0;
+            if (diagonal) {
+                currDist = dx1 + dz1 + dx2 + dz2 + dx3 + dz3;
+            } else {
+                currDist = Math.max(dx1 + dz1) + Math.max(dx2 + dz2) + Math.max(dx3 + dz3);
+            }
+            const currDist2 =
+                Math.sqrt(dx1 * dx1 + dz1 * dz1) +
+                Math.sqrt(dx2 * dx2 + dz2 * dz2) +
+                Math.sqrt(dx3 * dx3 + dz3 * dz3);
+            if (currDist < bestDist || (currDist === bestDist && currDist2 < bestDist2)) {
+                best      = curr;
+                bestDist  = currDist;
+                bestDist2 = currDist2;
+                bestXZ    = bestApproach;
+                nextExit  = bestExit;
+                gwExit    = exit;
+            }
+        }
+
+        // Found gateway is set as new destination so we go back and find
+        // a route to it first until there are no more prior gateways.
+        // In which case we can finally path to this gateway.
+        if (best) {
+            gw = best;
+            nextDestX = bestXZ[0];
+            nextDestZ = bestXZ[1];
+
+            // Ensure each gateway is only used once in the calculated route.
+            const index = currRegions.indexOf(best);
+            if (index > -1) {
+                currRegions.splice(index, 1);
+            }
+        } else {
+            break;
+        }
+    }
+
+    // If a gateway was found, one of 3 things will happen.
+    // 1. If not near approach tile, walk to it first.
+    // 2. If teleport is set, teleport to exit area.
+    // 3. Otherwise walk to exit area.
+    if (gw && gwExit) {
+        const gwDist = Math.max(Math.abs(player.x - nextDestX), Math.abs(player.z - nextDestZ)); // Chebyshev distance
+
+        if (gwDist > 5) {
+            // Not yet at the approach tile — walk toward it first.
+            // If the requested destination is CSV-blocked or WALK_BLOCKED,
+            // find the nearest walkable tile.
+            if (BotCollisionMap.isCsvBlocked(player.level, nextDestX, nextDestZ)) {
+                const alt = findNearestWalkableTile(player.level, nextDestX, nextDestZ, 5);
+                if (!alt) return; // nowhere reachable near this destination
+                nextDestX = alt.x;
+                nextDestZ = alt.z;
+            }
+            _pathTowards(player, nextDestX, nextDestZ);
+
+            try {
+                const botName = _debugBotName(player);
+                if (botName) BotDebugService.event(botName, 'movement', `approach gateway ${gw.name} (${nextDestX},${nextDestZ},${player.level})`);
+            } catch {
+                // debug hook must never affect gameplay
+            }
+            return;
+        }
+
+        // Close to approach tile — cross the gate.
+        if (gw.teleport) {
+            let teleportDestX = gwExit[0][0];
+            let teleportDestZ = gwExit[0][1];
+            // Toll/dialog gate that bots can't interact with — teleport through.
+            // If teleport area is defined, use random tile in area.
+            if (gwExit.length > 1) {
+                const xMin = Math.min(gwExit[0][0], gwExit[1][0]);
+                const zMin = Math.min(gwExit[0][1], gwExit[1][1]);
+                const xMax = Math.max(gwExit[0][0], gwExit[1][0]);
+                const zMax = Math.max(gwExit[0][1], gwExit[1][1]);
+                teleportDestX = xMin + Math.floor(Math.random() * (xMax - xMin + 1));
+                teleportDestZ = zMin + Math.floor(Math.random() * (zMax - zMin + 1));
+            }
+            // If the requested destination is CSV-blocked or WALK_BLOCKED,
+            // find the nearest walkable tile before teleporting.
+            if (BotCollisionMap.isCsvBlocked(player.level, teleportDestX, teleportDestZ)) {
+                const alt = findNearestWalkableTile(player.level, teleportDestX, teleportDestZ, 5);
+                if (!alt) return; // nowhere reachable near this destination
+                teleportDestX = alt.x;
+                teleportDestZ = alt.z;
+            }
+            botTeleport(player, teleportDestX, teleportDestZ, player.level);
+            return;
+        }
+
+        // Walk inside the exit area as we may need to get through
+        // more gateways before the last destination is reachable.
+        // Make sure we actually get a walkable tile in the exit area.
+        if (BotCollisionMap.isCsvBlocked(player.level, nextExit[0], nextExit[1])) {
+            nextExit = closestBetween(gwExit, [player.x, player.z], [destX, destZ], true);
+        }
+        _pathTowards(player, nextExit[0], nextExit[1]);
+
+        try {
+            const botName = _debugBotName(player);
+            if (botName) BotDebugService.event(botName, 'movement', `exiting gateway ${gw.name} (${nextExit[0]},${nextExit[1]},${player.level})`);
+        } catch {
+            // debug hook must never affect gameplay
+        }
+        return;
+    }
+    // No more gateways found, path directly to destination.
+
     // ── Destination validation ───────────────────────────────────────────────
-    // If the requested destination is CSV-blocked or WALK_BLOCKED, find the
-    // nearest walkable tile before engaging gateway/corridor/path logic.
+    // If the requested destination is CSV-blocked or WALK_BLOCKED
+    // find the nearest walkable tile.
     if (BotCollisionMap.isCsvBlocked(player.level, destX, destZ)) {
         const alt = findNearestWalkableTile(player.level, destX, destZ, 5);
         if (!alt) return; // nowhere reachable near this destination
@@ -688,50 +1816,44 @@ export function walkTo(player: Player, destX: number, destZ: number): void {
         destZ = alt.z;
     }
 
-    // ── Gateway routing ─────────────────────────────────────────────────────
-    // If the destination is inside a gated region and the bot is outside,
-    // walk to the approach tile first, then open the gate, then proceed.
-    for (const gw of GATEWAY_REGIONS) {
-        if (!gw.destInRegion(destX, destZ)) continue; // dest not in this region
-        if (gw.playerInRegion(player.x, player.z)) continue; // already inside
-
-        const gwDist = Math.max(Math.abs(player.x - gw.approachX), Math.abs(player.z - gw.approachZ)); // Chebyshev distance
-
-        if (gwDist > gw.arrivalRadius) {
-            // Not yet at the approach tile — walk toward it first.
-            _pathTowards(player, gw.approachX, gw.approachZ);
-            return;
-        }
-
-        // Close to approach tile — cross the gate.
-        if (gw.teleportDestX !== undefined && gw.teleportDestZ !== undefined) {
-            // Toll/dialog gate that bots can't interact with — teleport through.
-            botTeleport(player, gw.teleportDestX, gw.teleportDestZ, player.level);
-            return;
-        }
-        if (openNearbyGate(player, 8)) return; // gate interaction queued, wait
-        // Gate is open (or no gate found) — fall through to normal pathfinding.
-        break;
-    }
-
-    // ── Terrain corridor routing ─────────────────────────────────────────────
-    // For large solid obstacles (castle walls, etc.) the straight-line midpoint
-    // often lands behind the wall and the pathfinder returns empty.  Corridors
-    // redirect the bot through a known-clear intermediate tile on the near side
-    // of the obstacle so the BFS always has a viable segment to walk.
-    if (player.level === 0) {
-        for (const corridor of ROUTE_CORRIDORS) {
-            if (corridor.playerCleared(player.x, player.z)) continue; // already past it
-            if (!corridor.playerInZone(player.x, player.z)) continue; // not in this zone
-            if (!corridor.destBeyond(destX, destZ)) continue; // dest doesn't cross it
-
-            _pathTowards(player, corridor.viaX, corridor.viaZ);
-            return;
-        }
-    }
-
     // ── Normal pathfinding ──────────────────────────────────────────────────
     _pathTowards(player, destX, destZ);
+}
+
+/**
+ * Find the point in an area closest between 2 points.
+ * This is done by combining the distance from point `a` to a point in the area
+ * and from point `b` to that point in the area.
+ * Returning the point in the area with the least distance.
+ */
+function closestBetween(area: number[][], a: number[], b: number[], walkable?: boolean): number[] {
+    let best = [area[0][0], area[0][1]];
+    // Only caculate if area actually consists of more than one tile.
+    if (area.length > 1) {
+        let bestDist = Infinity;
+        const xMin = Math.min(area[0][0], area[1][0]);
+        const zMin = Math.min(area[0][1], area[1][1]);
+        const xMax = Math.max(area[0][0], area[1][0]);
+        const zMax = Math.max(area[0][1], area[1][1]);
+        for (let x = xMin; x <= xMax; x++) {
+            for (let z = zMin; z <= zMax; z++) {
+                // If set, make sure we get in the area on a walkable tile.
+                if (walkable && BotCollisionMap.isCsvBlocked(0, x, z)) continue;
+                const dxa = x - a[0];
+                const dza = z - a[1];
+                const dxb = x - b[0];
+                const dzb = z - b[1];
+                const dist =
+                    Math.sqrt(dxa * dxa + dza * dza) +
+                    Math.sqrt(dxb * dxb + dzb * dzb);
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    best = [x, z];
+                }
+            }
+        }
+    }
+    return best;
 }
 
 
