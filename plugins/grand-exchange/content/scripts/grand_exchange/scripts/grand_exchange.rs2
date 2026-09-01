@@ -88,3 +88,52 @@ if (map_feature("grandexchange") = false) {
     return;
 }
 if_openmain(grand_exchange_group_110);
+
+// Phase 4: group 105 buy-offer setup. The r481 client used IF3 listeners/CS2 to
+// switch from the six-slot overview into the buy setup/search prompt. The r254
+// port keeps that state server-authoritative and changes only IF1 layer visibility.
+// Item search/selection, quantity, price and submission remain separate phases.
+[proc,ge_open_buy_offer_setup]
+if (map_feature("grandexchange") = false) {
+    return;
+}
+if_sethide(grand_exchange_overview:com_16, true);
+if_sethide(grand_exchange_overview:com_126, false);
+if_sethide(grand_exchange_overview:com_156, true);
+if_sethide(grand_exchange_overview:com_192, false);
+if_sethide(grand_exchange_overview:com_197, true);
+if_sethide(grand_exchange_overview:com_200, true);
+
+[proc,ge_return_to_offer_summary]
+if (map_feature("grandexchange") = false) {
+    return;
+}
+// Preserve the six slot sub-states. Later active/partial/completed offer slices
+// can update those independently without Back flattening them to empty slots.
+if_sethide(grand_exchange_overview:com_16, false);
+if_sethide(grand_exchange_overview:com_126, true);
+if_sethide(grand_exchange_overview:com_156, true);
+if_sethide(grand_exchange_overview:com_192, true);
+if_sethide(grand_exchange_overview:com_197, true);
+if_sethide(grand_exchange_overview:com_200, true);
+
+[if_button,grand_exchange_overview:com_30]
+~ge_open_buy_offer_setup;
+
+[if_button,grand_exchange_overview:com_46]
+~ge_open_buy_offer_setup;
+
+[if_button,grand_exchange_overview:com_62]
+~ge_open_buy_offer_setup;
+
+[if_button,grand_exchange_overview:com_81]
+~ge_open_buy_offer_setup;
+
+[if_button,grand_exchange_overview:com_100]
+~ge_open_buy_offer_setup;
+
+[if_button,grand_exchange_overview:com_119]
+~ge_open_buy_offer_setup;
+
+[if_button,grand_exchange_overview:com_127]
+~ge_return_to_offer_summary;
