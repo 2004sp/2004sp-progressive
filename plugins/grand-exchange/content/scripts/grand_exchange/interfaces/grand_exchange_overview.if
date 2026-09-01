@@ -2,14 +2,16 @@
 // Staged only by the Grand Exchange custom-content build.
 // Positions and component sizes below are translated directly from the frozen r481 group-105 reference.
 
-// Source component 0: 488x305 backing rect at (17,25). r481 used transparency=200;
-// IF1 has no equivalent alpha field here, so retain the native dark backing approximation beneath the opaque tiled panel.
+// Source component 0: 488x305 backing rect at (17,25). Keep its visible
+// bottom/right shadow subtle: trans=230 renders the dark backing at about 10%
+// opacity (90% transparent) beneath the opaque tiled panel.
 [com_0]
 type=rect
 x=17
 y=25
 width=488
 height=305
+trans=230
 fill=yes
 colour=0x2E2B23
 
@@ -94,22 +96,6 @@ y=49
 width=465
 height=6
 graphic=r481_ge_component_10,0
-
-[com_11]
-type=graphic
-x=13
-y=37
-width=32
-height=32
-graphic=r481_ge_sprite_963,0
-
-[com_12]
-type=graphic
-x=468
-y=37
-width=32
-height=32
-graphic=r481_ge_sprite_964,0
 
 // Source component 13: exact r481 close-button bounds.
 [com_13]
@@ -992,9 +978,10 @@ scroll=46
 
 // r481 creates the empty-slot heading/button labels through client-side state.
 // IF1 has no equivalent runtime child creation here, so use the unused tail of
-// the reserved 256-component block for static visual helpers only. The supplied
-// visual reference uses a bordered slot with an unfilled header rather than a
-// solid banner, so keep the slot background visible and add only its frame/divider.
+// the reserved 256-component block for the static empty-slot frame and heading.
+// The native reference intentionally leaves the Buy/Sell labels blank: the
+// coloured crate arrows themselves identify the two actions, so do not add
+// text above the icon buttons.
 
 // Offer 1 visual helpers.
 [com_214]
@@ -1027,32 +1014,6 @@ center=yes
 font=p11
 shadowed=yes
 text=Empty
-colour=0xCC9800
-
-[com_217]
-layer=com_19
-type=text
-x=12
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xCC9800
-
-[com_218]
-layer=com_19
-type=text
-x=75
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
 colour=0xCC9800
 
 // Offer 2 visual helpers.
@@ -1088,32 +1049,6 @@ shadowed=yes
 text=Empty
 colour=0xCC9800
 
-[com_222]
-layer=com_35
-type=text
-x=12
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xCC9800
-
-[com_223]
-layer=com_35
-type=text
-x=75
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xCC9800
-
 // Offer 3 visual helpers.
 [com_224]
 layer=com_51
@@ -1145,32 +1080,6 @@ center=yes
 font=p11
 shadowed=yes
 text=Empty
-colour=0xCC9800
-
-[com_227]
-layer=com_51
-type=text
-x=12
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xCC9800
-
-[com_228]
-layer=com_51
-type=text
-x=75
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
 colour=0xCC9800
 
 // Offer 4 visual helpers.
@@ -1206,32 +1115,6 @@ shadowed=yes
 text=Empty
 colour=0xCC9800
 
-[com_232]
-layer=com_70
-type=text
-x=12
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xCC9800
-
-[com_233]
-layer=com_70
-type=text
-x=75
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xCC9800
-
 // Offer 5 visual helpers.
 [com_234]
 layer=com_89
@@ -1263,32 +1146,6 @@ center=yes
 font=p11
 shadowed=yes
 text=Empty
-colour=0xCC9800
-
-[com_237]
-layer=com_89
-type=text
-x=12
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xCC9800
-
-[com_238]
-layer=com_89
-type=text
-x=75
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
 colour=0xCC9800
 
 // Offer 6 visual helpers.
@@ -1324,28 +1181,3 @@ shadowed=yes
 text=Empty
 colour=0xCC9800
 
-[com_242]
-layer=com_108
-type=text
-x=12
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Buy
-colour=0xCC9800
-
-[com_243]
-layer=com_108
-type=text
-x=75
-y=28
-width=51
-height=14
-center=yes
-font=p11
-shadowed=yes
-text=Sell
-colour=0xCC9800
