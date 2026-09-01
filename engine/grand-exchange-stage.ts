@@ -40,6 +40,16 @@ const OVERVIEW_TILED_SPRITES = [
     { name: 'r481_ge_slot_v_32x45', sourceId: 1075, width: 32, height: 45 },
 ] as const;
 
+// The buy/sell crate sprites are 26x35 in the r481 cache, while their IF3
+// graphic components are 35x35. IF1 ignores the source component canvas and
+// draws the natural media size at the component origin, which makes the crates
+// look left-shifted. Pad only the temporary option-2 media to the IF3 canvas so
+// the visible crate stays centred without changing the frozen source geometry.
+const OVERVIEW_PADDED_SPRITES: Record<number, { width: number; height: number }> = {
+    1168: { width: 35, height: 35 },
+    1170: { width: 35, height: 35 },
+};
+
 // Only outputs/runtime sources touched by adding .if/.rs2/sprite sources need
 // to be restored. The whole server pack is backed up because the RuneScript
 // compiler owns its exact output set and can change more than script.dat.
@@ -273,11 +283,24 @@ async function stageSprites() {
             throw new Error(`Grand Exchange sprite ${sprite.source_id} hash mismatch: expected ${sprite.sha256}, got ${actualHash}`);
         }
 
-        const image = await Jimp.read(sourcePath);
+        let image = await Jimp.read(sourcePath);
         if (image.bitmap.width !== sprite.width || image.bitmap.height !== sprite.height) {
             throw new Error(
                 `Grand Exchange sprite ${sprite.source_id} dimensions changed: expected ${sprite.width}x${sprite.height}, got ${image.bitmap.width}x${image.bitmap.height}`
             );
+        }
+
+        const paddedSize = OVERVIEW_PADDED_SPRITES[sprite.source_id];
+        if (paddedSize) {
+            if (paddedSize.width < image.bitmap.width || paddedSize.height < image.bitmap.height) {
+                throw new Error(`Grand Exchange padded sprite canvas is smaller than source sprite ${sprite.source_id}`);
+            }
+
+            const padded = new Jimp({ width: paddedSize.width, height: paddedSize.height, color: 0x00000000 });
+            const x = Math.round((paddedSize.width - image.bitmap.width) / 2);
+            const y = Math.round((paddedSize.height - image.bitmap.height) / 2);
+            padded.composite(image, x, y);
+            image = padded;
         }
 
         // r254 PixPack uses #ff00ff as transparent palette entry and ignores
@@ -304,9 +327,28 @@ async function stageSprites() {
         const sourceImage = await Jimp.read(path.join(PLUGIN_DIR, source.file));
         const image = new Jimp({ width: tiledSprite.width, height: tiledSprite.height, color: 0x00000000 });
 
-        for (let y = 0; y < tiledSprite.height; y += sourceImage.bitmap.height) {
+        // The r481 right and bottom edge components reserve a 32px corner-sized
+        // canvas, but the repeating edge artwork itself is only 7px thick. The
+        // previous generic 2D tiler repeated that strip across the full 32px
+        // cross-axis, producing the visible stacks of vertical/horizontal lines.
+        // Keep the source component canvas, but tile only along the long axis
+        // and align the 7px strip to the outside edge, matching the adjacent
+        // 32x32 corner sprites.
+        if (tiledSprite.name === 'r481_ge_component_4') {
+            const x = tiledSprite.width - sourceImage.bitmap.width;
+            for (let y = 0; y < tiledSprite.height; y += sourceImage.bitmap.height) {
+                image.composite(sourceImage, x, y);
+            }
+        } else if (tiledSprite.name === 'r481_ge_component_6') {
+            const y = tiledSprite.height - sourceImage.bitmap.height;
             for (let x = 0; x < tiledSprite.width; x += sourceImage.bitmap.width) {
                 image.composite(sourceImage, x, y);
+            }
+        } else {
+            for (let y = 0; y < tiledSprite.height; y += sourceImage.bitmap.height) {
+                for (let x = 0; x < tiledSprite.width; x += sourceImage.bitmap.width) {
+                    image.composite(sourceImage, x, y);
+                }
             }
         }
 
