@@ -36,8 +36,12 @@ const OVERVIEW_TILED_SPRITES = [
     { name: 'r481_ge_component_5', sourceId: 954, width: 424, height: 7 },
     { name: 'r481_ge_component_6', sourceId: 956, width: 423, height: 32 },
     { name: 'r481_ge_component_10', sourceId: 962, width: 465, height: 6 },
-    { name: 'r481_ge_slot_h_47x32', sourceId: 1074, width: 47, height: 32 },
-    { name: 'r481_ge_slot_v_32x45', sourceId: 1075, width: 32, height: 45 },
+    // The r481 buy/sell frames use the 2px 1074/1075 bevel strips. IF1 cannot
+    // stretch those strips, so materialize only the four exact 51x46 edges.
+    { name: 'r481_ge_button_h_top', sourceId: 1074, width: 51, height: 2 },
+    { name: 'r481_ge_button_h_bottom', sourceId: 1074, width: 51, height: 2 },
+    { name: 'r481_ge_button_v_left', sourceId: 1075, width: 2, height: 46 },
+    { name: 'r481_ge_button_v_right', sourceId: 1075, width: 2, height: 46 },
 ] as const;
 
 // The buy/sell crate sprites are 26x35 in the r481 cache, while their IF3
@@ -178,11 +182,57 @@ function patchOverviewInterfaceForIf1() {
         source = source.slice(0, start) + block.replace(needle, `${field}=${replacement}`) + source.slice(end);
     };
 
-    // IF1's b12 baseline sits slightly higher than the r481 IF3 font metrics.
-    // Lower the title row by two pixels so the title visually meets the chrome
-    // strip directly beneath it, matching the supplied r481 comparison image.
-    replaceComponentField(14, 'y', '30', '32');
+    const replaceComponentBlock = (componentId: number, body: string) => {
+        const marker = `[com_${componentId}]`;
+        const start = source.indexOf(marker);
+        if (start === -1) {
+            throw new Error(`Grand Exchange overview is missing ${marker}`);
+        }
+
+        const next = source.indexOf('\n[com_', start + marker.length);
+        const end = next === -1 ? source.length : next;
+        source = source.slice(0, start) + `${marker}\n${body.trim()}` + source.slice(end);
+    };
+
+    // The supplied r481 header reference shows the 6px separator two pixels
+    // higher than the direct IF3 -> IF1 placement, and IF1's b12 metrics place
+    // the title three pixels lower. Keep the gavel at its visually matching row.
+    replaceComponentField(10, 'y', '49', '47');
+    replaceComponentField(14, 'y', '30', '29');
     replaceComponentField(15, 'y', '26', '28');
+
+    // Restore the actual two-pixel r481 button bevels from sprites 1074/1075.
+    // The previous one-pixel rectangles lost the dark outer + light inner edge
+    // visible around every Buy/Sell box in the frozen reference.
+    const buttonFrameGroups = [
+        { layer: 19, components: [20, 21, 22, 23, 24, 25, 26, 27] },
+        { layer: 35, components: [36, 37, 38, 39, 40, 41, 42, 43] },
+        { layer: 51, components: [52, 53, 54, 55, 56, 57, 58, 59] },
+        { layer: 70, components: [71, 72, 73, 74, 75, 76, 77, 78] },
+        { layer: 89, components: [90, 91, 92, 93, 94, 95, 96, 97] },
+        { layer: 108, components: [109, 110, 111, 112, 113, 114, 115, 116] },
+    ] as const;
+
+    for (const { layer, components } of buttonFrameGroups) {
+        const [buyTop, buyBottom, buyLeft, buyRight, sellTop, sellBottom, sellLeft, sellRight] = components;
+        const edges = [
+            { id: buyTop, x: 12, y: 43, width: 51, height: 2, graphic: 'r481_ge_button_h_top' },
+            { id: buyBottom, x: 12, y: 87, width: 51, height: 2, graphic: 'r481_ge_button_h_bottom' },
+            { id: buyLeft, x: 12, y: 43, width: 2, height: 46, graphic: 'r481_ge_button_v_left' },
+            { id: buyRight, x: 61, y: 43, width: 2, height: 46, graphic: 'r481_ge_button_v_right' },
+            { id: sellTop, x: 75, y: 43, width: 51, height: 2, graphic: 'r481_ge_button_h_top' },
+            { id: sellBottom, x: 75, y: 87, width: 51, height: 2, graphic: 'r481_ge_button_h_bottom' },
+            { id: sellLeft, x: 75, y: 43, width: 2, height: 46, graphic: 'r481_ge_button_v_left' },
+            { id: sellRight, x: 124, y: 43, width: 2, height: 46, graphic: 'r481_ge_button_v_right' },
+        ] as const;
+
+        for (const edge of edges) {
+            replaceComponentBlock(
+                edge.id,
+                `layer=com_${layer}\ntype=graphic\nx=${edge.x}\ny=${edge.y}\nwidth=${edge.width}\nheight=${edge.height}\ngraphic=${edge.graphic},0`
+            );
+        }
+    }
 
     // Make each empty-offer slot read as a framed panel rather than a faint
     // one-pixel outline. The light outer edge and dark inset reproduce the
@@ -514,6 +564,29 @@ async function stageSprites() {
                 for (let x = 0; x < tiledSprite.width; x += sourceImage.bitmap.width) {
                     image.composite(sourceImage, x, y);
                 }
+            }
+        }
+
+        // Top/left use the source strip orientation (dark outside, light inside).
+        // Mirror the two-pixel strip for bottom/right so the bevel closes with
+        // the light line on the inside and dark line on the outside.
+        const swapPixel = (offsetA: number, offsetB: number) => {
+            for (let channel = 0; channel < 4; channel++) {
+                const temp = image.bitmap.data[offsetA + channel];
+                image.bitmap.data[offsetA + channel] = image.bitmap.data[offsetB + channel];
+                image.bitmap.data[offsetB + channel] = temp;
+            }
+        };
+
+        if (tiledSprite.name === 'r481_ge_button_h_bottom') {
+            const stride = image.bitmap.width * 4;
+            for (let x = 0; x < image.bitmap.width; x++) {
+                swapPixel(x * 4, stride + x * 4);
+            }
+        } else if (tiledSprite.name === 'r481_ge_button_v_right') {
+            for (let y = 0; y < image.bitmap.height; y++) {
+                const row = y * image.bitmap.width * 4;
+                swapPixel(row, row + 4);
             }
         }
 
