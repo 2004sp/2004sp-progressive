@@ -31,8 +31,9 @@ Because a regular r254 IF1 interface needs an opening/root component while the r
 7. temporarily add `sourcePaths` to the installed `@lostcityrs/runescript` wrapper so it compiles from `BUILD_SRC_DIR/scripts` instead of its native `../content/scripts` default;
 8. convert and copy the frozen PNGs into the staged native sprite source directory;
 9. apply the IF1-only buy/sell action compatibility shims to the twelve frozen group-105 offer hitboxes;
-10. build and start option 2 with `BUILD_SRC_DIR` pointing at the stage;
-11. restore the native pack and compiler wrapper after the option-2 server exits.
+10. generate the option-2-only item-search interface, two temporary server inventories and RuneScript search catalogue directly from the staged native r254 `obj.pack`;
+11. build and start option 2 with `BUILD_SRC_DIR` pointing at the stage;
+12. restore the native pack and compiler wrapper after the option-2 server exits.
 
 Launcher options 1 and 3 explicitly force `NODE_FEATURE_GRANDEXCHANGE=false`. The launcher also restores a stale snapshot on its next start if an option-2 run was interrupted before its `finally` cleanup could run.
 
@@ -62,7 +63,24 @@ The frozen r481 buy hitboxes are source components `30`, `46`, `62`, `81`, `100`
 
 The server-side `[if_button]` handlers keep the setup state authoritative. **Buy** switches the overview root (`com_16`) to the group-105 setup root (`com_126`), keeps the frozen `Buy Offer` title, and shows the buy-search prompt (`com_192`). **Sell** switches to the same source setup root, changes the shared title (`com_133`) to `Sell Offer`, hides the buy-search prompt, and shows the frozen sell-inventory prompt (`com_197`). The source Back control (`com_127`) returns to the six-slot summary without resetting the individual slot sub-states. Opening Buy explicitly restores the `Buy Offer` title so alternating Sell → Back → Buy cannot leave stale sell text behind.
 
-This completes the Phase 4 buy- and sell-offer setup transitions only. Buy search/result selection, sell inventory item selection, quantity controls, price controls and offer submission remain deliberately unwired, so no server-side GE transaction or player-wealth mutation is introduced by this slice.
+Buy-item search/result selection is now wired; sell inventory selection, quantity controls, price controls and offer submission remain deliberately unwired, so no server-side GE transaction or player-wealth mutation is introduced by this slice.
+
+## Native r254 item search and selection
+
+`engine/grand-exchange-item-search-stage.ts` adds the buy-search interaction without importing any r481 item definition, item icon or item model:
+
+- source group-105 `com_194` becomes the IF1 **Search** action for the existing buy-search icon;
+- the search prompt uses the native `p_namedialog`/`last_string` path;
+- at option-2 staging time, the search catalogue is generated from the staged native r254 `pack/obj.pack`, preserving native object IDs/symbols and ID order;
+- runtime matching uses native `oc_name`, filters through native `oc_tradeable`, and rejects certificate/noted variants with native `oc_uncert`;
+- results are written into option-2-only temporary inventory `ge_search_results` (local inv `164`) and transmitted to a one-column IF1 inventory inside a scrollable layer, so the client draws the ordinary native r254 item icons;
+- up to 80 matches are shown per query with their native `oc_name` text alongside the icons; broad queries explicitly report that the first 80 matches are shown;
+- selecting a result revalidates tradeability/noted state server-side, stores the native object in `ge_selected_item` (local inv `165`), returns to the group-105 Buy Offer setup, and renders the selected item through native `if_setobject` plus native `oc_name`/`oc_desc`;
+- opening a fresh Buy setup clears both temporary search/selection containers, so no stale selected item survives into a new setup flow.
+
+The generated search interface uses synthetic root `8989` and component IDs `11304–11392`, immediately after the frozen r481 interface reservation ending at `11303`. These IDs exist only in the temporary option-2 stage. Launcher options 1 and 3 do not receive the interface, inventories, generated search scripts, or search mappings.
+
+This intentionally keeps the item boundary stronger than a copied lookup table: every searchable ID/name and every displayed item icon/model originates from the same staged native r254 catalogue used by the rest of the server/client. r481 assets remain chrome/reference material only.
 
 ## Group 107 helper/overlay
 
@@ -87,9 +105,12 @@ After copying this overlay onto the normal r254 base installation:
 - enable **Grand Exchange (option 2 only)** under launcher **Custom Content**;
 - start launcher option **2 — Custom Server + Hiscores** and allow the normal local build/repack to complete;
 - log in and run `~ge`, then click **Buy** in any of the six empty offer slots;
-- confirm the overview changes to the r481 **Buy Offer** setup with the buy-search prompt, and that **Back** returns to the six-slot summary;
+- click the buy-search icon, enter a native r254 item substring such as `lobster` or `rune`, and confirm native item names/icons populate the result list;
+- mouse-wheel/drag the native IF1 result scrollbar and confirm the item names/icons remain aligned while scrolling;
+- select a result icon and confirm the Buy Offer setup reopens with the selected native r254 item model, name and description, with the quantity/price layer now visible for the next milestone;
+- use **Back**, start a new Buy setup and confirm the search/selection state is reset; search a non-tradeable/noted-only object name and confirm it cannot enter the selection state;
 - click **Sell** in any empty offer slot and confirm the shared setup changes to **Sell Offer** with `Select an item in your inventory to sell.`, then use **Back** and verify a subsequent **Buy** restores the Buy Offer title/search prompt;
-- confirm quantity, price, item selection and Confirm Offer controls do not yet create a transaction;
+- confirm quantity, price and Confirm Offer controls still do not create a transaction;
 - run `~ge106`, `~ge107`, `~ge108` and `~ge110` as needed to verify the other staged interface slices;
 - stop option 2, then start options 1 and 3 and confirm the GE debug procedures/actions are absent and native cache/interface behaviour is unchanged.
 
