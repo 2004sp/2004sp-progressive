@@ -13,6 +13,7 @@ import { prepareGrandExchangeGroup110Stage } from './grand-exchange-group110-sta
 import { prepareGrandExchangeGroup643Stage } from './grand-exchange-group643-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
 import { prepareGrandExchangeClientStateStage } from './grand-exchange-client-state-stage.js';
+import { prepareGrandExchangeInterfaceCacheAdapter } from './grand-exchange-interface-cache-adapter.js';
 
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = path.join(ENGINE_DIR, '..');
@@ -86,6 +87,7 @@ export async function prepareGrandExchangeStage() {
         await prepareGrandExchangeGroup643Stage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
         prepareGrandExchangeClientStateStage(stagedContentDir);
+        prepareGrandExchangeInterfaceCacheAdapter(stagedContentDir);
         invalidateGrandExchangeServerConfigOutputs();
         return stagedContentDir;
     } catch (error) {
