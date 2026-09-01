@@ -78,3 +78,13 @@ if (map_feature("grandexchange") = false) {
     return;
 }
 if_openmain(grand_exchange_group_108);
+
+// Group 110 is the final frozen offer setup/state variant. Keeping it as its
+// own IF1 root verifies that 105/108/110 can transition by explicit main-interface
+// opens plus server-driven layer visibility, without replacing the older renderer.
+[debugproc,ge110]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+if_openmain(grand_exchange_group_110);
