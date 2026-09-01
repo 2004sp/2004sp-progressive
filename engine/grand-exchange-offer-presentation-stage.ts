@@ -12,10 +12,13 @@ const SEARCH_GLOW_COMPONENT = 137;
 const CONFIRM_BACKGROUND_COMPONENT = 190;
 const CONFIRM_TEXT_COMPONENT = 191;
 
-const INITIAL_MARKET_ICON_X = 100;
-const INITIAL_RANGE_DOWN_X = 306;
-const INITIAL_RANGE_UP_X = 348;
-const PRICE_ROW_Y = 132;
+// r254 IF1 if_setposition values are offsets from the component's authored
+// coordinates, not absolute canvas positions. These offsets move the source
+// chrome from x=53/211/443 to the r481 initial N/A positions x=100/306/348.
+const INITIAL_MARKET_ICON_OFFSET_X = 47;
+const INITIAL_RANGE_DOWN_OFFSET_X = 95;
+const INITIAL_RANGE_UP_OFFSET_X = -95;
+const PRICE_ROW_OFFSET_Y = 0;
 
 function getComponentBlock(source: string, componentId: number) {
     const marker = `[com_${componentId}]`;
@@ -66,18 +69,18 @@ function patchOfferInterface(stagedContentDir: string) {
             }
         }
 
-        if (block.includes('graphic=r481_ge_sprite_200137,0')) {
+        if (block.includes('graphic=r481_ge_sprite_200136,0')) {
             return block;
         }
-        if (!block.includes('graphic=r481_ge_sprite_200136,0')) {
-            throw new Error('Grand Exchange search highlight base graphic no longer matches the frozen group-105 search box');
+        if (block.includes('graphic=r481_ge_sprite_200137,0')) {
+            return block.replace('graphic=r481_ge_sprite_200137,0', 'graphic=r481_ge_sprite_200136,0');
         }
-        return block.replace('graphic=r481_ge_sprite_200136,0', 'graphic=r481_ge_sprite_200137,0');
+        throw new Error('Grand Exchange search box base graphic no longer matches the frozen group-105 search box');
     });
 
     const glow = getComponentBlock(source, SEARCH_GLOW_COMPONENT).block;
-    if (!glow.includes('type=graphic') || !glow.includes('graphic=r481_ge_sprite_200137,0')) {
-        throw new Error('Grand Exchange search highlight glow graphic no longer matches the frozen yellow state');
+    if (!glow.includes('type=graphic') || !glow.includes('graphic=r481_ge_sprite_1140,0')) {
+        throw new Error('Grand Exchange search highlight glow graphic no longer matches source sprite 1140');
     }
 
     source = replaceComponentBlock(source, CONFIRM_BACKGROUND_COMPONENT, block => {
@@ -156,9 +159,9 @@ function patchBuyOfferInitialState(stagedContentDir: string) {
     }
 
     const initialPositions = [
-        `if_setposition(${GE_INTERFACE_NAME}:com_${MARKET_ICON_COMPONENT}, ${INITIAL_MARKET_ICON_X}, ${PRICE_ROW_Y});`,
-        `if_setposition(${GE_INTERFACE_NAME}:com_${RANGE_DOWN_COMPONENT}, ${INITIAL_RANGE_DOWN_X}, ${PRICE_ROW_Y});`,
-        `if_setposition(${GE_INTERFACE_NAME}:com_${RANGE_UP_COMPONENT}, ${INITIAL_RANGE_UP_X}, ${PRICE_ROW_Y});`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_${MARKET_ICON_COMPONENT}, ${INITIAL_MARKET_ICON_OFFSET_X}, ${PRICE_ROW_OFFSET_Y});`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_${RANGE_DOWN_COMPONENT}, ${INITIAL_RANGE_DOWN_OFFSET_X}, ${PRICE_ROW_OFFSET_Y});`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_${RANGE_UP_COMPONENT}, ${INITIAL_RANGE_UP_OFFSET_X}, ${PRICE_ROW_OFFSET_Y});`,
     ].join('\n');
 
     if (!block.includes(initialPositions)) {
@@ -190,9 +193,9 @@ function patchSelectedItemLayoutRestore(stagedContentDir: string) {
     let block = originalBlock;
 
     const restorePositions = [
-        `if_setposition(${GE_INTERFACE_NAME}:com_${MARKET_ICON_COMPONENT}, 53, ${PRICE_ROW_Y});`,
-        `if_setposition(${GE_INTERFACE_NAME}:com_${RANGE_DOWN_COMPONENT}, 211, ${PRICE_ROW_Y});`,
-        `if_setposition(${GE_INTERFACE_NAME}:com_${RANGE_UP_COMPONENT}, 443, ${PRICE_ROW_Y});`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_${MARKET_ICON_COMPONENT}, 0, 0);`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_${RANGE_DOWN_COMPONENT}, 0, 0);`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_${RANGE_UP_COMPONENT}, 0, 0);`,
     ].join('\n');
 
     if (!block.includes(restorePositions)) {

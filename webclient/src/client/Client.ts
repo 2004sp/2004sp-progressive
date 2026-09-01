@@ -81,6 +81,10 @@ const SCROLLBAR_TRACK = 0x23201b;
 const SCROLLBAR_GRIP_FOREGROUND = 0x4d4233;
 const SCROLLBAR_GRIP_HIGHLIGHT = 0x766654;
 const SCROLLBAR_GRIP_LOWLIGHT = 0x332d25;
+// Frozen interface.pack id for grand_exchange_overview:com_137 (the yellow search glow).
+const GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID = 9136;
+const GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID = 9137;
+const GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS = 2000;
 const CUSTOM_CONTENT = (globalThis as typeof globalThis & { __customContent?: { clans?: boolean; antiMacroRotation?: boolean } }).__customContent;
 const CLANS_ENABLED = CUSTOM_CONTENT?.clans === true;
 const ANTI_MACRO_ROTATION_ENABLED = CUSTOM_CONTENT?.antiMacroRotation !== false;
@@ -10510,7 +10514,31 @@ export class Client extends GameShell {
                     image = child.graphic;
                 }
 
-                image?.plotSprite(childX, childY);
+                if (child.id !== GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID) {
+                    if (
+                        child.id === GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID &&
+                        image !== null
+                    ) {
+                        image = child.graphic;
+                    }
+                    image?.plotSprite(childX, childY);
+
+                    if (child.id === GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID) {
+                        const glow = IfType.list[GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID]?.graphic;
+                        if (glow) {
+                            const phase = (Date.now() % GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS) / GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS;
+                            const hovered =
+                                this.mouseX >= childX &&
+                                this.mouseX < childX + child.width &&
+                                this.mouseY >= childY &&
+                                this.mouseY < childY + child.height;
+                            const alpha = hovered
+                                ? 256
+                                : Math.round(((Math.sin(phase * Math.PI * 2 - Math.PI / 2) + 1) * 0.5) * 256);
+                            glow.transPlotSprite(childX, childY, alpha);
+                        }
+                    }
+                }
             } else if (child.type === ComponentType.TYPE_MODEL) {
                 const tmpX: number = Pix3D.originX;
                 const tmpY: number = Pix3D.originY;
