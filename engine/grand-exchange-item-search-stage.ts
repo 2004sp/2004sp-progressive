@@ -156,7 +156,10 @@ function readNativeObjectSymbols(stagedContentDir: string) {
         .filter(symbol => symbol.length > 0);
 
     for (const symbol of symbols) {
-        if (!/^[A-Za-z0-9_]+$/.test(symbol)) {
+        // @lostcityrs/runescript 0.9.6 lexes identifiers as [a-zA-Z0-9_+.:]+.
+        // Keep this validation aligned with the compiler instead of rejecting
+        // valid native symbols such as premade_cheese+tom_batta.
+        if (!/^[A-Za-z0-9_+.:]+$/.test(symbol)) {
             throw new Error(`Native r254 object symbol cannot be emitted safely into RuneScript: ${symbol}`);
         }
     }
