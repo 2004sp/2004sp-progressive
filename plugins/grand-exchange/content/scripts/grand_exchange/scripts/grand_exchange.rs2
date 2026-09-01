@@ -89,19 +89,32 @@ if (map_feature("grandexchange") = false) {
 }
 if_openmain(grand_exchange_group_110);
 
-// Phase 4: group 105 buy-offer setup. The r481 client used IF3 listeners/CS2 to
-// switch from the six-slot overview into the buy setup/search prompt. The r254
+// Phase 4: group 105 buy/sell offer setup. The r481 client used IF3 listeners/CS2
+// to switch from the six-slot overview into the matching setup prompt. The r254
 // port keeps that state server-authoritative and changes only IF1 layer visibility.
-// Item search/selection, quantity, price and submission remain separate phases.
+// Item selection, quantity, price and submission remain separate phases.
 [proc,ge_open_buy_offer_setup]
 if (map_feature("grandexchange") = false) {
     return;
 }
+if_settext(grand_exchange_overview:com_133, "Buy Offer");
 if_sethide(grand_exchange_overview:com_16, true);
 if_sethide(grand_exchange_overview:com_126, false);
 if_sethide(grand_exchange_overview:com_156, true);
 if_sethide(grand_exchange_overview:com_192, false);
 if_sethide(grand_exchange_overview:com_197, true);
+if_sethide(grand_exchange_overview:com_200, true);
+
+[proc,ge_open_sell_offer_setup]
+if (map_feature("grandexchange") = false) {
+    return;
+}
+if_settext(grand_exchange_overview:com_133, "Sell Offer");
+if_sethide(grand_exchange_overview:com_16, true);
+if_sethide(grand_exchange_overview:com_126, false);
+if_sethide(grand_exchange_overview:com_156, true);
+if_sethide(grand_exchange_overview:com_192, true);
+if_sethide(grand_exchange_overview:com_197, false);
 if_sethide(grand_exchange_overview:com_200, true);
 
 [proc,ge_return_to_offer_summary]
@@ -134,6 +147,24 @@ if_sethide(grand_exchange_overview:com_200, true);
 
 [if_button,grand_exchange_overview:com_119]
 ~ge_open_buy_offer_setup;
+
+[if_button,grand_exchange_overview:com_31]
+~ge_open_sell_offer_setup;
+
+[if_button,grand_exchange_overview:com_47]
+~ge_open_sell_offer_setup;
+
+[if_button,grand_exchange_overview:com_63]
+~ge_open_sell_offer_setup;
+
+[if_button,grand_exchange_overview:com_82]
+~ge_open_sell_offer_setup;
+
+[if_button,grand_exchange_overview:com_101]
+~ge_open_sell_offer_setup;
+
+[if_button,grand_exchange_overview:com_120]
+~ge_open_sell_offer_setup;
 
 [if_button,grand_exchange_overview:com_127]
 ~ge_return_to_offer_summary;
