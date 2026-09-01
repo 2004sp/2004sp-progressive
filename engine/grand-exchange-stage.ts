@@ -11,6 +11,7 @@ import { prepareGrandExchangeGroup108Stage } from './grand-exchange-group108-sta
 import { prepareGrandExchangeGroup109Stage } from './grand-exchange-group109-stage.js';
 import { prepareGrandExchangeGroup110Stage } from './grand-exchange-group110-stage.js';
 import { prepareGrandExchangeGroup643Stage } from './grand-exchange-group643-stage.js';
+import { prepareGrandExchangeBuyOfferSetupStage } from './grand-exchange-buy-offer-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
 import { prepareGrandExchangeClientStateStage } from './grand-exchange-client-state-stage.js';
 import { prepareGrandExchangeInterfaceCacheAdapter } from './grand-exchange-interface-cache-adapter.js';
@@ -85,6 +86,7 @@ export async function prepareGrandExchangeStage() {
         await prepareGrandExchangeGroup109Stage(stagedContentDir);
         await prepareGrandExchangeGroup110Stage(stagedContentDir);
         await prepareGrandExchangeGroup643Stage(stagedContentDir);
+        prepareGrandExchangeBuyOfferSetupStage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
         prepareGrandExchangeClientStateStage(stagedContentDir);
         prepareGrandExchangeInterfaceCacheAdapter(stagedContentDir);
