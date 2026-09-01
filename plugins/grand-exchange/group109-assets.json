@@ -1,0 +1,254 @@
+{
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "interface": {
+    "source_group_id": 109,
+    "synthetic_if1_root_local_id": 8994,
+    "source_component_block_base": 10024,
+    "component_formula": "local = 10024 + source_component_id",
+    "source_component_count": 58,
+    "source_component_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57
+    ],
+    "canvas": {
+      "width": 512,
+      "height": 334
+    },
+    "source_font_ids": [
+      494,
+      495,
+      496
+    ],
+    "historical_collection_inventory_component_ids": [
+      19,
+      23,
+      27,
+      32,
+      37,
+      42
+    ],
+    "historical_collection_slot_count": 6,
+    "outputs_per_offer": 2,
+    "compatibility_note": "The six inventory-host component IDs are preserved from the historical interface-109 collection hooks. Geometry and IF1 draw fields are reconstructed against the frozen r481 GE frame/media boundary because the r481 IF3 listener/CS2 path is not executable by the r254 client."
+  },
+  "containers": [
+    {
+      "id": 158,
+      "name": "ge_collection_offer_0",
+      "size": 2,
+      "scope": "temp",
+      "component_id": 19
+    },
+    {
+      "id": 159,
+      "name": "ge_collection_offer_1",
+      "size": 2,
+      "scope": "temp",
+      "component_id": 23
+    },
+    {
+      "id": 160,
+      "name": "ge_collection_offer_2",
+      "size": 2,
+      "scope": "temp",
+      "component_id": 27
+    },
+    {
+      "id": 161,
+      "name": "ge_collection_offer_3",
+      "size": 2,
+      "scope": "temp",
+      "component_id": 32
+    },
+    {
+      "id": 162,
+      "name": "ge_collection_offer_4",
+      "size": 2,
+      "scope": "temp",
+      "component_id": 37
+    },
+    {
+      "id": 163,
+      "name": "ge_collection_offer_5",
+      "size": 2,
+      "scope": "temp",
+      "component_id": 42
+    }
+  ],
+  "placeholder_states": [
+    {
+      "offer": 0,
+      "state": "bought_items",
+      "outputs": [
+        "lobster"
+      ]
+    },
+    {
+      "offer": 1,
+      "state": "sale_proceeds",
+      "outputs": [
+        "coins"
+      ]
+    },
+    {
+      "offer": 2,
+      "state": "refund",
+      "outputs": [
+        "coins"
+      ]
+    },
+    {
+      "offer": 3,
+      "state": "unsold_item",
+      "outputs": [
+        "rune_longsword"
+      ]
+    },
+    {
+      "offer": 4,
+      "state": "bought_with_refund",
+      "outputs": [
+        "lobster",
+        "coins"
+      ]
+    },
+    {
+      "offer": 5,
+      "state": "empty",
+      "outputs": []
+    }
+  ],
+  "reused_staged_media": [
+    {
+      "name": "r481_ge_component_1",
+      "width": 485,
+      "height": 300
+    },
+    {
+      "name": "r481_ge_component_2",
+      "width": 7,
+      "height": 241
+    },
+    {
+      "name": "r481_ge_component_4",
+      "width": 32,
+      "height": 243
+    },
+    {
+      "name": "r481_ge_component_5",
+      "width": 424,
+      "height": 7
+    },
+    {
+      "name": "r481_ge_component_6",
+      "width": 423,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_200011",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_200012",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_210010",
+      "width": 465,
+      "height": 6
+    },
+    {
+      "name": "r481_ge_sprite_211164",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "name": "r481_ge_sprite_831",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "r481_ge_sprite_958",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_959",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_960",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_961",
+      "width": 32,
+      "height": 32
+    }
+  ]
+}

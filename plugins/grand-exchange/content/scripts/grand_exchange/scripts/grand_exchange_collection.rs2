@@ -1,0 +1,59 @@
+// r481 group 109 Collection Box compatibility harness.
+// The six GE collection containers are temp-scope display state only. This
+// milestone deliberately does not move items or coins into inventory/bank.
+
+[debugproc,ge109]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+
+inv_clear(ge_collection_offer_0);
+inv_clear(ge_collection_offer_1);
+inv_clear(ge_collection_offer_2);
+inv_clear(ge_collection_offer_3);
+inv_clear(ge_collection_offer_4);
+inv_clear(ge_collection_offer_5);
+
+// Bought items.
+inv_setslot(ge_collection_offer_0, 0, lobster, 25);
+
+// Sale proceeds.
+inv_setslot(ge_collection_offer_1, 0, coins, 64000);
+
+// Price/refund remainder.
+inv_setslot(ge_collection_offer_2, 0, coins, 850);
+
+// Unsold item returned after an aborted/cancelled offer.
+inv_setslot(ge_collection_offer_3, 0, rune_longsword, 1);
+
+// Bought items plus a price refund exercise both output slots.
+inv_setslot(ge_collection_offer_4, 0, lobster, 10);
+inv_setslot(ge_collection_offer_4, 1, coins, 250);
+
+if_settext(grand_exchange_group_109:com_17, "You bought");
+if_settext(grand_exchange_group_109:com_18, "25 x Lobster");
+
+if_settext(grand_exchange_group_109:com_21, "You sold");
+if_settext(grand_exchange_group_109:com_22, "Sale proceeds");
+
+if_settext(grand_exchange_group_109:com_25, "Refund");
+if_settext(grand_exchange_group_109:com_26, "Coins returned");
+
+if_settext(grand_exchange_group_109:com_29, "Cancelled");
+if_settext(grand_exchange_group_109:com_30, "Unsold item returned");
+
+if_settext(grand_exchange_group_109:com_34, "You bought");
+if_settext(grand_exchange_group_109:com_35, "Items + refund");
+
+if_settext(grand_exchange_group_109:com_39, "Empty");
+if_settext(grand_exchange_group_109:com_40, "No items to collect");
+
+inv_transmit(ge_collection_offer_0, grand_exchange_group_109:com_19);
+inv_transmit(ge_collection_offer_1, grand_exchange_group_109:com_23);
+inv_transmit(ge_collection_offer_2, grand_exchange_group_109:com_27);
+inv_transmit(ge_collection_offer_3, grand_exchange_group_109:com_32);
+inv_transmit(ge_collection_offer_4, grand_exchange_group_109:com_37);
+inv_transmit(ge_collection_offer_5, grand_exchange_group_109:com_42);
+
+if_openmain(grand_exchange_group_109);

@@ -1,0 +1,33 @@
+// Display-only Grand Exchange collection containers.
+// These are temporary player containers used only to render group 109.
+// No collection handler moves their contents into inventory or bank.
+
+[ge_collection_offer_0]
+scope=temp
+size=2
+stackall=yes
+
+[ge_collection_offer_1]
+scope=temp
+size=2
+stackall=yes
+
+[ge_collection_offer_2]
+scope=temp
+size=2
+stackall=yes
+
+[ge_collection_offer_3]
+scope=temp
+size=2
+stackall=yes
+
+[ge_collection_offer_4]
+scope=temp
+size=2
+stackall=yes
+
+[ge_collection_offer_5]
+scope=temp
+size=2
+stackall=yes
