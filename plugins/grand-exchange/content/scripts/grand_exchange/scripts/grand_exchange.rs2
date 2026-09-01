@@ -58,3 +58,14 @@ if_sethide(grand_exchange_group_106:com_111, true);
 if_sethide(grand_exchange_group_106:com_126, true);
 if_sethide(grand_exchange_group_106:com_131, true);
 if_sethide(grand_exchange_group_106:com_140, true);
+
+// Group 107 is the GE's source helper/overlay frame. Its r481 definition has
+// no listeners, text or media, and all components are visible by default, so
+// IF1 requires no state reset beyond opening its synthetic staging root.
+[debugproc,ge107]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+if_openmain(grand_exchange_group_107);
+
