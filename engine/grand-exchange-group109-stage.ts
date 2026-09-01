@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 import { Jimp } from 'jimp';
@@ -13,7 +14,17 @@ const GROUP109_INTERFACE_NAME = 'grand_exchange_group_109';
 const GROUP109_INTERFACE_ROOT = 8994;
 const GROUP109_COMPONENT_BASE = 10024;
 const GROUP109_COMPONENT_MAX_SOURCE_ID = 57;
-const GROUP109_COLLECTION_COMPONENT_IDS = [19, 23, 27, 32, 37, 42] as const;
+const GROUP109_COMPONENT_MAX_HELPER_ID = 81;
+const GROUP109_SLOT_HOSTS = [17, 22, 27, 35, 43, 51] as const;
+const GROUP109_SLOT_INVS = [59, 63, 67, 71, 75, 79] as const;
+const GROUP109_COLLECT_BUTTONS = [61, 65, 69, 73, 77, 81] as const;
+
+const GROUP109_SCRIPT_TRIGGERS = [
+    '[debugproc,ge109]',
+    '[debugproc,ge109empty]',
+    ...GROUP109_SLOT_INVS.map(componentId => `[inv_button1,grand_exchange_group_109:com_${componentId}]`),
+    ...GROUP109_COLLECT_BUTTONS.map(componentId => `[if_button,grand_exchange_group_109:com_${componentId}]`),
+] as const;
 
 type Group109AssetManifest = {
     interface: {
@@ -22,17 +33,27 @@ type Group109AssetManifest = {
         source_component_block_base: number;
         source_component_count: number;
         source_component_ids: number[];
+        if1_helper_component_ids: number[];
+        reserved_component_block_end: number;
+        source_sprite_ids: number[];
         source_font_ids: number[];
-        historical_collection_inventory_component_ids: number[];
-        historical_collection_slot_count: number;
-        outputs_per_offer: number;
+        source_model_ids: number[];
     };
-    containers: Array<{
-        id: number;
-        name: string;
+    inventory_hooks: Array<{
+        source_inv_id: number;
+        local_inv_id: number;
+        local_name: string;
+        slot: number;
+        host_component_id: number;
         size: number;
         scope: string;
-        component_id: number;
+    }>;
+    sprites: Array<{
+        source_id: number;
+        file: string;
+        width: number;
+        height: number;
+        sha256: string;
     }>;
     reused_staged_media: Array<{
         name: string;
@@ -52,14 +73,19 @@ function readPack(file: string) {
         const id = Number.parseInt(line.slice(0, equals), 10);
         if (Number.isInteger(id)) values.set(id, line.slice(equals + 1));
     }
+
     return { content, values };
 }
 
 function readAndValidateManifest() {
     const manifest = JSON.parse(fs.readFileSync(GROUP109_ASSETS_PATH, 'utf8')) as Group109AssetManifest;
     const expectedSourceIds = Array.from({ length: GROUP109_COMPONENT_MAX_SOURCE_ID + 1 }, (_, index) => index);
-    const expectedContainerIds = [158, 159, 160, 161, 162, 163];
-    const expectedContainerNames = expectedContainerIds.map((_, index) => `ge_collection_offer_${index}`);
+    const expectedHelperIds = Array.from(
+        { length: GROUP109_COMPONENT_MAX_HELPER_ID - GROUP109_COMPONENT_MAX_SOURCE_ID },
+        (_, index) => GROUP109_COMPONENT_MAX_SOURCE_ID + 1 + index
+    );
+    const expectedInvIds = [523, 524, 525, 526, 527, 528];
+    const expectedLocalInvIds = [158, 159, 160, 161, 162, 163];
 
     if (
         manifest.interface.source_group_id !== 109 ||
@@ -67,42 +93,82 @@ function readAndValidateManifest() {
         manifest.interface.source_component_block_base !== GROUP109_COMPONENT_BASE ||
         manifest.interface.source_component_count !== expectedSourceIds.length ||
         manifest.interface.source_component_ids.join(',') !== expectedSourceIds.join(',') ||
-        manifest.interface.source_font_ids.join(',') !== '494,495,496' ||
-        manifest.interface.historical_collection_inventory_component_ids.join(',') !== GROUP109_COLLECTION_COMPONENT_IDS.join(',') ||
-        manifest.interface.historical_collection_slot_count !== 6 ||
-        manifest.interface.outputs_per_offer !== 2 ||
-        manifest.containers.length !== 6 ||
-        manifest.containers.map(container => container.id).join(',') !== expectedContainerIds.join(',') ||
-        manifest.containers.map(container => container.name).join(',') !== expectedContainerNames.join(',') ||
-        manifest.containers.some((container, index) =>
-            container.size !== 2 ||
-            container.scope !== 'temp' ||
-            container.component_id !== GROUP109_COLLECTION_COMPONENT_IDS[index]
+        manifest.interface.if1_helper_component_ids.join(',') !== expectedHelperIds.join(',') ||
+        manifest.interface.reserved_component_block_end !== 10279 ||
+        manifest.interface.source_sprite_ids.join(',') !== '297,831,954,955,956,957,958,959,960,961,962,963,964,1164,1167' ||
+        manifest.interface.source_font_ids.join(',') !== '496' ||
+        manifest.interface.source_model_ids.length !== 0 ||
+        manifest.inventory_hooks.length !== 6 ||
+        manifest.inventory_hooks.map(hook => hook.source_inv_id).join(',') !== expectedInvIds.join(',') ||
+        manifest.inventory_hooks.map(hook => hook.local_inv_id).join(',') !== expectedLocalInvIds.join(',') ||
+        manifest.inventory_hooks.map(hook => hook.host_component_id).join(',') !== GROUP109_SLOT_HOSTS.join(',') ||
+        manifest.inventory_hooks.some((hook, index) =>
+            hook.slot !== index ||
+            hook.local_name !== `ge_collection_offer_${index}` ||
+            hook.size !== 2 ||
+            hook.scope !== 'temp'
         )
     ) {
-        throw new Error('Grand Exchange group-109 asset manifest no longer matches the frozen collection-box mapping');
+        throw new Error('Grand Exchange group-109 asset manifest no longer matches the frozen Collection Box export');
     }
 
     return manifest;
 }
 
-function validateCollectionHosts(interfaceSource: string) {
-    const blockFor = (componentId: number) => {
-        const marker = `[com_${componentId}]`;
-        const start = interfaceSource.indexOf(marker);
-        if (start === -1) throw new Error(`Grand Exchange group 109 is missing ${marker}`);
-        const next = interfaceSource.indexOf('\n[com_', start + marker.length);
-        return interfaceSource.slice(start, next === -1 ? interfaceSource.length : next);
-    };
+function appendPackMappings(file: string, mappings: Map<number, string>, label: string) {
+    const { content, values } = readPack(file);
+    const names = new Map<string, number>();
+    for (const [id, name] of values) names.set(name, id);
 
-    for (const componentId of GROUP109_COLLECTION_COMPONENT_IDS) {
-        const block = blockFor(componentId);
-        for (const required of ['type=inv', 'width=2', 'height=1', 'option1=Collect']) {
-            if (!block.includes(required)) {
-                throw new Error(`Grand Exchange group 109 collection host com_${componentId} is missing ${required}`);
-            }
+    const additions: string[] = [];
+    for (const [id, name] of mappings) {
+        const existingName = values.get(id);
+        if (existingName && existingName !== name) {
+            throw new Error(`${label} reserved ID ${id} is already mapped to ${existingName}`);
+        }
+
+        const existingId = names.get(name);
+        if (typeof existingId === 'number' && existingId !== id) {
+            throw new Error(`${label} name ${name} is already mapped to ${existingId}`);
+        }
+
+        if (!existingName) additions.push(`${id}=${name}`);
+    }
+
+    if (!additions.length) return;
+    const normalized = content.endsWith('\n') ? content : `${content}\n`;
+    fs.writeFileSync(file, normalized + additions.join('\n') + '\n', 'utf8');
+}
+
+function validateCollectionConfig(stagedContentDir: string, manifest: Group109AssetManifest) {
+    const configPath = path.join(
+        stagedContentDir,
+        'scripts',
+        'grand_exchange',
+        'configs',
+        'grand_exchange_collection.inv'
+    );
+    if (!fs.existsSync(configPath)) {
+        throw new Error(`Grand Exchange group-109 collection inventory config was not staged: ${configPath}`);
+    }
+
+    const source = fs.readFileSync(configPath, 'utf8').replace(/\r/g, '');
+    for (const hook of manifest.inventory_hooks) {
+        const marker = `[${hook.local_name}]`;
+        const start = source.indexOf(marker);
+        if (start === -1) throw new Error(`Grand Exchange group 109 collection config is missing ${marker}`);
+        const next = source.indexOf('\n[', start + marker.length);
+        const block = source.slice(start, next === -1 ? source.length : next);
+        if (!block.includes(`scope=${hook.scope}`) || !block.includes(`size=${hook.size}`)) {
+            throw new Error(`Grand Exchange group 109 collection config ${marker} no longer matches its manifest`);
         }
     }
+}
+
+function injectGroup109InventoryMappings(stagedContentDir: string, manifest: Group109AssetManifest) {
+    const mappings = new Map<number, string>();
+    for (const hook of manifest.inventory_hooks) mappings.set(hook.local_inv_id, hook.local_name);
+    appendPackMappings(path.join(stagedContentDir, 'pack', 'inv.pack'), mappings, 'Grand Exchange group-109 inventory');
 }
 
 function injectGroup109InterfaceMappings(stagedContentDir: string, manifest: Group109AssetManifest) {
@@ -121,58 +187,44 @@ function injectGroup109InterfaceMappings(stagedContentDir: string, manifest: Gro
     }
 
     const interfaceSource = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
-    const sourceComponentIds = Array.from(interfaceSource.matchAll(/^\[com_(\d+)\]$/gm), match =>
-        Number.parseInt(match[1], 10)
-    );
+    const componentIds = Array.from(interfaceSource.matchAll(/^\[com_(\d+)\]$/gm), match => Number.parseInt(match[1], 10));
+    const expectedIds = [...manifest.interface.source_component_ids, ...manifest.interface.if1_helper_component_ids];
 
-    if (sourceComponentIds.length !== manifest.interface.source_component_count) {
-        throw new Error(
-            `Grand Exchange group 109 expected ${manifest.interface.source_component_count} components, found ${sourceComponentIds.length}`
-        );
+    if (componentIds.length !== expectedIds.length) {
+        throw new Error(`Grand Exchange group 109 expected ${expectedIds.length} source/helper components, found ${componentIds.length}`);
     }
-
-    for (let sourceId = 0; sourceId <= GROUP109_COMPONENT_MAX_SOURCE_ID; sourceId++) {
-        if (sourceComponentIds[sourceId] !== sourceId) {
-            throw new Error(`Grand Exchange group 109 component mapping is not contiguous at source component ${sourceId}`);
+    for (let index = 0; index < expectedIds.length; index++) {
+        if (componentIds[index] !== expectedIds[index]) {
+            throw new Error(`Grand Exchange group 109 component mapping is not contiguous at component ${expectedIds[index]}`);
         }
     }
 
-    validateCollectionHosts(interfaceSource);
+    for (const componentId of GROUP109_SLOT_INVS) {
+        const marker = `[com_${componentId}]`;
+        const start = interfaceSource.indexOf(marker);
+        const next = interfaceSource.indexOf('\n[com_', start + marker.length);
+        const block = interfaceSource.slice(start, next === -1 ? interfaceSource.length : next);
+        for (const required of ['type=inv', 'width=2', 'height=1', 'option1=Collect']) {
+            if (!block.includes(required)) {
+                throw new Error(`Grand Exchange group 109 helper ${marker} is missing ${required}`);
+            }
+        }
+    }
 
-    const { content: originalPack, values } = readPack(packPath);
     const mappings = new Map<number, string>();
     mappings.set(GROUP109_INTERFACE_ROOT, GROUP109_INTERFACE_NAME);
-    for (const sourceId of sourceComponentIds) {
-        mappings.set(GROUP109_COMPONENT_BASE + sourceId, `${GROUP109_INTERFACE_NAME}:com_${sourceId}`);
-    }
-
-    const names = new Map<string, number>();
-    for (const [id, name] of values) names.set(name, id);
-
-    const additions: string[] = [];
-    for (const [id, name] of mappings) {
-        const existingName = values.get(id);
-        if (existingName && existingName !== name) {
-            throw new Error(`Reserved Grand Exchange group-109 interface ID ${id} is already mapped to ${existingName}`);
+    for (const componentId of componentIds) {
+        const localId = GROUP109_COMPONENT_BASE + componentId;
+        if (localId > manifest.interface.reserved_component_block_end) {
+            throw new Error(`Grand Exchange group-109 helper component ${componentId} exceeds the reserved interface block`);
         }
-
-        const existingId = names.get(name);
-        if (typeof existingId === 'number' && existingId !== id) {
-            throw new Error(`Grand Exchange group-109 interface name ${name} is already mapped to ${existingId}`);
-        }
-
-        if (!existingName) additions.push(`${id}=${name}`);
+        mappings.set(localId, `${GROUP109_INTERFACE_NAME}:com_${componentId}`);
     }
-
-    const normalizedPack = originalPack.endsWith('\n') ? originalPack : `${originalPack}\n`;
-    fs.writeFileSync(packPath, normalizedPack + additions.join('\n') + (additions.length ? '\n' : ''), 'utf8');
+    appendPackMappings(packPath, mappings, 'Grand Exchange group-109 interface');
 
     const orderLines = fs.readFileSync(orderPath, 'utf8').replace(/\r/g, '').split('\n').filter(Boolean);
     const existingOrder = new Set(orderLines.map(value => Number.parseInt(value, 10)));
-    for (const id of [
-        GROUP109_INTERFACE_ROOT,
-        ...sourceComponentIds.map(sourceId => GROUP109_COMPONENT_BASE + sourceId),
-    ]) {
+    for (const id of [GROUP109_INTERFACE_ROOT, ...componentIds.map(componentId => GROUP109_COMPONENT_BASE + componentId)]) {
         if (!existingOrder.has(id)) {
             orderLines.push(String(id));
             existingOrder.add(id);
@@ -181,71 +233,61 @@ function injectGroup109InterfaceMappings(stagedContentDir: string, manifest: Gro
     fs.writeFileSync(orderPath, orderLines.join('\n') + '\n', 'utf8');
 }
 
-function validateCollectionConfig(stagedContentDir: string, manifest: Group109AssetManifest) {
-    const configPath = path.join(
-        stagedContentDir,
-        'scripts',
-        'grand_exchange',
-        'configs',
-        'grand_exchange_collection.inv'
-    );
-    if (!fs.existsSync(configPath)) {
-        throw new Error(`Grand Exchange group-109 collection inventory config was not staged: ${configPath}`);
-    }
-
-    const source = fs.readFileSync(configPath, 'utf8').replace(/\r/g, '');
-    for (const container of manifest.containers) {
-        const marker = `[${container.name}]`;
-        const start = source.indexOf(marker);
-        if (start === -1) throw new Error(`Grand Exchange group 109 collection config is missing ${marker}`);
-        const next = source.indexOf('\n[', start + marker.length);
-        const block = source.slice(start, next === -1 ? source.length : next);
-        if (!block.includes(`scope=${container.scope}`) || !block.includes(`size=${container.size}`)) {
-            throw new Error(`Grand Exchange group 109 collection config ${marker} no longer matches its manifest`);
-        }
-    }
-}
-
-function injectGroup109InventoryMappings(stagedContentDir: string, manifest: Group109AssetManifest) {
-    const packPath = path.join(stagedContentDir, 'pack', 'inv.pack');
-    const { content: originalPack, values } = readPack(packPath);
-    const names = new Map<string, number>();
-    for (const [id, name] of values) names.set(name, id);
-
-    const additions: string[] = [];
-    for (const container of manifest.containers) {
-        const existingName = values.get(container.id);
-        if (existingName && existingName !== container.name) {
-            throw new Error(`Reserved Grand Exchange collection inv ID ${container.id} is already mapped to ${existingName}`);
-        }
-
-        const existingId = names.get(container.name);
-        if (typeof existingId === 'number' && existingId !== container.id) {
-            throw new Error(`Grand Exchange collection inv ${container.name} is already mapped to ${existingId}`);
-        }
-
-        if (!existingName) additions.push(`${container.id}=${container.name}`);
-    }
-
-    const normalizedPack = originalPack.endsWith('\n') ? originalPack : `${originalPack}\n`;
-    fs.writeFileSync(packPath, normalizedPack + additions.join('\n') + (additions.length ? '\n' : ''), 'utf8');
-}
-
-function injectGroup109ScriptMapping(stagedContentDir: string) {
+function injectGroup109ScriptMappings(stagedContentDir: string) {
     const packPath = path.join(stagedContentDir, 'pack', 'script.pack');
     const { content, values } = readPack(packPath);
-    const triggerName = '[debugproc,ge109]';
+    const existingNames = new Set(values.values());
+    const additions: string[] = [];
+    let maxId = Math.max(-1, ...values.keys());
 
-    if (Array.from(values.values()).includes(triggerName)) return;
+    for (const triggerName of GROUP109_SCRIPT_TRIGGERS) {
+        if (existingNames.has(triggerName)) continue;
+        maxId++;
+        additions.push(`${maxId}=${triggerName}`);
+        existingNames.add(triggerName);
+    }
 
-    const maxId = Math.max(-1, ...values.keys());
+    if (!additions.length) return;
     const normalized = content.endsWith('\n') ? content : `${content}\n`;
-    fs.writeFileSync(packPath, `${normalized}${maxId + 1}=${triggerName}\n`, 'utf8');
+    fs.writeFileSync(packPath, normalized + additions.join('\n') + '\n', 'utf8');
 }
 
-async function verifyGroup109Media(stagedContentDir: string, manifest: Group109AssetManifest) {
+async function stageGroup109Sprites(stagedContentDir: string, manifest: Group109AssetManifest) {
     const spriteDir = path.join(stagedContentDir, 'sprites');
+    fs.mkdirSync(spriteDir, { recursive: true });
 
+    for (const sprite of manifest.sprites) {
+        const sourcePath = path.join(PLUGIN_DIR, sprite.file);
+        const bytes = fs.readFileSync(sourcePath);
+        const actualHash = crypto.createHash('sha256').update(bytes).digest('hex');
+        if (actualHash !== sprite.sha256) {
+            throw new Error(
+                `Grand Exchange group-109 sprite ${sprite.source_id} hash mismatch: expected ${sprite.sha256}, got ${actualHash}`
+            );
+        }
+
+        const image = await Jimp.read(sourcePath);
+        if (image.bitmap.width !== sprite.width || image.bitmap.height !== sprite.height) {
+            throw new Error(
+                `Grand Exchange group-109 sprite ${sprite.source_id} dimensions changed: expected ${sprite.width}x${sprite.height}, got ${image.bitmap.width}x${image.bitmap.height}`
+            );
+        }
+
+        for (let offset = 0; offset < image.bitmap.data.length; offset += 4) {
+            if (image.bitmap.data[offset + 3] < 128) {
+                image.bitmap.data[offset + 0] = 0xff;
+                image.bitmap.data[offset + 1] = 0x00;
+                image.bitmap.data[offset + 2] = 0xff;
+            }
+            image.bitmap.data[offset + 3] = 0xff;
+        }
+
+        await image.write(path.join(spriteDir, `r481_ge_sprite_${sprite.source_id}.png`));
+    }
+}
+
+async function verifyGroup109ReusedMedia(stagedContentDir: string, manifest: Group109AssetManifest) {
+    const spriteDir = path.join(stagedContentDir, 'sprites');
     for (const media of manifest.reused_staged_media) {
         const file = path.join(spriteDir, `${media.name}.png`);
         if (!fs.existsSync(file)) {
@@ -270,6 +312,7 @@ export async function prepareGrandExchangeGroup109Stage(stagedContentDir: string
     validateCollectionConfig(stagedContentDir, manifest);
     injectGroup109InventoryMappings(stagedContentDir, manifest);
     injectGroup109InterfaceMappings(stagedContentDir, manifest);
-    injectGroup109ScriptMapping(stagedContentDir);
-    await verifyGroup109Media(stagedContentDir, manifest);
+    injectGroup109ScriptMappings(stagedContentDir);
+    await stageGroup109Sprites(stagedContentDir, manifest);
+    await verifyGroup109ReusedMedia(stagedContentDir, manifest);
 }
