@@ -25,3 +25,36 @@ if_sethide(grand_exchange_overview:com_156, true);
 if_sethide(grand_exchange_overview:com_192, true);
 if_sethide(grand_exchange_overview:com_197, true);
 if_sethide(grand_exchange_overview:com_200, true);
+
+// Group 106 remains isolated behind the same option-2 custom-content gate.
+// This debug entry point exists only to verify the reconstructed IF1 state.
+[debugproc,ge106]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+if_openmain(grand_exchange_group_106);
+
+// IF3 stores these layer visibility flags in the component definitions. IF1
+// does not, so restore the frozen group-106 state immediately after opening.
+if_sethide(grand_exchange_group_106:com_16, false);
+if_sethide(grand_exchange_group_106:com_18, false);
+if_sethide(grand_exchange_group_106:com_32, false);
+if_sethide(grand_exchange_group_106:com_46, false);
+if_sethide(grand_exchange_group_106:com_63, false);
+if_sethide(grand_exchange_group_106:com_80, false);
+if_sethide(grand_exchange_group_106:com_97, false);
+
+if_sethide(grand_exchange_group_106:com_19, true);
+if_sethide(grand_exchange_group_106:com_33, true);
+if_sethide(grand_exchange_group_106:com_47, true);
+if_sethide(grand_exchange_group_106:com_60, true);
+if_sethide(grand_exchange_group_106:com_64, true);
+if_sethide(grand_exchange_group_106:com_77, true);
+if_sethide(grand_exchange_group_106:com_81, true);
+if_sethide(grand_exchange_group_106:com_94, true);
+if_sethide(grand_exchange_group_106:com_98, true);
+if_sethide(grand_exchange_group_106:com_111, true);
+if_sethide(grand_exchange_group_106:com_126, true);
+if_sethide(grand_exchange_group_106:com_131, true);
+if_sethide(grand_exchange_group_106:com_140, true);

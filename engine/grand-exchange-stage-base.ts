@@ -1,0 +1,654 @@
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+
+import { Jimp } from 'jimp';
+
+const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
+const REPO_DIR = path.join(ENGINE_DIR, '..');
+const NATIVE_CONTENT_DIR = path.join(REPO_DIR, 'content');
+const PLUGIN_DIR = path.join(REPO_DIR, 'plugins', 'grand-exchange');
+const PLUGIN_CONTENT_DIR = path.join(PLUGIN_DIR, 'content');
+const OVERVIEW_ASSETS_PATH = path.join(PLUGIN_DIR, 'overview-assets.json');
+
+const STAGE_ROOT = path.join(ENGINE_DIR, '.custom-content-stage', 'grand-exchange');
+const STAGED_CONTENT_DIR = path.join(STAGE_ROOT, 'content');
+const BACKUP_DIR = path.join(STAGE_ROOT, 'native-pack-backup');
+const BACKUP_MANIFEST = path.join(BACKUP_DIR, 'manifest.json');
+
+const GE_INTERFACE_NAME = 'grand_exchange_overview';
+const GE_INTERFACE_ROOT = 8990;
+const GE_COMPONENT_BASE = 9000;
+// Source group 105 ends at component 213. The remaining offsets in its reserved
+// 256-ID block are available for IF1-only visual helpers that stand in for
+// decoration/text normally created at runtime by the r481 IF3/CS2 path.
+const GE_COMPONENT_MAX_SOURCE_ID = 255;
+
+// r481 IF3 can tile a sprite across a component rectangle; the r254 IF1
+// renderer only plots the sprite once at its natural dimensions. Materialize
+// the tiled group-105 graphics into exact-size temporary media during option 2
+// so the source geometry can be preserved without changing the native client.
+const OVERVIEW_TILED_SPRITES = [
+    { name: 'r481_ge_component_1', sourceId: 297, width: 485, height: 300 },
+    { name: 'r481_ge_component_2', sourceId: 955, width: 7, height: 241 },
+    { name: 'r481_ge_component_4', sourceId: 957, width: 32, height: 243 },
+    { name: 'r481_ge_component_5', sourceId: 954, width: 424, height: 7 },
+    { name: 'r481_ge_component_6', sourceId: 956, width: 423, height: 32 },
+    // IF3 draws this header separator into the cap pieces. Materialise the
+    // inner banner width for IF1 so it meets the side artwork without drawing
+    // over the corner caps.
+    { name: 'r481_ge_component_10', sourceId: 962, width: 473, height: 6 },
+    // The r481 buy/sell frames use the 2px 1074/1075 bevel strips. IF1 cannot
+    // stretch those strips, so materialize only the four exact 51x46 edges.
+    { name: 'r481_ge_button_h_top', sourceId: 1074, width: 51, height: 2 },
+    { name: 'r481_ge_button_h_bottom', sourceId: 1074, width: 51, height: 2 },
+    { name: 'r481_ge_button_v_left', sourceId: 1075, width: 2, height: 46 },
+    { name: 'r481_ge_button_v_right', sourceId: 1075, width: 2, height: 46 },
+] as const;
+
+// The buy/sell crate sprites are 26x35 in the r481 cache, while their IF3
+// graphic components are 35x35. IF1 ignores the source component canvas and
+// draws the natural media size at the component origin, which makes the crates
+// look left-shifted. Pad only the temporary option-2 media to the IF3 canvas so
+// the visible crate stays centred without changing the frozen source geometry.
+const OVERVIEW_PADDED_SPRITES: Record<number, { width: number; height: number }> = {
+    1168: { width: 35, height: 35 },
+    1170: { width: 35, height: 35 },
+};
+
+// Only outputs/runtime sources touched by adding .if/.rs2/sprite sources need
+// to be restored. The whole server pack is backed up because the RuneScript
+// compiler owns its exact output set and can change more than script.dat.
+const MANAGED_NATIVE_OUTPUTS = [
+    'data/pack/client/interface',
+    'data/pack/client/media',
+    'data/pack/server',
+    'data/symbols',
+    'tools/pack/Compiler.ts',
+] as const;
+
+type BackupManifest = {
+    version: 1;
+    outputs: Array<{ path: string; existed: boolean }>;
+};
+
+type OverviewAssetManifest = {
+    sprites: Array<{
+        source_id: number;
+        file: string;
+        width: number;
+        height: number;
+        sha256: string;
+    }>;
+};
+
+function ensureParent(file: string) {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+}
+
+function copyPath(source: string, destination: string) {
+    ensureParent(destination);
+    fs.cpSync(source, destination, {
+        recursive: fs.statSync(source).isDirectory(),
+        force: true,
+        preserveTimestamps: true,
+    });
+}
+
+function snapshotNativeOutputs() {
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
+
+    const manifest: BackupManifest = {
+        version: 1,
+        outputs: MANAGED_NATIVE_OUTPUTS.map(relativePath => {
+            const source = path.join(ENGINE_DIR, relativePath);
+            const existed = fs.existsSync(source);
+            if (existed) {
+                copyPath(source, path.join(BACKUP_DIR, relativePath));
+            }
+            return { path: relativePath, existed };
+        }),
+    };
+
+    fs.writeFileSync(BACKUP_MANIFEST, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+}
+
+export function restoreGrandExchangeStage() {
+    let restored = false;
+
+    if (fs.existsSync(BACKUP_MANIFEST)) {
+        const manifest = JSON.parse(fs.readFileSync(BACKUP_MANIFEST, 'utf8')) as BackupManifest;
+        if (manifest.version !== 1) {
+            throw new Error(`Unsupported Grand Exchange backup manifest version: ${manifest.version}`);
+        }
+
+        for (const output of manifest.outputs) {
+            const livePath = path.join(ENGINE_DIR, output.path);
+            fs.rmSync(livePath, { recursive: true, force: true });
+
+            if (output.existed) {
+                const backupPath = path.join(BACKUP_DIR, output.path);
+                if (!fs.existsSync(backupPath)) {
+                    throw new Error(`Grand Exchange native-pack backup is incomplete: ${output.path}`);
+                }
+                copyPath(backupPath, livePath);
+            }
+        }
+        restored = true;
+    }
+
+    fs.rmSync(STAGE_ROOT, { recursive: true, force: true });
+    return restored;
+}
+
+function readPack(file: string) {
+    const values = new Map<number, string>();
+    const content = fs.readFileSync(file, 'utf8').replace(/\r/g, '');
+
+    for (const line of content.split('\n')) {
+        if (!line) {
+            continue;
+        }
+        const equals = line.indexOf('=');
+        if (equals === -1) {
+            continue;
+        }
+        const id = Number.parseInt(line.slice(0, equals), 10);
+        if (Number.isInteger(id)) {
+            values.set(id, line.slice(equals + 1));
+        }
+    }
+
+    return { content, values };
+}
+
+function patchOverviewInterfaceForIf1() {
+    const interfacePath = path.join(STAGED_CONTENT_DIR, 'scripts', 'grand_exchange', 'interfaces', `${GE_INTERFACE_NAME}.if`);
+    let source = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
+
+    const replaceComponentField = (componentId: number, field: string, expected: string, replacement: string) => {
+        const marker = `[com_${componentId}]`;
+        const start = source.indexOf(marker);
+        if (start === -1) {
+            throw new Error(`Grand Exchange overview is missing ${marker}`);
+        }
+
+        const next = source.indexOf('\n[com_', start + marker.length);
+        const end = next === -1 ? source.length : next;
+        const block = source.slice(start, end);
+        const needle = `${field}=${expected}`;
+        if (!block.includes(needle)) {
+            throw new Error(`Grand Exchange overview ${marker} no longer contains ${needle}`);
+        }
+
+        source = source.slice(0, start) + block.replace(needle, `${field}=${replacement}`) + source.slice(end);
+    };
+
+    const replaceComponentBlock = (componentId: number, body: string) => {
+        const marker = `[com_${componentId}]`;
+        const start = source.indexOf(marker);
+        if (start === -1) {
+            throw new Error(`Grand Exchange overview is missing ${marker}`);
+        }
+
+        const next = source.indexOf('\n[com_', start + marker.length);
+        const end = next === -1 ? source.length : next;
+        source = source.slice(0, start) + `${marker}\n${body.trim()}` + source.slice(end);
+    };
+
+    // Preserve the source separator row: moving it two pixels up compresses
+    // the title band and no longer matches the Nostalgia GE header. Extend it
+    // only to the banner's inner edges: raw IF1 rendering does not inherit
+    // IF3's overlap, but a cap-to-cap strip would draw over the corner pieces.
+    // IF1's b12 metrics still place the title three pixels lower; retain that
+    // compatibility adjustment and place the gavel one pixel lower to align
+    // it with the final header row.
+    replaceComponentField(10, 'x', '24', '20');
+    replaceComponentField(10, 'width', '465', '473');
+    replaceComponentField(14, 'y', '30', '29');
+    replaceComponentField(15, 'y', '26', '29');
+
+    // Restore the two-pixel r481 button bevels. These remain darker than the
+    // empty-offer panel border, so the boxes frame their icons without reading
+    // as a bright second border around each button.
+    const buttonFrameGroups = [
+        { layer: 19, components: [20, 21, 22, 23, 24, 25, 26, 27] },
+        { layer: 35, components: [36, 37, 38, 39, 40, 41, 42, 43] },
+        { layer: 51, components: [52, 53, 54, 55, 56, 57, 58, 59] },
+        { layer: 70, components: [71, 72, 73, 74, 75, 76, 77, 78] },
+        { layer: 89, components: [90, 91, 92, 93, 94, 95, 96, 97] },
+        { layer: 108, components: [109, 110, 111, 112, 113, 114, 115, 116] },
+    ] as const;
+
+    for (const { layer, components } of buttonFrameGroups) {
+        const [buyTop, buyBottom, buyLeft, buyRight, sellTop, sellBottom, sellLeft, sellRight] = components;
+        const edges = [
+            { id: buyTop, x: 12, y: 43, width: 51, height: 2, graphic: 'r481_ge_button_h_top' },
+            { id: buyBottom, x: 12, y: 87, width: 51, height: 2, graphic: 'r481_ge_button_h_bottom' },
+            { id: buyLeft, x: 12, y: 43, width: 2, height: 46, graphic: 'r481_ge_button_v_left' },
+            { id: buyRight, x: 61, y: 43, width: 2, height: 46, graphic: 'r481_ge_button_v_right' },
+            { id: sellTop, x: 75, y: 43, width: 51, height: 2, graphic: 'r481_ge_button_h_top' },
+            { id: sellBottom, x: 75, y: 87, width: 51, height: 2, graphic: 'r481_ge_button_h_bottom' },
+            { id: sellLeft, x: 75, y: 43, width: 2, height: 46, graphic: 'r481_ge_button_v_left' },
+            { id: sellRight, x: 124, y: 43, width: 2, height: 46, graphic: 'r481_ge_button_v_right' },
+        ] as const;
+
+        for (const edge of edges) {
+            replaceComponentBlock(
+                edge.id,
+                `layer=com_${layer}\ntype=graphic\nx=${edge.x}\ny=${edge.y}\nwidth=${edge.width}\nheight=${edge.height}\ngraphic=${edge.graphic},0`
+            );
+        }
+    }
+
+    // Make each empty-offer slot read as a framed panel rather than a faint
+    // one-pixel outline. The light outer edge and dark inset reproduce the
+    // two-tone border visible in the reference without importing more assets.
+    for (const componentId of [214, 219, 224, 229, 234, 239]) {
+        replaceComponentField(componentId, 'colour', '0x5A5245', '0x817765');
+    }
+    for (const componentId of [215, 220, 225, 230, 235, 240]) {
+        replaceComponentField(componentId, 'colour', '0x5A5245', '0x817765');
+    }
+
+    if (source.includes('[com_244]')) {
+        throw new Error('Grand Exchange overview IF1 bevel helper IDs 244-255 are already in use');
+    }
+
+    const bevelHelpers = `
+// Additional IF1-only bevel helpers for the six empty-offer panels. The outer
+// highlight/divider above use the existing helpers; these add the dark inset
+// edge and divider shadow seen in the reference image.
+[com_244]
+layer=com_19
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_245]
+layer=com_35
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_246]
+layer=com_51
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_247]
+layer=com_70
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_248]
+layer=com_89
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_249]
+layer=com_108
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_250]
+layer=com_19
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_251]
+layer=com_35
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_252]
+layer=com_51
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_253]
+layer=com_70
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_254]
+layer=com_89
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_255]
+layer=com_108
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+`;
+
+    source = source.trimEnd() + '\n' + bevelHelpers;
+    fs.writeFileSync(interfacePath, source, 'utf8');
+}
+
+function injectInterfaceMappings() {
+    const packPath = path.join(STAGED_CONTENT_DIR, 'pack', 'interface.pack');
+    const orderPath = path.join(STAGED_CONTENT_DIR, 'pack', 'interface.order');
+    const interfacePath = path.join(STAGED_CONTENT_DIR, 'scripts', 'grand_exchange', 'interfaces', `${GE_INTERFACE_NAME}.if`);
+    const interfaceSource = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
+
+    const sourceComponentIds: number[] = [];
+    for (const match of interfaceSource.matchAll(/^\[com_(\d+)\]$/gm)) {
+        const sourceId = Number.parseInt(match[1], 10);
+        if (sourceId < 0 || sourceId > GE_COMPONENT_MAX_SOURCE_ID) {
+            throw new Error(`Grand Exchange overview component com_${sourceId} is outside the reserved group-105 block`);
+        }
+        sourceComponentIds.push(sourceId);
+    }
+
+    const { content: originalPack, values } = readPack(packPath);
+    const mappings = new Map<number, string>();
+    mappings.set(GE_INTERFACE_ROOT, GE_INTERFACE_NAME);
+    for (const sourceId of sourceComponentIds) {
+        mappings.set(GE_COMPONENT_BASE + sourceId, `${GE_INTERFACE_NAME}:com_${sourceId}`);
+    }
+
+    const names = new Map<string, number>();
+    for (const [id, name] of values) {
+        names.set(name, id);
+    }
+
+    const additions: string[] = [];
+    for (const [id, name] of mappings) {
+        const existingName = values.get(id);
+        if (existingName && existingName !== name) {
+            throw new Error(`Reserved Grand Exchange interface ID ${id} is already mapped to ${existingName}`);
+        }
+        const existingId = names.get(name);
+        if (typeof existingId === 'number' && existingId !== id) {
+            throw new Error(`Grand Exchange interface name ${name} is already mapped to ${existingId}`);
+        }
+        if (!existingName) {
+            additions.push(`${id}=${name}`);
+        }
+    }
+
+    const normalizedPack = originalPack.endsWith('\n') ? originalPack : `${originalPack}\n`;
+    fs.writeFileSync(packPath, normalizedPack + additions.join('\n') + (additions.length ? '\n' : ''), 'utf8');
+
+    const orderLines = fs.readFileSync(orderPath, 'utf8').replace(/\r/g, '').split('\n').filter(Boolean);
+    const existingOrder = new Set(orderLines.map(value => Number.parseInt(value, 10)));
+    for (const id of [GE_INTERFACE_ROOT, ...sourceComponentIds.map(sourceId => GE_COMPONENT_BASE + sourceId)]) {
+        if (!existingOrder.has(id)) {
+            orderLines.push(String(id));
+            existingOrder.add(id);
+        }
+    }
+    fs.writeFileSync(orderPath, orderLines.join('\n') + '\n', 'utf8');
+}
+
+function injectScriptMapping() {
+    const packPath = path.join(STAGED_CONTENT_DIR, 'pack', 'script.pack');
+    const { content, values } = readPack(packPath);
+    const triggerName = '[debugproc,ge]';
+
+    for (const value of values.values()) {
+        if (value === triggerName) {
+            return;
+        }
+    }
+
+    let maxId = -1;
+    for (const id of values.keys()) {
+        maxId = Math.max(maxId, id);
+    }
+
+    const normalized = content.endsWith('\n') ? content : `${content}\n`;
+    fs.writeFileSync(packPath, `${normalized}${maxId + 1}=${triggerName}\n`, 'utf8');
+}
+
+function pointRuneScriptCompilerAtStage() {
+    // This progressive base uses @lostcityrs/runescript. Its engine wrapper
+    // loads symbols from BUILD_SRC_DIR but, unless sourcePaths is supplied,
+    // the package itself defaults to ../content/scripts. Temporarily teach the
+    // installed wrapper to read the same staged scripts as the rest of option 2.
+    const compilerPath = path.join(ENGINE_DIR, 'tools', 'pack', 'Compiler.ts');
+    if (!fs.existsSync(compilerPath)) {
+        throw new Error(`RuneScript compiler wrapper was not found at ${compilerPath}`);
+    }
+
+    const content = fs.readFileSync(compilerPath, 'utf8');
+    const marker = 'CompileServerScript({';
+    const callStart = content.indexOf(marker);
+    if (callStart === -1) {
+        throw new Error('Could not find CompileServerScript({ in tools/pack/Compiler.ts');
+    }
+
+    const callEnd = content.indexOf('});', callStart);
+    const callPreview = content.slice(callStart, callEnd === -1 ? callStart + 4000 : callEnd);
+    if (/\bsourcePaths\s*:/.test(callPreview)) {
+        return;
+    }
+
+    const afterMarker = content.slice(callStart + marker.length);
+    const newline = afterMarker.startsWith('\r\n') ? '\r\n' : afterMarker.startsWith('\n') ? '\n' : '';
+    if (!newline) {
+        throw new Error('Unexpected CompileServerScript formatting in tools/pack/Compiler.ts');
+    }
+
+    const indentMatch = afterMarker.match(/^\r?\n([ \t]*)/);
+    const indent = indentMatch?.[1] ?? '        ';
+    const insertAt = callStart + marker.length + newline.length;
+    const sourcePathsLine = `${indent}sourcePaths: [process.env.BUILD_SRC_DIR ? process.env.BUILD_SRC_DIR + '/scripts' : '../content/scripts'],${newline}`;
+    const patched = content.slice(0, insertAt) + sourcePathsLine + content.slice(insertAt);
+    fs.writeFileSync(compilerPath, patched, 'utf8');
+}
+
+async function stageSprites() {
+    const manifest = JSON.parse(fs.readFileSync(OVERVIEW_ASSETS_PATH, 'utf8')) as OverviewAssetManifest;
+    const spriteDir = path.join(STAGED_CONTENT_DIR, 'sprites');
+    fs.mkdirSync(spriteDir, { recursive: true });
+
+    const spritesBySourceId = new Map(manifest.sprites.map(sprite => [sprite.source_id, sprite]));
+
+    for (const sprite of manifest.sprites) {
+        const sourcePath = path.join(PLUGIN_DIR, sprite.file);
+        const actualHash = crypto.createHash('sha256').update(fs.readFileSync(sourcePath)).digest('hex');
+        if (actualHash !== sprite.sha256) {
+            throw new Error(`Grand Exchange sprite ${sprite.source_id} hash mismatch: expected ${sprite.sha256}, got ${actualHash}`);
+        }
+
+        let image = await Jimp.read(sourcePath);
+        if (image.bitmap.width !== sprite.width || image.bitmap.height !== sprite.height) {
+            throw new Error(
+                `Grand Exchange sprite ${sprite.source_id} dimensions changed: expected ${sprite.width}x${sprite.height}, got ${image.bitmap.width}x${image.bitmap.height}`
+            );
+        }
+
+        const paddedSize = OVERVIEW_PADDED_SPRITES[sprite.source_id];
+        if (paddedSize) {
+            if (paddedSize.width < image.bitmap.width || paddedSize.height < image.bitmap.height) {
+                throw new Error(`Grand Exchange padded sprite canvas is smaller than source sprite ${sprite.source_id}`);
+            }
+
+            const padded = new Jimp({ width: paddedSize.width, height: paddedSize.height, color: 0x00000000 });
+            const x = Math.round((paddedSize.width - image.bitmap.width) / 2);
+            const y = Math.round((paddedSize.height - image.bitmap.height) / 2);
+            padded.composite(image, x, y);
+            image = padded;
+        }
+
+        // r254 PixPack uses #ff00ff as transparent palette entry and ignores
+        // PNG alpha. Convert the r481 RGBA exports only in the temporary stage.
+        for (let offset = 0; offset < image.bitmap.data.length; offset += 4) {
+            const alpha = image.bitmap.data[offset + 3];
+            if (alpha < 128) {
+                image.bitmap.data[offset + 0] = 0xff;
+                image.bitmap.data[offset + 1] = 0x00;
+                image.bitmap.data[offset + 2] = 0xff;
+            }
+            image.bitmap.data[offset + 3] = 0xff;
+        }
+
+        await image.write(path.join(spriteDir, `r481_ge_sprite_${sprite.source_id}.png`));
+    }
+
+    for (const tiledSprite of OVERVIEW_TILED_SPRITES) {
+        const source = spritesBySourceId.get(tiledSprite.sourceId);
+        if (!source) {
+            throw new Error(`Grand Exchange tiled sprite source ${tiledSprite.sourceId} is not present in overview-assets.json`);
+        }
+
+        const sourceImage = await Jimp.read(path.join(PLUGIN_DIR, source.file));
+        const image = new Jimp({ width: tiledSprite.width, height: tiledSprite.height, color: 0x00000000 });
+
+        // The r481 right and bottom edge components reserve a 32px corner-sized
+        // canvas, but the repeating edge artwork itself is only 7px thick. The
+        // previous generic 2D tiler repeated that strip across the full 32px
+        // cross-axis, producing the visible stacks of vertical/horizontal lines.
+        // Keep the source component canvas, but tile only along the long axis
+        // and align the 7px strip to the outside edge, matching the adjacent
+        // 32x32 corner sprites.
+        if (tiledSprite.name === 'r481_ge_component_4') {
+            const x = tiledSprite.width - sourceImage.bitmap.width;
+            for (let y = 0; y < tiledSprite.height; y += sourceImage.bitmap.height) {
+                image.composite(sourceImage, x, y);
+            }
+        } else if (tiledSprite.name === 'r481_ge_component_6') {
+            const y = tiledSprite.height - sourceImage.bitmap.height;
+            for (let x = 0; x < tiledSprite.width; x += sourceImage.bitmap.width) {
+                image.composite(sourceImage, x, y);
+            }
+        } else {
+            for (let y = 0; y < tiledSprite.height; y += sourceImage.bitmap.height) {
+                for (let x = 0; x < tiledSprite.width; x += sourceImage.bitmap.width) {
+                    image.composite(sourceImage, x, y);
+                }
+            }
+        }
+
+        // Top/left use the source strip orientation (dark outside, light inside).
+        // Mirror the two-pixel strip for bottom/right so the bevel closes with
+        // the light line on the inside and dark line on the outside.
+        const swapPixel = (offsetA: number, offsetB: number) => {
+            for (let channel = 0; channel < 4; channel++) {
+                const temp = image.bitmap.data[offsetA + channel];
+                image.bitmap.data[offsetA + channel] = image.bitmap.data[offsetB + channel];
+                image.bitmap.data[offsetB + channel] = temp;
+            }
+        };
+
+        if (tiledSprite.name === 'r481_ge_button_h_bottom') {
+            const stride = image.bitmap.width * 4;
+            for (let x = 0; x < image.bitmap.width; x++) {
+                swapPixel(x * 4, stride + x * 4);
+            }
+        } else if (tiledSprite.name === 'r481_ge_button_v_right') {
+            for (let y = 0; y < image.bitmap.height; y++) {
+                const row = y * image.bitmap.width * 4;
+                swapPixel(row, row + 4);
+            }
+        }
+
+        // Derived tiled media is temporary too, so apply the same IF1 palette
+        // transparency conversion before it enters the r254 media pack.
+        for (let offset = 0; offset < image.bitmap.data.length; offset += 4) {
+            const alpha = image.bitmap.data[offset + 3];
+            if (alpha < 128) {
+                image.bitmap.data[offset + 0] = 0xff;
+                image.bitmap.data[offset + 1] = 0x00;
+                image.bitmap.data[offset + 2] = 0xff;
+            }
+            image.bitmap.data[offset + 3] = 0xff;
+        }
+
+        await image.write(path.join(spriteDir, `${tiledSprite.name}.png`));
+    }
+}
+
+export async function prepareGrandExchangeStage() {
+    // Recover from an interrupted previous option-2 run before taking a fresh
+    // native snapshot. This makes the next launcher start self-healing.
+    restoreGrandExchangeStage();
+
+    if (!fs.existsSync(NATIVE_CONTENT_DIR)) {
+        throw new Error(`Native content directory not found: ${NATIVE_CONTENT_DIR}`);
+    }
+    if (!fs.existsSync(PLUGIN_CONTENT_DIR) || !fs.existsSync(OVERVIEW_ASSETS_PATH)) {
+        throw new Error(`Grand Exchange plugin staging files are incomplete under ${PLUGIN_DIR}`);
+    }
+
+    snapshotNativeOutputs();
+
+    try {
+        fs.mkdirSync(path.dirname(STAGED_CONTENT_DIR), { recursive: true });
+        fs.cpSync(NATIVE_CONTENT_DIR, STAGED_CONTENT_DIR, {
+            recursive: true,
+            force: true,
+            preserveTimestamps: true,
+        });
+        fs.cpSync(PLUGIN_CONTENT_DIR, STAGED_CONTENT_DIR, {
+            recursive: true,
+            force: true,
+            preserveTimestamps: true,
+        });
+
+        patchOverviewInterfaceForIf1();
+        injectInterfaceMappings();
+        injectScriptMapping();
+        pointRuneScriptCompilerAtStage();
+        await stageSprites();
+        return STAGED_CONTENT_DIR;
+    } catch (error) {
+        restoreGrandExchangeStage();
+        throw error;
+    }
+}
