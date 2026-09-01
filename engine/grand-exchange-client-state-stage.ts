@@ -124,10 +124,18 @@ function validateClientStateManifest() {
         substitution.groups[0] === 105 &&
         substitution.local_script === 'generated grand_exchange_item_search.rs2'
     );
+    const quantitySubstitution = manifest.server_state_substitutions.find(substitution =>
+        substitution.groups.length === 1 &&
+        substitution.groups[0] === 105 &&
+        substitution.local_script === 'generated grand_exchange_quantity.rs2'
+    );
     if (
-        manifest.server_state_substitutions.length !== 6 ||
+        manifest.server_state_substitutions.length !== 7 ||
         !searchSubstitution ||
         !searchSubstitution.mechanism.includes('native obj.pack-derived search catalogue') ||
+        !quantitySubstitution ||
+        !quantitySubstitution.mechanism.includes('p_countdialog') ||
+        manifest.deferred_server_authoritative_state.includes('quantity') ||
         manifest.deferred_server_authoritative_state.length === 0
     ) {
         throw new Error('Grand Exchange client-state server substitution/deferred-state contract is incomplete');
@@ -220,7 +228,23 @@ function validateServerDrivenSubstitutions(stagedContentDir: string) {
         'lowercase(oc_name(',
         'inv_transmit(ge_search_results, grand_exchange_item_search:com_8);',
         '[inv_button1,grand_exchange_item_search:com_8]',
-        'if_setobject(grand_exchange_overview:com_138, $item, 250);'
+        'if_setobject(grand_exchange_overview:com_138, $item, 250);',
+        'if_settext(grand_exchange_overview:com_150, "1");'
+    ]);
+
+    requireTokens(path.join(scriptDir, 'grand_exchange_quantity.rs2'), [
+        '[proc,ge_offer_quantity_set]',
+        '[if_button,grand_exchange_overview:com_157]',
+        '[if_button,grand_exchange_overview:com_159]',
+        '[if_button,grand_exchange_overview:com_162]',
+        '[if_button,grand_exchange_overview:com_164]',
+        '[if_button,grand_exchange_overview:com_166]',
+        '[if_button,grand_exchange_overview:com_168]',
+        '[if_button,grand_exchange_overview:com_170]',
+        'p_countdialog;',
+        'def_int $quantity = last_int;',
+        'inv_setslot(ge_selected_item, 0, $item, $clamped);',
+        'if_settext(grand_exchange_overview:com_150, append_num("", $clamped));'
     ]);
 }
 

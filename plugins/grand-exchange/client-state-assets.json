@@ -57,6 +57,12 @@
       "purpose": "buy-item search, scrollable result presentation and selected native-r254 item state"
     },
     {
+      "groups": [105],
+      "mechanism": "ge_selected_item stack quantity plus IF1 quantity button triggers and p_countdialog numeric input",
+      "local_script": "generated grand_exchange_quantity.rs2",
+      "purpose": "server-authoritative offer quantity decrement/increment, preset selection and numeric entry"
+    },
+    {
       "groups": [106],
       "mechanism": "if_sethide",
       "local_script": "grand_exchange.rs2",
@@ -83,7 +89,6 @@
   ],
   "deferred_server_authoritative_state": [
     "offer side and slot",
-    "quantity",
     "price",
     "offer lifecycle and status",
     "matching, settlement and persistence"
