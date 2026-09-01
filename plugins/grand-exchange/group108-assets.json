@@ -189,9 +189,10 @@
       {
         "source_component_id": 72,
         "source_model_id": 2810,
-        "reserved_local_model_id": 4001,
-        "status": "visual-slot-only",
-        "note": "Phase 2 group-108 milestone preserves the IF1 model canvas/zoom but does not activate the reserved r481 model import yet."
+        "imported_model_id": null,
+        "status": "native-r254-runtime-item-host",
+        "item_source": "native-r254-only",
+        "note": "The frozen r481 model reference is retained only as source metadata. The IF1 component must remain unbound until the GE server/client state supplies a native r254 object ID through native item rendering; model 2810 is never imported or remapped."
       },
       {
         "source_component_ids": [
