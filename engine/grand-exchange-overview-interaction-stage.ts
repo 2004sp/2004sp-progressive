@@ -125,8 +125,8 @@ function patchOfferControls(stagedContentDir: string) {
     let source = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
 
     // The two 51px offer buttons occupy x=12..125 in a 140px slot, leaving the
-    // pair one pixel left of true centre. Shift the complete button chrome,
-    // icons and click targets together by one pixel so both outer margins are 13.
+    // pair one pixel left of true centre. Shift the complete button chrome and
+    // click targets together by one pixel so both outer margins are 13.
     for (const group of BUTTON_FRAME_GROUPS) {
         const [buyTop, buyBottom, buyLeft, buyRight, sellTop, sellBottom, sellLeft, sellRight] = group;
         for (const componentId of [buyTop, buyBottom, buyLeft] as const) {
@@ -140,11 +140,15 @@ function patchOfferControls(stagedContentDir: string) {
         source = patchComponentX(source, sellRight, 124, 125, 'graphic');
     }
 
+    // Optical correction from the latest in-game check: the crate artwork still
+    // reads two pixels left of centre inside the now-centred button frames. Move
+    // only the Buy/Sell icon graphics a further two pixels right; hitboxes and
+    // frame geometry stay unchanged.
     for (const componentId of BUY_ICON_COMPONENTS) {
-        source = patchIconX(source, componentId, 20, 21, BUY_ICON_GRAPHIC);
+        source = patchIconX(source, componentId, 20, 23, BUY_ICON_GRAPHIC);
     }
     for (const componentId of SELL_ICON_COMPONENTS) {
-        source = patchIconX(source, componentId, 83, 84, SELL_ICON_GRAPHIC);
+        source = patchIconX(source, componentId, 83, 86, SELL_ICON_GRAPHIC);
     }
 
     for (const componentId of BUY_ACTION_COMPONENTS) {
