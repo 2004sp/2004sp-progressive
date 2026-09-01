@@ -59,6 +59,12 @@ One compatibility conversion is required: r254 PixPack treats RGB magenta (`#ff0
 
 With the GE toggle enabled and launcher option 2 running, `~ge` opens this first recognisable sprite-backed overview through the staged `[debugproc,ge]` script. It is still a visual/compatibility slice: offer actions and live GE state are intentionally not wired yet.
 
+## Group 107 helper/overlay
+
+The r481 GE helper/overlay is reconstructed as `grand_exchange_group_107` with source components `0–18` mapped exactly to local IDs `9512–9530`; the unused tail `9531–9767` remains reserved. Its synthetic IF1 opening root is `8992`, outside the frozen component block. The source contains two top-level layers, a nested seventeen-rectangle alpha frame, no text, no sprites, and no hidden components. IF1 needs only explicit `scroll` extents on the two layers because the r481 zero extents imply their source heights; no listener, media, or visibility shim is needed.
+
+With Grand Exchange custom content enabled, `~ge107` opens it for isolated verification. The root mapping and debug script map are inserted only into the temporary option-2 stage, alongside groups 105 and 106; the native `content/` tree and native interface packs stay untouched and are restored after option 2 exits.
+
 ## Local verification
 
 After copying this overlay onto the normal r254 base installation:
@@ -70,3 +76,4 @@ After copying this overlay onto the normal r254 base installation:
 - stop option 2, then start options 1 and 3 and confirm `~ge` is absent and native cache/interface behaviour is unchanged.
 
 Do not move this plugin under normal `content/`; the isolation boundary is intentional.
+
