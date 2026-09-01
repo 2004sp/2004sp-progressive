@@ -98,7 +98,9 @@ function validateClientStateManifest() {
         throw new Error('Grand Exchange client-state manifest no longer matches the frozen r481/r254 compatibility contract');
     }
 
-    const mappings = new Map(manifest.client_script_mappings.map(mapping => [mapping.source_script_id, mapping]));
+    const mappings = new Map<number, ClientScriptMapping>(
+        manifest.client_script_mappings.map(mapping => [mapping.source_script_id, mapping] as const)
+    );
     if (mappings.size !== 3 || !mappings.has(581) || !mappings.has(654) || !mappings.has(656)) {
         throw new Error('Grand Exchange client-state manifest must map exactly source client scripts 581, 654 and 656');
     }
