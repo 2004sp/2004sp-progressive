@@ -119,7 +119,17 @@ function validateClientStateManifest() {
         throw new Error('Grand Exchange client-state source-script mapping drifted from the frozen group-109 listener contract');
     }
 
-    if (manifest.server_state_substitutions.length !== 5 || manifest.deferred_server_authoritative_state.length === 0) {
+    const searchSubstitution = manifest.server_state_substitutions.find(substitution =>
+        substitution.groups.length === 1 &&
+        substitution.groups[0] === 105 &&
+        substitution.local_script === 'generated grand_exchange_item_search.rs2'
+    );
+    if (
+        manifest.server_state_substitutions.length !== 6 ||
+        !searchSubstitution ||
+        !searchSubstitution.mechanism.includes('native obj.pack-derived search catalogue') ||
+        manifest.deferred_server_authoritative_state.length === 0
+    ) {
         throw new Error('Grand Exchange client-state server substitution/deferred-state contract is incomplete');
     }
 
@@ -200,6 +210,17 @@ function validateServerDrivenSubstitutions(stagedContentDir: string) {
         'inv_transmit(ge_collection_offer_3, grand_exchange_group_109:com_71);',
         'inv_transmit(ge_collection_offer_4, grand_exchange_group_109:com_75);',
         'inv_transmit(ge_collection_offer_5, grand_exchange_group_109:com_79);'
+    ]);
+
+    requireTokens(path.join(scriptDir, 'grand_exchange_item_search.rs2'), [
+        '[if_button,grand_exchange_overview:com_194]',
+        'p_namedialog;',
+        'oc_tradeable(',
+        'oc_uncert(',
+        'lowercase(oc_name(',
+        'inv_transmit(ge_search_results, grand_exchange_item_search:com_8);',
+        '[inv_button1,grand_exchange_item_search:com_8]',
+        'if_setobject(grand_exchange_overview:com_138, $item, 250);'
     ]);
 }
 
