@@ -27,11 +27,12 @@ Because a regular r254 IF1 interface needs an opening/root component while the r
 3. copy normal `content/` into `engine/.custom-content-stage/grand-exchange/content`;
 4. overlay this plugin's `.if` and `.rs2` sources into that copy;
 5. inject the synthetic roots and implemented GE component names at their frozen local IDs;
-6. append the staged GE debug procedures (`ge`, `ge106`, `ge107`, `ge108`) to the script name map;
+6. append the staged GE debug procedures (`ge`, `ge106`, `ge107`, `ge108`, `ge110`) to the script name map;
 7. temporarily add `sourcePaths` to the installed `@lostcityrs/runescript` wrapper so it compiles from `BUILD_SRC_DIR/scripts` instead of its native `../content/scripts` default;
 8. convert and copy the frozen PNGs into the staged native sprite source directory;
-9. build and start option 2 with `BUILD_SRC_DIR` pointing at the stage;
-10. restore the native pack and compiler wrapper after the option-2 server exits.
+9. apply the IF1-only buy-action compatibility shim to the six frozen group-105 buy hitboxes;
+10. build and start option 2 with `BUILD_SRC_DIR` pointing at the stage;
+11. restore the native pack and compiler wrapper after the option-2 server exits.
 
 Launcher options 1 and 3 explicitly force `NODE_FEATURE_GRANDEXCHANGE=false`. The launcher also restores a stale snapshot on its next start if an option-2 run was interrupted before its `finally` cleanup could run.
 
@@ -49,15 +50,17 @@ IF1 components then reference them in the native form, for example `graphic=r481
 
 One compatibility conversion is required: r254 PixPack treats RGB magenta (`#ff00ff`) as transparent and does not preserve PNG alpha. The committed r481 source PNGs are left untouched; only their temporary staged copies convert alpha below 128 to magenta and force the staged image alpha opaque before the native media packer sees them.
 
-## First sprite-backed overview
+## Overview and buy-offer setup
 
-`content/scripts/grand_exchange/interfaces/grand_exchange_overview.if` now keeps the initial r254 geometry scaffold but uses staged r481 media for:
+`content/scripts/grand_exchange/interfaces/grand_exchange_overview.if` uses staged r481 media for:
 
 - the group-105 close control (`831`);
 - the six buy action visuals (`1168`);
 - the six sell action visuals (`1170`).
 
-With the GE toggle enabled and launcher option 2 running, `~ge` opens this first recognisable sprite-backed overview through the staged `[debugproc,ge]` script. It is still a visual/compatibility slice: offer actions and live GE state are intentionally not wired yet.
+The frozen r481 buy hitboxes are source components `30`, `46`, `62`, `81`, `100` and `119`. r481 drove them with IF3 listeners/CS2; the option-2 compatibility stage adds only the equivalent IF1 `Buy` button metadata to those same components. Their server-side `[if_button]` handlers switch the overview root (`com_16`) to the group-105 buy setup root (`com_126`) and buy-search prompt (`com_192`). The source Back control (`com_127`) returns to the six-slot summary without resetting the individual slot sub-states.
+
+This completes the Phase 4 buy-offer setup transition only. Item search/selection, quantity controls, price controls and offer submission remain deliberately unwired, so no server-side GE transaction or player-wealth mutation is introduced by this slice.
 
 ## Group 107 helper/overlay
 
@@ -81,8 +84,10 @@ After copying this overlay onto the normal r254 base installation:
 
 - enable **Grand Exchange (option 2 only)** under launcher **Custom Content**;
 - start launcher option **2 — Custom Server + Hiscores** and allow the normal local build/repack to complete;
-- log in and run `~ge`, `~ge106`, `~ge107` and `~ge108` as needed to verify the staged interface slices;
-- confirm the overview opens with the r481 close/buy/sell sprites and group 108 exposes the offer controls/state visuals without creating server transactions;
-- stop option 2, then start options 1 and 3 and confirm the GE debug procedures are absent and native cache/interface behaviour is unchanged.
+- log in and run `~ge`, then click **Buy** in any of the six empty offer slots;
+- confirm the overview changes to the r481 Buy Offer setup with the buy-search prompt, and that **Back** returns to the six-slot summary;
+- confirm quantity, price, item search and Confirm Offer controls do not yet create a transaction;
+- run `~ge106`, `~ge107`, `~ge108` and `~ge110` as needed to verify the other staged interface slices;
+- stop option 2, then start options 1 and 3 and confirm the GE debug procedures/actions are absent and native cache/interface behaviour is unchanged.
 
 Do not move this plugin under normal `content/`; the isolation boundary is intentional.
