@@ -8,7 +8,7 @@
       "sequence": 1190,
       "inventory": 157
     },
-    "policy": "Do not renumber existing 2004 content. Interface groups receive fixed 256-ID blocks; NPC and NPC-model/sequence imports use reserved ranges above observed maxima. GE-only inventory containers use local IDs 158-163 above the native r254 inventory ceiling, while source inventory 93 reuses native r254 inv. r481 interface/item-display models are never assigned local model IDs; GE items render from native r254 object definitions/models only."
+    "policy": "Do not renumber existing 2004 content. Interface groups receive fixed 256-ID blocks; NPC and NPC-model/sequence imports use reserved ranges above observed maxima. GE-only inventory containers use local IDs 158-165 above the native r254 inventory ceiling, while source inventory 93 reuses native r254 inv. r481 interface/item-display models are never assigned local model IDs; GE items render from native r254 object definitions/models only."
   },
   "interfaces": {
     "105": {
@@ -66,6 +66,17 @@
       "max_source_component_id": 13
     }
   },
+  "synthetic_interfaces": {
+    "grand_exchange_item_search": {
+      "local_root_id": 8989,
+      "local_component_block_base": 11304,
+      "max_local_component_id": 11392,
+      "component_count": 89,
+      "strategy": "option-2-only-generated-if1",
+      "item_source": "native-r254-obj.pack",
+      "item_rendering": "native-r254-inventory-icons"
+    }
+  },
   "inventories": {
     "93": {
       "source_inv_id": 93,
@@ -115,6 +126,22 @@
       "local_name": "ge_collection_offer_5",
       "size": 2,
       "scope": "temp"
+    },
+    "search_results": {
+      "source_inv_id": null,
+      "local_inv_id": 164,
+      "local_name": "ge_search_results",
+      "size": 80,
+      "scope": "temp",
+      "strategy": "option-2-native-r254-search-results"
+    },
+    "selected_item": {
+      "source_inv_id": null,
+      "local_inv_id": 165,
+      "local_name": "ge_selected_item",
+      "size": 1,
+      "scope": "temp",
+      "strategy": "server-authoritative-native-r254-selection"
     }
   },
   "npcs": {
