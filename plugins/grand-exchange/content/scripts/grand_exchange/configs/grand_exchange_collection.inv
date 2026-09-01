@@ -1,6 +1,11 @@
-// Display-only Grand Exchange collection containers.
-// These are temporary player containers used only to render group 109.
-// No collection handler moves their contents into inventory or bank.
+// r481 Grand Exchange collection/output containers.
+// Source inventory IDs 523-528 map to option-2-only local IDs 158-163.
+// Each offer slot can present up to two outputs (item/coins), so each
+// compatibility container has two stackable slots.
+//
+// These remain temporary player containers. The current group-109 harness is
+// display-only; the later server-side GE settlement phase will populate them
+// from authoritative offer state using native r254 item IDs only.
 
 [ge_collection_offer_0]
 scope=temp

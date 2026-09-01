@@ -5,20 +5,117 @@
       "interface": 8461,
       "npc": 1174,
       "model": 3649,
-      "sequence": 1190
+      "sequence": 1190,
+      "inventory": 157
     },
-    "policy": "Do not renumber existing 2004 content. Interface groups receive fixed 256-ID blocks; NPC/model/sequence imports use reserved ranges above observed maxima."
+    "policy": "Do not renumber existing 2004 content. Interface groups receive fixed 256-ID blocks; NPC/model/sequence imports use reserved ranges above observed maxima. GE-only inventory containers use local IDs 158-163 above the native r254 inventory ceiling, while source inventory 93 reuses native r254 inv."
   },
   "interfaces": {
-    "105": {"source_group_id": 105, "local_block_base": 9000, "formula": "local = 9000 + source_component_id", "max_source_component_id": 213},
-    "106": {"source_group_id": 106, "local_block_base": 9256, "formula": "local = 9256 + source_component_id", "max_source_component_id": 145},
-    "107": {"source_group_id": 107, "local_block_base": 9512, "formula": "local = 9512 + source_component_id", "max_source_component_id": 18},
-    "108": {"source_group_id": 108, "local_block_base": 9768, "formula": "local = 9768 + source_component_id", "max_source_component_id": 97},
-    "109": {"source_group_id": 109, "local_block_base": 10024, "formula": "local = 10024 + source_component_id", "max_source_component_id": 57},
-    "110": {"source_group_id": 110, "local_block_base": 10280, "formula": "local = 10280 + source_component_id", "max_source_component_id": 92},
-    "643": {"source_group_id": 643, "local_block_base": 10536, "formula": "local = 10536 + source_component_id", "max_source_component_id": 50},
-    "645": {"source_group_id": 645, "local_block_base": 10792, "formula": "local = 10792 + source_component_id", "max_source_component_id": 19},
-    "646": {"source_group_id": 646, "local_block_base": 11048, "formula": "local = 11048 + source_component_id", "max_source_component_id": 13}
+    "105": {
+      "source_group_id": 105,
+      "local_block_base": 9000,
+      "formula": "local = 9000 + source_component_id",
+      "max_source_component_id": 213
+    },
+    "106": {
+      "source_group_id": 106,
+      "local_block_base": 9256,
+      "formula": "local = 9256 + source_component_id",
+      "max_source_component_id": 145
+    },
+    "107": {
+      "source_group_id": 107,
+      "local_block_base": 9512,
+      "formula": "local = 9512 + source_component_id",
+      "max_source_component_id": 18
+    },
+    "108": {
+      "source_group_id": 108,
+      "local_block_base": 9768,
+      "formula": "local = 9768 + source_component_id",
+      "max_source_component_id": 97
+    },
+    "109": {
+      "source_group_id": 109,
+      "local_block_base": 10024,
+      "formula": "local = 10024 + source_component_id",
+      "max_source_component_id": 57
+    },
+    "110": {
+      "source_group_id": 110,
+      "local_block_base": 10280,
+      "formula": "local = 10280 + source_component_id",
+      "max_source_component_id": 92
+    },
+    "643": {
+      "source_group_id": 643,
+      "local_block_base": 10536,
+      "formula": "local = 10536 + source_component_id",
+      "max_source_component_id": 50
+    },
+    "645": {
+      "source_group_id": 645,
+      "local_block_base": 10792,
+      "formula": "local = 10792 + source_component_id",
+      "max_source_component_id": 19
+    },
+    "646": {
+      "source_group_id": 646,
+      "local_block_base": 11048,
+      "formula": "local = 11048 + source_component_id",
+      "max_source_component_id": 13
+    }
+  },
+  "inventories": {
+    "93": {
+      "source_inv_id": 93,
+      "local_inv_id": 93,
+      "local_name": "inv",
+      "strategy": "reuse-native-r254",
+      "definition_imported": false
+    },
+    "523": {
+      "source_inv_id": 523,
+      "local_inv_id": 158,
+      "local_name": "ge_collection_offer_0",
+      "size": 2,
+      "scope": "temp"
+    },
+    "524": {
+      "source_inv_id": 524,
+      "local_inv_id": 159,
+      "local_name": "ge_collection_offer_1",
+      "size": 2,
+      "scope": "temp"
+    },
+    "525": {
+      "source_inv_id": 525,
+      "local_inv_id": 160,
+      "local_name": "ge_collection_offer_2",
+      "size": 2,
+      "scope": "temp"
+    },
+    "526": {
+      "source_inv_id": 526,
+      "local_inv_id": 161,
+      "local_name": "ge_collection_offer_3",
+      "size": 2,
+      "scope": "temp"
+    },
+    "527": {
+      "source_inv_id": 527,
+      "local_inv_id": 162,
+      "local_name": "ge_collection_offer_4",
+      "size": 2,
+      "scope": "temp"
+    },
+    "528": {
+      "source_inv_id": 528,
+      "local_inv_id": 163,
+      "local_name": "ge_collection_offer_5",
+      "size": 2,
+      "scope": "temp"
+    }
   },
   "npcs": {
     "6528": 1200,
@@ -111,8 +208,26 @@
     "1174": "r481_ge_sprite_1174"
   },
   "fonts": {
-    "494": {"status": "reused-native", "source_cache_name": "p11_full", "native_font": "p11", "preferred": "reuse native font; no r481 font import required", "fallback_name": "r481_ge_font_494"},
-    "495": {"status": "reused-native", "source_cache_name": "p12_full", "native_font": "p12", "preferred": "reuse native font; no r481 font import required", "fallback_name": "r481_ge_font_495"},
-    "496": {"status": "reused-native", "source_cache_name": "b12_full", "native_font": "b12", "preferred": "reuse native font; no r481 font import required", "fallback_name": "r481_ge_font_496"}
+    "494": {
+      "status": "reused-native",
+      "source_cache_name": "p11_full",
+      "native_font": "p11",
+      "preferred": "reuse native font; no r481 font import required",
+      "fallback_name": "r481_ge_font_494"
+    },
+    "495": {
+      "status": "reused-native",
+      "source_cache_name": "p12_full",
+      "native_font": "p12",
+      "preferred": "reuse native font; no r481 font import required",
+      "fallback_name": "r481_ge_font_495"
+    },
+    "496": {
+      "status": "reused-native",
+      "source_cache_name": "b12_full",
+      "native_font": "b12",
+      "preferred": "reuse native font; no r481 font import required",
+      "fallback_name": "r481_ge_font_496"
+    }
   }
 }
