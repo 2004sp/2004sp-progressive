@@ -14,6 +14,16 @@ const GROUP108_INTERFACE_ROOT = 8993;
 const GROUP108_COMPONENT_BASE = 9768;
 const GROUP108_COMPONENT_MAX_SOURCE_ID = 97;
 
+type Group108ModelCompatibility = {
+    source_component_id?: number;
+    source_component_ids?: number[];
+    source_model_id?: number;
+    imported_model_id?: number | null;
+    reserved_local_model_id?: number;
+    status: string;
+    item_source?: string;
+};
+
 type Group108AssetManifest = {
     interface: {
         source_group_id: number;
@@ -23,6 +33,7 @@ type Group108AssetManifest = {
         source_component_ids: number[];
         source_font_ids: number[];
         source_model_ids: number[];
+        model_compatibility: Group108ModelCompatibility[];
     };
     reused_staged_media: Array<{
         name: string;
@@ -55,6 +66,7 @@ function readPack(file: string) {
 function readAndValidateManifest() {
     const manifest = JSON.parse(fs.readFileSync(GROUP108_ASSETS_PATH, 'utf8')) as Group108AssetManifest;
     const expectedSourceIds = Array.from({ length: GROUP108_COMPONENT_MAX_SOURCE_ID + 1 }, (_, index) => index);
+    const itemModelHost = manifest.interface.model_compatibility.find(entry => entry.source_component_id === 72);
 
     if (
         manifest.interface.source_group_id !== 108 ||
@@ -63,9 +75,15 @@ function readAndValidateManifest() {
         manifest.interface.source_component_count !== expectedSourceIds.length ||
         manifest.interface.source_component_ids.join(',') !== expectedSourceIds.join(',') ||
         manifest.interface.source_font_ids.join(',') !== '494,495,496' ||
-        manifest.interface.source_model_ids.join(',') !== '2810'
+        manifest.interface.source_model_ids.join(',') !== '2810' ||
+        !itemModelHost ||
+        itemModelHost.source_model_id !== 2810 ||
+        itemModelHost.imported_model_id !== null ||
+        itemModelHost.reserved_local_model_id !== undefined ||
+        itemModelHost.status !== 'native-r254-runtime-item-host' ||
+        itemModelHost.item_source !== 'native-r254-only'
     ) {
-        throw new Error('Grand Exchange group-108 asset manifest no longer matches the frozen offer-state export');
+        throw new Error('Grand Exchange group-108 asset manifest no longer matches the native-r254 item-source boundary');
     }
 
     return manifest;
@@ -101,6 +119,19 @@ function injectGroup108InterfaceMappings(stagedContentDir: string, manifest: Gro
         if (sourceComponentIds[sourceId] !== sourceId) {
             throw new Error(`Grand Exchange group 108 component mapping is not contiguous at source component ${sourceId}`);
         }
+    }
+
+    // Source component 72 carried r481 model 2810 in the frozen IF3 cache, but
+    // this backport intentionally keeps only the item-display canvas/zoom. Any
+    // model binding here would bypass native r254 object definitions and could
+    // reintroduce an r481 item-model dependency, so fail the option-2 stage.
+    const itemHostMarker = '[com_72]';
+    const itemHostStart = interfaceSource.indexOf(itemHostMarker);
+    const itemHostNext = interfaceSource.indexOf('\n[com_', itemHostStart + itemHostMarker.length);
+    const itemHostEnd = itemHostNext === -1 ? interfaceSource.length : itemHostNext;
+    const itemHostBlock = itemHostStart === -1 ? '' : interfaceSource.slice(itemHostStart, itemHostEnd);
+    if (!itemHostBlock || /^model=/m.test(itemHostBlock)) {
+        throw new Error('Grand Exchange group-108 item host must remain unbound for native r254 runtime item rendering');
     }
 
     const { content: originalPack, values } = readPack(packPath);
