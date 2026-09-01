@@ -69,3 +69,12 @@ if (map_feature("grandexchange") = false) {
 }
 if_openmain(grand_exchange_group_107);
 
+// Group 108 is the r481 offer setup/state variant. Quantity/price controls,
+// alternate state visuals and hover affordances are present only as display
+// scaffolding in this milestone; no server-side offer transaction is wired.
+[debugproc,ge108]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+if_openmain(grand_exchange_group_108);
