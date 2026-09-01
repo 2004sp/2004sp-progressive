@@ -35,7 +35,10 @@ const OVERVIEW_TILED_SPRITES = [
     { name: 'r481_ge_component_4', sourceId: 957, width: 32, height: 243 },
     { name: 'r481_ge_component_5', sourceId: 954, width: 424, height: 7 },
     { name: 'r481_ge_component_6', sourceId: 956, width: 423, height: 32 },
-    { name: 'r481_ge_component_10', sourceId: 962, width: 465, height: 6 },
+    // IF3 draws this header separator into the cap pieces. Materialise the
+    // inner banner width for IF1 so it meets the side artwork without drawing
+    // over the corner caps.
+    { name: 'r481_ge_component_10', sourceId: 962, width: 473, height: 6 },
     // The r481 buy/sell frames use the 2px 1074/1075 bevel strips. IF1 cannot
     // stretch those strips, so materialize only the four exact 51x46 edges.
     { name: 'r481_ge_button_h_top', sourceId: 1074, width: 51, height: 2 },
@@ -194,16 +197,21 @@ function patchOverviewInterfaceForIf1() {
         source = source.slice(0, start) + `${marker}\n${body.trim()}` + source.slice(end);
     };
 
-    // The supplied r481 header reference shows the 6px separator two pixels
-    // higher than the direct IF3 -> IF1 placement, and IF1's b12 metrics place
-    // the title three pixels lower. Keep the gavel at its visually matching row.
-    replaceComponentField(10, 'y', '49', '47');
+    // Preserve the source separator row: moving it two pixels up compresses
+    // the title band and no longer matches the Nostalgia GE header. Extend it
+    // only to the banner's inner edges: raw IF1 rendering does not inherit
+    // IF3's overlap, but a cap-to-cap strip would draw over the corner pieces.
+    // IF1's b12 metrics still place the title three pixels lower; retain that
+    // compatibility adjustment and place the gavel one pixel lower to align
+    // it with the final header row.
+    replaceComponentField(10, 'x', '24', '20');
+    replaceComponentField(10, 'width', '465', '473');
     replaceComponentField(14, 'y', '30', '29');
-    replaceComponentField(15, 'y', '26', '28');
+    replaceComponentField(15, 'y', '26', '29');
 
-    // Restore the actual two-pixel r481 button bevels from sprites 1074/1075.
-    // The previous one-pixel rectangles lost the dark outer + light inner edge
-    // visible around every Buy/Sell box in the frozen reference.
+    // Restore the two-pixel r481 button bevels. These remain darker than the
+    // empty-offer panel border, so the boxes frame their icons without reading
+    // as a bright second border around each button.
     const buttonFrameGroups = [
         { layer: 19, components: [20, 21, 22, 23, 24, 25, 26, 27] },
         { layer: 35, components: [36, 37, 38, 39, 40, 41, 42, 43] },
