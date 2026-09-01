@@ -123,12 +123,15 @@ function widenSelectedItemState(stagedContentDir: string) {
     const end = next === -1 ? source.length : next;
     const block = source.slice(start, end);
 
-    if (block.includes('size=3')) return;
-    if (!block.includes('size=1')) {
-        throw new Error('Grand Exchange selected-item state no longer has the expected one-slot staging size');
+    const sizeMatch = block.match(/^size=(\d+)$/m);
+    if (!sizeMatch) {
+        throw new Error('Grand Exchange selected-item state no longer exposes a staging size');
     }
 
-    const patched = block.replace('size=1', 'size=3');
+    const currentSize = Number.parseInt(sizeMatch[1], 10);
+    if (currentSize >= 3) return;
+
+    const patched = block.replace(/^size=\d+$/m, 'size=3');
     source = source.slice(0, start) + patched + source.slice(end);
     fs.writeFileSync(configPath, source, 'utf8');
 }
