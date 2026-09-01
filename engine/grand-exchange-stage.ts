@@ -13,6 +13,7 @@ import { prepareGrandExchangeGroup110Stage } from './grand-exchange-group110-sta
 import { prepareGrandExchangeGroup643Stage } from './grand-exchange-group643-stage.js';
 import { prepareGrandExchangeBuyOfferSetupStage } from './grand-exchange-buy-offer-stage.js';
 import { prepareGrandExchangeSellOfferSetupStage } from './grand-exchange-sell-offer-stage.js';
+import { prepareGrandExchangeOverviewInteractionStage } from './grand-exchange-overview-interaction-stage.js';
 import { prepareGrandExchangeItemSearchStage } from './grand-exchange-item-search-stage.js';
 import { prepareGrandExchangeRuneScriptTypeCompatibilityStage } from './grand-exchange-runescript-type-compatibility.js';
 import { prepareGrandExchangeQuantityStage } from './grand-exchange-quantity-stage.js';
@@ -93,6 +94,7 @@ export async function prepareGrandExchangeStage() {
         await prepareGrandExchangeGroup643Stage(stagedContentDir);
         prepareGrandExchangeBuyOfferSetupStage(stagedContentDir);
         prepareGrandExchangeSellOfferSetupStage(stagedContentDir);
+        prepareGrandExchangeOverviewInteractionStage(stagedContentDir);
         prepareGrandExchangeItemSearchStage(stagedContentDir);
         prepareGrandExchangeRuneScriptTypeCompatibilityStage(stagedContentDir);
         prepareGrandExchangeQuantityStage(stagedContentDir);
