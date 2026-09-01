@@ -51,6 +51,12 @@
       "purpose": "overview mutually-exclusive layers and initial state"
     },
     {
+      "groups": [105],
+      "mechanism": "native obj.pack-derived search catalogue plus temp inventories 164/165, inv_transmit and if_setobject",
+      "local_script": "generated grand_exchange_item_search.rs2",
+      "purpose": "buy-item search, scrollable result presentation and selected native-r254 item state"
+    },
+    {
       "groups": [106],
       "mechanism": "if_sethide",
       "local_script": "grand_exchange.rs2",
@@ -76,7 +82,6 @@
     }
   ],
   "deferred_server_authoritative_state": [
-    "selected native-r254 item",
     "offer side and slot",
     "quantity",
     "price",
@@ -86,6 +91,7 @@
   "guardrails": [
     "Do not import opaque r481 varp or varbit numeric IDs unless a reconstructed IF1 component directly requires them.",
     "Do not import the r481 GE client scripts or add a CS2 runtime solely to reproduce GE presentation state.",
-    "Future interactive GE state is server-authoritative; a client variable may mirror display state only when a concrete r254 widget requirement proves it necessary."
+    "Future interactive GE state is server-authoritative; a client variable may mirror display state only when a concrete r254 widget requirement proves it necessary.",
+    "GE item search/selection must be derived only from the staged native r254 obj.pack and rendered with native r254 inventory icons or object models."
   ]
 }
