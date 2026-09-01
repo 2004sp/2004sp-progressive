@@ -8,7 +8,7 @@
       "sequence": 1190,
       "inventory": 157
     },
-    "policy": "Do not renumber existing 2004 content. Interface groups receive fixed 256-ID blocks; NPC/model/sequence imports use reserved ranges above observed maxima. GE-only inventory containers use local IDs 158-163 above the native r254 inventory ceiling, while source inventory 93 reuses native r254 inv."
+    "policy": "Do not renumber existing 2004 content. Interface groups receive fixed 256-ID blocks; NPC and NPC-model/sequence imports use reserved ranges above observed maxima. GE-only inventory containers use local IDs 158-163 above the native r254 inventory ceiling, while source inventory 93 reuses native r254 inv. r481 interface/item-display models are never assigned local model IDs; GE items render from native r254 object definitions/models only."
   },
   "interfaces": {
     "105": {
@@ -126,7 +126,6 @@
   },
   "models": {
     "103": 4000,
-    "2810": 4001,
     "28758": 4002,
     "28810": 4003,
     "29874": 4004,
@@ -143,8 +142,21 @@
     "29900": 4015,
     "29903": 4016,
     "29904": 4017,
-    "29908": 4018,
-    "29916": 4019
+    "29908": 4018
+  },
+  "excluded_interface_models": {
+    "2810": {
+      "source_role": "group-108 item-display model reference",
+      "local_model_id": null,
+      "strategy": "native-r254-runtime-item-rendering",
+      "reason": "The offer item slot must be populated from the selected native r254 object definition/model. The r481 source model is reference metadata only and is not imported or remapped."
+    },
+    "29916": {
+      "source_role": "r481 interface-only static model reference",
+      "local_model_id": null,
+      "strategy": "not-imported",
+      "reason": "This r481 interface model is not an NPC dependency and is outside the native-r254 GE item rendering boundary."
+    }
   },
   "sequences": {
     "808": 1200,
