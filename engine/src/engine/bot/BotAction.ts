@@ -573,6 +573,70 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         exit: [[2460, 3385], [2462, 3385]]
     },
     {
+        // ── Tree Gnome Stronghold ↔ Gnome Stronghold South Bank (stairs) ──────
+        // South stairs.
+        // Bots need to interact with the stairs to get inside the bank.
+        name: 'GnomeSouthBankS',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GnomeSouthBank']),
+        approach: [[2446, 3415]],
+        exit: [[2445, 3416]],
+        exitLevel: 1
+    },
+    {
+        // ── Tree Gnome Stronghold ↔ Gnome Stronghold South Bank (stairs) ──────
+        // North stairs.
+        // Bots need to interact with the stairs to get inside the bank.
+        name: 'GnomeSouthBankN',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GnomeSouthBank']),
+        approach: [[2444, 3434]],
+        exit: [[2445, 3433]],
+        exitLevel: 1
+    },
+    {
+        // ── Tree Gnome Stronghold ↔ Grand Tree entrance (gate) ────────────────
+        // Bots first need to open the gate to get into the Grand Tree.
+        name: 'GrandTree',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GrandTree',
+            'GrandTree1']),
+        approach: [[2465, 3491], [2466, 3491]],
+        exit: [[2465, 3493], [2466, 3493]]
+    },
+    {
+        // ── Grand Tree entrance ↔ Grand Tree 1st floor (stairs) ───────────────
+        // Stairs to the 1st floor of the Grand Tree.
+        name: 'GrandTree1',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GrandTree1']),
+        approach: [[2466, 3494]],
+        exit: [[2466, 3494]],
+        exitLevel: 1
+    },
+    {
+        // ── Grand Tree 1st floor ↔ Grand Tree 2nd floor (stairs) ──────────────
+        // Stairs to the 2nd floor of the Grand Tree.
+        name: 'GrandTree2',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GrandTree2']),
+        approach: [[2466, 3494]],
+        exit: [[2466, 3494]],
+        approachLevel: 1,
+        exitLevel: 2
+    },
+    {
+        // ── Grand Tree 2nd floor ↔ Grand Tree 3nd floor (stairs) ──────────────
+        // Stairs to the 3nd floor of the Grand Tree.
+        name: 'GrandTree3',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GrandTree3']),
+        approach: [[2466, 3494]],
+        exit: [[2466, 3494]],
+        approachLevel: 2,
+        exitLevel: 3
+    },
+    {
         // ── Brimhaven ↔ Ardougne (boat) ───────────────────────────────────────
         // Bots heading to Ardougne can take the boat from Karamja.
         // The boat costs 30 coins and triggers a dialog that
@@ -719,7 +783,7 @@ type Region = {
      */
     readonly coords: number[][];
     /**
-     * If set, limit this region to a floor.
+     * If set, this region only applies to this floor and those above it.
      * Otherwise all floors are inside the region.
      */
     readonly level?: number;
@@ -1229,6 +1293,50 @@ const REGIONS: Region[] = [
             [2375, 3417]]
     },
     {
+        name: 'GnomeSouthBank',
+        coords: [
+            [2443, 3415],
+            [2443, 3434],
+            [2448, 3434],
+            [2448, 3415]],
+        level: 1
+    },
+    {
+        name: 'GrandTree',
+        coords: [
+            [2463, 3493],
+            [2463, 3498],
+            [2468, 3498],
+            [2468, 3493]]
+    },
+    {
+        name: 'GrandTree1',
+        coords: [
+            [2438, 3478],
+            [2438, 3520],
+            [2500, 3520],
+            [2500, 3478]],
+        level: 1
+    },
+    {
+        name: 'GrandTree2',
+        coords: [
+            [2438, 3478],
+            [2438, 3520],
+            [2500, 3520],
+            [2500, 3478]],
+        level: 2
+    },
+    {
+        name: 'GrandTree3',
+        coords: [
+            [2438, 3478],
+            [2438, 3520],
+            [2500, 3520],
+            [2500, 3478]],
+        level: 3
+    },
+    {
         name: 'Ardougne',
         coords: [
             [2433, 3305],
@@ -1415,13 +1523,13 @@ function checkRegion(x: number, z: number, level: number, names: string[]): bool
     for (const name of names) {
         const region = REGIONS.find(r => r.name === name);
         if (!region) continue;
-        if (region.level && region.level !== level) continue;
+        if (region.level && region.level > level) continue;
         if (isInside(region.coords, x, z)) return true;
         if (!region.contains) continue;
         for (const i of region.contains) {
             const contained = REGIONS.find(r => r.name === i);
             if (!contained) continue;
-            if (contained.level && contained.level !== level) continue;
+            if (contained.level && contained.level > level) continue;
             if (isInside(contained.coords, x, z)) return true;
         }
     }
@@ -1751,10 +1859,11 @@ export function walkTo(player: Player, destX: number, destZ: number, level = 0):
         }
     }
 
-    // If a gateway was found, one of 3 things will happen.
+    // If a gateway was found, one of 4 things will happen.
     // 1. If not near approach tile, walk to it first.
     // 2. If teleport is set, teleport to exit area.
-    // 3. Otherwise walk to exit area.
+    // 3. If changing floor, interact with stairs.
+    // 4. Otherwise walk to exit area.
     if (gw && gwExit) {
         const gwDist = Math.max(Math.abs(player.x - next[0]), Math.abs(player.z - next[1])); // Chebyshev distance
 
@@ -1802,6 +1911,15 @@ export function walkTo(player: Player, destX: number, destZ: number, level = 0):
                 teleportDestZ = alt.z;
             }
             botTeleport(player, teleportDestX, teleportDestZ, nextExit[2]);
+            return;
+        }
+
+        // Changing floor, interact with stairs.
+        if (next[2] < nextExit[2] || (next[1] > 4100 && nextExit[1] <= 4100)) {
+            interactNearbyLocByOps(player, 'climb-up', 8);
+            return;
+        } else if (next[2] > nextExit[2] || (next[1] <= 4100 && nextExit[1] > 4100)) {
+            interactNearbyLocByOps(player, 'climb-down', 8);
             return;
         }
 
@@ -2932,6 +3050,35 @@ export function setVarp(player: Player, varpName: string, varpId: number, varpVa
     } else {
         console.log("Error: can't find varp id: " + varpId);
     }
+}
+
+/**
+ * Scan within `radius` tiles for any loc with an option that matches keyword.
+ * If already adjacent to the loc, find which specific option number matches
+ * the keyword and interact with it. If not yet adjacent, path to the loc.
+ *
+ * Returns true if an obstruction was found (interaction queued or walk started).
+ */
+function interactNearbyLocByOps(player: Player, keyword: string, radius = 30): boolean {
+    const loc = _findLoc(player.x, player.z, player.level, radius, loc => {
+        const t = LocType.get(loc.type);
+        const ops = (t.op ?? []).filter((o): o is string => typeof o === 'string').map(o => o.toLowerCase());
+        return ops.some(op => op === keyword);
+    });
+    if (!loc) return false;
+
+    if (isAdjacentToLoc(player, loc)) {
+        const t = LocType.get(loc.type);
+        const ops = (t.op ?? []).filter((o): o is string => typeof o === 'string').map(o => o.toLowerCase());
+        let op = 1 + ops.findIndex(i => i === keyword);
+        if (op < 1) op = 1;
+        interactLocOp(player, loc, op as 1 | 2 | 3 | 4 | 5);
+        return true;
+    }
+
+    // Not adjacent — path toward the loc tile.
+    _pathTowards(player, loc.x, loc.z);
+    return true;
 }
 
 // ── Gate handling ─────────────────────────────────────────────────────────────
