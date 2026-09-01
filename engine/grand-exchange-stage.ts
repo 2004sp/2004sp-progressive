@@ -13,8 +13,44 @@ import { prepareGrandExchangeGroup110Stage } from './grand-exchange-group110-sta
 import { prepareGrandExchangeGroup643Stage } from './grand-exchange-group643-stage.js';
 
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
+const REPO_DIR = path.join(ENGINE_DIR, '..');
+const PLUGIN_SCRIPT_DIR = path.join(REPO_DIR, 'plugins', 'grand-exchange', 'content', 'scripts');
 
 export { restoreGrandExchangeStage };
+
+function assertNativeR254ItemDefinitionBoundary() {
+    if (!fs.existsSync(PLUGIN_SCRIPT_DIR)) {
+        return;
+    }
+
+    const directories = [PLUGIN_SCRIPT_DIR];
+    const forbiddenItemConfigs: string[] = [];
+
+    while (directories.length > 0) {
+        const directory = directories.pop()!;
+        for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+            const fullPath = path.join(directory, entry.name);
+            if (entry.isDirectory()) {
+                directories.push(fullPath);
+                continue;
+            }
+
+            // Native item definitions live in RuneScript .obj sources. The GE
+            // plugin may add interfaces, scripts, inventories and later the
+            // clerk's NPC-specific assets, but it must never overlay an r481
+            // item config into the staged r254 catalogue.
+            if (entry.isFile() && entry.name.toLowerCase().endsWith('.obj')) {
+                forbiddenItemConfigs.push(path.relative(REPO_DIR, fullPath).replace(/\\/g, '/'));
+            }
+        }
+    }
+
+    if (forbiddenItemConfigs.length > 0) {
+        throw new Error(
+            `Grand Exchange plugin item-source boundary violation: r481 item definitions are not allowed (${forbiddenItemConfigs.join(', ')})`
+        );
+    }
+}
 
 function invalidateGrandExchangeServerConfigOutputs() {
     // Group 109 extends inv.pack with six option-2-only collection containers.
@@ -34,6 +70,7 @@ function invalidateGrandExchangeServerConfigOutputs() {
 }
 
 export async function prepareGrandExchangeStage() {
+    assertNativeR254ItemDefinitionBoundary();
     const stagedContentDir = await prepareGrandExchangeBaseStage();
 
     try {
