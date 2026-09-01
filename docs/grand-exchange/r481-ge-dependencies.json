@@ -242,8 +242,33 @@
       }
     ]
   },
-  "unresolved_phase2_dependencies": [
-    "varp/varbit IDs referenced indirectly by client scripts",
-    "client script IDs and opcode compatibility required to drive r481 IF3 state"
-  ]
+  "client_state_resolution": {
+    "manifest": "plugins/grand-exchange/client-state-assets.json",
+    "strategy": "server-authoritative-if1-substitution",
+    "source_varp_ids": [],
+    "source_varbit_ids": [],
+    "local_varp_configs": [],
+    "local_varbit_configs": [],
+    "resolution": "No in-scope reconstructed IF1 component directly reads an r481 varp or varbit. Indirect r481 CS2 presentation state is replaced with explicit r254 server-driven IF1 state rather than importing opaque unused variables.",
+    "source_client_script_mappings": {
+      "581": "group-109 collection slot onload -> IF1 slot hosts/helper presentation driven by grand_exchange_collection.rs2",
+      "654": "group-109 collection box onload -> explicit server-driven open/initialisation in grand_exchange_collection.rs2",
+      "656": "group-109 inventory transmit -> native r254 inv_transmit using source inventories 523-528 mapped to local temp containers 158-163"
+    },
+    "server_state_substitutions": [
+      "group 105 initial/mutually-exclusive layers -> if_sethide",
+      "group 106 submitted-offer visibility -> if_sethide",
+      "groups 108/110 setup-state variants -> explicit IF1 root opens plus server setters",
+      "group 109 collection outputs -> temp inventories, inv_transmit, if_settext and if_sethide",
+      "group 643 history rows -> if_settext and if_setobject"
+    ],
+    "deferred_to_phase4_and_phase5": [
+      "selected native-r254 item",
+      "offer side and slot",
+      "quantity and price",
+      "offer lifecycle/status",
+      "matching, settlement and persistence"
+    ]
+  },
+  "unresolved_phase2_dependencies": []
 }
