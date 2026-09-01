@@ -111,8 +111,8 @@
     "1174": "r481_ge_sprite_1174"
   },
   "fonts": {
-    "494": {"status": "compatibility-check-required", "preferred": "reuse native font if metrics/rendering are compatible", "fallback_name": "r481_ge_font_494"},
-    "495": {"status": "compatibility-check-required", "preferred": "reuse native font if metrics/rendering are compatible", "fallback_name": "r481_ge_font_495"},
-    "496": {"status": "compatibility-check-required", "preferred": "reuse native font if metrics/rendering are compatible", "fallback_name": "r481_ge_font_496"}
+    "494": {"status": "reused-native", "source_cache_name": "p11_full", "native_font": "p11", "preferred": "reuse native font; no r481 font import required", "fallback_name": "r481_ge_font_494"},
+    "495": {"status": "reused-native", "source_cache_name": "p12_full", "native_font": "p12", "preferred": "reuse native font; no r481 font import required", "fallback_name": "r481_ge_font_495"},
+    "496": {"status": "reused-native", "source_cache_name": "b12_full", "native_font": "b12", "preferred": "reuse native font; no r481 font import required", "fallback_name": "r481_ge_font_496"}
   }
 }

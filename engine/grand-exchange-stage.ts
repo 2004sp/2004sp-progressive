@@ -1,4 +1,5 @@
 import { prepareGrandExchangeStage as prepareGrandExchangeBaseStage, restoreGrandExchangeStage } from './grand-exchange-stage-base.js';
+import { prepareGrandExchangeFontCompatibilityStage } from './grand-exchange-font-compatibility.js';
 import { prepareGrandExchangeSpriteStage } from './grand-exchange-sprite-stage.js';
 import { prepareGrandExchangeGroup106Stage } from './grand-exchange-group106-stage.js';
 import { prepareGrandExchangeGroup107Stage } from './grand-exchange-group107-stage.js';
@@ -13,6 +14,7 @@ export async function prepareGrandExchangeStage() {
     const stagedContentDir = await prepareGrandExchangeBaseStage();
 
     try {
+        prepareGrandExchangeFontCompatibilityStage(stagedContentDir);
         await prepareGrandExchangeSpriteStage(stagedContentDir);
         await prepareGrandExchangeGroup106Stage(stagedContentDir);
         await prepareGrandExchangeGroup107Stage(stagedContentDir);

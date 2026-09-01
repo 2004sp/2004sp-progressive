@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "scope": {
+    "in_scope_interface_groups": [105, 106, 107, 108, 109, 110, 643],
+    "excluded_interface_groups": [645, 646],
+    "source_font_ids": [494, 495, 496]
+  },
+  "decision": "reuse-native-only",
+  "fallback_prefix": "r481_ge_font_",
+  "reference_note": "The frozen Phase 1 extraction records interface font IDs but does not contain the source font group blobs. Compatibility is therefore resolved from the canonical r481 font identities plus the existing r254 renderer path, rather than by claiming a byte-for-byte font-resource match.",
+  "compatibility_basis": [
+    "r481 font IDs 494, 495 and 496 are the canonical p11_full, p12_full and b12_full font groups.",
+    "The r254 Java client already loads native p11, p12 and b12 PixFont instances and supplies them to the interface loader.",
+    "All reconstructed in-scope GE IF1 interfaces use only p11, p12 and b12; known IF3-to-IF1 baseline differences are handled as component-layout compatibility shims rather than by importing replacement fonts."
+  ],
+  "mappings": [
+    {
+      "source_font_id": 494,
+      "source_cache_name": "p11_full",
+      "native_font": "p11",
+      "status": "native-compatible",
+      "in_scope_usage": {
+        "components": 57,
+        "groups": [105, 106, 108, 110, 643]
+      }
+    },
+    {
+      "source_font_id": 495,
+      "source_cache_name": "p12_full",
+      "native_font": "p12",
+      "status": "native-compatible",
+      "in_scope_usage": {
+        "components": 6,
+        "groups": [106, 108, 110]
+      }
+    },
+    {
+      "source_font_id": 496,
+      "source_cache_name": "b12_full",
+      "native_font": "b12",
+      "status": "native-compatible",
+      "in_scope_usage": {
+        "components": 36,
+        "groups": [105, 106, 108, 109, 110, 643]
+      }
+    }
+  ],
+  "resource_imports": []
+}
