@@ -17,6 +17,7 @@ const QUANTITY_PRESETS = [
     { componentId: 168, option: 'Offer 500', quantity: 500 },
 ] as const;
 const EDIT_COMPONENT = 170;
+const QUANTITY_BUTTON_TEXT_Y = 212;
 const MAX_QUANTITY = 2147483647;
 
 function readPack(file: string) {
@@ -67,6 +68,27 @@ function enableLayerAction(source: string, componentId: number, option: string) 
     return source.slice(0, start) + patched + source.slice(end);
 }
 
+function setButtonTextY(source: string, componentId: number) {
+    const { marker, start, end, block } = getComponentBlock(source, componentId);
+    if (!block.includes('type=text')) {
+        throw new Error(`Grand Exchange quantity button ${marker} is no longer an IF1 text component`);
+    }
+
+    const yMatch = block.match(/^y=(\d+)$/m);
+    if (!yMatch) {
+        throw new Error(`Grand Exchange quantity button ${marker} no longer exposes a y position`);
+    }
+
+    const currentY = Number.parseInt(yMatch[1], 10);
+    if (currentY === QUANTITY_BUTTON_TEXT_Y) return source;
+    if (currentY !== 205) {
+        throw new Error(`Grand Exchange quantity button ${marker} expected frozen y=205, found y=${currentY}`);
+    }
+
+    const patched = block.replace(/^y=\d+$/m, `y=${QUANTITY_BUTTON_TEXT_Y}`);
+    return source.slice(0, start) + patched + source.slice(end);
+}
+
 function patchQuantityActions(stagedContentDir: string) {
     const interfacePath = path.join(
         stagedContentDir,
@@ -93,12 +115,14 @@ function patchQuantityActions(stagedContentDir: string) {
         if (!block.includes('buttontype=normal') || !block.includes(`option=${preset.option}`)) {
             throw new Error(`Grand Exchange quantity preset com_${preset.componentId} no longer exposes ${preset.option}`);
         }
+        source = setButtonTextY(source, preset.componentId);
     }
 
     const edit = getComponentBlock(source, EDIT_COMPONENT).block;
     if (!edit.includes('buttontype=normal') || !edit.includes('option=Edit Quantity')) {
         throw new Error('Grand Exchange quantity numeric-input action com_170 no longer exposes Edit Quantity');
     }
+    source = setButtonTextY(source, EDIT_COMPONENT);
 
     fs.writeFileSync(interfacePath, source, 'utf8');
 }
