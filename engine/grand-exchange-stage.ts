@@ -13,6 +13,7 @@ import { prepareGrandExchangeGroup110Stage } from './grand-exchange-group110-sta
 import { prepareGrandExchangeGroup643Stage } from './grand-exchange-group643-stage.js';
 import { prepareGrandExchangeBuyOfferSetupStage } from './grand-exchange-buy-offer-stage.js';
 import { prepareGrandExchangeSellOfferSetupStage } from './grand-exchange-sell-offer-stage.js';
+import { prepareGrandExchangeItemSearchStage } from './grand-exchange-item-search-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
 import { prepareGrandExchangeClientStateStage } from './grand-exchange-client-state-stage.js';
 import { prepareGrandExchangeInterfaceCacheAdapter } from './grand-exchange-interface-cache-adapter.js';
@@ -58,7 +59,8 @@ function assertNativeR254ItemDefinitionBoundary() {
 }
 
 function invalidateGrandExchangeServerConfigOutputs() {
-    // Group 109 extends inv.pack with six option-2-only collection containers.
+    // Group 109 extends inv.pack with six option-2-only collection containers,
+    // and item search adds two more temp containers for result/selection state.
     // Some installed engine packer revisions decide whether to rebuild inv.dat
     // from source mtimes alone, while the staged .inv files can retain their
     // checkout timestamps. That can leave the newly extended staged inv.pack
@@ -89,6 +91,7 @@ export async function prepareGrandExchangeStage() {
         await prepareGrandExchangeGroup643Stage(stagedContentDir);
         prepareGrandExchangeBuyOfferSetupStage(stagedContentDir);
         prepareGrandExchangeSellOfferSetupStage(stagedContentDir);
+        prepareGrandExchangeItemSearchStage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
         prepareGrandExchangeClientStateStage(stagedContentDir);
         prepareGrandExchangeInterfaceCacheAdapter(stagedContentDir);
