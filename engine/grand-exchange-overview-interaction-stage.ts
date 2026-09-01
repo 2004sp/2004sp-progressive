@@ -99,12 +99,13 @@ function patchActionHitbox(
     // its children and skips the normal button branch for the layer itself.
     // Replace the empty source hitbox layer with an invisible text component so
     // buttontype=normal reaches the client's button packet path while keeping
-    // the full frozen 51x46 clickable area.
+    // the full frozen 51x46 clickable area. Text widgets require a colour field
+    // in this IF1 compiler even when their text is empty.
     const patchedBlock = block
         .replace('type=layer', 'type=text')
         .replace(`x=${expectedX}`, `x=${correctedX}`)
         .replace('scroll=46\n', '')
-        .replace(`option=${option}`, `option=${option}\nfont=p11\ntext=`);
+        .replace(`option=${option}`, `option=${option}\nfont=p11\ntext=\ncolour=0x000000`);
 
     return source.slice(0, start) + patchedBlock + source.slice(end);
 }
