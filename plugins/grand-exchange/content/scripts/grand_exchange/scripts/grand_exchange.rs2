@@ -6,3 +6,22 @@ if (map_feature("grandexchange") = false) {
     return;
 }
 if_openmain(grand_exchange_overview);
+
+// r481 group 105 owns several mutually exclusive layers. IF1 has no onload CS2
+// to establish them, so initialise the overview state explicitly on open.
+if_sethide(grand_exchange_overview:com_19, false);
+if_sethide(grand_exchange_overview:com_35, false);
+if_sethide(grand_exchange_overview:com_51, false);
+if_sethide(grand_exchange_overview:com_70, false);
+if_sethide(grand_exchange_overview:com_89, false);
+if_sethide(grand_exchange_overview:com_108, false);
+
+if_sethide(grand_exchange_overview:com_66, true);
+if_sethide(grand_exchange_overview:com_85, true);
+if_sethide(grand_exchange_overview:com_104, true);
+if_sethide(grand_exchange_overview:com_123, true);
+if_sethide(grand_exchange_overview:com_126, true);
+if_sethide(grand_exchange_overview:com_156, true);
+if_sethide(grand_exchange_overview:com_192, true);
+if_sethide(grand_exchange_overview:com_197, true);
+if_sethide(grand_exchange_overview:com_200, true);
