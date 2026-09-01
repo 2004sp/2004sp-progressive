@@ -10,6 +10,15 @@ const BUY_ICON_GRAPHIC = 'r481_ge_sprite_1170,0';
 const SELL_ICON_GRAPHIC = 'r481_ge_sprite_1168,0';
 const BACK_COMPONENT = 127;
 
+const BUTTON_FRAME_GROUPS = [
+    [20, 21, 22, 23, 24, 25, 26, 27],
+    [36, 37, 38, 39, 40, 41, 42, 43],
+    [52, 53, 54, 55, 56, 57, 58, 59],
+    [71, 72, 73, 74, 75, 76, 77, 78],
+    [90, 91, 92, 93, 94, 95, 96, 97],
+    [109, 110, 111, 112, 113, 114, 115, 116],
+] as const;
+
 function getComponentBlock(source: string, componentId: number) {
     const marker = `[com_${componentId}]`;
     const start = source.indexOf(marker);
@@ -22,16 +31,16 @@ function getComponentBlock(source: string, componentId: number) {
     return { marker, start, end, block: source.slice(start, end) };
 }
 
-function patchIconX(
+function patchComponentX(
     source: string,
     componentId: number,
     expectedX: number,
     correctedX: number,
-    expectedGraphic: string
+    expectedType: string
 ) {
     const { marker, start, end, block } = getComponentBlock(source, componentId);
-    if (!block.includes('type=graphic') || !block.includes(`graphic=${expectedGraphic}`)) {
-        throw new Error(`Grand Exchange overview interaction ${marker} no longer matches the expected offer icon`);
+    if (!block.includes(`type=${expectedType}`)) {
+        throw new Error(`Grand Exchange overview interaction ${marker} no longer has type=${expectedType}`);
     }
 
     const expected = `x=${expectedX}`;
@@ -47,18 +56,60 @@ function patchIconX(
     return source.slice(0, start) + patchedBlock + source.slice(end);
 }
 
-function requireButtonAction(source: string, componentId: number, option: 'Buy' | 'Sell') {
+function patchIconX(
+    source: string,
+    componentId: number,
+    expectedX: number,
+    correctedX: number,
+    expectedGraphic: string
+) {
     const { marker, block } = getComponentBlock(source, componentId);
-    if (
-        !block.includes('type=layer') ||
-        !block.includes('buttontype=normal') ||
-        !block.includes(`option=${option}`)
-    ) {
-        throw new Error(`Grand Exchange overview interaction ${marker} is not wired as an IF1 ${option} action`);
+    if (!block.includes(`graphic=${expectedGraphic}`)) {
+        throw new Error(`Grand Exchange overview interaction ${marker} no longer matches the expected offer icon`);
     }
+    return patchComponentX(source, componentId, expectedX, correctedX, 'graphic');
 }
 
-function patchOfferIconAlignment(stagedContentDir: string) {
+function patchActionHitbox(
+    source: string,
+    componentId: number,
+    option: 'Buy' | 'Sell',
+    expectedX: number,
+    correctedX: number
+) {
+    const { marker, start, end, block } = getComponentBlock(source, componentId);
+    const required = [
+        'type=layer',
+        `x=${expectedX}`,
+        'y=43',
+        'width=51',
+        'height=46',
+        'scroll=46',
+        'buttontype=normal',
+        `option=${option}`,
+    ];
+
+    for (const token of required) {
+        if (!block.includes(token)) {
+            throw new Error(`Grand Exchange overview interaction ${marker} is missing ${token}`);
+        }
+    }
+
+    // r254 treats IF1 type=layer as a container: input handling recurses into
+    // its children and skips the normal button branch for the layer itself.
+    // Replace the empty source hitbox layer with an invisible text component so
+    // buttontype=normal reaches the client's button packet path while keeping
+    // the full frozen 51x46 clickable area.
+    const patchedBlock = block
+        .replace('type=layer', 'type=text')
+        .replace(`x=${expectedX}`, `x=${correctedX}`)
+        .replace('scroll=46\n', '')
+        .replace(`option=${option}`, `option=${option}\nfont=p11\ntext=`);
+
+    return source.slice(0, start) + patchedBlock + source.slice(end);
+}
+
+function patchOfferControls(stagedContentDir: string) {
     const interfacePath = path.join(
         stagedContentDir,
         'scripts',
@@ -72,22 +123,34 @@ function patchOfferIconAlignment(stagedContentDir: string) {
 
     let source = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
 
-    for (const componentId of BUY_ACTION_COMPONENTS) {
-        requireButtonAction(source, componentId, 'Buy');
-    }
-    for (const componentId of SELL_ACTION_COMPONENTS) {
-        requireButtonAction(source, componentId, 'Sell');
+    // The two 51px offer buttons occupy x=12..125 in a 140px slot, leaving the
+    // pair one pixel left of true centre. Shift the complete button chrome,
+    // icons and click targets together by one pixel so both outer margins are 13.
+    for (const group of BUTTON_FRAME_GROUPS) {
+        const [buyTop, buyBottom, buyLeft, buyRight, sellTop, sellBottom, sellLeft, sellRight] = group;
+        for (const componentId of [buyTop, buyBottom, buyLeft] as const) {
+            source = patchComponentX(source, componentId, 12, 13, 'graphic');
+        }
+        source = patchComponentX(source, buyRight, 61, 62, 'graphic');
+
+        for (const componentId of [sellTop, sellBottom, sellLeft] as const) {
+            source = patchComponentX(source, componentId, 75, 76, 'graphic');
+        }
+        source = patchComponentX(source, sellRight, 124, 125, 'graphic');
     }
 
-    // The raw r481 crate art is 26px wide inside a 35px IF3 component canvas.
-    // The option-2 stage pads that media for IF1, but the older renderer still
-    // reads the visible artwork slightly left-heavy. Apply a one-pixel optical
-    // correction to both icons while leaving the 51x46 click hitboxes unchanged.
     for (const componentId of BUY_ICON_COMPONENTS) {
         source = patchIconX(source, componentId, 20, 21, BUY_ICON_GRAPHIC);
     }
     for (const componentId of SELL_ICON_COMPONENTS) {
         source = patchIconX(source, componentId, 83, 84, SELL_ICON_GRAPHIC);
+    }
+
+    for (const componentId of BUY_ACTION_COMPONENTS) {
+        source = patchActionHitbox(source, componentId, 'Buy', 12, 13);
+    }
+    for (const componentId of SELL_ACTION_COMPONENTS) {
+        source = patchActionHitbox(source, componentId, 'Sell', 75, 76);
     }
 
     fs.writeFileSync(interfacePath, source, 'utf8');
@@ -157,6 +220,6 @@ function injectOverviewInteractionMappings(stagedContentDir: string) {
 }
 
 export function prepareGrandExchangeOverviewInteractionStage(stagedContentDir: string) {
-    patchOfferIconAlignment(stagedContentDir);
+    patchOfferControls(stagedContentDir);
     injectOverviewInteractionMappings(stagedContentDir);
 }
