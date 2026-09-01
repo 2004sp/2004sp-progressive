@@ -30,7 +30,7 @@ Because a regular r254 IF1 interface needs an opening/root component while the r
 6. append the staged GE debug procedures (`ge`, `ge106`, `ge107`, `ge108`, `ge110`) to the script name map;
 7. temporarily add `sourcePaths` to the installed `@lostcityrs/runescript` wrapper so it compiles from `BUILD_SRC_DIR/scripts` instead of its native `../content/scripts` default;
 8. convert and copy the frozen PNGs into the staged native sprite source directory;
-9. apply the IF1-only buy-action compatibility shim to the six frozen group-105 buy hitboxes;
+9. apply the IF1-only buy/sell action compatibility shims to the twelve frozen group-105 offer hitboxes;
 10. build and start option 2 with `BUILD_SRC_DIR` pointing at the stage;
 11. restore the native pack and compiler wrapper after the option-2 server exits.
 
@@ -50,17 +50,19 @@ IF1 components then reference them in the native form, for example `graphic=r481
 
 One compatibility conversion is required: r254 PixPack treats RGB magenta (`#ff00ff`) as transparent and does not preserve PNG alpha. The committed r481 source PNGs are left untouched; only their temporary staged copies convert alpha below 128 to magenta and force the staged image alpha opaque before the native media packer sees them.
 
-## Overview and buy-offer setup
+## Overview and offer setup
 
 `content/scripts/grand_exchange/interfaces/grand_exchange_overview.if` uses staged r481 media for:
 
 - the group-105 close control (`831`);
-- the six buy action visuals (`1168`);
-- the six sell action visuals (`1170`).
+- the six buy action visuals (`1170`);
+- the six sell action visuals (`1168`).
 
-The frozen r481 buy hitboxes are source components `30`, `46`, `62`, `81`, `100` and `119`. r481 drove them with IF3 listeners/CS2; the option-2 compatibility stage adds only the equivalent IF1 `Buy` button metadata to those same components. Their server-side `[if_button]` handlers switch the overview root (`com_16`) to the group-105 buy setup root (`com_126`) and buy-search prompt (`com_192`). The source Back control (`com_127`) returns to the six-slot summary without resetting the individual slot sub-states.
+The frozen r481 buy hitboxes are source components `30`, `46`, `62`, `81`, `100` and `119`. The sell hitboxes are source components `31`, `47`, `63`, `82`, `101` and `120`. r481 drove both sets with IF3 listeners/CS2; the option-2 compatibility stage adds only the equivalent IF1 `Buy`/`Sell` button metadata to those same components without changing their source geometry.
 
-This completes the Phase 4 buy-offer setup transition only. Item search/selection, quantity controls, price controls and offer submission remain deliberately unwired, so no server-side GE transaction or player-wealth mutation is introduced by this slice.
+The server-side `[if_button]` handlers keep the setup state authoritative. **Buy** switches the overview root (`com_16`) to the group-105 setup root (`com_126`), keeps the frozen `Buy Offer` title, and shows the buy-search prompt (`com_192`). **Sell** switches to the same source setup root, changes the shared title (`com_133`) to `Sell Offer`, hides the buy-search prompt, and shows the frozen sell-inventory prompt (`com_197`). The source Back control (`com_127`) returns to the six-slot summary without resetting the individual slot sub-states. Opening Buy explicitly restores the `Buy Offer` title so alternating Sell → Back → Buy cannot leave stale sell text behind.
+
+This completes the Phase 4 buy- and sell-offer setup transitions only. Buy search/result selection, sell inventory item selection, quantity controls, price controls and offer submission remain deliberately unwired, so no server-side GE transaction or player-wealth mutation is introduced by this slice.
 
 ## Group 107 helper/overlay
 
@@ -85,8 +87,9 @@ After copying this overlay onto the normal r254 base installation:
 - enable **Grand Exchange (option 2 only)** under launcher **Custom Content**;
 - start launcher option **2 — Custom Server + Hiscores** and allow the normal local build/repack to complete;
 - log in and run `~ge`, then click **Buy** in any of the six empty offer slots;
-- confirm the overview changes to the r481 Buy Offer setup with the buy-search prompt, and that **Back** returns to the six-slot summary;
-- confirm quantity, price, item search and Confirm Offer controls do not yet create a transaction;
+- confirm the overview changes to the r481 **Buy Offer** setup with the buy-search prompt, and that **Back** returns to the six-slot summary;
+- click **Sell** in any empty offer slot and confirm the shared setup changes to **Sell Offer** with `Select an item in your inventory to sell.`, then use **Back** and verify a subsequent **Buy** restores the Buy Offer title/search prompt;
+- confirm quantity, price, item selection and Confirm Offer controls do not yet create a transaction;
 - run `~ge106`, `~ge107`, `~ge108` and `~ge110` as needed to verify the other staged interface slices;
 - stop option 2, then start options 1 and 3 and confirm the GE debug procedures/actions are absent and native cache/interface behaviour is unchanged.
 
