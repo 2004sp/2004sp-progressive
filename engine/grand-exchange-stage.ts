@@ -156,6 +156,171 @@ function readPack(file: string) {
     return { content, values };
 }
 
+function patchOverviewInterfaceForIf1() {
+    const interfacePath = path.join(STAGED_CONTENT_DIR, 'scripts', 'grand_exchange', 'interfaces', `${GE_INTERFACE_NAME}.if`);
+    let source = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
+
+    const replaceComponentField = (componentId: number, field: string, expected: string, replacement: string) => {
+        const marker = `[com_${componentId}]`;
+        const start = source.indexOf(marker);
+        if (start === -1) {
+            throw new Error(`Grand Exchange overview is missing ${marker}`);
+        }
+
+        const next = source.indexOf('\n[com_', start + marker.length);
+        const end = next === -1 ? source.length : next;
+        const block = source.slice(start, end);
+        const needle = `${field}=${expected}`;
+        if (!block.includes(needle)) {
+            throw new Error(`Grand Exchange overview ${marker} no longer contains ${needle}`);
+        }
+
+        source = source.slice(0, start) + block.replace(needle, `${field}=${replacement}`) + source.slice(end);
+    };
+
+    // IF1's b12 baseline sits slightly higher than the r481 IF3 font metrics.
+    // Lower the title row by two pixels so the title visually meets the chrome
+    // strip directly beneath it, matching the supplied r481 comparison image.
+    replaceComponentField(14, 'y', '30', '32');
+    replaceComponentField(15, 'y', '26', '28');
+
+    // Make each empty-offer slot read as a framed panel rather than a faint
+    // one-pixel outline. The light outer edge and dark inset reproduce the
+    // two-tone border visible in the reference without importing more assets.
+    for (const componentId of [214, 219, 224, 229, 234, 239]) {
+        replaceComponentField(componentId, 'colour', '0x5A5245', '0x817765');
+    }
+    for (const componentId of [215, 220, 225, 230, 235, 240]) {
+        replaceComponentField(componentId, 'colour', '0x5A5245', '0x817765');
+    }
+
+    if (source.includes('[com_244]')) {
+        throw new Error('Grand Exchange overview IF1 bevel helper IDs 244-255 are already in use');
+    }
+
+    const bevelHelpers = `
+// Additional IF1-only bevel helpers for the six empty-offer panels. The outer
+// highlight/divider above use the existing helpers; these add the dark inset
+// edge and divider shadow seen in the reference image.
+[com_244]
+layer=com_19
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_245]
+layer=com_35
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_246]
+layer=com_51
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_247]
+layer=com_70
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_248]
+layer=com_89
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_249]
+layer=com_108
+type=rect
+x=1
+y=1
+width=138
+height=108
+colour=0x3B352C
+
+[com_250]
+layer=com_19
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_251]
+layer=com_35
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_252]
+layer=com_51
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_253]
+layer=com_70
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_254]
+layer=com_89
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+
+[com_255]
+layer=com_108
+type=rect
+x=1
+y=25
+width=138
+height=1
+fill=yes
+colour=0x3B352C
+`;
+
+    source = source.trimEnd() + '\n' + bevelHelpers;
+    fs.writeFileSync(interfacePath, source, 'utf8');
+}
+
 function injectInterfaceMappings() {
     const packPath = path.join(STAGED_CONTENT_DIR, 'pack', 'interface.pack');
     const orderPath = path.join(STAGED_CONTENT_DIR, 'pack', 'interface.order');
@@ -395,6 +560,7 @@ export async function prepareGrandExchangeStage() {
             preserveTimestamps: true,
         });
 
+        patchOverviewInterfaceForIf1();
         injectInterfaceMappings();
         injectScriptMapping();
         pointRuneScriptCompilerAtStage();
