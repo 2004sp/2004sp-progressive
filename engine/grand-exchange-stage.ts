@@ -4,6 +4,7 @@ import { prepareGrandExchangeGroup107Stage } from './grand-exchange-group107-sta
 import { prepareGrandExchangeGroup108Stage } from './grand-exchange-group108-stage.js';
 import { prepareGrandExchangeGroup109Stage } from './grand-exchange-group109-stage.js';
 import { prepareGrandExchangeGroup110Stage } from './grand-exchange-group110-stage.js';
+import { prepareGrandExchangeGroup643Stage } from './grand-exchange-group643-stage.js';
 
 export { restoreGrandExchangeStage };
 
@@ -16,6 +17,7 @@ export async function prepareGrandExchangeStage() {
         await prepareGrandExchangeGroup108Stage(stagedContentDir);
         await prepareGrandExchangeGroup109Stage(stagedContentDir);
         await prepareGrandExchangeGroup110Stage(stagedContentDir);
+        await prepareGrandExchangeGroup643Stage(stagedContentDir);
         return stagedContentDir;
     } catch (error) {
         restoreGrandExchangeStage();

@@ -1,0 +1,395 @@
+{
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "interface": {
+    "source_group_id": 643,
+    "synthetic_if1_root_local_id": 8996,
+    "source_component_block_base": 10536,
+    "component_formula": "local = 10536 + source_component_id",
+    "source_component_count": 51,
+    "source_component_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50
+    ],
+    "if1_helper_component_ids": [
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65
+    ],
+    "reserved_component_block_end": 10791,
+    "canvas": {
+      "width": 512,
+      "height": 334
+    },
+    "source_component_types": {
+      "3": 1,
+      "5": 24,
+      "6": 1,
+      "4": 25
+    },
+    "source_sprite_ids": [
+      297,
+      820,
+      821,
+      822,
+      823,
+      824,
+      825,
+      826,
+      827,
+      828,
+      829,
+      830,
+      831,
+      851,
+      852,
+      1074,
+      1164
+    ],
+    "source_font_ids": [
+      494,
+      496
+    ],
+    "source_model_ids": [],
+    "source_zero_model_host_component_id": 14,
+    "source_row_components": [
+      {
+        "row": 0,
+        "offer_type_component_id": 25,
+        "quantity_component_id": 30,
+        "item_name_component_id": 35,
+        "price_component_id": 40,
+        "separator_component_id": 45
+      },
+      {
+        "row": 1,
+        "offer_type_component_id": 26,
+        "quantity_component_id": 31,
+        "item_name_component_id": 36,
+        "price_component_id": 41,
+        "separator_component_id": 46
+      },
+      {
+        "row": 2,
+        "offer_type_component_id": 27,
+        "quantity_component_id": 32,
+        "item_name_component_id": 37,
+        "price_component_id": 42,
+        "separator_component_id": 47
+      },
+      {
+        "row": 3,
+        "offer_type_component_id": 28,
+        "quantity_component_id": 33,
+        "item_name_component_id": 38,
+        "price_component_id": 43,
+        "separator_component_id": 48
+      },
+      {
+        "row": 4,
+        "offer_type_component_id": 29,
+        "quantity_component_id": 34,
+        "item_name_component_id": 39,
+        "price_component_id": 44,
+        "separator_component_id": 49
+      }
+    ],
+    "source_default_text": {
+      "title": "Item Back History",
+      "headers": [
+        "Offer type",
+        "Item name",
+        "Quantity",
+        "Price"
+      ],
+      "offer_type": "xxxxxxxxxxxxx",
+      "quantity": "2,000,000,000",
+      "item_name": "name name name name name",
+      "price": "2,000,000,000 gp"
+    },
+    "font_compatibility": [
+      {
+        "source_font_id": 494,
+        "candidate_native_font": "p11",
+        "status": "reused-as-established-by-group105"
+      },
+      {
+        "source_font_id": 496,
+        "candidate_native_font": "b12",
+        "status": "reused-as-established-by-group105"
+      }
+    ],
+    "listener_fallbacks": [
+      {
+        "source_component_id": 7,
+        "if1": "buttontype=close + activegraphic",
+        "source_hover_sprite_id": 832,
+        "fallback_sprite_id": 831,
+        "status": "preserved-with-frozen-reference-boundary"
+      }
+    ],
+    "scrolling": {
+      "source_scrollable_component_ids": [],
+      "status": "not-present-in-frozen-group-643",
+      "note": "The 51 source components contain no IF3 layer/container component, so the r481 history view is a fixed five-row page rather than a scrollable list."
+    },
+    "dynamic_history_compatibility": {
+      "source_component_id": 14,
+      "source_role": "zero-sized runtime model host",
+      "if1_helper_item_model_component_ids": [
+        51,
+        52,
+        53,
+        54,
+        55
+      ],
+      "if1_helper_status_component_ids": [
+        56,
+        57,
+        58,
+        59,
+        60
+      ],
+      "if1_helper_timestamp_component_ids": [
+        61,
+        62,
+        63,
+        64,
+        65
+      ],
+      "item_source_boundary": "native-r254-only",
+      "status": "renderable-shell-with-server-population-contract"
+    },
+    "derived_media_note": "Source components 0-50 retain the frozen r481 geometry. IF1-only helpers 51-65 stay inside group 643's reserved block and expose native-r254 item model, status and timestamp targets for later server-side GE history population."
+  },
+  "history_contract": {
+    "typescript_module": "engine/grand-exchange-history-contract.ts",
+    "row_count": 5,
+    "shell_default": "empty",
+    "placeholder_debug_trigger": "[debugproc,ge643test]",
+    "item_source": "native r254 obj IDs/names/models only"
+  },
+  "sprites": [
+    {
+      "source_id": 824,
+      "file": "assets/sprites/824.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "3d9b21dc3f7ef52e4231ba00e0f45f54a4f4467a1924b102b57ad731651ed11b"
+    },
+    {
+      "source_id": 825,
+      "file": "assets/sprites/825.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "6a4e443a8c8a3bee527e57e657b5f522cf5d8aaf0f5ff34a36ce77399ad5d463"
+    },
+    {
+      "source_id": 826,
+      "file": "assets/sprites/826.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "3d0f99df4568f187586caa20aada734a46c8b5c3c8e79b8cb814bb02e0924c45"
+    },
+    {
+      "source_id": 827,
+      "file": "assets/sprites/827.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "143f10ebadf89912d4492efe7466f33b424a1a8301459accbd7ee19b69d8ffcb"
+    },
+    {
+      "source_id": 2643002,
+      "file": "assets/derived/group643/com_2.png",
+      "width": 32,
+      "height": 241,
+      "sha256": "c6de64838f196e2c1a0bab49124b30e0656411543b0f817d9d8df4cebc53f6d5",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 821,
+      "source_tiling": true,
+      "source_component_id": 2
+    },
+    {
+      "source_id": 2643004,
+      "file": "assets/derived/group643/com_4.png",
+      "width": 32,
+      "height": 243,
+      "sha256": "8c2e276709564cd2f8915c2f6f26398c93a147e9a0fbbd040319b6f44d9670bc",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 823,
+      "source_tiling": true,
+      "source_component_id": 4
+    },
+    {
+      "source_id": 2643005,
+      "file": "assets/derived/group643/com_5.png",
+      "width": 424,
+      "height": 34,
+      "sha256": "ab178a2d87c04c8646c132418c69dfcb1f0ac8477797b020f90938a365144b23",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 820,
+      "source_tiling": true,
+      "source_component_id": 5
+    },
+    {
+      "source_id": 2643006,
+      "file": "assets/derived/group643/com_6.png",
+      "width": 423,
+      "height": 32,
+      "sha256": "b3eae398c7593a17959dd7ab8a5e0a704af3ae07c74ed35757fcb3fcd24bdb0a",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 822,
+      "source_tiling": true,
+      "source_component_id": 6
+    },
+    {
+      "source_id": 2643011,
+      "file": "assets/derived/group643/com_11.png",
+      "width": 465,
+      "height": 32,
+      "sha256": "2cdd6fad134d3c2a25b08667f9196a56767e332e6d95d903c2abbbd8e360f64b",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 828,
+      "source_tiling": true,
+      "source_component_id": 11
+    },
+    {
+      "source_id": 2643012,
+      "file": "assets/derived/group643/com_12.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "54282100e609288fcf9863013c73013590bee65395f29e5dfdf39e5c63f9cc1a",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 829,
+      "source_tiling": false,
+      "source_component_id": 12
+    },
+    {
+      "source_id": 2643013,
+      "file": "assets/derived/group643/com_13.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "a3692f08924d8a70b5a771074cab19373f751391af162f92daac770f2a7356f5",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 830,
+      "source_tiling": false,
+      "source_component_id": 13
+    },
+    {
+      "source_id": 2643852,
+      "file": "assets/derived/group643/tiled_852_32x44.png",
+      "width": 32,
+      "height": 44,
+      "sha256": "905318467d7aa3c0efcb960698c080eae71d625623fb4831f26a44eb7e31c809",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 852,
+      "source_tiling": true
+    },
+    {
+      "source_id": 2644074,
+      "file": "assets/derived/group643/tiled_1074_474x32.png",
+      "width": 474,
+      "height": 32,
+      "sha256": "679bf87f7e754603c757aa98be60ad8228d488445363b06a1d824ff2365da878",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 643,
+      "derived_from_source_sprite": 1074,
+      "source_tiling": true
+    }
+  ],
+  "reused_staged_media": [
+    {
+      "name": "r481_ge_component_1",
+      "width": 485,
+      "height": 300
+    },
+    {
+      "name": "r481_ge_sprite_831",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "r481_ge_sprite_200128",
+      "width": 474,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_211164",
+      "width": 25,
+      "height": 25
+    }
+  ]
+}
