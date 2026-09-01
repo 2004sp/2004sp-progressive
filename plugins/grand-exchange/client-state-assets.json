@@ -52,13 +52,13 @@
     },
     {
       "groups": [105],
-      "mechanism": "native obj.pack-derived search catalogue plus temp inventories 164/165, inv_transmit and if_setobject",
+      "mechanism": "native obj.pack-derived search catalogue plus temp inventories 164/165, inv_transmit, runtime inv_moveitem and if_setobject",
       "local_script": "generated grand_exchange_item_search.rs2",
       "purpose": "buy-item search, scrollable result presentation and selected native-r254 item state"
     },
     {
       "groups": [105],
-      "mechanism": "ge_selected_item stack quantity plus IF1 quantity button triggers and p_countdialog numeric input",
+      "mechanism": "ge_selected_item slot-1 private coins-count token plus IF1 quantity button triggers and p_countdialog numeric input",
       "local_script": "generated grand_exchange_quantity.rs2",
       "purpose": "server-authoritative offer quantity decrement/increment, preset selection and numeric entry"
     },

@@ -2,7 +2,11 @@ import fs from 'fs';
 import path from 'path';
 
 const GE_INTERFACE_NAME = 'grand_exchange_overview';
+const SEARCH_RESULTS_INV = 'ge_search_results';
 const SELECTED_ITEM_INV = 'ge_selected_item';
+const SELECTED_ITEM_SLOT = 0;
+const QUANTITY_STATE_SLOT = 1;
+const QUANTITY_STATE_OBJECT = 'coins';
 const QUANTITY_TEXT_COMPONENT = 150;
 const DECREASE_COMPONENT = 157;
 const INCREASE_COMPONENT = 159;
@@ -119,25 +123,31 @@ function patchSelectedItemReset(stagedContentDir: string) {
     }
     const next = source.indexOf('\n[', start + selectionMarker.length);
     const end = next === -1 ? source.length : next;
-    const block = source.slice(start, end);
-    const reset = `if_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "1");`;
+    let block = source.slice(start, end);
 
-    if (!block.includes(reset)) {
-        const selectedItemWrite = `inv_setslot(${SELECTED_ITEM_INV}, 0, $item, 1);`;
-        if (!block.includes(selectedItemWrite)) {
-            throw new Error('Grand Exchange quantity state requires selected-item count 1 on item selection');
-        }
-        const patched = block.replace(selectedItemWrite, `${selectedItemWrite}\n${reset}`);
-        source = source.slice(0, start) + patched + source.slice(end);
+    const selectedItemMove = `inv_moveitem(${SEARCH_RESULTS_INV}, ${SELECTED_ITEM_INV}, $item, 1);`;
+    if (!block.includes(selectedItemMove)) {
+        throw new Error('Grand Exchange quantity state requires the selected runtime item to be moved into ge_selected_item');
     }
 
+    const quantityReset = `inv_setslot(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT}, ${QUANTITY_STATE_OBJECT}, 1);`;
+    if (!block.includes(quantityReset)) {
+        block = block.replace(selectedItemMove, `${selectedItemMove}\n${quantityReset}`);
+    }
+
+    const textReset = `if_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "1");`;
+    if (!block.includes(textReset)) {
+        block = block.replace(quantityReset, `${quantityReset}\n${textReset}`);
+    }
+
+    source = source.slice(0, start) + block + source.slice(end);
     fs.writeFileSync(scriptPath, source, 'utf8');
 }
 
 function buildQuantityScript() {
-    const presetHandlers = QUANTITY_PRESETS.map(preset => `[if_button,${GE_INTERFACE_NAME}:com_${preset.componentId}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, 0) <= 0) return;\n~ge_offer_quantity_set(${preset.quantity});\n`).join('\n');
+    const presetHandlers = QUANTITY_PRESETS.map(preset => `[if_button,${GE_INTERFACE_NAME}:com_${preset.componentId}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\n~ge_offer_quantity_set(${preset.quantity});\n`).join('\n');
 
-    return `// Option-2-only server-authoritative quantity state for group 105.\n// The selected native-r254 item stays in ge_selected_item; its stack count is\n// reused as the pending offer quantity until authoritative offer submission is\n// implemented. No player inventory or wealth is mutated by these controls.\n\n[proc,ge_offer_quantity_set](int $quantity)\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, 0) <= 0) return;\ndef_int $clamped = $quantity;\nif ($clamped < 1) {\n    $clamped = 1;\n}\ndef_obj $item = inv_getobj(${SELECTED_ITEM_INV}, 0);\ninv_setslot(${SELECTED_ITEM_INV}, 0, $item, $clamped);\nif_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, append_num("", $clamped));\n\n[if_button,${GE_INTERFACE_NAME}:com_${DECREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, 0);\nif ($quantity <= 1) return;\n~ge_offer_quantity_set(sub($quantity, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${INCREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, 0);\nif ($quantity <= 0 | $quantity >= ${MAX_QUANTITY}) return;\n~ge_offer_quantity_set(add($quantity, 1));\n\n${presetHandlers}\n[if_button,${GE_INTERFACE_NAME}:com_${EDIT_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, 0) <= 0) return;\np_countdialog;\ndef_int $quantity = last_int;\nif ($quantity <= 0) return;\n~ge_offer_quantity_set($quantity);\n`;
+    return `// Option-2-only server-authoritative quantity state for group 105.\n// ge_selected_item slot 0 stores the selected native-r254 item. Slot 1 uses a\n// private coins stack only as an integer quantity token; this temp inventory is\n// never transmitted as player wealth and no player inventory is mutated here.\n\n[proc,ge_offer_quantity_set](int $quantity)\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $clamped = $quantity;\nif ($clamped < 1) {\n    $clamped = 1;\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT}, ${QUANTITY_STATE_OBJECT}, $clamped);\nif_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, append_num("", $clamped));\n\n[if_button,${GE_INTERFACE_NAME}:com_${DECREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT});\nif ($quantity <= 1) return;\n~ge_offer_quantity_set(sub($quantity, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${INCREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT});\nif ($quantity <= 0 | $quantity >= ${MAX_QUANTITY}) return;\n~ge_offer_quantity_set(add($quantity, 1));\n\n${presetHandlers}\n[if_button,${GE_INTERFACE_NAME}:com_${EDIT_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\np_countdialog;\ndef_int $quantity = last_int;\nif ($quantity <= 0) return;\n~ge_offer_quantity_set($quantity);\n`;
 }
 
 function writeQuantityScript(stagedContentDir: string) {
