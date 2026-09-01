@@ -1,0 +1,51 @@
+{
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "interface": {
+    "source_group_id": 107,
+    "synthetic_if1_root_local_id": 8992,
+    "source_component_block_base": 9512,
+    "component_formula": "local = 9512 + source_component_id",
+    "source_component_count": 19,
+    "source_component_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+    "top_level_source_components": [0, 18],
+    "initial_hidden_components": [],
+    "direct_text": [],
+    "direct_sprite_ids": [],
+    "if1_compatibility": {
+      "layer_scroll": {
+        "0": 262,
+        "18": 250
+      },
+      "note": "r481 stores zero scroll extents for both root helper layers; IF1 requires an explicit vertical scroll extent, so each uses its source height. No other IF3 behaviour is shimmed."
+    }
+  },
+  "rectangles": {
+    "colour": "0x908335",
+    "components": {
+      "1": { "trans": 245 },
+      "2": { "trans": 245 },
+      "3": { "trans": 245 },
+      "4": { "trans": 245 },
+      "5": { "trans": 235 },
+      "6": { "trans": 235 },
+      "7": { "trans": 235 },
+      "8": { "trans": 225 },
+      "9": { "trans": 225 },
+      "10": { "trans": 225 },
+      "11": { "trans": 215 },
+      "12": { "trans": 215 },
+      "13": { "trans": 215 },
+      "14": { "trans": 205 },
+      "15": { "trans": 205 },
+      "16": { "trans": 205 },
+      "17": { "trans": 200 }
+    }
+  },
+  "sprites": []
+}
+
