@@ -77,6 +77,15 @@
     2810,
     29916
   ],
+  "interface_model_import_policy": {
+    "strategy": "source-reference-only-native-r254-item-rendering",
+    "source_only_model_ids": [
+      2810,
+      29916
+    ],
+    "import_model_ids": [],
+    "note": "Direct r481 interface model references are frozen for source documentation only. GE searchable/tradeable item slots must be populated from native r254 object definitions and their native models/icons; these r481 interface models are never import dependencies."
+  },
   "npc_ids": [
     6521,
     6528,
@@ -106,7 +115,6 @@
   ],
   "all_model_ids": [
     103,
-    2810,
     28758,
     28810,
     29874,
@@ -123,9 +131,9 @@
     29900,
     29903,
     29904,
-    29908,
-    29916
+    29908
   ],
+  "model_dependency_policy": "all_model_ids intentionally contains only NPC-specific model dependencies. r481 interface/item-display models are source metadata only and must not be imported for GE item search, offers, history, icons or models.",
   "sequence_ids": [
     808,
     7368
