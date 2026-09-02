@@ -66,7 +66,7 @@ function getComponentBlock(source: string, componentId: number) {
     return { marker, start, end, block: source.slice(start, end) };
 }
 
-function enableOverviewSearchAction(stagedContentDir: string) {
+function enableOverviewSearchButton(stagedContentDir: string) {
     const interfacePath = path.join(
         stagedContentDir,
         'scripts',
@@ -77,17 +77,38 @@ function enableOverviewSearchAction(stagedContentDir: string) {
     let source = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
     const { start, end, block } = getComponentBlock(source, 194);
 
-    for (const required of ['type=layer', 'x=102', 'y=94', 'width=40', 'height=36']) {
-        if (!block.includes(required)) {
-            throw new Error(`Grand Exchange buy-search action com_194 no longer contains ${required}`);
-        }
-    }
+    // com_137 remains the visible sprite-1140 glow because the webclient's
+    // yellow pulse is keyed to that component ID. A TYPE_LAYER component is
+    // treated as a container by the r254 client, so com_194 cannot stay a layer
+    // if it needs to emit an IF_BUTTON action. Stage it as an empty text control
+    // over the same 40x36 area: it draws nothing, remains clickable, and leaves
+    // the pulsing com_137 graphic visible underneath.
+    const alreadyPatched =
+        block.includes('buttontype=normal') &&
+        block.includes('option=Search') &&
+        block.includes('type=text') &&
+        block.includes('font=p11') &&
+        block.includes('text=') &&
+        block.includes('colour=0x000000') &&
+        block.includes('x=102') &&
+        block.includes('y=94') &&
+        block.includes('width=40') &&
+        block.includes('height=36');
 
-    if (!block.includes('buttontype=')) {
-        const patched = block.trimEnd() + '\nbuttontype=normal\noption=Search\n';
+    if (!alreadyPatched) {
+        for (const required of ['type=layer', 'x=102', 'y=94', 'width=40', 'height=36', 'scroll=36']) {
+            if (!block.includes(required)) {
+                throw new Error(`Grand Exchange buy-search action com_194 no longer contains ${required}`);
+            }
+        }
+        if (block.includes('buttontype=')) {
+            throw new Error('Grand Exchange buy-search action com_194 already has incompatible IF1 action metadata');
+        }
+
+        const patched = block
+            .replace('type=layer', 'buttontype=normal\noption=Search\ntype=text')
+            .replace('scroll=36', 'font=p11\ntext=\ncolour=0x000000');
         source = source.slice(0, start) + patched + source.slice(end);
-    } else if (!block.includes('buttontype=normal') || !block.includes('option=Search')) {
-        throw new Error('Grand Exchange buy-search action com_194 already has incompatible IF1 action metadata');
     }
 
     fs.writeFileSync(interfacePath, source, 'utf8');
@@ -119,6 +140,16 @@ function patchOverviewBuySetupReset(stagedContentDir: string) {
         source = source.slice(0, start) + patched + source.slice(end);
     }
 
+    // Empty Buy slots now stop at the Buy Offer setup. The user-facing
+    // name-dialog/chatbox search is launched explicitly by clicking the pulsing
+    // sprite-1140 control; com_194 is its visually empty IF1 Search button.
+    for (const componentId of [30, 46, 62, 81, 100, 119]) {
+        const trigger = `[if_button,grand_exchange_overview:com_${componentId}]\n~ge_open_buy_offer_setup;`;
+        if (!source.includes(trigger)) {
+            throw new Error(`Grand Exchange Buy button com_${componentId} no longer opens the Buy Offer setup`);
+        }
+    }
+
     fs.writeFileSync(scriptPath, source, 'utf8');
 }
 
@@ -148,12 +179,65 @@ function writeSearchInventoryConfig(stagedContentDir: string) {
     );
 }
 
+function walkNativeObjectSources(directory: string, output: string[]) {
+    if (!fs.existsSync(directory)) return;
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const fullPath = path.join(directory, entry.name);
+        if (entry.isDirectory()) {
+            walkNativeObjectSources(fullPath, output);
+        } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.obj')) {
+            output.push(fullPath);
+        }
+    }
+}
+
+function collectExplicitlyUntradeableSymbols(stagedContentDir: string) {
+    const symbols = new Set<string>();
+    const files: string[] = [];
+    walkNativeObjectSources(path.join(stagedContentDir, 'scripts'), files);
+
+    for (const file of files) {
+        const source = fs.readFileSync(file, 'utf8').replace(/\r/g, '');
+        let current: string | null = null;
+        let untradeable = false;
+
+        const finish = () => {
+            if (current && untradeable) symbols.add(current);
+        };
+
+        for (const rawLine of source.split('\n')) {
+            const line = rawLine.trim();
+            const section = line.match(/^\[([^\]]+)\]$/);
+            if (section) {
+                finish();
+                current = section[1].trim();
+                untradeable = false;
+                continue;
+            }
+            if (current && /^tradeable\s*=\s*no$/i.test(line)) {
+                untradeable = true;
+            }
+            if (current && /^dummyitem\s*=\s*(?!0\s*$|none\s*$).+/i.test(line)) {
+                untradeable = true;
+            }
+        }
+        finish();
+    }
+
+    return symbols;
+}
+
 function readNativeObjectSymbols(stagedContentDir: string) {
+    const explicitlyUntradeable = collectExplicitlyUntradeableSymbols(stagedContentDir);
     const { values } = readPack(path.join(stagedContentDir, 'pack', 'obj.pack'));
     const symbols = [...values.entries()]
         .sort(([a], [b]) => a - b)
         .map(([, symbol]) => symbol)
-        .filter(symbol => symbol.length > 0);
+        .filter(symbol =>
+            symbol.length > 0 &&
+            !symbol.toLowerCase().startsWith('cert_') &&
+            !explicitlyUntradeable.has(symbol)
+        );
 
     for (const symbol of symbols) {
         // @lostcityrs/runescript 0.9.6 lexes identifiers as [a-zA-Z0-9_+.:]+.
@@ -183,7 +267,7 @@ function buildCatalogueScripts(symbols: string[]) {
     }
 
     const chunkScripts = chunks.map((chunk, chunkIndex) => {
-        const checks = chunk.map(symbol => `if ($count < ${SEARCH_RESULT_CAP}) {\n    if (oc_tradeable(${symbol}) = true) {\n        if (oc_uncert(${symbol}) = ${symbol}) {\n            if (string_indexof_string($needle, lowercase(oc_name(${symbol}))) ! -1) {\n                ~ge_item_search_store_result($count, ${symbol});\n                $count = add($count, 1);\n            }\n        }\n    }\n}`).join('\n');
+        const checks = chunk.map(symbol => `if ($count < ${SEARCH_RESULT_CAP}) {\n    if (oc_uncert(${symbol}) = ${symbol}) {\n        if (string_indexof_string($needle, lowercase(oc_name(${symbol}))) ! -1) {\n            ~ge_item_search_store_result($count, ${symbol});\n            $count = add($count, 1);\n        }\n    }\n}`).join('\n');
         return `[proc,ge_item_search_catalogue_${chunkIndex}](string $needle, int $count)(int)\n${checks}\nreturn ($count);\n`;
     });
 
@@ -199,7 +283,7 @@ function buildSearchScript(symbols: string[]) {
     ).join('\n');
     const { chunks, source: catalogueSource } = buildCatalogueScripts(symbols);
 
-    const source = `// Option-2-only native r254 item search. The catalogue procs at the end of\n// this generated source are emitted from the staged native obj.pack. Runtime\n// filtering and presentation use only native oc_* definitions and inv rendering.\n\n${buildStoreResultProc()}\n\n[proc,ge_item_search_run](string $query)\ndef_string $needle = lowercase($query);\ninv_clear(${SEARCH_RESULTS_INV_NAME});\n${clearNames}\nif_settext(${SEARCH_INTERFACE_NAME}:com_2, append("Search: ", $query));\nif_settext(${SEARCH_INTERFACE_NAME}:com_3, "Searching...");\nif_setscrollpos(${SEARCH_INTERFACE_NAME}:com_${SEARCH_SCROLL_COMPONENT}, 0);\ndef_int $count = ~ge_item_search_catalogue($needle);\nif ($count = 0) {\n    if_settext(${SEARCH_INTERFACE_NAME}:com_3, "No matching tradeable items.");\n} else if ($count >= ${SEARCH_RESULT_CAP}) {\n    if_settext(${SEARCH_INTERFACE_NAME}:com_3, "Showing the first ${SEARCH_RESULT_CAP} matching tradeable items.");\n} else {\n    if_settext(${SEARCH_INTERFACE_NAME}:com_3, append_num("Results: ", $count));\n}\ninv_transmit(${SEARCH_RESULTS_INV_NAME}, ${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT});\n\n[proc,ge_item_search_apply_selection](obj $item)\ninv_clear(${SEARCH_SELECTED_INV_NAME});\ninv_setslot(${SEARCH_SELECTED_INV_NAME}, 0, $item, 1);\nif_openmain(grand_exchange_overview);\nif_settext(grand_exchange_overview:com_133, "Buy Offer");\nif_sethide(grand_exchange_overview:com_16, true);\nif_sethide(grand_exchange_overview:com_126, false);\nif_sethide(grand_exchange_overview:com_156, false);\nif_sethide(grand_exchange_overview:com_192, true);\nif_sethide(grand_exchange_overview:com_197, true);\nif_sethide(grand_exchange_overview:com_200, true);\nif_setobject(grand_exchange_overview:com_138, $item, 250);\nif_settext(grand_exchange_overview:com_140, oc_name($item));\nif_settext(grand_exchange_overview:com_141, oc_name($item));\nif_settext(grand_exchange_overview:com_142, oc_desc($item));\nif_settext(grand_exchange_overview:com_145, "");\n\n[if_button,grand_exchange_overview:com_194]\nif (map_feature("grandexchange") = false) return;\ninv_clear(${SEARCH_RESULTS_INV_NAME});\ninv_clear(${SEARCH_SELECTED_INV_NAME});\np_namedialog;\ndef_string $query = last_string;\nif (string_length($query) < 1) return;\nif_openmain(${SEARCH_INTERFACE_NAME});\n~ge_item_search_run($query);\n\n[if_button,${SEARCH_INTERFACE_NAME}:com_${SEARCH_AGAIN_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\np_namedialog;\ndef_string $query = last_string;\nif (string_length($query) < 1) return;\n~ge_item_search_run($query);\n\n[if_button,${SEARCH_INTERFACE_NAME}:com_${SEARCH_BACK_COMPONENT}]\ninv_stoptransmit(${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT});\nif_openmain(grand_exchange_overview);\n~ge_open_buy_offer_setup;\n\n[inv_button1,${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT}]\ndef_int $slot = last_slot;\nif ($slot < 0 | $slot >= ${SEARCH_RESULT_CAP}) return;\nif (inv_getnum(${SEARCH_RESULTS_INV_NAME}, $slot) <= 0) return;\ndef_obj $item = inv_getobj(${SEARCH_RESULTS_INV_NAME}, $slot);\nif (oc_tradeable($item) = false) return;\nif (oc_uncert($item) ! $item) return;\ninv_stoptransmit(${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT});\n~ge_item_search_apply_selection($item);\n\n[if_close,${SEARCH_INTERFACE_NAME}]\ninv_stoptransmit(${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT});\n\n${catalogueSource}\n`;
+    const source = `// Option-2-only native r254 item search. The catalogue procs at the end of\n// this generated source are emitted from the staged native obj.pack. Runtime\n// filtering and presentation use only native oc_* definitions and inv rendering.\n\n${buildStoreResultProc()}\n\n[proc,ge_item_search_run](string $query)\ndef_string $needle = lowercase($query);\ninv_clear(${SEARCH_RESULTS_INV_NAME});\n${clearNames}\nif_settext(${SEARCH_INTERFACE_NAME}:com_2, append("Search: ", $query));\nif_settext(${SEARCH_INTERFACE_NAME}:com_3, "Searching...");\nif_setscrollpos(${SEARCH_INTERFACE_NAME}:com_${SEARCH_SCROLL_COMPONENT}, 0);\ndef_int $count = ~ge_item_search_catalogue($needle);\nif ($count = 0) {\n    if_settext(${SEARCH_INTERFACE_NAME}:com_3, "No matching tradeable items.");\n} else if ($count >= ${SEARCH_RESULT_CAP}) {\n    if_settext(${SEARCH_INTERFACE_NAME}:com_3, "Showing the first ${SEARCH_RESULT_CAP} matching tradeable items.");\n} else {\n    if_settext(${SEARCH_INTERFACE_NAME}:com_3, append_num("Results: ", $count));\n}\ninv_transmit(${SEARCH_RESULTS_INV_NAME}, ${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT});\n\n[proc,ge_item_search_apply_selection](obj $item)\ninv_clear(${SEARCH_SELECTED_INV_NAME});\ninv_setslot(${SEARCH_SELECTED_INV_NAME}, 0, $item, 1);\nif_openmain(grand_exchange_overview);\nif_settext(grand_exchange_overview:com_133, "Buy Offer");\nif_sethide(grand_exchange_overview:com_16, true);\nif_sethide(grand_exchange_overview:com_126, false);\nif_sethide(grand_exchange_overview:com_156, false);\nif_sethide(grand_exchange_overview:com_192, true);\nif_sethide(grand_exchange_overview:com_197, true);\nif_sethide(grand_exchange_overview:com_200, true);\nif_setobject(grand_exchange_overview:com_138, $item, 600);\nif_settext(grand_exchange_overview:com_140, oc_name($item));\nif_settext(grand_exchange_overview:com_141, oc_name($item));\nif_settext(grand_exchange_overview:com_142, oc_desc($item));\nif_settext(grand_exchange_overview:com_145, "");\n\n[if_button,grand_exchange_overview:com_194]\nif (map_feature("grandexchange") = false) return;\ninv_clear(${SEARCH_RESULTS_INV_NAME});\ninv_clear(${SEARCH_SELECTED_INV_NAME});\np_namedialog;\ndef_string $query = last_string;\nif (string_length($query) < 1) return;\n~ge_item_search_run($query);\nif (inv_getnum(${SEARCH_RESULTS_INV_NAME}, 0) <= 0) return;\ndef_obj $item = inv_getobj(${SEARCH_RESULTS_INV_NAME}, 0);\nif (oc_uncert($item) ! $item) return;\n~ge_item_search_apply_selection($item);\n\n[if_button,${SEARCH_INTERFACE_NAME}:com_${SEARCH_AGAIN_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\np_namedialog;\ndef_string $query = last_string;\nif (string_length($query) < 1) return;\n~ge_item_search_run($query);\n\n[if_button,${SEARCH_INTERFACE_NAME}:com_${SEARCH_BACK_COMPONENT}]\ninv_stoptransmit(${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT});\nif_openmain(grand_exchange_overview);\n~ge_open_buy_offer_setup;\n\n[inv_button1,${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT}]\ndef_int $slot = last_slot;\nif ($slot < 0 | $slot >= ${SEARCH_RESULT_CAP}) return;\nif (inv_getnum(${SEARCH_RESULTS_INV_NAME}, $slot) <= 0) return;\ndef_obj $item = inv_getobj(${SEARCH_RESULTS_INV_NAME}, $slot);\nif (oc_uncert($item) ! $item) return;\ninv_stoptransmit(${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT});\n~ge_item_search_apply_selection($item);\n\n[if_close,${SEARCH_INTERFACE_NAME}]\ninv_stoptransmit(${SEARCH_INTERFACE_NAME}:com_${SEARCH_RESULT_INV_COMPONENT});\n\n${catalogueSource}\n`;
 
     const triggerNames = [
         '[proc,ge_item_search_store_result]',
@@ -293,7 +377,7 @@ function injectSearchScriptMappings(stagedContentDir: string, triggerNames: stri
 }
 
 export function prepareGrandExchangeItemSearchStage(stagedContentDir: string) {
-    enableOverviewSearchAction(stagedContentDir);
+    enableOverviewSearchButton(stagedContentDir);
     writeSearchInventoryConfig(stagedContentDir);
     injectSearchInventoryMappings(stagedContentDir);
     patchOverviewBuySetupReset(stagedContentDir);

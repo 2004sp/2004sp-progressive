@@ -11,6 +11,10 @@ const SEARCH_BASE_COMPONENT = 136;
 const SEARCH_GLOW_COMPONENT = 137;
 const CONFIRM_BACKGROUND_COMPONENT = 190;
 const CONFIRM_TEXT_COMPONENT = 191;
+const CONFIRM_BUTTON_GRAPHIC = 'r481_ge_confirm_offer_button';
+const CONFIRM_BUTTON_HOVER_GRAPHIC = 'r481_ge_confirm_offer_button_hover';
+const CONFIRM_TEXT_Y = 285;
+const CONFIRM_TEXT_HEIGHT = 13;
 
 // r254 IF1 if_setposition values are offsets from the component's authored
 // coordinates, not absolute canvas positions. These offsets move the source
@@ -90,9 +94,14 @@ function patchOfferInterface(stagedContentDir: string) {
             }
         }
 
-        if (block.includes('type=rect')) {
-            if (!block.includes('fill=yes') || !block.includes('colour=0x332C24')) {
-                throw new Error('Grand Exchange Confirm Offer background already has incompatible IF1 rectangle metadata');
+        if (block.includes('type=graphic')) {
+            if (
+                !block.includes(`graphic=${CONFIRM_BUTTON_GRAPHIC},0`) ||
+                !block.includes(`activegraphic=${CONFIRM_BUTTON_HOVER_GRAPHIC},0`) ||
+                !block.includes('buttontype=normal') ||
+                !block.includes('option=Confirm Offer')
+            ) {
+                throw new Error('Grand Exchange Confirm Offer background already has incompatible IF1 graphic metadata');
             }
             return block;
         }
@@ -101,25 +110,22 @@ function patchOfferInterface(stagedContentDir: string) {
         }
 
         return block
-            .replace('type=layer', 'type=rect')
-            .replace('scroll=43', 'fill=yes\ncolour=0x332C24');
+            .replace('type=layer', 'buttontype=normal\noption=Confirm Offer\ntype=graphic')
+            .replace('scroll=43', `graphic=${CONFIRM_BUTTON_GRAPHIC},0\nactivegraphic=${CONFIRM_BUTTON_HOVER_GRAPHIC},0`);
     });
 
     source = replaceComponentBlock(source, CONFIRM_TEXT_COMPONENT, block => {
-        for (const required of ['type=text', 'x=200', 'y=270', 'width=120', 'height=43', 'text=Confirm Offer']) {
+        for (const required of ['type=text', 'x=200', 'y=270', 'width=120', 'height=43', 'center=yes', 'text=Confirm Offer']) {
             if (!block.includes(required)) {
                 throw new Error(`Grand Exchange Confirm Offer label no longer contains ${required}`);
             }
         }
 
-        if (block.includes('buttontype=')) {
-            if (!block.includes('buttontype=normal') || !block.includes('option=Confirm Offer')) {
-                throw new Error('Grand Exchange Confirm Offer label already has incompatible IF1 action metadata');
-            }
-            return block;
+        if (block.includes('buttontype=') || block.includes('option=Confirm Offer')) {
+            throw new Error('Grand Exchange Confirm Offer label must remain passive above the authentic action-button component');
         }
 
-        return block.replace('type=text', 'buttontype=normal\noption=Confirm Offer\ntype=text');
+        return block.replace('y=270', `y=${CONFIRM_TEXT_Y}`).replace('height=43', `height=${CONFIRM_TEXT_HEIGHT}`);
     });
 
     fs.writeFileSync(interfacePath, source, 'utf8');
@@ -199,7 +205,7 @@ function patchSelectedItemLayoutRestore(stagedContentDir: string) {
     ].join('\n');
 
     if (!block.includes(restorePositions)) {
-        const selectionObject = `if_setobject(${GE_INTERFACE_NAME}:com_138, $item, 250);`;
+        const selectionObject = `if_setobject(${GE_INTERFACE_NAME}:com_138, $item, 600);`;
         if (!block.includes(selectionObject)) {
             throw new Error('Grand Exchange selected-item presentation can no longer find the group-105 selected item model setter');
         }

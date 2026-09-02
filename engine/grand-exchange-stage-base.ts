@@ -57,6 +57,28 @@ const OVERVIEW_PADDED_SPRITES: Record<number, { width: number; height: number }>
     1170: { width: 35, height: 35 },
 };
 
+// Group 105 represents Confirm Offer as an action-only IF3 layer. The surface
+// is supplied by the r481 client from sprite 1013 (normal) and 1014 (hover),
+// whose 150x43 cache canvases are scaled to the component's 120x43 bounds.
+// Materialise both scaled states because r254 IF1 draws sprites at their natural
+// dimensions rather than scaling them to the authored component rectangle.
+const CONFIRM_OFFER_BUTTONS = [
+    {
+        name: 'r481_ge_confirm_offer_button',
+        sourceId: 1013,
+        sha256: '5ebfafff6f4baa14ea9bb7ef644c135bd960f2154c458a17bd6b48df9ddab3c2',
+    },
+    {
+        name: 'r481_ge_confirm_offer_button_hover',
+        sourceId: 1014,
+        sha256: 'f449a638d76c4fab50c5610ab2a37fb0b773ee41c61cbc279626d6d8d0955de4',
+    },
+] as const;
+const CONFIRM_OFFER_BUTTON_SIZE = {
+    width: 120,
+    height: 43,
+} as const;
+
 // Only outputs/runtime sources touched by adding .if/.rs2/sprite sources need
 // to be restored. The whole server pack is backed up because the RuneScript
 // compiler owns its exact output set and can change more than script.dat.
@@ -611,6 +633,57 @@ async function stageSprites() {
         }
 
         await image.write(path.join(spriteDir, `${tiledSprite.name}.png`));
+    }
+
+    for (const confirmButton of CONFIRM_OFFER_BUTTONS) {
+        const confirmSourcePath = path.join(PLUGIN_DIR, 'assets', 'sprites', `${confirmButton.sourceId}.png`);
+        if (!fs.existsSync(confirmSourcePath)) {
+            throw new Error(`Grand Exchange Confirm Offer button source is missing: ${confirmSourcePath}`);
+        }
+
+        const actualHash = crypto.createHash('sha256').update(fs.readFileSync(confirmSourcePath)).digest('hex');
+        if (actualHash !== confirmButton.sha256) {
+            throw new Error(
+                `Grand Exchange Confirm Offer sprite ${confirmButton.sourceId} hash mismatch: expected ${confirmButton.sha256}, got ${actualHash}`
+            );
+        }
+
+        const confirmSourceImage = await Jimp.read(confirmSourcePath);
+        if (confirmSourceImage.bitmap.width !== 150 || confirmSourceImage.bitmap.height !== 43) {
+            throw new Error(`Grand Exchange Confirm Offer sprite ${confirmButton.sourceId} no longer has its r481 150x43 canvas`);
+        }
+
+        const confirmImage = new Jimp({
+            width: CONFIRM_OFFER_BUTTON_SIZE.width,
+            height: CONFIRM_OFFER_BUTTON_SIZE.height,
+            color: 0x00000000,
+        });
+
+        // Match the integer nearest-neighbour scaling used by the period client.
+        for (let y = 0; y < CONFIRM_OFFER_BUTTON_SIZE.height; y++) {
+            const sourceY = Math.floor((y * confirmSourceImage.bitmap.height) / CONFIRM_OFFER_BUTTON_SIZE.height);
+            for (let x = 0; x < CONFIRM_OFFER_BUTTON_SIZE.width; x++) {
+                const sourceX = Math.floor((x * confirmSourceImage.bitmap.width) / CONFIRM_OFFER_BUTTON_SIZE.width);
+                const sourceOffset = (sourceY * confirmSourceImage.bitmap.width + sourceX) * 4;
+                const targetOffset = (y * CONFIRM_OFFER_BUTTON_SIZE.width + x) * 4;
+
+                for (let channel = 0; channel < 4; channel++) {
+                    confirmImage.bitmap.data[targetOffset + channel] = confirmSourceImage.bitmap.data[sourceOffset + channel];
+                }
+            }
+        }
+
+        // r254 PixPack uses magenta rather than alpha for transparent pixels.
+        for (let offset = 0; offset < confirmImage.bitmap.data.length; offset += 4) {
+            if (confirmImage.bitmap.data[offset + 3] < 128) {
+                confirmImage.bitmap.data[offset + 0] = 0xff;
+                confirmImage.bitmap.data[offset + 1] = 0x00;
+                confirmImage.bitmap.data[offset + 2] = 0xff;
+            }
+            confirmImage.bitmap.data[offset + 3] = 0xff;
+        }
+
+        await confirmImage.write(path.join(spriteDir, `${confirmButton.name}.png`));
     }
 }
 

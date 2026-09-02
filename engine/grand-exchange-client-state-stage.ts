@@ -224,14 +224,14 @@ function validateServerDrivenSubstitutions(stagedContentDir: string) {
         '[proc,ge_item_search_store_result](int $slot, namedobj $item)',
         '[if_button,grand_exchange_overview:com_194]',
         'p_namedialog;',
-        'oc_tradeable(',
+        // Tradeability is prefiltered from native r254 .obj source metadata at stage time.
         'oc_uncert(',
         'lowercase(oc_name(',
         'inv_transmit(ge_search_results, grand_exchange_item_search:com_8);',
         '[inv_button1,grand_exchange_item_search:com_8]',
         'inv_moveitem(ge_search_results, ge_selected_item, $item, 1);',
         'inv_setslot(ge_selected_item, 1, coins, 1);',
-        'if_setobject(grand_exchange_overview:com_138, $item, 250);',
+        'if_setobject(grand_exchange_overview:com_138, $item, 600);',
         'if_settext(grand_exchange_overview:com_150, "1");'
     ]);
 

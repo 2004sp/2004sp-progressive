@@ -1,5 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 const GE_INTERFACE_NAME = 'grand_exchange_overview';
 const SELECTED_ITEM_INV = 'ge_selected_item';
@@ -21,6 +24,13 @@ const EDIT_COMPONENT = 185;
 const QUANTITY_DECREASE_COMPONENT = 157;
 const QUANTITY_INCREASE_COMPONENT = 159;
 const MAX_PRICE = 2147483647;
+const NOSTALGIA_PRICE_CHUNK_SIZE = 128;
+
+type NostalgiaPrice = {
+    id: number;
+    symbol: string;
+    price: number;
+};
 
 function readPack(file: string) {
     const values = new Map<number, string>();
@@ -35,6 +45,72 @@ function readPack(file: string) {
     }
 
     return { content, values };
+}
+
+function readNostalgiaPrices(stagedContentDir: string): NostalgiaPrice[] {
+    const progressiveRoot = path.resolve(stagedContentDir, '..', '..', '..', '..');
+    const nostalgiaRoot = process.env.NOSTALGIA_ROOT?.trim() || path.resolve(progressiveRoot, '..', 'Nostalgia');
+    const databasePath = path.join(nostalgiaRoot, '2009scape', 'Server', 'data', 'eco', 'grandexchange.db');
+    if (!fs.existsSync(databasePath)) {
+        throw new Error(`Nostalgia Grand Exchange price database is missing: ${databasePath}`);
+    }
+
+    const { values: nativeObjects } = readPack(path.join(stagedContentDir, 'pack', 'obj.pack'));
+    let sqlite: typeof import('node:sqlite');
+    try {
+        sqlite = require('node:sqlite') as typeof import('node:sqlite');
+    } catch {
+        throw new Error('Nostalgia Grand Exchange prices require a Node.js runtime with node:sqlite support.');
+    }
+    const database = new sqlite.DatabaseSync(databasePath, { readOnly: true });
+    let rows: Array<Record<string, string | number | bigint | Uint8Array | null>>;
+    try {
+        rows = database.prepare('SELECT item_id, value FROM price_index').all() as Array<Record<string, string | number | bigint | Uint8Array | null>>;
+    } finally {
+        database.close();
+    }
+
+    const prices = new Map<number, NostalgiaPrice>();
+    for (const row of rows) {
+        const id = Number(row.item_id);
+        const price = Number(row.value);
+        const symbol = nativeObjects.get(id);
+        if (!Number.isInteger(id) || !Number.isSafeInteger(price) || price < 1 || !symbol) {
+            continue;
+        }
+        if (!/^[A-Za-z0-9_+.:]+$/.test(symbol)) {
+            throw new Error(`Native r254 object symbol cannot be emitted safely into the Nostalgia price lookup: ${symbol}`);
+        }
+        prices.set(id, { id, symbol, price: Math.min(price, MAX_PRICE) });
+    }
+
+    const result = [...prices.values()].sort((a, b) => a.id - b.id);
+    if (!result.length) {
+        throw new Error(`Nostalgia Grand Exchange price_index has no overlap with the native r254 item catalogue: ${databasePath}`);
+    }
+    return result;
+}
+
+function buildNostalgiaPriceLookup(prices: NostalgiaPrice[]) {
+    const chunks: NostalgiaPrice[][] = [];
+    for (let index = 0; index < prices.length; index += NOSTALGIA_PRICE_CHUNK_SIZE) {
+        chunks.push(prices.slice(index, index + NOSTALGIA_PRICE_CHUNK_SIZE));
+    }
+
+    const chunkSources = chunks.map((chunk, chunkIndex) => {
+        const checks = chunk.map(entry => `if ($item = ${entry.symbol}) return (${entry.price});`).join('\n');
+        return `[proc,ge_offer_nostalgia_price_${chunkIndex}](obj $item)(int)\n${checks}\nreturn (0);`;
+    });
+    const dispatcherCalls = chunks.map((_, chunkIndex) => `def_int $price_${chunkIndex} = ~ge_offer_nostalgia_price_${chunkIndex}($item);\nif ($price_${chunkIndex} > 0) return ($price_${chunkIndex});`).join('\n');
+    const dispatcher = `[proc,ge_offer_nostalgia_price](obj $item)(int)\n${dispatcherCalls}\nreturn (0);`;
+
+    return {
+        source: `${chunkSources.join('\n\n')}\n\n${dispatcher}\n`,
+        triggerNames: [
+            ...chunks.map((_, chunkIndex) => `[proc,ge_offer_nostalgia_price_${chunkIndex}]`),
+            '[proc,ge_offer_nostalgia_price]',
+        ],
+    };
 }
 
 function getComponentBlock(source: string, componentId: number) {
@@ -303,7 +379,7 @@ function patchSelectedItemPriceReset(stagedContentDir: string) {
         throw new Error('Grand Exchange price state requires the quantity-stage selected-item reset');
     }
 
-    const priceReset = `def_int $guide_price = oc_cost($item);\nif ($guide_price < 1) {\n    $guide_price = 1;\n}\ndef_int $guide_delta = max(1, calc($guide_price / 20));\ndef_int $minimum_price = sub($guide_price, $guide_delta);\nif ($minimum_price < 1) {\n    $minimum_price = 1;\n}\ndef_int $maximum_price = ${MAX_PRICE};\nif ($guide_price <= sub(${MAX_PRICE}, $guide_delta)) {\n    $maximum_price = add($guide_price, $guide_delta);\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $guide_price);\nif_settext(${GE_INTERFACE_NAME}:com_${MARKET_TEXT_COMPONENT}, append(append_num("", $guide_price), " gp"));\ndef_string $minimum_text = append(append_num("", $minimum_price), " gp");\ndef_string $maximum_text = append(append_num("", $maximum_price), " gp");\nif_settext(${GE_INTERFACE_NAME}:com_${RANGE_TEXT_COMPONENT}, append(append($minimum_text, " - "), $maximum_text));\nif_settext(${GE_INTERFACE_NAME}:com_${PRICE_TEXT_COMPONENT}, append(append_num("", $guide_price), " gp"));\n~ge_offer_total_refresh;`;
+    const priceReset = `def_int $guide_price = ~ge_offer_nostalgia_price($item);\nif ($guide_price < 1) {\n    $guide_price = oc_cost($item);\n}\nif ($guide_price < 1) {\n    $guide_price = 1;\n}\ndef_int $minimum_delta = calc($guide_price / 20);\nif (calc($guide_price % 20) ! 0) {\n    $minimum_delta = add($minimum_delta, 1);\n}\ndef_int $minimum_price = sub($guide_price, $minimum_delta);\nif ($minimum_price < 1) {\n    $minimum_price = 1;\n}\ndef_int $maximum_delta = calc($guide_price / 20);\ndef_int $maximum_price = ${MAX_PRICE};\nif ($guide_price <= sub(${MAX_PRICE}, $maximum_delta)) {\n    $maximum_price = add($guide_price, $maximum_delta);\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $guide_price);\nif_settext(${GE_INTERFACE_NAME}:com_${MARKET_TEXT_COMPONENT}, append(append_num("", $guide_price), " gp"));\ndef_string $minimum_text = append(append_num("", $minimum_price), " gp");\ndef_string $maximum_text = append(append_num("", $maximum_price), " gp");\nif_settext(${GE_INTERFACE_NAME}:com_${RANGE_TEXT_COMPONENT}, append(append($minimum_text, " - "), $maximum_text));\nif_settext(${GE_INTERFACE_NAME}:com_${PRICE_TEXT_COMPONENT}, append(append_num("", $guide_price), " gp"));\n~ge_offer_total_refresh;`;
 
     if (!block.includes(`inv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $guide_price);`)) {
         block = block.replace(quantityTextReset, `${quantityTextReset}\n${priceReset}`);
@@ -316,10 +392,10 @@ function patchSelectedItemPriceReset(stagedContentDir: string) {
 }
 
 function buildPriceScript() {
-    return `// Option-2-only server-authoritative price state for group 105.\n// ge_selected_item slot 0 stores the selected native-r254 item, slot 1 stores\n// quantity, and slot 2 uses a private coins stack only as an integer price token.\n// oc_cost is an interim native-r254 guide-price baseline for Phase 4 controls;\n// the authoritative 2009Scape price source remains a Phase 5 integration task.\n\n[proc,ge_offer_total_refresh]\nif (map_feature("grandexchange") = false) return;\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT});\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($quantity <= 0 | $price <= 0) {\n    if_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, "0 gp");\n    return;\n}\ndef_int $total = ${MAX_PRICE};\nif ($price <= calc(${MAX_PRICE} / $quantity)) {\n    $total = calc($quantity * $price);\n}\nif_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, append(append_num("", $total), " gp"));\n\n[proc,ge_offer_guide_price]()(int)\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return (1);\ndef_obj $item = inv_getobj(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT});\ndef_int $guide = oc_cost($item);\nif ($guide < 1) {\n    $guide = 1;\n}\nreturn ($guide);\n\n[proc,ge_offer_price_set](int $price)\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $clamped = $price;\nif ($clamped < 1) {\n    $clamped = 1;\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $clamped);\nif_settext(${GE_INTERFACE_NAME}:com_${PRICE_TEXT_COMPONENT}, append(append_num("", $clamped), " gp"));\n~ge_offer_total_refresh;\n\n[if_button,${GE_INTERFACE_NAME}:com_${DECREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($price <= 1) return;\n~ge_offer_price_set(sub($price, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${INCREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($price <= 0) {\n    $price = ~ge_offer_guide_price;\n}\nif ($price >= ${MAX_PRICE}) return;\n~ge_offer_price_set(add($price, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${MINIMUM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $guide = ~ge_offer_guide_price;\ndef_int $delta = max(1, calc($guide / 20));\ndef_int $minimum = sub($guide, $delta);\nif ($minimum < 1) {\n    $minimum = 1;\n}\n~ge_offer_price_set($minimum);\n\n[if_button,${GE_INTERFACE_NAME}:com_${MARKET_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\n~ge_offer_price_set(~ge_offer_guide_price);\n\n[if_button,${GE_INTERFACE_NAME}:com_${MAXIMUM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $guide = ~ge_offer_guide_price;\ndef_int $delta = max(1, calc($guide / 20));\nif ($guide > sub(${MAX_PRICE}, $delta)) {\n    ~ge_offer_price_set(${MAX_PRICE});\n    return;\n}\n~ge_offer_price_set(add($guide, $delta));\n\n[if_button,${GE_INTERFACE_NAME}:com_${EDIT_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\np_countdialog;\ndef_int $price = last_int;\nif ($price <= 0) return;\n~ge_offer_price_set($price);\n`;
+    return `// Option-2-only server-authoritative price state for group 105.\n// ge_selected_item slot 0 stores the selected native-r254 item, slot 1 stores\n// quantity, and slot 2 uses a private coins stack only as an integer price token.\n// Guide prices come from Nostalgia/2009scape's price_index for item IDs that\n// also exist in native r254. oc_cost is used only when that index has no row.\n\n[proc,ge_offer_total_refresh]\nif (map_feature("grandexchange") = false) return;\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT});\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($quantity <= 0 | $price <= 0) {\n    if_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, "0 gp");\n    return;\n}\ndef_int $total = ${MAX_PRICE};\nif ($price <= calc(${MAX_PRICE} / $quantity)) {\n    $total = calc($quantity * $price);\n}\nif_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, append(append_num("", $total), " gp"));\n\n[proc,ge_offer_guide_price]()(int)\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return (1);\ndef_obj $item = inv_getobj(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT});\ndef_int $guide = ~ge_offer_nostalgia_price($item);\nif ($guide < 1) {\n    $guide = oc_cost($item);\n}\nif ($guide < 1) {\n    $guide = 1;\n}\nreturn ($guide);\n\n[proc,ge_offer_price_set](int $price)\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $clamped = $price;\nif ($clamped < 1) {\n    $clamped = 1;\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $clamped);\nif_settext(${GE_INTERFACE_NAME}:com_${PRICE_TEXT_COMPONENT}, append(append_num("", $clamped), " gp"));\n~ge_offer_total_refresh;\n\n[if_button,${GE_INTERFACE_NAME}:com_${DECREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($price <= 1) return;\n~ge_offer_price_set(sub($price, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${INCREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($price <= 0) {\n    $price = ~ge_offer_guide_price;\n}\nif ($price >= ${MAX_PRICE}) return;\n~ge_offer_price_set(add($price, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${MINIMUM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $guide = ~ge_offer_guide_price;\ndef_int $delta = calc($guide / 20);\nif (calc($guide % 20) ! 0) {\n    $delta = add($delta, 1);\n}\ndef_int $minimum = sub($guide, $delta);\nif ($minimum < 1) {\n    $minimum = 1;\n}\n~ge_offer_price_set($minimum);\n\n[if_button,${GE_INTERFACE_NAME}:com_${MARKET_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\n~ge_offer_price_set(~ge_offer_guide_price);\n\n[if_button,${GE_INTERFACE_NAME}:com_${MAXIMUM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $guide = ~ge_offer_guide_price;\ndef_int $delta = calc($guide / 20);\nif ($guide > sub(${MAX_PRICE}, $delta)) {\n    ~ge_offer_price_set(${MAX_PRICE});\n    return;\n}\n~ge_offer_price_set(add($guide, $delta));\n\n[if_button,${GE_INTERFACE_NAME}:com_${EDIT_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\np_countdialog;\ndef_int $price = last_int;\nif ($price <= 0) return;\n~ge_offer_price_set($price);\n`;
 }
 
-function writePriceScript(stagedContentDir: string) {
+function writePriceScript(stagedContentDir: string, prices: NostalgiaPrice[]) {
     const scriptPath = path.join(
         stagedContentDir,
         'scripts',
@@ -327,12 +403,15 @@ function writePriceScript(stagedContentDir: string) {
         'scripts',
         'grand_exchange_price.rs2'
     );
+    const priceLookup = buildNostalgiaPriceLookup(prices);
     fs.mkdirSync(path.dirname(scriptPath), { recursive: true });
-    fs.writeFileSync(scriptPath, buildPriceScript(), 'utf8');
+    fs.writeFileSync(scriptPath, priceLookup.source + '\n' + buildPriceScript(), 'utf8');
+    return priceLookup.triggerNames;
 }
 
-function injectPriceScriptMappings(stagedContentDir: string) {
+function injectPriceScriptMappings(stagedContentDir: string, nostalgiaTriggerNames: string[]) {
     const triggerNames = [
+        ...nostalgiaTriggerNames,
         '[proc,ge_offer_total_refresh]',
         '[proc,ge_offer_guide_price]',
         '[proc,ge_offer_price_set]',
@@ -363,11 +442,13 @@ function injectPriceScriptMappings(stagedContentDir: string) {
 }
 
 export function prepareGrandExchangePriceStage(stagedContentDir: string) {
+    const nostalgiaPrices = readNostalgiaPrices(stagedContentDir);
     patchPriceActions(stagedContentDir);
     patchOfferSetupPresentation(stagedContentDir);
     widenSelectedItemState(stagedContentDir);
     patchQuantityTotalRefresh(stagedContentDir);
     patchSelectedItemPriceReset(stagedContentDir);
-    writePriceScript(stagedContentDir);
-    injectPriceScriptMappings(stagedContentDir);
+    const nostalgiaTriggerNames = writePriceScript(stagedContentDir, nostalgiaPrices);
+    injectPriceScriptMappings(stagedContentDir, nostalgiaTriggerNames);
+    console.log(`Grand Exchange: loaded ${nostalgiaPrices.length} Nostalgia guide prices that exist in native r254.`);
 }

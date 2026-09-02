@@ -63,24 +63,31 @@ The frozen r481 buy hitboxes are source components `30`, `46`, `62`, `81`, `100`
 
 The server-side `[if_button]` handlers keep the setup state authoritative. **Buy** switches the overview root (`com_16`) to the group-105 setup root (`com_126`), keeps the frozen `Buy Offer` title, and shows the buy-search prompt (`com_192`). **Sell** switches to the same source setup root, changes the shared title (`com_133`) to `Sell Offer`, hides the buy-search prompt, and shows the frozen sell-inventory prompt (`com_197`). The source Back control (`com_127`) returns to the six-slot summary without resetting the individual slot sub-states. Opening Buy explicitly restores the `Buy Offer` title so alternating Sell → Back → Buy cannot leave stale sell text behind.
 
-Buy-item search/result selection is now wired; sell inventory selection, quantity controls, price controls and offer submission remain deliberately unwired, so no server-side GE transaction or player-wealth mutation is introduced by this slice.
+Buy-item search/result selection and the quantity/price setup state are wired; sell inventory selection and offer submission remain deliberately unwired, so no server-side GE transaction or player-wealth mutation is introduced by this slice.
 
 ## Native r254 item search and selection
 
-`engine/grand-exchange-item-search-stage.ts` adds the buy-search interaction without importing any r481 item definition, item icon or item model:
+`engine/grand-exchange-item-search-stage.ts` and the r254 webclient now implement the buy-search interaction without importing any r481 item definition, item icon or item model:
 
-- source group-105 `com_194` becomes the IF1 **Search** action for the existing buy-search icon;
-- the search prompt uses the native `p_namedialog`/`last_string` path;
-- at option-2 staging time, the search catalogue is generated from the staged native r254 `pack/obj.pack`, preserving native object IDs/symbols and ID order;
-- runtime matching uses native `oc_name`, filters through native `oc_tradeable`, and rejects certificate/noted variants with native `oc_uncert`;
-- results are written into option-2-only temporary inventory `ge_search_results` (local inv `164`) and transmitted to a one-column IF1 inventory inside a scrollable layer, so the client draws the ordinary native r254 item icons;
-- up to 80 matches are shown per query with their native `oc_name` text alongside the icons; broad queries explicitly report that the first 80 matches are shown;
-- selecting a result revalidates tradeability/noted state server-side, stores the native object in `ge_selected_item` (local inv `165`), returns to the group-105 Buy Offer setup, and renders the selected item through native `if_setobject` plus native `oc_name`/`oc_desc`;
-- opening a fresh Buy setup clears both temporary search/selection containers, so no stale selected item survives into a new setup flow.
+- opening an empty Buy slot now stops at the **Buy Offer** setup instead of immediately opening item search;
+- source group-105 `com_137` remains the authentic r481 sprite-`1140` yellow glow so the webclient can keep pulsing it; `com_194` is staged as a visually empty IF1 text **Search** button over that glow (rather than a layer/container), and clicking the pulsing control starts item search;
+- the server still uses the native `p_namedialog`/`last_string` resume packet, but while that dialog is active on the GE Buy Offer screen the webclient renders it as the later-style **Grand Exchange Item Search** directly inside the normal chatbox;
+- typing filters the complete native r254 `ObjType` catalogue live and case-insensitively; native certificate/noted variants are excluded client-side;
+- `webclient/scripts/generate-ge-untradeable.ts` runs before each webclient build and derives the client-side exclusion set from native r254 object source sections that declare `tradeable=no` or a non-zero `dummyitem`, matching the server's static untradeable rules;
+- clicking either visible result submits its exact native item name through the existing `RESUME_P_NAMEDIALOG` packet, with no new client protocol or r481 item dependency;
+- the server then searches the staged native r254 `pack/obj.pack` catalogue, revalidates with native `oc_tradeable` and `oc_uncert`, and only accepts a matching tradeable unnoted object;
+- selecting a result stores the native object in `ge_selected_item` (local inv `165`), keeps/reopens the group-105 Buy Offer setup, and renders the selected item through native `if_setobject` plus native `oc_name`/`oc_desc`;
+- opening a fresh Buy setup clears the temporary search/selection containers, so no stale selected item survives into a new setup flow.
 
-The generated search interface uses synthetic root `8989` and component IDs `11304–11392`, immediately after the frozen r481 interface reservation ending at `11303`. These IDs exist only in the temporary option-2 stage. Launcher options 1 and 3 do not receive the interface, inventories, generated search scripts, or search mappings.
+The older synthetic search interface reservation (`8989`, components `11304–11392`) is still emitted as an option-2 staging helper for the generated server catalogue, but the normal `com_194` path no longer opens it. The user-facing search is the chatbox flow. Launcher options 1 and 3 do not receive the GE staging scripts or temporary inventories.
 
-This intentionally keeps the item boundary stronger than a copied lookup table: every searchable ID/name and every displayed item icon/model originates from the same staged native r254 catalogue used by the rest of the server/client. r481 assets remain chrome/reference material only.
+This keeps the item boundary stronger than a copied lookup table: every searchable and selectable object still comes from the native r254 catalogue used by the rest of the server/client, while r481 assets remain chrome/reference material only.
+
+##  Grand Exchange guide prices
+
+`engine/grand-exchange-price-stage.ts` reads `2009scape/Server/data/eco/grandexchange.db` on each option-2 staging run and imports the current `price_index.value` rows used by `GrandExchange.getRecommendedPrice` path. Only IDs also present in the staged native r254 `obj.pack` are emitted into the generated RuneScript lookup, so later-revision items never enter the r254 GE.
+
+The generated `ge_offer_nostalgia_price` procedures drive the selected item's market/guide price and the price preset controls. The minimum/maximum presets mirror 2009scape's integer-truncated `95%` / `105%` calculations (so a 16 gp guide displays 15–16 gp, matching the reference client). An r254 item with no 2009scape `price_index` row falls back to native `oc_cost` rather than inventing a later-revision object. By default the sibling folder is resolved as `../Nostalgia`; `NOSTALGIA_ROOT` can override that path.
 
 ## Group 107 helper/overlay
 
@@ -105,9 +112,9 @@ After copying this overlay onto the normal r254 base installation:
 - enable **Grand Exchange (option 2 only)** under launcher **Custom Content**;
 - start launcher option **2 — Custom Server + Hiscores** and allow the normal local build/repack to complete;
 - log in and run `~ge`, then click **Buy** in any of the six empty offer slots;
-- click the buy-search icon, enter a native r254 item substring such as `lobster` or `rune`, and confirm native item names/icons populate the result list;
-- mouse-wheel/drag the native IF1 result scrollbar and confirm the item names/icons remain aligned while scrolling;
-- select a result icon and confirm the Buy Offer setup reopens with the selected native r254 item model, name and description, with the quantity/price layer now visible for the next milestone;
+- confirm **Buy** only opens the Buy Offer setup, then click the visible sprite-`1140` Search button and confirm the normal chatbox becomes **Grand Exchange Item Search**, with the instruction text and magnifier/input line shown while the Buy Offer interface remains open;
+- type a native r254 item substring such as `bronze sword`, `lobster` or `rune` and confirm the visible native item names/icons update live; refine broad queries to reach the desired item, and confirm explicitly non-tradeable/noted objects never appear as selectable results;
+- click a chatbox result and confirm the Buy Offer setup shows that native r254 item model/name/description, quantity resets to `1`, and its guide price comes from the matching 2009scape `price_index` row when one exists;
 - use **Back**, start a new Buy setup and confirm the search/selection state is reset; search a non-tradeable/noted-only object name and confirm it cannot enter the selection state;
 - click **Sell** in any empty offer slot and confirm the shared setup changes to **Sell Offer** with `Select an item in your inventory to sell.`, then use **Back** and verify a subsequent **Buy** restores the Buy Offer title/search prompt;
 - confirm quantity, price and Confirm Offer controls still do not create a transaction;

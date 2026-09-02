@@ -19,6 +19,7 @@ import { prepareGrandExchangeRuneScriptTypeCompatibilityStage } from './grand-ex
 import { prepareGrandExchangeQuantityStage } from './grand-exchange-quantity-stage.js';
 import { prepareGrandExchangePriceStage } from './grand-exchange-price-stage.js';
 import { prepareGrandExchangeOfferPresentationStage } from './grand-exchange-offer-presentation-stage.js';
+import { prepareGrandExchangeHoverStage } from './grand-exchange-hover-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
 import { prepareGrandExchangeClientStateStage } from './grand-exchange-client-state-stage.js';
 import { prepareGrandExchangeInterfaceCacheAdapter } from './grand-exchange-interface-cache-adapter.js';
@@ -102,6 +103,7 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangeQuantityStage(stagedContentDir);
         prepareGrandExchangePriceStage(stagedContentDir);
         prepareGrandExchangeOfferPresentationStage(stagedContentDir);
+        await prepareGrandExchangeHoverStage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
         prepareGrandExchangeClientStateStage(stagedContentDir);
         prepareGrandExchangeInterfaceCacheAdapter(stagedContentDir);

@@ -9381,6 +9381,11 @@ public class Client extends GameShell {
 		}
 	}
 
+	private boolean isGrandExchangeHoverGraphic(int x, int y, int width, int height) {
+		boolean grandExchangeOpen = this.mainLayerId == 8990 || this.mainOverlayLayerId == 8990;
+		return grandExchangeOpen && super.mouseX >= x && super.mouseY >= y && super.mouseX < x + width && super.mouseY < y + height;
+	}
+
 	@ObfuscatedName("client.a(IILd;II)V")
 	public void drawLayer(int arg1, IfType arg2, int arg3, int arg4) {
 		if (arg2.type != 0 || arg2.children == null || arg2.hidden && this.overMainLayerId != arg2.id && this.overSideLayerId != arg2.id && this.overChatLayerId != arg2.id) {
@@ -9606,7 +9611,10 @@ public class Client extends GameShell {
 					}
 				} else if (var14.type == 5) {
 					Pix32 var45;
-					if (this.getIfActive(var14)) {
+					boolean var45Hovered = this.isGrandExchangeHoverGraphic(var15, var16, var14.width, var14.height);
+					if (var45Hovered && var14.graphic2 != null) {
+						var45 = var14.graphic2;
+					} else if (this.getIfActive(var14)) {
 						var45 = var14.graphic2;
 					} else {
 						var45 = var14.graphic;
