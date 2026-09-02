@@ -563,6 +563,76 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         exit: [[2855, 3440]]
     },
     {
+        // ── Hemenster ↔ Baxtorian Falls ───────────────────────────────────────
+        // South of Fishing Guild, used to path around Lake Hemenster.
+        name: 'KandarinNorthWest',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'KandarinNorthWest',
+            'Tirannwn']),
+        approach: [[2610, 3365], [2610, 3393]],
+        exit: [[2609, 3365], [2609, 3393]]
+    },
+    {
+        // ── Baxtorian Falls ↔ Coal Trucks (gate) ──────────────────────────────
+        // Gated mining area east of Baxtorian Falls.
+        name: 'CoalTrucks',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'CoalTrucks']),
+        approach: [[2567, 3457], [2568, 3457]],
+        exit: [[2567, 3458], [2568, 3458]]
+    },
+    {
+        // ── Fishing Guild ↔ Baxtorian Falls ───────────────────────────────────
+        // Bottom of hill toward Baxtorian Falls.
+        name: 'BaxtorianFalls',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'BaxtorianFalls']),
+        approach: [[2550, 3470], [2554, 3470]],
+        exit: [[2551, 3471], [2554, 3471]]
+    },
+    {
+        // ── Baxtorian Falls ↔ Barbarian Outpost ───────────────────────────────
+        // Bridge over river Dougne south of Barbarian Outpost.
+        name: 'BarbarianOutpost',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'BarbarianOutpost']),
+        approach: [[2525, 3513], [2526, 3513]],
+        exit: [[2525, 3514], [2526, 3514]]
+    },
+    {
+        // ── Barbarian Outpost ↔ Agility Course (gate) ─────────────────────────
+        // Opening the gate requires completion of Alfred Grimhand's Barcrawl,
+        // which the bots should have auto completed.
+        name: 'BarbarianAgilityGate',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'BarbarianAgilityGate']),
+        approach: [[2545, 3569], [2545, 3570]],
+        exit: [[2546, 3569], [2546, 3570]]
+    },
+    {
+        // ── Fishing Guild ↔ Ardougne Castle ───────────────────────────────────
+        // Bridge over river Dougne, north of Ardougne Castle.
+        name: 'RiverDougneFish',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'KandarinNorthWestRiver',
+            'ArdougneRiverWest',
+            'KandarinSouth',
+            'Feldip',
+            'Tirannwn']),
+        approach: [[2581, 3363], [2582, 3363]],
+        exit: [[2581, 3362], [2582, 3362]]
+    },
+    {
+        // ── Baxtorian Falls ↔ Tree Gnome Stronghold ───────────────────────────
+        // Bridge over river Dougne near Tourist Information Centre.
+        name: 'RiverDougneTourist',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'KandarinNorthWestRiver',
+            'Tirannwn']),
+        approach: [[2535, 3400], [2535, 3401]],
+        exit: [[2534, 3400], [2534, 3401]]
+    },
+    {
         // ── Ardougne ↔ Tree Gnome Stronghold (gate) ───────────────────────────
         // Gate to the Tree Gnome Stronghold. Bots should have auto completed to
         // help Femi (var 152) so they can open the gate without dialog.
@@ -579,7 +649,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         name: 'GnomeSouthBankS',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'GnomeSouthBank']),
-        approach: [[2446, 3415]],
+        approach: [[2443, 3413], [2446, 3416]],
         exit: [[2445, 3416]],
         exitLevel: 1
     },
@@ -590,7 +660,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         name: 'GnomeSouthBankN',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'GnomeSouthBank']),
-        approach: [[2444, 3434]],
+        approach: [[2444, 3433], [2447, 3436]],
         exit: [[2445, 3433]],
         exitLevel: 1
     },
@@ -610,8 +680,8 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         name: 'GrandTree1',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'GrandTree1']),
-        approach: [[2466, 3494]],
-        exit: [[2466, 3494]],
+        approach: [[2465, 3494], [2467, 3496]],
+        exit: [[2465, 3494], [2467, 3496]],
         exitLevel: 1
     },
     {
@@ -620,8 +690,8 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         name: 'GrandTree2',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'GrandTree2']),
-        approach: [[2466, 3494]],
-        exit: [[2466, 3494]],
+        approach: [[2465, 3494], [2467, 3496]],
+        exit: [[2465, 3494], [2467, 3496]],
         approachLevel: 1,
         exitLevel: 2
     },
@@ -631,8 +701,8 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         name: 'GrandTree3',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
             'GrandTree3']),
-        approach: [[2466, 3494]],
-        exit: [[2466, 3494]],
+        approach: [[2465, 3494], [2467, 3496]],
+        exit: [[2465, 3494], [2467, 3496]],
         approachLevel: 2,
         exitLevel: 3
     },
@@ -700,7 +770,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Entrance to Ardougne, north of castle.
         name: 'ArdougneNorthCastle',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
-            'Ardougne',
+            'ArdougneRiverWest',
             'KandarinSouth',
             'Feldip']),
         approach: [[2587, 3342], [2588, 3342]],
@@ -711,7 +781,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Small entrance to Ardougne, northwest corner.
         name: 'ArdougneNorthWest',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
-            'Ardougne',
+            'ArdougneRiverWest',
             'KandarinSouth',
             'Feldip']),
         approach: [[2559, 3337]],
@@ -1242,6 +1312,126 @@ const REGIONS: Region[] = [
             [2669, 3340],
             [2617, 3340],
             [2615, 3342],
+            [2563, 3342],
+            [2559, 3337],
+            [2461, 3337],
+            [2461, 3325],
+            [2433, 3325],
+            [2408, 3335],
+            [2346, 3335],
+            [2334, 3392],
+            [2178, 3392]]
+    },
+    {
+        name: 'KandarinNorthWest',
+        coords: [
+            [2176, 3636],
+            [2331, 3741],
+            [2490, 3596],
+            [2532, 3596],
+            [2567, 3583],
+            [2599, 3505],
+            [2599, 3430],
+            [2595, 3425],
+            [2578, 3425],
+            [2578, 3414],
+            [2583, 3414],
+            [2593, 3393],
+            [2609, 3393],
+            [2609, 3351],
+            [2593, 3351],
+            [2598, 3342],
+            [2563, 3342],
+            [2559, 3337],
+            [2461, 3337],
+            [2461, 3325],
+            [2433, 3325],
+            [2408, 3335],
+            [2346, 3335],
+            [2334, 3392],
+            [2178, 3392]]
+    },
+    {
+        name: 'CoalTrucks',
+        coords: [
+            [2553, 3479],
+            [2553, 3485],
+            [2581, 3513],
+            [2599, 3505],
+            [2599, 3456],
+            [2575, 3456],
+            [2575, 3459],
+            [2571, 3459],
+            [2570, 3458],
+            [2565, 3458],
+            [2565, 3460],
+            [2559, 3460],
+            [2559, 3462],
+            [2555, 3465],
+            [2555, 3467],
+            [2558, 3472]]
+    },
+    {
+        name: 'BaxtorianFalls',
+        coords: [
+            [2473, 3532],
+            [2491, 3596],
+            [2532, 3596],
+            [2567, 3583],
+            [2581, 3514],
+            [2552, 3486],
+            [2552, 3478],
+            [2557, 3472],
+            [2555, 3471],
+            [2533, 3471],
+            [2496, 3431],
+            [2496, 3512]]
+    },
+    {
+        name: 'BarbarianOutpost',
+        coords: [
+            [2473, 3532],
+            [2491, 3596],
+            [2532, 3596],
+            [2567, 3583],
+            [2581, 3514],
+            [2520, 3514],
+            [2496, 3512]]
+    },
+    {
+        name: 'BarbarianAgilityGate',
+        coords: [
+            [2528, 3551],
+            [2528, 3556],
+            [2546, 3556],
+            [2546, 3573],
+            [2555, 3573],
+            [2555, 3561],
+            [2553, 3559],
+            [2553, 3543],
+            [2552, 3542],
+            [2529, 3542],
+            [2529, 3550]]
+    },
+    {
+        name: 'KandarinNorthWestRiver',
+        coords: [
+            [2176, 3636],
+            [2331, 3741],
+            [2490, 3596],
+            [2472, 3532],
+            [2495, 3511],
+            [2495, 3430],
+            [2497, 3428],
+            [2534, 3408],
+            [2534, 3398],
+            [2550, 3388],
+            [2567, 3370],
+            [2572, 3361],
+            [2578, 3362],
+            [2585, 3362],
+            [2593, 3351],
+            [2598, 3342],
             [2563, 3342],
             [2559, 3337],
             [2461, 3337],
