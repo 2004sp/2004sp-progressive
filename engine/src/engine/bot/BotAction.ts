@@ -563,6 +563,76 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         exit: [[2855, 3440]]
     },
     {
+        // ── Hemenster ↔ Baxtorian Falls ───────────────────────────────────────
+        // South of Fishing Guild, used to path around Lake Hemenster.
+        name: 'KandarinNorthWest',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'KandarinNorthWest',
+            'Tirannwn']),
+        approach: [[2610, 3365], [2610, 3393]],
+        exit: [[2609, 3365], [2609, 3393]]
+    },
+    {
+        // ── Baxtorian Falls ↔ Coal Trucks (gate) ──────────────────────────────
+        // Gated mining area east of Baxtorian Falls.
+        name: 'CoalTrucks',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'CoalTrucks']),
+        approach: [[2567, 3457], [2568, 3457]],
+        exit: [[2567, 3458], [2568, 3458]]
+    },
+    {
+        // ── Fishing Guild ↔ Baxtorian Falls ───────────────────────────────────
+        // Bottom of hill toward Baxtorian Falls.
+        name: 'BaxtorianFalls',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'BaxtorianFalls']),
+        approach: [[2550, 3470], [2554, 3470]],
+        exit: [[2551, 3471], [2554, 3471]]
+    },
+    {
+        // ── Baxtorian Falls ↔ Barbarian Outpost ───────────────────────────────
+        // Bridge over river Dougne south of Barbarian Outpost.
+        name: 'BarbarianOutpost',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'BarbarianOutpost']),
+        approach: [[2525, 3513], [2526, 3513]],
+        exit: [[2525, 3514], [2526, 3514]]
+    },
+    {
+        // ── Barbarian Outpost ↔ Agility Course (gate) ─────────────────────────
+        // Opening the gate requires completion of Alfred Grimhand's Barcrawl,
+        // which the bots should have auto completed.
+        name: 'BarbarianAgilityGate',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'BarbarianAgilityGate']),
+        approach: [[2545, 3569], [2545, 3570]],
+        exit: [[2546, 3569], [2546, 3570]]
+    },
+    {
+        // ── Fishing Guild ↔ Ardougne Castle ───────────────────────────────────
+        // Bridge over river Dougne, north of Ardougne Castle.
+        name: 'RiverDougneFish',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'KandarinNorthWestRiver',
+            'ArdougneRiverWest',
+            'KandarinSouth',
+            'Feldip',
+            'Tirannwn']),
+        approach: [[2581, 3363], [2582, 3363]],
+        exit: [[2581, 3362], [2582, 3362]]
+    },
+    {
+        // ── Baxtorian Falls ↔ Tree Gnome Stronghold ───────────────────────────
+        // Bridge over river Dougne near Tourist Information Centre.
+        name: 'RiverDougneTourist',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'KandarinNorthWestRiver',
+            'Tirannwn']),
+        approach: [[2535, 3400], [2535, 3401]],
+        exit: [[2534, 3400], [2534, 3401]]
+    },
+    {
         // ── Ardougne ↔ Tree Gnome Stronghold (gate) ───────────────────────────
         // Gate to the Tree Gnome Stronghold. Bots should have auto completed to
         // help Femi (var 152) so they can open the gate without dialog.
@@ -571,6 +641,70 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
             'GnomeStronghold']),
         approach: [[2460, 3382], [2462, 3382]],
         exit: [[2460, 3385], [2462, 3385]]
+    },
+    {
+        // ── Tree Gnome Stronghold ↔ Gnome Stronghold South Bank (stairs) ──────
+        // South stairs.
+        // Bots need to interact with the stairs to get inside the bank.
+        name: 'GnomeSouthBankS',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GnomeSouthBank']),
+        approach: [[2443, 3413], [2446, 3416]],
+        exit: [[2445, 3416]],
+        exitLevel: 1
+    },
+    {
+        // ── Tree Gnome Stronghold ↔ Gnome Stronghold South Bank (stairs) ──────
+        // North stairs.
+        // Bots need to interact with the stairs to get inside the bank.
+        name: 'GnomeSouthBankN',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GnomeSouthBank']),
+        approach: [[2444, 3433], [2447, 3436]],
+        exit: [[2445, 3433]],
+        exitLevel: 1
+    },
+    {
+        // ── Tree Gnome Stronghold ↔ Grand Tree entrance (gate) ────────────────
+        // Bots first need to open the gate to get into the Grand Tree.
+        name: 'GrandTree',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GrandTree',
+            'GrandTree1']),
+        approach: [[2465, 3491], [2466, 3491]],
+        exit: [[2465, 3493], [2466, 3493]]
+    },
+    {
+        // ── Grand Tree entrance ↔ Grand Tree 1st floor (stairs) ───────────────
+        // Stairs to the 1st floor of the Grand Tree.
+        name: 'GrandTree1',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GrandTree1']),
+        approach: [[2465, 3494], [2467, 3496]],
+        exit: [[2465, 3494], [2467, 3496]],
+        exitLevel: 1
+    },
+    {
+        // ── Grand Tree 1st floor ↔ Grand Tree 2nd floor (stairs) ──────────────
+        // Stairs to the 2nd floor of the Grand Tree.
+        name: 'GrandTree2',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GrandTree2']),
+        approach: [[2465, 3494], [2467, 3496]],
+        exit: [[2465, 3494], [2467, 3496]],
+        approachLevel: 1,
+        exitLevel: 2
+    },
+    {
+        // ── Grand Tree 2nd floor ↔ Grand Tree 3nd floor (stairs) ──────────────
+        // Stairs to the 3nd floor of the Grand Tree.
+        name: 'GrandTree3',
+        destInRegion: (x, z, l) => checkRegion(x, z, l, [
+            'GrandTree3']),
+        approach: [[2465, 3494], [2467, 3496]],
+        exit: [[2465, 3494], [2467, 3496]],
+        approachLevel: 2,
+        exitLevel: 3
     },
     {
         // ── Brimhaven ↔ Ardougne (boat) ───────────────────────────────────────
@@ -636,7 +770,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Entrance to Ardougne, north of castle.
         name: 'ArdougneNorthCastle',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
-            'Ardougne',
+            'ArdougneRiverWest',
             'KandarinSouth',
             'Feldip']),
         approach: [[2587, 3342], [2588, 3342]],
@@ -647,7 +781,7 @@ const GATEWAY_REGIONS: GatewayRegion[] = [
         // Small entrance to Ardougne, northwest corner.
         name: 'ArdougneNorthWest',
         destInRegion: (x, z, l) => checkRegion(x, z, l, [
-            'Ardougne',
+            'ArdougneRiverWest',
             'KandarinSouth',
             'Feldip']),
         approach: [[2559, 3337]],
@@ -719,7 +853,7 @@ type Region = {
      */
     readonly coords: number[][];
     /**
-     * If set, limit this region to a floor.
+     * If set, this region only applies to this floor and those above it.
      * Otherwise all floors are inside the region.
      */
     readonly level?: number;
@@ -1189,6 +1323,126 @@ const REGIONS: Region[] = [
             [2178, 3392]]
     },
     {
+        name: 'KandarinNorthWest',
+        coords: [
+            [2176, 3636],
+            [2331, 3741],
+            [2490, 3596],
+            [2532, 3596],
+            [2567, 3583],
+            [2599, 3505],
+            [2599, 3430],
+            [2595, 3425],
+            [2578, 3425],
+            [2578, 3414],
+            [2583, 3414],
+            [2593, 3393],
+            [2609, 3393],
+            [2609, 3351],
+            [2593, 3351],
+            [2598, 3342],
+            [2563, 3342],
+            [2559, 3337],
+            [2461, 3337],
+            [2461, 3325],
+            [2433, 3325],
+            [2408, 3335],
+            [2346, 3335],
+            [2334, 3392],
+            [2178, 3392]]
+    },
+    {
+        name: 'CoalTrucks',
+        coords: [
+            [2553, 3479],
+            [2553, 3485],
+            [2581, 3513],
+            [2599, 3505],
+            [2599, 3456],
+            [2575, 3456],
+            [2575, 3459],
+            [2571, 3459],
+            [2570, 3458],
+            [2565, 3458],
+            [2565, 3460],
+            [2559, 3460],
+            [2559, 3462],
+            [2555, 3465],
+            [2555, 3467],
+            [2558, 3472]]
+    },
+    {
+        name: 'BaxtorianFalls',
+        coords: [
+            [2473, 3532],
+            [2491, 3596],
+            [2532, 3596],
+            [2567, 3583],
+            [2581, 3514],
+            [2552, 3486],
+            [2552, 3478],
+            [2557, 3472],
+            [2555, 3471],
+            [2533, 3471],
+            [2496, 3431],
+            [2496, 3512]]
+    },
+    {
+        name: 'BarbarianOutpost',
+        coords: [
+            [2473, 3532],
+            [2491, 3596],
+            [2532, 3596],
+            [2567, 3583],
+            [2581, 3514],
+            [2520, 3514],
+            [2496, 3512]]
+    },
+    {
+        name: 'BarbarianAgilityGate',
+        coords: [
+            [2528, 3551],
+            [2528, 3556],
+            [2546, 3556],
+            [2546, 3573],
+            [2555, 3573],
+            [2555, 3561],
+            [2553, 3559],
+            [2553, 3543],
+            [2552, 3542],
+            [2529, 3542],
+            [2529, 3550]]
+    },
+    {
+        name: 'KandarinNorthWestRiver',
+        coords: [
+            [2176, 3636],
+            [2331, 3741],
+            [2490, 3596],
+            [2472, 3532],
+            [2495, 3511],
+            [2495, 3430],
+            [2497, 3428],
+            [2534, 3408],
+            [2534, 3398],
+            [2550, 3388],
+            [2567, 3370],
+            [2572, 3361],
+            [2578, 3362],
+            [2585, 3362],
+            [2593, 3351],
+            [2598, 3342],
+            [2563, 3342],
+            [2559, 3337],
+            [2461, 3337],
+            [2461, 3325],
+            [2433, 3325],
+            [2408, 3335],
+            [2346, 3335],
+            [2334, 3392],
+            [2178, 3392]]
+    },
+    {
         name: 'GnomeStronghold',
         coords: [
             [2369, 3423],
@@ -1227,6 +1481,50 @@ const REGIONS: Region[] = [
             [2380, 3408],
             [2376, 3411],
             [2375, 3417]]
+    },
+    {
+        name: 'GnomeSouthBank',
+        coords: [
+            [2443, 3415],
+            [2443, 3434],
+            [2448, 3434],
+            [2448, 3415]],
+        level: 1
+    },
+    {
+        name: 'GrandTree',
+        coords: [
+            [2463, 3493],
+            [2463, 3498],
+            [2468, 3498],
+            [2468, 3493]]
+    },
+    {
+        name: 'GrandTree1',
+        coords: [
+            [2438, 3478],
+            [2438, 3520],
+            [2500, 3520],
+            [2500, 3478]],
+        level: 1
+    },
+    {
+        name: 'GrandTree2',
+        coords: [
+            [2438, 3478],
+            [2438, 3520],
+            [2500, 3520],
+            [2500, 3478]],
+        level: 2
+    },
+    {
+        name: 'GrandTree3',
+        coords: [
+            [2438, 3478],
+            [2438, 3520],
+            [2500, 3520],
+            [2500, 3478]],
+        level: 3
     },
     {
         name: 'Ardougne',
@@ -1415,13 +1713,13 @@ function checkRegion(x: number, z: number, level: number, names: string[]): bool
     for (const name of names) {
         const region = REGIONS.find(r => r.name === name);
         if (!region) continue;
-        if (region.level && region.level !== level) continue;
+        if (region.level && region.level > level) continue;
         if (isInside(region.coords, x, z)) return true;
         if (!region.contains) continue;
         for (const i of region.contains) {
             const contained = REGIONS.find(r => r.name === i);
             if (!contained) continue;
-            if (contained.level && contained.level !== level) continue;
+            if (contained.level && contained.level > level) continue;
             if (isInside(contained.coords, x, z)) return true;
         }
     }
@@ -1751,10 +2049,11 @@ export function walkTo(player: Player, destX: number, destZ: number, level = 0):
         }
     }
 
-    // If a gateway was found, one of 3 things will happen.
+    // If a gateway was found, one of 4 things will happen.
     // 1. If not near approach tile, walk to it first.
     // 2. If teleport is set, teleport to exit area.
-    // 3. Otherwise walk to exit area.
+    // 3. If changing floor, interact with stairs.
+    // 4. Otherwise walk to exit area.
     if (gw && gwExit) {
         const gwDist = Math.max(Math.abs(player.x - next[0]), Math.abs(player.z - next[1])); // Chebyshev distance
 
@@ -1802,6 +2101,15 @@ export function walkTo(player: Player, destX: number, destZ: number, level = 0):
                 teleportDestZ = alt.z;
             }
             botTeleport(player, teleportDestX, teleportDestZ, nextExit[2]);
+            return;
+        }
+
+        // Changing floor, interact with stairs.
+        if (next[2] < nextExit[2] || (next[1] > 4100 && nextExit[1] <= 4100)) {
+            interactNearbyLocByOps(player, 'climb-up', 8);
+            return;
+        } else if (next[2] > nextExit[2] || (next[1] <= 4100 && nextExit[1] > 4100)) {
+            interactNearbyLocByOps(player, 'climb-down', 8);
             return;
         }
 
@@ -2932,6 +3240,35 @@ export function setVarp(player: Player, varpName: string, varpId: number, varpVa
     } else {
         console.log("Error: can't find varp id: " + varpId);
     }
+}
+
+/**
+ * Scan within `radius` tiles for any loc with an option that matches keyword.
+ * If already adjacent to the loc, find which specific option number matches
+ * the keyword and interact with it. If not yet adjacent, path to the loc.
+ *
+ * Returns true if an obstruction was found (interaction queued or walk started).
+ */
+function interactNearbyLocByOps(player: Player, keyword: string, radius = 30): boolean {
+    const loc = _findLoc(player.x, player.z, player.level, radius, loc => {
+        const t = LocType.get(loc.type);
+        const ops = (t.op ?? []).filter((o): o is string => typeof o === 'string').map(o => o.toLowerCase());
+        return ops.some(op => op === keyword);
+    });
+    if (!loc) return false;
+
+    if (isAdjacentToLoc(player, loc)) {
+        const t = LocType.get(loc.type);
+        const ops = (t.op ?? []).filter((o): o is string => typeof o === 'string').map(o => o.toLowerCase());
+        let op = 1 + ops.findIndex(i => i === keyword);
+        if (op < 1) op = 1;
+        interactLocOp(player, loc, op as 1 | 2 | 3 | 4 | 5);
+        return true;
+    }
+
+    // Not adjacent — path toward the loc tile.
+    _pathTowards(player, loc.x, loc.z);
+    return true;
 }
 
 // ── Gate handling ─────────────────────────────────────────────────────────────
