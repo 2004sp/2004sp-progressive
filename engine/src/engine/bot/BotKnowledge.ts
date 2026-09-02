@@ -659,6 +659,8 @@ export const Locations = {
     EDGEVILLE_BANK: [3093, 3491, 0] as [number, number, number],
     YANILLE_BANK: [2613, 3093, 0] as [number, number, number],
     CATHERBY_BANK: [2808, 3441, 0] as [number, number, number],
+    GNOME_NORTH_BANK: [2449, 3482, 1] as [number, number, number], // ⛩ 1st floor
+    GNOME_SOUTH_BANK: [2445, 3424, 1] as [number, number, number], // ⛩ 1st floor
 
     // ── Shops ─────────────────────────────────────────────────────────────────
     BOB_AXES: [3231, 3203, 0] as [number, number, number], // ✅ Bob's Axes, Lumbridge
