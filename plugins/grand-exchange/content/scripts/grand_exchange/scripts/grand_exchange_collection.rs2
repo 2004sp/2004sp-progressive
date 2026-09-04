@@ -1,0 +1,168 @@
+// r481 group 109 Collection Box compatibility harness.
+// Source inventory triggers 523-528 map to six stable temp GE containers.
+// These containers drive placeholder presentation only; this milestone does
+// not move items or coins into inventory/bank and does not alter player wealth.
+
+[debugproc,ge109]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+
+if_openmain(grand_exchange_group_109);
+
+inv_clear(ge_collection_offer_0);
+inv_clear(ge_collection_offer_1);
+inv_clear(ge_collection_offer_2);
+inv_clear(ge_collection_offer_3);
+inv_clear(ge_collection_offer_4);
+inv_clear(ge_collection_offer_5);
+
+// Establish the six empty source-slot presentations first.
+if_settext(grand_exchange_group_109:com_58, "Empty");
+if_settext(grand_exchange_group_109:com_62, "Empty");
+if_settext(grand_exchange_group_109:com_66, "Empty");
+if_settext(grand_exchange_group_109:com_70, "Empty");
+if_settext(grand_exchange_group_109:com_74, "Empty");
+if_settext(grand_exchange_group_109:com_78, "Empty");
+
+if_sethide(grand_exchange_group_109:com_59, true);
+if_sethide(grand_exchange_group_109:com_60, true);
+if_sethide(grand_exchange_group_109:com_61, true);
+if_sethide(grand_exchange_group_109:com_63, true);
+if_sethide(grand_exchange_group_109:com_64, true);
+if_sethide(grand_exchange_group_109:com_65, true);
+if_sethide(grand_exchange_group_109:com_67, true);
+if_sethide(grand_exchange_group_109:com_68, true);
+if_sethide(grand_exchange_group_109:com_69, true);
+if_sethide(grand_exchange_group_109:com_71, true);
+if_sethide(grand_exchange_group_109:com_72, true);
+if_sethide(grand_exchange_group_109:com_73, true);
+if_sethide(grand_exchange_group_109:com_75, true);
+if_sethide(grand_exchange_group_109:com_76, true);
+if_sethide(grand_exchange_group_109:com_77, true);
+if_sethide(grand_exchange_group_109:com_79, true);
+if_sethide(grand_exchange_group_109:com_80, true);
+if_sethide(grand_exchange_group_109:com_81, true);
+
+// Bought items.
+inv_setslot(ge_collection_offer_0, 0, lobster, 25);
+inv_transmit(ge_collection_offer_0, grand_exchange_group_109:com_59);
+if_settext(grand_exchange_group_109:com_58, "Bought items");
+if_settext(grand_exchange_group_109:com_60, "25 x Lobster");
+if_settext(grand_exchange_group_109:com_61, "Collect");
+if_sethide(grand_exchange_group_109:com_59, false);
+if_sethide(grand_exchange_group_109:com_60, false);
+if_sethide(grand_exchange_group_109:com_61, false);
+
+// Sale proceeds.
+inv_setslot(ge_collection_offer_1, 0, coins, 64000);
+inv_transmit(ge_collection_offer_1, grand_exchange_group_109:com_63);
+if_settext(grand_exchange_group_109:com_62, "Sale proceeds");
+if_settext(grand_exchange_group_109:com_64, "64,000 gp");
+if_settext(grand_exchange_group_109:com_65, "Collect");
+if_sethide(grand_exchange_group_109:com_63, false);
+if_sethide(grand_exchange_group_109:com_64, false);
+if_sethide(grand_exchange_group_109:com_65, false);
+
+// Price/refund remainder.
+inv_setslot(ge_collection_offer_2, 0, coins, 850);
+inv_transmit(ge_collection_offer_2, grand_exchange_group_109:com_67);
+if_settext(grand_exchange_group_109:com_66, "Refund");
+if_settext(grand_exchange_group_109:com_68, "850 gp returned");
+if_settext(grand_exchange_group_109:com_69, "Collect");
+if_sethide(grand_exchange_group_109:com_67, false);
+if_sethide(grand_exchange_group_109:com_68, false);
+if_sethide(grand_exchange_group_109:com_69, false);
+
+// Unsold item returned after an aborted/cancelled offer.
+inv_setslot(ge_collection_offer_3, 0, rune_longsword, 1);
+inv_transmit(ge_collection_offer_3, grand_exchange_group_109:com_71);
+if_settext(grand_exchange_group_109:com_70, "Unsold item");
+if_settext(grand_exchange_group_109:com_72, "Rune longsword");
+if_settext(grand_exchange_group_109:com_73, "Collect");
+if_sethide(grand_exchange_group_109:com_71, false);
+if_sethide(grand_exchange_group_109:com_72, false);
+if_sethide(grand_exchange_group_109:com_73, false);
+
+// Bought items plus a price refund exercise both source outputs.
+inv_setslot(ge_collection_offer_4, 0, lobster, 10);
+inv_setslot(ge_collection_offer_4, 1, coins, 250);
+inv_transmit(ge_collection_offer_4, grand_exchange_group_109:com_75);
+if_settext(grand_exchange_group_109:com_74, "Items + refund");
+if_settext(grand_exchange_group_109:com_76, "10 Lobster + 250 gp");
+if_settext(grand_exchange_group_109:com_77, "Collect");
+if_sethide(grand_exchange_group_109:com_75, false);
+if_sethide(grand_exchange_group_109:com_76, false);
+if_sethide(grand_exchange_group_109:com_77, false);
+
+// Keep the final slot empty but transmit its stable container so the source
+// six-container wiring is exercised as a complete set.
+inv_transmit(ge_collection_offer_5, grand_exchange_group_109:com_79);
+
+[debugproc,ge109empty]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+
+if_openmain(grand_exchange_group_109);
+inv_clear(ge_collection_offer_0);
+inv_clear(ge_collection_offer_1);
+inv_clear(ge_collection_offer_2);
+inv_clear(ge_collection_offer_3);
+inv_clear(ge_collection_offer_4);
+inv_clear(ge_collection_offer_5);
+
+if_settext(grand_exchange_group_109:com_58, "Empty");
+if_settext(grand_exchange_group_109:com_62, "Empty");
+if_settext(grand_exchange_group_109:com_66, "Empty");
+if_settext(grand_exchange_group_109:com_70, "Empty");
+if_settext(grand_exchange_group_109:com_74, "Empty");
+if_settext(grand_exchange_group_109:com_78, "Empty");
+if_sethide(grand_exchange_group_109:com_59, true);
+if_sethide(grand_exchange_group_109:com_60, true);
+if_sethide(grand_exchange_group_109:com_61, true);
+if_sethide(grand_exchange_group_109:com_63, true);
+if_sethide(grand_exchange_group_109:com_64, true);
+if_sethide(grand_exchange_group_109:com_65, true);
+if_sethide(grand_exchange_group_109:com_67, true);
+if_sethide(grand_exchange_group_109:com_68, true);
+if_sethide(grand_exchange_group_109:com_69, true);
+if_sethide(grand_exchange_group_109:com_71, true);
+if_sethide(grand_exchange_group_109:com_72, true);
+if_sethide(grand_exchange_group_109:com_73, true);
+if_sethide(grand_exchange_group_109:com_75, true);
+if_sethide(grand_exchange_group_109:com_76, true);
+if_sethide(grand_exchange_group_109:com_77, true);
+if_sethide(grand_exchange_group_109:com_79, true);
+if_sethide(grand_exchange_group_109:com_80, true);
+if_sethide(grand_exchange_group_109:com_81, true);
+
+// Collection interactions are deliberately display-only until the server-side
+// GE settlement/wealth-transfer phase is implemented.
+[inv_button1,grand_exchange_group_109:com_59]
+mes("Collection transfer is not implemented yet.");
+[inv_button1,grand_exchange_group_109:com_63]
+mes("Collection transfer is not implemented yet.");
+[inv_button1,grand_exchange_group_109:com_67]
+mes("Collection transfer is not implemented yet.");
+[inv_button1,grand_exchange_group_109:com_71]
+mes("Collection transfer is not implemented yet.");
+[inv_button1,grand_exchange_group_109:com_75]
+mes("Collection transfer is not implemented yet.");
+[inv_button1,grand_exchange_group_109:com_79]
+mes("Collection transfer is not implemented yet.");
+
+[if_button,grand_exchange_group_109:com_61]
+mes("Collection transfer is not implemented yet.");
+[if_button,grand_exchange_group_109:com_65]
+mes("Collection transfer is not implemented yet.");
+[if_button,grand_exchange_group_109:com_69]
+mes("Collection transfer is not implemented yet.");
+[if_button,grand_exchange_group_109:com_73]
+mes("Collection transfer is not implemented yet.");
+[if_button,grand_exchange_group_109:com_77]
+mes("Collection transfer is not implemented yet.");
+[if_button,grand_exchange_group_109:com_81]
+mes("Collection transfer is not implemented yet.");

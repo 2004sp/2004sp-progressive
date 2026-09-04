@@ -1,0 +1,272 @@
+{
+  "reservation_basis": {
+    "branch": "feature/grand-exchange-backport",
+    "observed_current_maxima": {
+      "interface": 8461,
+      "npc": 1174,
+      "model": 3649,
+      "sequence": 1190,
+      "inventory": 157
+    },
+    "policy": "Do not renumber existing 2004 content. Interface groups receive fixed 256-ID blocks; NPC and NPC-model/sequence imports use reserved ranges above observed maxima. GE-only inventory containers use local IDs 158-165 above the native r254 inventory ceiling, while source inventory 93 reuses native r254 inv. r481 interface/item-display models are never assigned local model IDs; GE items render from native r254 object definitions/models only."
+  },
+  "interfaces": {
+    "105": {
+      "source_group_id": 105,
+      "local_block_base": 9000,
+      "formula": "local = 9000 + source_component_id",
+      "max_source_component_id": 213
+    },
+    "106": {
+      "source_group_id": 106,
+      "local_block_base": 9256,
+      "formula": "local = 9256 + source_component_id",
+      "max_source_component_id": 145
+    },
+    "107": {
+      "source_group_id": 107,
+      "local_block_base": 9512,
+      "formula": "local = 9512 + source_component_id",
+      "max_source_component_id": 18
+    },
+    "108": {
+      "source_group_id": 108,
+      "local_block_base": 9768,
+      "formula": "local = 9768 + source_component_id",
+      "max_source_component_id": 97
+    },
+    "109": {
+      "source_group_id": 109,
+      "local_block_base": 10024,
+      "formula": "local = 10024 + source_component_id",
+      "max_source_component_id": 57
+    },
+    "110": {
+      "source_group_id": 110,
+      "local_block_base": 10280,
+      "formula": "local = 10280 + source_component_id",
+      "max_source_component_id": 92
+    },
+    "643": {
+      "source_group_id": 643,
+      "local_block_base": 10536,
+      "formula": "local = 10536 + source_component_id",
+      "max_source_component_id": 50
+    },
+    "645": {
+      "source_group_id": 645,
+      "local_block_base": 10792,
+      "formula": "local = 10792 + source_component_id",
+      "max_source_component_id": 19
+    },
+    "646": {
+      "source_group_id": 646,
+      "local_block_base": 11048,
+      "formula": "local = 11048 + source_component_id",
+      "max_source_component_id": 13
+    }
+  },
+  "synthetic_interfaces": {
+    "grand_exchange_item_search": {
+      "local_root_id": 8989,
+      "local_component_block_base": 11304,
+      "max_local_component_id": 11392,
+      "component_count": 89,
+      "strategy": "option-2-only-generated-if1",
+      "item_source": "native-r254-obj.pack",
+      "item_rendering": "native-r254-inventory-icons"
+    }
+  },
+  "inventories": {
+    "93": {
+      "source_inv_id": 93,
+      "local_inv_id": 93,
+      "local_name": "inv",
+      "strategy": "reuse-native-r254",
+      "definition_imported": false
+    },
+    "523": {
+      "source_inv_id": 523,
+      "local_inv_id": 158,
+      "local_name": "ge_collection_offer_0",
+      "size": 2,
+      "scope": "temp"
+    },
+    "524": {
+      "source_inv_id": 524,
+      "local_inv_id": 159,
+      "local_name": "ge_collection_offer_1",
+      "size": 2,
+      "scope": "temp"
+    },
+    "525": {
+      "source_inv_id": 525,
+      "local_inv_id": 160,
+      "local_name": "ge_collection_offer_2",
+      "size": 2,
+      "scope": "temp"
+    },
+    "526": {
+      "source_inv_id": 526,
+      "local_inv_id": 161,
+      "local_name": "ge_collection_offer_3",
+      "size": 2,
+      "scope": "temp"
+    },
+    "527": {
+      "source_inv_id": 527,
+      "local_inv_id": 162,
+      "local_name": "ge_collection_offer_4",
+      "size": 2,
+      "scope": "temp"
+    },
+    "528": {
+      "source_inv_id": 528,
+      "local_inv_id": 163,
+      "local_name": "ge_collection_offer_5",
+      "size": 2,
+      "scope": "temp"
+    },
+    "search_results": {
+      "source_inv_id": null,
+      "local_inv_id": 164,
+      "local_name": "ge_search_results",
+      "size": 80,
+      "scope": "temp",
+      "strategy": "option-2-native-r254-search-results"
+    },
+    "selected_item": {
+      "source_inv_id": null,
+      "local_inv_id": 165,
+      "local_name": "ge_selected_item",
+      "size": 1,
+      "scope": "temp",
+      "strategy": "server-authoritative-native-r254-selection"
+    }
+  },
+  "npcs": {
+    "6528": 1200,
+    "6529": 1201,
+    "6530": 1202,
+    "6531": 1203,
+    "6521": 1204
+  },
+  "models": {
+    "103": 4000,
+    "28758": 4002,
+    "28810": 4003,
+    "29874": 4004,
+    "29877": 4005,
+    "29881": 4006,
+    "29884": 4007,
+    "29887": 4008,
+    "29889": 4009,
+    "29890": 4010,
+    "29891": 4011,
+    "29895": 4012,
+    "29896": 4013,
+    "29898": 4014,
+    "29900": 4015,
+    "29903": 4016,
+    "29904": 4017,
+    "29908": 4018
+  },
+  "excluded_interface_models": {
+    "2810": {
+      "source_role": "group-108 item-display model reference",
+      "local_model_id": null,
+      "strategy": "native-r254-runtime-item-rendering",
+      "reason": "The offer item slot must be populated from the selected native r254 object definition/model. The r481 source model is reference metadata only and is not imported or remapped."
+    },
+    "29916": {
+      "source_role": "r481 interface-only static model reference",
+      "local_model_id": null,
+      "strategy": "not-imported",
+      "reason": "This r481 interface model is not an NPC dependency and is outside the native-r254 GE item rendering boundary."
+    }
+  },
+  "sequences": {
+    "808": 1200,
+    "7368": 1201
+  },
+  "sprites": {
+    "297": "r481_ge_sprite_297",
+    "820": "r481_ge_sprite_820",
+    "821": "r481_ge_sprite_821",
+    "822": "r481_ge_sprite_822",
+    "823": "r481_ge_sprite_823",
+    "824": "r481_ge_sprite_824",
+    "825": "r481_ge_sprite_825",
+    "826": "r481_ge_sprite_826",
+    "827": "r481_ge_sprite_827",
+    "828": "r481_ge_sprite_828",
+    "829": "r481_ge_sprite_829",
+    "830": "r481_ge_sprite_830",
+    "831": "r481_ge_sprite_831",
+    "841": "r481_ge_sprite_841",
+    "846": "r481_ge_sprite_846",
+    "847": "r481_ge_sprite_847",
+    "848": "r481_ge_sprite_848",
+    "849": "r481_ge_sprite_849",
+    "851": "r481_ge_sprite_851",
+    "852": "r481_ge_sprite_852",
+    "954": "r481_ge_sprite_954",
+    "955": "r481_ge_sprite_955",
+    "956": "r481_ge_sprite_956",
+    "957": "r481_ge_sprite_957",
+    "958": "r481_ge_sprite_958",
+    "959": "r481_ge_sprite_959",
+    "960": "r481_ge_sprite_960",
+    "961": "r481_ge_sprite_961",
+    "962": "r481_ge_sprite_962",
+    "963": "r481_ge_sprite_963",
+    "964": "r481_ge_sprite_964",
+    "1074": "r481_ge_sprite_1074",
+    "1075": "r481_ge_sprite_1075",
+    "1136": "r481_ge_sprite_1136",
+    "1137": "r481_ge_sprite_1137",
+    "1138": "r481_ge_sprite_1138",
+    "1140": "r481_ge_sprite_1140",
+    "1146": "r481_ge_sprite_1146",
+    "1147": "r481_ge_sprite_1147",
+    "1150": "r481_ge_sprite_1150",
+    "1151": "r481_ge_sprite_1151",
+    "1152": "r481_ge_sprite_1152",
+    "1153": "r481_ge_sprite_1153",
+    "1154": "r481_ge_sprite_1154",
+    "1157": "r481_ge_sprite_1157",
+    "1158": "r481_ge_sprite_1158",
+    "1161": "r481_ge_sprite_1161",
+    "1162": "r481_ge_sprite_1162",
+    "1163": "r481_ge_sprite_1163",
+    "1164": "r481_ge_sprite_1164",
+    "1165": "r481_ge_sprite_1165",
+    "1167": "r481_ge_sprite_1167",
+    "1168": "r481_ge_sprite_1168",
+    "1170": "r481_ge_sprite_1170",
+    "1174": "r481_ge_sprite_1174"
+  },
+  "fonts": {
+    "494": {
+      "status": "reused-native",
+      "source_cache_name": "p11_full",
+      "native_font": "p11",
+      "preferred": "reuse native font; no r481 font import required",
+      "fallback_name": "r481_ge_font_494"
+    },
+    "495": {
+      "status": "reused-native",
+      "source_cache_name": "p12_full",
+      "native_font": "p12",
+      "preferred": "reuse native font; no r481 font import required",
+      "fallback_name": "r481_ge_font_495"
+    },
+    "496": {
+      "status": "reused-native",
+      "source_cache_name": "b12_full",
+      "native_font": "b12",
+      "preferred": "reuse native font; no r481 font import required",
+      "fallback_name": "r481_ge_font_496"
+    }
+  }
+}

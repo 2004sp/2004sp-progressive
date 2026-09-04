@@ -12,6 +12,7 @@ import FloType from '#/config/FloType.js';
 import SeqType, { PostanimMove, PreanimMove, RestartMode } from '#/config/SeqType.js';
 import LocType from '#/config/LocType.js';
 import ObjType from '#/config/ObjType.js';
+import { GRAND_EXCHANGE_UNTRADEABLE_ITEM_IDS } from '#/generated/GrandExchangeUntradeable.js';
 import NpcType from '#/config/NpcType.js';
 import IdkType from '#/config/IdkType.js';
 import SpotType from '#/config/SpotType.js';
@@ -81,6 +82,14 @@ const SCROLLBAR_TRACK = 0x23201b;
 const SCROLLBAR_GRIP_FOREGROUND = 0x4d4233;
 const SCROLLBAR_GRIP_HIGHLIGHT = 0x766654;
 const SCROLLBAR_GRIP_LOWLIGHT = 0x332d25;
+// Frozen interface.pack IDs for the Grand Exchange buy-search prompt.
+const GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID = 9136;
+const GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID = 9137;
+const GRAND_EXCHANGE_SEARCH_PROMPT_COMPONENT_ID = 9192;
+const GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS = 2000;
+const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;
+const GRAND_EXCHANGE_ITEM_SEARCH_HEADER = 'Grand Exchange Item Search';
+const GRAND_EXCHANGE_BACK_COMPONENT_ID = 9127; // group 105 local component formula: 9000 + source com_127
 const CUSTOM_CONTENT = (globalThis as typeof globalThis & { __customContent?: { clans?: boolean; antiMacroRotation?: boolean } }).__customContent;
 const CLANS_ENABLED = CUSTOM_CONTENT?.clans === true;
 const ANTI_MACRO_ROTATION_ENABLED = CUSTOM_CONTENT?.antiMacroRotation !== false;
@@ -469,6 +478,9 @@ export class Client extends GameShell {
     private socialInput: string = '';
     private socialInputType: number = 0;
     private socialInputHeader: string = '';
+    private grandExchangeItemSearchCatalogue: Array<{ id: number; name: string }> | null = null;
+    private grandExchangeItemSearchLastQuery: string = '';
+    private grandExchangeItemSearchLastResults: Array<{ id: number; name: string }> = [];
 
     private dialogInputOpen: boolean = false;
     private dialogInput: string = '';
@@ -2590,10 +2602,12 @@ export class Client extends GameShell {
         const checkClickInput = !this.isMobile || (this.isMobile && !MobileKeyboard.isWithinCanvasKeyboard(this.mouseClickX, this.mouseClickY));
 
         if (checkClickInput) {
-            this.mouseLoop();
-            this.minimapLoop();
-            this.tabLoop();
-            this.chatModeLoop();
+            if (!this.handleGrandExchangeItemSearchClick()) {
+                this.mouseLoop();
+                this.minimapLoop();
+                this.tabLoop();
+                this.chatModeLoop();
+            }
         }
 
         if (this.mouseButton === 1 || this.mouseClickButton === 1) {
@@ -2918,6 +2932,9 @@ export class Client extends GameShell {
 
     // todo: order
     private addChatOptions(_mouseX: number, mouseY: number): void {
+        if (this.isGrandExchangeItemSearchActive()) {
+            return;
+        }
         let line: number = 0;
         for (let i: number = 0; i < 100; i++) {
             if (!this.chatText[i]) {
@@ -6240,6 +6257,16 @@ export class Client extends GameShell {
             }
 
             if (this.ptype === ServerProt.IF_CLOSE) {
+                // IF_CLOSE closes every viewport interface. Preserve the old overlay id long enough
+                // to recognise a closing GE, then clear it so scene/minimap input is restored.
+                const closingOverlayId = this.mainOverlayId;
+                this.mainOverlayId = -1;
+            if (
+                this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+                closingOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID
+            ) {
+                this.closeGrandExchangeItemSearch();
+            }
                 if (this.sideModalId !== -1) {
                     this.sideModalId = -1;
                     this.redrawSidebar = true;
@@ -7069,7 +7096,9 @@ export class Client extends GameShell {
                 this.socialInputOpen = true;
                 this.socialInput = '';
                 this.socialInputType = 6;
-                this.socialInputHeader = 'Enter clan name:';
+                this.socialInputHeader = (this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID || this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID)
+                    ? GRAND_EXCHANGE_ITEM_SEARCH_HEADER
+                    : 'Enter clan name:';
                 this.redrawChatback = true;
 
                 if (this.isMobile) {
@@ -8882,6 +8911,17 @@ export class Client extends GameShell {
         const a: number = this.menuParamA[optionId];
         const b: number = this.menuParamB[optionId];
         const c: number = this.menuParamC[optionId];
+        const normalizedAction = action >= MiniMenuAction._PRIORITY ? action - MiniMenuAction._PRIORITY : action;
+        if (
+            normalizedAction === MiniMenuAction.IF_BUTTON &&
+            c === GRAND_EXCHANGE_BACK_COMPONENT_ID &&
+            this.isGrandExchangeItemSearchActive()
+        ) {
+            this.closeGrandExchangeItemSearch();
+        }
+        if (normalizedAction === MiniMenuAction.CLOSE_BUTTON && this.isGrandExchangeItemSearchActive()) {
+            this.closeGrandExchangeItemSearch();
+        }
 
         if (action >= MiniMenuAction._PRIORITY) {
             action -= MiniMenuAction._PRIORITY;
@@ -10218,6 +10258,13 @@ export class Client extends GameShell {
         }
     }
 
+    private isGrandExchangeHoverGraphic(x: number, y: number, width: number, height: number): boolean {
+        const grandExchangeOpen =
+            this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+            this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID;
+        return grandExchangeOpen && this.mouseX >= x && this.mouseY >= y && this.mouseX < x + width && this.mouseY < y + height;
+    }
+
     private drawInterface(com: IfType, x: number, y: number, scrollY: number): void {
         if (com.type !== 0 || !com.children || (com.hide && this.overMainComId !== com.id && this.overSideComId !== com.id && this.overChatComId !== com.id)) {
             return;
@@ -10504,13 +10551,43 @@ export class Client extends GameShell {
                 }
             } else if (child.type === ComponentType.TYPE_GRAPHIC) {
                 let image: Pix32 | null;
-                if (this.getIfActive(child)) {
+                const hovered = this.isGrandExchangeHoverGraphic(childX, childY, child.width, child.height);
+                if (hovered && child.graphic2 !== null) {
+                    image = child.graphic2;
+                } else if (this.getIfActive(child)) {
                     image = child.graphic2;
                 } else {
                     image = child.graphic;
                 }
 
-                image?.plotSprite(childX, childY);
+                if (child.id !== GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID) {
+                    if (
+                        child.id === GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID &&
+                        image !== null
+                    ) {
+                        image = child.graphic;
+                    }
+                    image?.plotSprite(childX, childY);
+
+                    if (
+                        child.id === GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID &&
+                        IfType.list[GRAND_EXCHANGE_SEARCH_PROMPT_COMPONENT_ID]?.hide === false
+                    ) {
+                        const glow = IfType.list[GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID]?.graphic;
+                        if (glow) {
+                            const phase = (Date.now() % GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS) / GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS;
+                            const hovered =
+                                this.mouseX - 4 >= childX &&
+                                this.mouseX - 4 < childX + child.width &&
+                                this.mouseY - 4 >= childY &&
+                                this.mouseY - 4 < childY + child.height;
+                            const alpha = hovered
+                                ? 256
+                                : Math.round((1 - Math.abs(phase * 2 - 1)) * 256);
+                            glow.transPlotSprite(childX, childY, alpha);
+                        }
+                    }
+                }
             } else if (child.type === ComponentType.TYPE_MODEL) {
                 const tmpX: number = Pix3D.originX;
                 const tmpY: number = Pix3D.originY;
@@ -11259,6 +11336,15 @@ export class Client extends GameShell {
     }
 
     private closeModal(): void {
+        const closingGrandExchange =
+            this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+            this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID;
+        if (closingGrandExchange) {
+            this.closeGrandExchangeItemSearch();
+        }
+        // CLOSE_MODAL clears the locally-open viewport overlay immediately. Waiting for
+        // a server IF_CLOSE leaves GE input state behind and blocks scene/minimap movement.
+        this.mainOverlayId = -1;
         this.out.pIsaac(ClientProt.CLOSE_MODAL);
 
         if (this.sideModalId !== -1) {
@@ -11442,6 +11528,158 @@ export class Client extends GameShell {
     }
 
     // todo: order
+    private closeGrandExchangeItemSearch(): void {
+        if (
+            !this.socialInputOpen ||
+            this.socialInputType !== 6 ||
+            this.socialInputHeader !== GRAND_EXCHANGE_ITEM_SEARCH_HEADER
+        ) {
+            return;
+        }
+
+        // Release the server-side p_namedialog suspension when Back/X cancels the GE search.
+        this.out.pIsaac(ClientProt.RESUME_P_NAMEDIALOG);
+        this.out.p1(1);
+        this.out.pjstr('');
+
+        this.socialInputOpen = false;
+        this.socialInput = '';
+        this.socialInputType = 0;
+        this.socialInputHeader = '';
+        this.grandExchangeItemSearchLastQuery = '';
+        this.grandExchangeItemSearchLastResults = [];
+        this.redrawChatback = true;
+    }
+
+    private isGrandExchangeItemSearchActive(): boolean {
+        if (!this.socialInputOpen || this.socialInputType !== 6 || this.socialInputHeader !== GRAND_EXCHANGE_ITEM_SEARCH_HEADER) {
+            return false;
+        }
+
+        return this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+            this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID;
+    }
+
+    private getGrandExchangeItemSearchCatalogue(): Array<{ id: number; name: string }> {
+        if (this.grandExchangeItemSearchCatalogue) {
+            return this.grandExchangeItemSearchCatalogue;
+        }
+
+        const catalogue: Array<{ id: number; name: string }> = [];
+        for (let id = 0; id < ObjType.numDefinitions; id++) {
+            if (GRAND_EXCHANGE_UNTRADEABLE_ITEM_IDS.has(id)) {
+                continue;
+            }
+
+            const obj = ObjType.list(id);
+            const name = obj.name?.trim();
+            if (!name || name.toLowerCase() === 'null' || obj.certtemplate !== -1) {
+                continue;
+            }
+
+            catalogue.push({ id, name });
+        }
+
+        this.grandExchangeItemSearchCatalogue = catalogue;
+        return catalogue;
+    }
+
+    private getGrandExchangeItemSearchResults(limit: number = 7): Array<{ id: number; name: string }> {
+        const needle = this.socialInput.trim().toLowerCase();
+        if (!needle) {
+            this.grandExchangeItemSearchLastQuery = '';
+            this.grandExchangeItemSearchLastResults = [];
+            return [];
+        }
+
+        if (needle !== this.grandExchangeItemSearchLastQuery) {
+            const matches = this.getGrandExchangeItemSearchCatalogue().filter(item => item.name.toLowerCase().includes(needle));
+            matches.sort((a, b) => {
+                const aName = a.name.toLowerCase();
+                const bName = b.name.toLowerCase();
+                const aExact = aName === needle ? 0 : aName.startsWith(needle) ? 1 : 2;
+                const bExact = bName === needle ? 0 : bName.startsWith(needle) ? 1 : 2;
+                if (aExact !== bExact) return aExact - bExact;
+                const byName = aName.localeCompare(bName);
+                return byName !== 0 ? byName : a.id - b.id;
+            });
+            this.grandExchangeItemSearchLastQuery = needle;
+            this.grandExchangeItemSearchLastResults = matches;
+        }
+
+        return this.grandExchangeItemSearchLastResults.slice(0, limit);
+    }
+
+    private submitGrandExchangeItemSearchResult(name: string): void {
+        this.socialInput = name;
+        this.socialInputOpen = false;
+        this.redrawChatback = true;
+
+        this.out.pIsaac(ClientProt.RESUME_P_NAMEDIALOG);
+        this.out.p1(name.length + 1);
+        this.out.pjstr(name);
+    }
+
+    private handleGrandExchangeItemSearchClick(): boolean {
+        if (!this.isGrandExchangeItemSearchActive() || this.mouseClickButton !== 1) {
+            return false;
+        }
+
+        const localX = this.mouseClickX - 17;
+        const localY = this.mouseClickY - 357;
+        if (localX < 0 || localX >= 479 || localY < 0 || localY >= 84) {
+            return false;
+        }
+
+        const results = this.getGrandExchangeItemSearchResults(7);
+        const row = Math.floor(localY / 12);
+        if (row < 0 || row >= results.length) {
+            return false;
+        }
+
+        this.submitGrandExchangeItemSearchResult(results[row].name);
+        this.mouseClickButton = 0;
+        return true;
+    }
+
+    private drawGrandExchangeItemSearchChatbox(): void {
+        const query = this.socialInput.trim();
+        if (!query) {
+            Pix2D.drawRect(0, 0, 38, 36, 0x6b6252);
+            Pix2D.drawRect(1, 1, 36, 34, 0xb4a783);
+            this.b12?.centreString('Grand Exchange Item Search', 239, 18, 0x7e3200);
+            this.p11?.centreString('To search for an item, start by typing part of its name.', 239, 49, 0x7e3200);
+            this.p11?.centreString('Then, simply select the item you want from the results on display.', 239, 64, 0x7e3200);
+        } else {
+            const results = this.getGrandExchangeItemSearchResults(7);
+            if (results.length === 0) {
+                this.p12?.centreString('No matching tradeable items.', 239, 36, 0x7e3200);
+            } else {
+                for (let row = 0; row < results.length; row++) {
+                    const item = results[row];
+                    const y = row * 12;
+                const hoverX = this.mouseX - 17;
+                const hoverY = this.mouseY - 357;
+                if (hoverX >= 47 && hoverX < 463 && hoverY >= y && hoverY < y + 12) {
+                    Pix2D.fillRect(47, y, 416, 12, 0xb4a783);
+                }
+                    // Java-style GE search results are a compact text list; no per-row icon tile.
+                    
+                    
+                    this.p12?.drawString(item.name, 48, y + 12, 0x7e3200);
+                }
+            }
+        }
+
+        // Match the later GE chatbox search affordance: a small magnifier at the
+        // left of the live text entry line rather than the generic name-dialog label.
+        Pix2D.fillCircle(10, 86, 5, 0x4b4638, 256);
+        Pix2D.fillCircle(10, 86, 3, 0xd5c7a6, 256);
+        Pix2D.fillRect(14, 90, 4, 2, 0x4b4638);
+        Pix2D.fillRect(16, 92, 3, 2, 0x4b4638);
+        this.p12?.drawString(this.socialInput + '*', 24, 92, Colour.DARKBLUE);
+    }
+
     private drawChat(): void {
         this.areaChatback?.setPixels();
         if (this.chatbackScanline) {
@@ -11451,8 +11689,12 @@ export class Client extends GameShell {
         this.chatback?.plotSprite(0, 0);
 
         if (this.socialInputOpen) {
-            this.b12?.centreString(this.socialInputHeader, 239, 40, Colour.BLACK);
-            this.b12?.centreString(this.socialInput + '*', 239, 60, Colour.DARKBLUE);
+            if (this.isGrandExchangeItemSearchActive()) {
+                this.drawGrandExchangeItemSearchChatbox();
+            } else {
+                this.b12?.centreString(this.socialInputHeader, 239, 40, Colour.BLACK);
+                this.b12?.centreString(this.socialInput + '*', 239, 60, Colour.DARKBLUE);
+            }
         } else if (this.dialogInputOpen) {
             this.b12?.centreString('Enter amount:', 239, 40, Colour.BLACK);
             this.b12?.centreString(this.dialogInput + '*', 239, 60, Colour.DARKBLUE);

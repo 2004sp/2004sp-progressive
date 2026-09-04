@@ -1,0 +1,124 @@
+// r481 group 643 Grand Exchange item/offer history compatibility harness.
+//
+// Source rows are intentionally opened empty by [debugproc,ge643]. The later
+// authoritative server-side GE system can populate the same stable component
+// contract with if_settext/if_setobject. Item models must always be native r254
+// objects; this script imports no r481 item definitions or item-model data.
+
+[debugproc,ge643]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+
+if_openmain(grand_exchange_group_643);
+
+// Empty/renderable shell: preserve chrome, headers and row separators while
+// clearing every runtime-owned source text cell and compatibility helper.
+if_settext(grand_exchange_group_643:com_25, "");
+if_settext(grand_exchange_group_643:com_26, "");
+if_settext(grand_exchange_group_643:com_27, "");
+if_settext(grand_exchange_group_643:com_28, "");
+if_settext(grand_exchange_group_643:com_29, "");
+if_settext(grand_exchange_group_643:com_30, "");
+if_settext(grand_exchange_group_643:com_31, "");
+if_settext(grand_exchange_group_643:com_32, "");
+if_settext(grand_exchange_group_643:com_33, "");
+if_settext(grand_exchange_group_643:com_34, "");
+if_settext(grand_exchange_group_643:com_35, "");
+if_settext(grand_exchange_group_643:com_36, "");
+if_settext(grand_exchange_group_643:com_37, "");
+if_settext(grand_exchange_group_643:com_38, "");
+if_settext(grand_exchange_group_643:com_39, "");
+if_settext(grand_exchange_group_643:com_40, "");
+if_settext(grand_exchange_group_643:com_41, "");
+if_settext(grand_exchange_group_643:com_42, "");
+if_settext(grand_exchange_group_643:com_43, "");
+if_settext(grand_exchange_group_643:com_44, "");
+
+if_sethide(grand_exchange_group_643:com_51, true);
+if_sethide(grand_exchange_group_643:com_52, true);
+if_sethide(grand_exchange_group_643:com_53, true);
+if_sethide(grand_exchange_group_643:com_54, true);
+if_sethide(grand_exchange_group_643:com_55, true);
+if_sethide(grand_exchange_group_643:com_56, true);
+if_sethide(grand_exchange_group_643:com_57, true);
+if_sethide(grand_exchange_group_643:com_58, true);
+if_sethide(grand_exchange_group_643:com_59, true);
+if_sethide(grand_exchange_group_643:com_60, true);
+if_sethide(grand_exchange_group_643:com_61, true);
+if_sethide(grand_exchange_group_643:com_62, true);
+if_sethide(grand_exchange_group_643:com_63, true);
+if_sethide(grand_exchange_group_643:com_64, true);
+if_sethide(grand_exchange_group_643:com_65, true);
+
+// Deterministic visual fixture. This is display-only and does not create,
+// reserve, match, cancel, settle or persist any GE offer.
+[debugproc,ge643test]
+if (map_feature("grandexchange") = false) {
+    mes("Grand Exchange custom content is disabled.");
+    return;
+}
+
+if_openmain(grand_exchange_group_643);
+
+// Row 0: completed native-r254 Lobster buy.
+if_settext(grand_exchange_group_643:com_25, "Buy");
+if_settext(grand_exchange_group_643:com_30, "25");
+if_settext(grand_exchange_group_643:com_35, "Lobster");
+if_settext(grand_exchange_group_643:com_40, "120 gp");
+if_setobject(grand_exchange_group_643:com_51, lobster, 250);
+if_settext(grand_exchange_group_643:com_56, "Complete");
+if_settext(grand_exchange_group_643:com_61, "12 Dec 12:00");
+
+// Row 1: partially-filled native-r254 Rune longsword sell.
+if_settext(grand_exchange_group_643:com_26, "Sell");
+if_settext(grand_exchange_group_643:com_31, "1");
+if_settext(grand_exchange_group_643:com_36, "Rune longsword");
+if_settext(grand_exchange_group_643:com_41, "32,000 gp");
+if_setobject(grand_exchange_group_643:com_52, rune_longsword, 250);
+if_settext(grand_exchange_group_643:com_57, "Partial");
+if_settext(grand_exchange_group_643:com_62, "12 Dec 11:45");
+
+// Row 2: cancelled Lobster buy.
+if_settext(grand_exchange_group_643:com_27, "Buy");
+if_settext(grand_exchange_group_643:com_32, "100");
+if_settext(grand_exchange_group_643:com_37, "Lobster");
+if_settext(grand_exchange_group_643:com_42, "110 gp");
+if_setobject(grand_exchange_group_643:com_53, lobster, 250);
+if_settext(grand_exchange_group_643:com_58, "Cancelled");
+if_settext(grand_exchange_group_643:com_63, "12 Dec 11:20");
+
+// Row 3: completed Rune longsword sell.
+if_settext(grand_exchange_group_643:com_28, "Sell");
+if_settext(grand_exchange_group_643:com_33, "2");
+if_settext(grand_exchange_group_643:com_38, "Rune longsword");
+if_settext(grand_exchange_group_643:com_43, "31,500 gp");
+if_setobject(grand_exchange_group_643:com_54, rune_longsword, 250);
+if_settext(grand_exchange_group_643:com_59, "Complete");
+if_settext(grand_exchange_group_643:com_64, "12 Dec 10:55");
+
+// Row 4: pending Lobster buy.
+if_settext(grand_exchange_group_643:com_29, "Buy");
+if_settext(grand_exchange_group_643:com_34, "50");
+if_settext(grand_exchange_group_643:com_39, "Lobster");
+if_settext(grand_exchange_group_643:com_44, "125 gp");
+if_setobject(grand_exchange_group_643:com_55, lobster, 250);
+if_settext(grand_exchange_group_643:com_60, "Pending");
+if_settext(grand_exchange_group_643:com_65, "12 Dec 10:30");
+
+if_sethide(grand_exchange_group_643:com_51, false);
+if_sethide(grand_exchange_group_643:com_52, false);
+if_sethide(grand_exchange_group_643:com_53, false);
+if_sethide(grand_exchange_group_643:com_54, false);
+if_sethide(grand_exchange_group_643:com_55, false);
+if_sethide(grand_exchange_group_643:com_56, false);
+if_sethide(grand_exchange_group_643:com_57, false);
+if_sethide(grand_exchange_group_643:com_58, false);
+if_sethide(grand_exchange_group_643:com_59, false);
+if_sethide(grand_exchange_group_643:com_60, false);
+if_sethide(grand_exchange_group_643:com_61, false);
+if_sethide(grand_exchange_group_643:com_62, false);
+if_sethide(grand_exchange_group_643:com_63, false);
+if_sethide(grand_exchange_group_643:com_64, false);
+if_sethide(grand_exchange_group_643:com_65, false);

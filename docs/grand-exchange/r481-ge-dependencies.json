@@ -1,0 +1,274 @@
+{
+  "interface_groups": [
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    643,
+    645,
+    646
+  ],
+  "interface_component_count": 713,
+  "sprite_groups": [
+    297,
+    820,
+    821,
+    822,
+    823,
+    824,
+    825,
+    826,
+    827,
+    828,
+    829,
+    830,
+    831,
+    841,
+    846,
+    847,
+    848,
+    849,
+    851,
+    852,
+    954,
+    955,
+    956,
+    957,
+    958,
+    959,
+    960,
+    961,
+    962,
+    963,
+    964,
+    1074,
+    1075,
+    1136,
+    1137,
+    1138,
+    1140,
+    1146,
+    1147,
+    1150,
+    1151,
+    1152,
+    1153,
+    1154,
+    1157,
+    1158,
+    1161,
+    1162,
+    1163,
+    1164,
+    1165,
+    1167,
+    1168,
+    1170,
+    1174
+  ],
+  "font_ids": [
+    494,
+    495,
+    496
+  ],
+  "interface_static_model_ids": [
+    2810,
+    29916
+  ],
+  "interface_model_import_policy": {
+    "strategy": "source-reference-only-native-r254-item-rendering",
+    "source_only_model_ids": [
+      2810,
+      29916
+    ],
+    "import_model_ids": [],
+    "note": "Direct r481 interface model references are frozen for source documentation only. GE searchable/tradeable item slots must be populated from native r254 object definitions and their native models/icons; these r481 interface models are never import dependencies."
+  },
+  "npc_ids": [
+    6521,
+    6528,
+    6529,
+    6530,
+    6531
+  ],
+  "npc_model_ids": [
+    103,
+    28758,
+    28810,
+    29874,
+    29877,
+    29881,
+    29884,
+    29887,
+    29889,
+    29890,
+    29891,
+    29895,
+    29896,
+    29898,
+    29900,
+    29903,
+    29904,
+    29908
+  ],
+  "all_model_ids": [
+    103,
+    28758,
+    28810,
+    29874,
+    29877,
+    29881,
+    29884,
+    29887,
+    29889,
+    29890,
+    29891,
+    29895,
+    29896,
+    29898,
+    29900,
+    29903,
+    29904,
+    29908
+  ],
+  "model_dependency_policy": "all_model_ids intentionally contains only NPC-specific model dependencies. r481 interface/item-display models are source metadata only and must not be imported for GE item search, offers, history, icons or models.",
+  "sequence_ids": [
+    808,
+    7368
+  ],
+  "framesets": {
+    "207": [
+      236,
+      237,
+      238,
+      239,
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247
+    ],
+    "1869": [
+      13,
+      27,
+      38,
+      40,
+      60,
+      63,
+      64,
+      71,
+      76,
+      77,
+      80,
+      83,
+      90,
+      92,
+      99,
+      111,
+      113,
+      116,
+      126,
+      135,
+      138,
+      140,
+      149,
+      160,
+      163,
+      166,
+      171,
+      176,
+      177
+    ]
+  },
+  "skeleton_ids": [
+    0
+  ],
+  "inventory_container_resolution": {
+    "native_reuse": [
+      {
+        "source_inv_id": 93,
+        "local_inv_id": 93,
+        "local_name": "inv",
+        "strategy": "reuse-native-r254"
+      }
+    ],
+    "plugin_containers": [
+      {
+        "source_inv_id": 523,
+        "local_inv_id": 158,
+        "local_name": "ge_collection_offer_0",
+        "size": 2,
+        "scope": "temp"
+      },
+      {
+        "source_inv_id": 524,
+        "local_inv_id": 159,
+        "local_name": "ge_collection_offer_1",
+        "size": 2,
+        "scope": "temp"
+      },
+      {
+        "source_inv_id": 525,
+        "local_inv_id": 160,
+        "local_name": "ge_collection_offer_2",
+        "size": 2,
+        "scope": "temp"
+      },
+      {
+        "source_inv_id": 526,
+        "local_inv_id": 161,
+        "local_name": "ge_collection_offer_3",
+        "size": 2,
+        "scope": "temp"
+      },
+      {
+        "source_inv_id": 527,
+        "local_inv_id": 162,
+        "local_name": "ge_collection_offer_4",
+        "size": 2,
+        "scope": "temp"
+      },
+      {
+        "source_inv_id": 528,
+        "local_inv_id": 163,
+        "local_name": "ge_collection_offer_5",
+        "size": 2,
+        "scope": "temp"
+      }
+    ]
+  },
+  "client_state_resolution": {
+    "manifest": "plugins/grand-exchange/client-state-assets.json",
+    "strategy": "server-authoritative-if1-substitution",
+    "source_varp_ids": [],
+    "source_varbit_ids": [],
+    "local_varp_configs": [],
+    "local_varbit_configs": [],
+    "resolution": "No in-scope reconstructed IF1 component directly reads an r481 varp or varbit. Indirect r481 CS2 presentation state is replaced with explicit r254 server-driven IF1 state rather than importing opaque unused variables.",
+    "source_client_script_mappings": {
+      "581": "group-109 collection slot onload -> IF1 slot hosts/helper presentation driven by grand_exchange_collection.rs2",
+      "654": "group-109 collection box onload -> explicit server-driven open/initialisation in grand_exchange_collection.rs2",
+      "656": "group-109 inventory transmit -> native r254 inv_transmit using source inventories 523-528 mapped to local temp containers 158-163"
+    },
+    "server_state_substitutions": [
+      "group 105 initial/mutually-exclusive layers -> if_sethide",
+      "group 106 submitted-offer visibility -> if_sethide",
+      "groups 108/110 setup-state variants -> explicit IF1 root opens plus server setters",
+      "group 109 collection outputs -> temp inventories, inv_transmit, if_settext and if_sethide",
+      "group 643 history rows -> if_settext and if_setobject"
+    ],
+    "deferred_to_phase4_and_phase5": [
+      "selected native-r254 item",
+      "offer side and slot",
+      "quantity and price",
+      "offer lifecycle/status",
+      "matching, settlement and persistence"
+    ]
+  },
+  "unresolved_phase2_dependencies": []
+}

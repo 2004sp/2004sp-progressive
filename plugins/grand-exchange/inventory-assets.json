@@ -1,0 +1,102 @@
+{
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "native_reuse": [
+    {
+      "source_inv_id": 93,
+      "local_inv_id": 93,
+      "local_name": "inv",
+      "purpose": "player inventory used by the Grand Exchange sell-selection flow",
+      "strategy": "reuse-native-r254",
+      "definition_imported": false
+    }
+  ],
+  "plugin_containers": [
+    {
+      "source_inv_id": 523,
+      "local_inv_id": 158,
+      "local_name": "ge_collection_offer_0",
+      "slot": 0,
+      "host_component_id": 17,
+      "size": 2,
+      "scope": "temp",
+      "stackall": true,
+      "purpose": "collection outputs for Grand Exchange offer slot 0"
+    },
+    {
+      "source_inv_id": 524,
+      "local_inv_id": 159,
+      "local_name": "ge_collection_offer_1",
+      "slot": 1,
+      "host_component_id": 22,
+      "size": 2,
+      "scope": "temp",
+      "stackall": true,
+      "purpose": "collection outputs for Grand Exchange offer slot 1"
+    },
+    {
+      "source_inv_id": 525,
+      "local_inv_id": 160,
+      "local_name": "ge_collection_offer_2",
+      "slot": 2,
+      "host_component_id": 27,
+      "size": 2,
+      "scope": "temp",
+      "stackall": true,
+      "purpose": "collection outputs for Grand Exchange offer slot 2"
+    },
+    {
+      "source_inv_id": 526,
+      "local_inv_id": 161,
+      "local_name": "ge_collection_offer_3",
+      "slot": 3,
+      "host_component_id": 35,
+      "size": 2,
+      "scope": "temp",
+      "stackall": true,
+      "purpose": "collection outputs for Grand Exchange offer slot 3"
+    },
+    {
+      "source_inv_id": 527,
+      "local_inv_id": 162,
+      "local_name": "ge_collection_offer_4",
+      "slot": 4,
+      "host_component_id": 43,
+      "size": 2,
+      "scope": "temp",
+      "stackall": true,
+      "purpose": "collection outputs for Grand Exchange offer slot 4"
+    },
+    {
+      "source_inv_id": 528,
+      "local_inv_id": 163,
+      "local_name": "ge_collection_offer_5",
+      "slot": 5,
+      "host_component_id": 51,
+      "size": 2,
+      "scope": "temp",
+      "stackall": true,
+      "purpose": "collection outputs for Grand Exchange offer slot 5"
+    }
+  ],
+  "staging": {
+    "native_inv_pack_max_before_ge": 157,
+    "plugin_local_range": "158-163",
+    "option_2_only": true,
+    "generated_outputs_repacked": [
+      "inv.dat",
+      "inv.idx"
+    ],
+    "native_outputs_restored_after_run": true
+  },
+  "guardrails": [
+    "Do not import an r481 definition for inventory 93; reuse the native r254 player inventory.",
+    "Do not import r481 item definitions, names, icons or models through these containers.",
+    "The six collection containers may contain only native r254 item IDs (including native coins) when populated.",
+    "The containers are presentation transports; authoritative Grand Exchange offer and collection persistence belongs to the server-side GE system."
+  ]
+}

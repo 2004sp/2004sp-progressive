@@ -1,0 +1,222 @@
+{
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "interface": {
+    "source_group_id": 106,
+    "synthetic_if1_root_local_id": 8991,
+    "source_component_block_base": 9256,
+    "component_formula": "local = 9256 + source_component_id",
+    "source_component_count": 146,
+    "canvas": {
+      "width": 512,
+      "height": 334
+    },
+    "initial_hidden_layers": [
+      19,
+      33,
+      47,
+      60,
+      64,
+      77,
+      81,
+      94,
+      98,
+      111,
+      126,
+      131,
+      140
+    ],
+    "font_compatibility": [
+      {
+        "source_font_id": 494,
+        "candidate_native_font": "p11",
+        "status": "reused-as-established-by-group105"
+      },
+      {
+        "source_font_id": 495,
+        "candidate_native_font": "p12",
+        "status": "native-compatibility-mapping"
+      },
+      {
+        "source_font_id": 496,
+        "candidate_native_font": "b12",
+        "status": "reused-as-established-by-group105"
+      }
+    ],
+    "derived_media_note": "source_id >= 200000 is an IF1-only exact sprite/component render used only where r254 cannot reproduce r481 IF3 canvas offsets or tiling directly",
+    "listener_fallbacks": [
+      {
+        "source_component_id": 13,
+        "source_hover_sprite_id": 832,
+        "if1_activegraphic": "r481_ge_sprite_831",
+        "reason": "hover-only sprite 832 is not present in the frozen Phase 1 extraction"
+      },
+      {
+        "source_component_id": 125,
+        "source_hover_sprite_id": 1175,
+        "if1_activegraphic": "r481_ge_sprite_1174",
+        "reason": "hover-only sprite 1175 is not present in the frozen Phase 1 extraction"
+      },
+      {
+        "source_component_id": 145,
+        "source_hover_colour": "0xFFFFFF",
+        "if1_field": "activecolour",
+        "status": "preserved"
+      }
+    ]
+  },
+  "sprites": [
+    {
+      "source_id": 828,
+      "file": "assets/sprites/828.png",
+      "width": 32,
+      "height": 6,
+      "sha256": "168e08d0693003d02369f88edf01b10ca2d7dd5e4b5a1df6b4230fccb0f9894a"
+    },
+    {
+      "source_id": 841,
+      "file": "assets/sprites/841.png",
+      "width": 6,
+      "height": 32,
+      "sha256": "42a68b651459f3716f2f8be58227c17306032b9f72e5cd209c0fb8590d925875"
+    },
+    {
+      "source_id": 846,
+      "file": "assets/sprites/846.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "e987aa62f9951237dbba19e4b074543ea14eeeba5787673a30e76a4c63b36c7c"
+    },
+    {
+      "source_id": 847,
+      "file": "assets/sprites/847.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "bd77e9eda65f57a0e8f894bdf9195e1498f98928958a870d52e0ad98bc9afabb"
+    },
+    {
+      "source_id": 848,
+      "file": "assets/sprites/848.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "6cc875c3710000f6ca1472f98263688edc880242da62a1a73f9e1ab1f89bd839"
+    },
+    {
+      "source_id": 849,
+      "file": "assets/sprites/849.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "978e889a5f1ffb350f47cc224a69cfefbeafe068beb358b6e2acc023f13da556"
+    },
+    {
+      "source_id": 1174,
+      "file": "assets/sprites/1174.png",
+      "width": 16,
+      "height": 16,
+      "sha256": "9f7ea2db8b722ba3aa155c0b27f2322d687bc3f17e718909c8674cb979cf68a3"
+    },
+    {
+      "source_id": 210010,
+      "file": "assets/derived/group106/com_10.png",
+      "width": 465,
+      "height": 6,
+      "sha256": "26cb67aa7ba6bcb9ccbacdcb2992ed59d71082284ab9b9b6ec854c9a1c4a4cee",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 962,
+      "source_tiling": true
+    },
+    {
+      "source_id": 210074,
+      "file": "assets/derived/group106/tiled_1074_47x32.png",
+      "width": 47,
+      "height": 32,
+      "sha256": "c464056d58fd79ea5e0a87f1f1545fb2b75b241b9d30a3cfea8ead28dec46c01",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 1074,
+      "source_tiling": true
+    },
+    {
+      "source_id": 210075,
+      "file": "assets/derived/group106/tiled_1075_32x45.png",
+      "width": 32,
+      "height": 45,
+      "sha256": "679b28cf51ca5b0676d8c0adc0f6a26e899b1bdf115d7d6e98ef3fd7e74e2de0",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 1075,
+      "source_tiling": true
+    },
+    {
+      "source_id": 210828,
+      "file": "assets/derived/group106/tiled_828_252x32.png",
+      "width": 252,
+      "height": 32,
+      "sha256": "dd3955d948ddb865e2457b5503f8a649ada97d3d190b9501e95c5e11155a586c",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 828,
+      "source_tiling": true
+    },
+    {
+      "source_id": 210841,
+      "file": "assets/derived/group106/tiled_841_32x32.png",
+      "width": 32,
+      "height": 32,
+      "sha256": "82c098f5e51177d84d516d8f03d7ff54e4869e2a6ea9d982b07e241736c4ccb6",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 841,
+      "source_tiling": true
+    },
+    {
+      "source_id": 211164,
+      "file": "assets/derived/group106/com_15.png",
+      "width": 25,
+      "height": 25,
+      "sha256": "d3e3ba6463177f5d99553aee235320446ffc026850e6cb9eb554d13eb992cc53",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 1164,
+      "source_tiling": false
+    },
+    {
+      "source_id": 211167,
+      "file": "assets/derived/group106/tiled_1167_140x110.png",
+      "width": 140,
+      "height": 110,
+      "sha256": "88bc5486e6c5d66a35536b6d1dbb7a0b7e64ed93e041e52fd4313f10950c5292",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 1167,
+      "source_tiling": true
+    },
+    {
+      "source_id": 211168,
+      "file": "assets/derived/group106/sprite_1168_canvas.png",
+      "width": 35,
+      "height": 35,
+      "sha256": "fe584f6886c067c69fc7516bfc3cf26e44e2aa4a5b5a71263e51a3f16833805e",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 1168,
+      "source_tiling": false
+    },
+    {
+      "source_id": 211170,
+      "file": "assets/derived/group106/sprite_1170_canvas.png",
+      "width": 35,
+      "height": 35,
+      "sha256": "9049dccec5ef62aaa596b438ff2d160c7f72476910e4d43dd84dc1b6b8697fb0",
+      "kind": "if1_component_render",
+      "derived_from_source_group": 106,
+      "derived_from_source_sprite": 1170,
+      "source_tiling": false
+    }
+  ]
+}
