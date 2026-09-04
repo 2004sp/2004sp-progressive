@@ -61,6 +61,8 @@ export default class MessagePublicHandler extends ClientGameMessageHandler<Messa
             return true;
         }
 
+        player.sendMessageToNearbyBots(player.username, text);
+
         for (const target of World.players) {
             target?.messageGame(`[World] ${player.username}: ${text}`);
         }
