@@ -292,9 +292,11 @@ class BotManagerClass {
             }
         }
 
-        // Set Herblore to 3 (requires Druidic Ritual quest)
-        player.baseLevels[PlayerStat.HERBLORE] = 3;
-        player.stats[PlayerStat.HERBLORE] = getExpByLevel(3);
+        if (!saveExists) {
+            // Set Herblore to 3 (requires Druidic Ritual quest)
+            player.baseLevels[PlayerStat.HERBLORE] = 3;
+            player.stats[PlayerStat.HERBLORE] = getExpByLevel(3);
+        }
         // Complete Alfred Grimhand's Barcrawl.
         setVarp(player, 'barcrawl', 77, 2);
         // Remove Wilderness lever warning so it can be used without dialog.
