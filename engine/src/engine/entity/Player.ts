@@ -2412,6 +2412,9 @@ export default class Player extends PathingEntity {
     botTradeTargetChatName: string = '';
     botTradeTargetChatMessage: string = '';
     botVendorPmCooldowns: Record<string, number> = {};
+    botVendorStockItemId: number = -1;
+    botVendorStockName: string = '';
+    botVendorStockNoted: boolean = false;
     botComeHereReturnX: number = -1;
     botComeHereReturnZ: number = -1;
 
@@ -2425,32 +2428,31 @@ export default class Player extends PathingEntity {
      */
     sendMessageToNearbyBots(name: string, mes: string) {
         if (!mes?.length) return;
+        const bots = new Set<Player>();
         for (const bot of World.players) {
-            if (!bot) continue;
-            if (bot.botTradeTargetPid != -1) { 
-                if(bot.botTradeTargetPid === this.uid) { // <- check if the name matches the uid
-                    bot.botTradeTargetChatName = name;
-                    bot.botTradeTargetChatMessage = mes;
-                }
-            } else {
-                bot.botTradeTargetChatName = '';
-                bot.botTradeTargetChatMessage = '';
-                setTimeout(() => this.botChatCheck(name, mes, bot), 1000 + Math.random() * 1000); //1-2s
-            }
+            if (bot) bots.add(bot);
         }
-        //Both lists
         for (const bot of World.newPlayers) {
-            if (!bot) continue;
-            if (bot.botTradeTargetPid != -1) {
-                if(bot.botTradeTargetPid === this.uid) {
+            if (bot) bots.add(bot);
+        }
+
+        for (const bot of bots) {
+            if (bot.botTradeTargetPid !== -1) {
+                if (bot.botTradeTargetPid === this.uid) {
                     bot.botTradeTargetChatName = name;
                     bot.botTradeTargetChatMessage = mes;
+                    continue;
                 }
+
+                // Vendors should still answer marketplace requests while they
+                // are serving somebody else.
+                if (bot.botPlanner !== 'extras_vendor') continue;
             } else {
                 bot.botTradeTargetChatName = '';
                 bot.botTradeTargetChatMessage = '';
-                setTimeout(() => this.botChatCheck(name, mes, bot), 1000 + Math.random() * 1000); //1-2s
             }
+
+            setTimeout(() => this.botChatCheck(name, mes, bot), 1000 + Math.random() * 1000); //1-2s
         }
     }
 
@@ -2567,12 +2569,12 @@ export default class Player extends PathingEntity {
             return false;
         }
 
+        const activeStockMatches = bot.botVendorStockItemId !== -1 &&
+            this.tradeTextMatches(request.item, this.normalizeTradeText(bot.botVendorStockName));
         const inv = bot.getInventory(InvType.INV);
-        if (!inv) {
-            return false;
-        }
-
-        const match = this.findMatchingVendorItem(inv, request.item);
+        const match = activeStockMatches
+            ? { id: bot.botVendorStockItemId, name: bot.botVendorStockName, noted: bot.botVendorStockNoted }
+            : inv ? this.findMatchingVendorItem(inv, request.item) : null;
         if (!match) {
             return false;
         }
