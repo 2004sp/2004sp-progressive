@@ -2428,6 +2428,8 @@ export default class Player extends PathingEntity {
      */
     sendMessageToNearbyBots(name: string, mes: string) {
         if (!mes?.length) return;
+        if (this.handleVendorMarketplaceMessage(name, mes)) return;
+
         const bots = new Set<Player>();
         for (const bot of World.players) {
             if (bot) bots.add(bot);
@@ -2456,6 +2458,42 @@ export default class Player extends PathingEntity {
         }
     }
 
+    /**
+     * Handle a public marketplace request before ordinary social-chat
+     * throttling. The web client echoes public text locally even when that
+     * throttle rejects the packet, which otherwise makes a request appear to
+     * have been sent while no vendor ever receives it.
+     */
+    handleVendorMarketplaceMessage(name: string, mes: string): boolean {
+        const tradeRequest = this.getRequestedTradeText(mes);
+        if (!tradeRequest) {
+            return false;
+        }
+
+        const bots = new Set<Player>();
+        for (const bot of World.players) {
+            if (bot) bots.add(bot);
+        }
+        for (const bot of World.newPlayers) {
+            if (bot) bots.add(bot);
+        }
+
+        // Marketplace lookup is global and deterministic. Pick one matching
+        // vendor so multiple replies cannot overwrite the location arrow.
+        for (const bot of bots) {
+            if (bot.uid === -1 || isClientConnected(bot) || !bot.is_bot) {
+                continue;
+            }
+
+            if (this.tryVendorPrivateMessage(name, mes, bot)) {
+                return true;
+            }
+        }
+
+        this.messageGame(`No vendor is currently available for ${tradeRequest.item}.`);
+        return true;
+    }
+
     botChatCheck(name: string, mes: string, bot: Player) {
         if (!bot) return;
         if (bot.uid === -1) return;
@@ -2466,10 +2504,6 @@ export default class Player extends PathingEntity {
         const distanceToZ = Math.abs(bot.z - this.z);
         const distance = Math.max(distanceToX, distanceToZ);
         if (distance > 50) return;
-
-        if (this.tryVendorPrivateMessage(name, mes, bot)) {
-            return;
-        }
 
         if (distance > 14) return;
 
@@ -2585,16 +2619,24 @@ export default class Player extends PathingEntity {
 
         const now = Date.now();
         const cooldownKey = `${name}:${request.mode}:${match.id}`;
+        const displayName = bot.displayName || toDisplayName(bot.username);
         if ((bot.botVendorPmCooldowns[cooldownKey] ?? 0) > now) {
+            this.hintTile(2, bot.x, bot.z, 0);
+            this.messageGame(`Marketplace: ${displayName} has ${match.name}; location marked.`);
             return true;
         }
 
         bot.botVendorPmCooldowns[cooldownKey] = now + 30000;
         const pmId = (Environment.NODE_ID << 24) + ((Math.random() * 0xff) << 16) + World.pmCount++;
-        const displayName = bot.displayName || toDisplayName(bot.username);
         const reply = request.mode === 'buy'
-            ? `${displayName}: I have ${match.name} for sale. Trade me.`
-            : `${displayName}: I'm buying noted ${match.name}. Trade me and put them up for coins.`;
+            ? `${displayName}: I have ${match.name} for sale. Trade me. I've marked my location with an arrow.`
+            : `${displayName}: I'm buying noted ${match.name}. Trade me and put them up for coins. I've marked my location with an arrow.`;
+
+        // A player hint only works while the bot is in the local player list.
+        // Use a coordinate hint so the arrow can guide the requester across
+        // the world to the vendor's current stall position.
+        this.hintTile(2, bot.x, bot.z, 0);
+        this.messageGame(`Marketplace: ${displayName} matched ${match.name}; location marked.`);
         this.write(new MessagePrivate(toBase37(bot.username), pmId, Math.min(bot.staffModLevel, 2), reply));
         return true;
     }
