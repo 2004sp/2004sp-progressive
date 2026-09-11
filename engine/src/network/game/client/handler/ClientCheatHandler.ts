@@ -186,6 +186,29 @@ export default class ClientCheatHandler extends ClientGameMessageHandler<ClientC
             return true;
         }
 
+        // The web client uses a dedicated command for marketplace phrases.
+        // Unlike its optimistic local public-chat echo, this only displays a
+        // successful match after the server has actually processed it.
+        if (cmd === 'marketplace') {
+            if (player.muted_until !== null && player.muted_until > new Date()) {
+                return true;
+            }
+
+            const text = cheat.slice('marketplace'.length).trim();
+            if (!text || !player.handleVendorMarketplaceMessage(player.username, text)) {
+                player.messageGame('Invalid marketplace request. Try: buying logs');
+                return true;
+            }
+
+            for (const target of World.players) {
+                target?.messageGame(`[World] ${player.username}: ${text}`);
+            }
+            player.logMessage = text;
+            player.socialProtect = true;
+            console.log('Player sent marketplace message: ' + player.username + ': ' + text + ' (' + player.x + ' : ' + player.z + ')');
+            return true;
+        }
+
         if (player.staffModLevel >= 2) {
             player.addSessionLog(LoggerEventType.MODERATOR, 'Ran cheat', cheat);
         }
