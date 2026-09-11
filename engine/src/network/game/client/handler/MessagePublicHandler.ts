@@ -15,11 +15,6 @@ export default class MessagePublicHandler extends ClientGameMessageHandler<Messa
             return false;
         }
 
-        if (player.muted_until !== null && player.muted_until > new Date()) {
-            // todo: do we still log their attempt to chat?
-            return false;
-        }
-
         const buf: Packet = Packet.alloc(0);
         buf.pdata(input, 0, input.length);
         buf.pos = 0;
@@ -28,13 +23,23 @@ export default class MessagePublicHandler extends ClientGameMessageHandler<Messa
         const text = WordEnc.filter(unpack).trim();
         const lower = text.toLowerCase();
 
+        if (player.muted_until !== null && player.muted_until > new Date()) {
+            // todo: do we still log their attempt to chat?
+            return false;
+        }
+
+        // Process marketplace phrases before the general one-social-packet-
+        // per-tick guard. The web client locally echoes its own chat before
+        // the server accepts it, so silently throttling here is misleading.
+        const marketplaceRequest = player.handleVendorMarketplaceMessage(player.username, text);
+
+        if (player.socialProtect && !marketplaceRequest) {
+            return false;
+        }
+
         if (player.chatChannel === 'clan' && lower !== '/world' && lower !== 'world') {
             ClanManager.clanChat(player, text);
             return true;
-        }
-
-        if (player.socialProtect) {
-            return false;
         }
 
         if (lower === '/clan' || lower === 'clan') {
@@ -59,6 +64,10 @@ export default class MessagePublicHandler extends ClientGameMessageHandler<Messa
         if (text.length === 0) {
             player.socialProtect = true;
             return true;
+        }
+
+        if (!marketplaceRequest) {
+            player.sendMessageToNearbyBots(player.username, text);
         }
 
         for (const target of World.players) {
