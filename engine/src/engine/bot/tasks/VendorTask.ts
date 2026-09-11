@@ -298,6 +298,9 @@ export class VendorTask extends BotTask {
         this.stock = picked;
         this.itemCount = pickedObj?.stackable ? randInt(5000, 8000) : 1;
         this.stockMax = this.itemCount;
+        player.botVendorStockItemId = pickedTradeId;
+        player.botVendorStockName = picked.name;
+        player.botVendorStockNoted = this._isNotedStock(picked);
 
         if (inv) {
             inv.add(pickedTradeId, this.itemCount);
