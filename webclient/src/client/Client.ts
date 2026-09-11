@@ -3443,14 +3443,25 @@ export class Client extends GameShell {
                                     this.out.p1(clanMessage.length + 1);
                                     this.out.pjstr(clanMessage);
                                 } else {
-                                    this.out.pIsaac(ClientProt.MESSAGE_PUBLIC);
-                                    this.out.p1(0);
-                                    const start: number = this.out.pos;
+                                    const marketplaceRequest = /^(?:buying|buy|need|looking for|lf|selling|sell|wts)\s+\S/i.test(this.chatInput);
+                                    if (marketplaceRequest) {
+                                        // Use an explicit server command for marketplace searches.
+                                        // Public chat is optimistically echoed by the client, so a
+                                        // rejected public-chat packet otherwise looks successfully sent.
+                                        const marketplaceMessage: string = 'marketplace ' + this.chatInput;
+                                        this.out.pIsaac(ClientProt.CLIENT_CHEAT);
+                                        this.out.p1(marketplaceMessage.length + 1);
+                                        this.out.pjstr(marketplaceMessage);
+                                    } else {
+                                        this.out.pIsaac(ClientProt.MESSAGE_PUBLIC);
+                                        this.out.p1(0);
+                                        const start: number = this.out.pos;
 
-                                    this.out.p1(colour);
-                                    this.out.p1(effect);
-                                    WordPack.pack(this.out, this.chatInput);
-                                    this.out.psize1(this.out.pos - start);
+                                        this.out.p1(colour);
+                                        this.out.p1(effect);
+                                        WordPack.pack(this.out, this.chatInput);
+                                        this.out.psize1(this.out.pos - start);
+                                    }
 
                                     this.chatInput = JString.toSentenceCase(this.chatInput);
                                     this.chatInput = WordFilter.filter(this.chatInput);
