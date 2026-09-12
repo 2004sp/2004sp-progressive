@@ -2,15 +2,14 @@ import fs from 'fs';
 import path from 'path';
 
 const GE_INTERFACE_NAME = 'grand_exchange_overview';
-const BUY_MODE = 1;
 
 const ACTIVE_OFFERS = [
-    { name: 'ge_active_offer_1', slot: 1, layer: 19, model: 33, title: 216, detail: 250, quantity: 30, sellAction: 31, progress: 244 },
-    { name: 'ge_active_offer_2', slot: 2, layer: 35, model: 49, title: 221, detail: 251, quantity: 46, sellAction: 47, progress: 245 },
-    { name: 'ge_active_offer_3', slot: 3, layer: 51, model: 65, title: 226, detail: 252, quantity: 62, sellAction: 63, progress: 246 },
-    { name: 'ge_active_offer_4', slot: 4, layer: 70, model: 84, title: 231, detail: 253, quantity: 81, sellAction: 82, progress: 247 },
-    { name: 'ge_active_offer_5', slot: 5, layer: 89, model: 103, title: 236, detail: 254, quantity: 100, sellAction: 101, progress: 248 },
-    { name: 'ge_active_offer_6', slot: 6, layer: 108, model: 122, title: 241, detail: 255, quantity: 119, sellAction: 120, progress: 249 },
+    { name: 'ge_active_offer_1', slot: 1, layer: 19, model: 33, title: 216, detail: 250, quantity: 30, price: 31, sellAction: 31, progress: 244 },
+    { name: 'ge_active_offer_2', slot: 2, layer: 35, model: 49, title: 221, detail: 251, quantity: 46, price: 47, sellAction: 47, progress: 245 },
+    { name: 'ge_active_offer_3', slot: 3, layer: 51, model: 65, title: 226, detail: 252, quantity: 62, price: 63, sellAction: 63, progress: 246 },
+    { name: 'ge_active_offer_4', slot: 4, layer: 70, model: 84, title: 231, detail: 253, quantity: 81, price: 82, sellAction: 82, progress: 247 },
+    { name: 'ge_active_offer_5', slot: 5, layer: 89, model: 103, title: 236, detail: 254, quantity: 100, price: 101, sellAction: 101, progress: 248 },
+    { name: 'ge_active_offer_6', slot: 6, layer: 108, model: 122, title: 241, detail: 255, quantity: 119, price: 120, sellAction: 120, progress: 249 },
 ] as const;
 
 function getComponentBlock(source: string, componentId: number) {
@@ -68,12 +67,7 @@ function patchOverviewInterface(stagedContentDir: string) {
 
     for (const offer of ACTIVE_OFFERS) {
         const detail = getComponentBlock(source, offer.detail).block;
-        for (const required of [
-            `layer=com_${offer.layer}`,
-            'type=text',
-            'font=p11',
-            'shadowed=yes',
-        ]) {
+        for (const required of [`layer=com_${offer.layer}`, 'type=text', 'font=p11', 'shadowed=yes']) {
             if (!detail.includes(required)) {
                 throw new Error(`Grand Exchange waiting-offer detail com_${offer.detail} no longer contains ${required}`);
             }
@@ -81,7 +75,7 @@ function patchOverviewInterface(stagedContentDir: string) {
         source = replaceComponent(
             source,
             offer.detail,
-            `[com_${offer.detail}]\nlayer=com_${offer.layer}\ntype=text\nx=46\ny=32\nwidth=88\nheight=42\nfont=p11\nshadowed=yes\ntext=\ncolour=0xCC9800\n`
+            `[com_${offer.detail}]\nlayer=com_${offer.layer}\ntype=text\nx=46\ny=32\nwidth=88\nheight=16\nfont=p11\nshadowed=yes\ntext=\ncolour=0xCC9800\n`
         );
 
         const progress = getComponentBlock(source, offer.progress).block;
@@ -108,6 +102,29 @@ function patchOverviewInterface(stagedContentDir: string) {
     fs.writeFileSync(interfacePath, source, 'utf8');
 }
 
+function patchVisualControl(
+    source: string,
+    componentId: number,
+    occupiedLines: readonly string[],
+    emptyLines: readonly string[],
+    label: string
+) {
+    const hidden = `    if_sethide(${GE_INTERFACE_NAME}:com_${componentId}, true);`;
+    const occupied = [
+        `    if_sethide(${GE_INTERFACE_NAME}:com_${componentId}, false);`,
+        ...occupiedLines.map(line => `    ${line}`),
+    ].join('\n');
+    source = replaceExactlyOnce(source, hidden, occupied, `${label} occupied control`);
+
+    const visible = `    if_sethide(${GE_INTERFACE_NAME}:com_${componentId}, false);`;
+    const lastVisible = source.lastIndexOf(visible);
+    if (lastVisible === -1) {
+        throw new Error(`Grand Exchange waiting-offer presentation cannot find ${label} empty control`);
+    }
+    const empty = [visible, ...emptyLines.map(line => `    ${line}`)].join('\n');
+    return source.slice(0, lastVisible) + empty + source.slice(lastVisible + visible.length);
+}
+
 function patchActiveOfferRefresh(stagedContentDir: string) {
     const scriptPath = path.join(
         stagedContentDir,
@@ -123,33 +140,39 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
     let source = fs.readFileSync(scriptPath, 'utf8').replace(/\r/g, '');
 
     for (const offer of ACTIVE_OFFERS) {
-        const hideQuantity = `    if_sethide(${GE_INTERFACE_NAME}:com_${offer.quantity}, true);`;
-        const showQuantity = [
-            `    if_sethide(${GE_INTERFACE_NAME}:com_${offer.quantity}, false);`,
-            `    if_setposition(${GE_INTERFACE_NAME}:com_${offer.quantity}, -6, -12);`,
-            `    if_setcolour(${GE_INTERFACE_NAME}:com_${offer.quantity}, 0xFFFF00);`,
-            `    if_settext(${GE_INTERFACE_NAME}:com_${offer.quantity}, tostring($quantity_${offer.slot}));`,
-            `    if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, false);`,
-        ].join('\n');
-        source = replaceExactlyOnce(source, hideQuantity, showQuantity, `slot ${offer.slot} occupied quantity control`);
+        source = patchVisualControl(
+            source,
+            offer.quantity,
+            [
+                `if_setposition(${GE_INTERFACE_NAME}:com_${offer.quantity}, -6, -12);`,
+                `if_setcolour(${GE_INTERFACE_NAME}:com_${offer.quantity}, 0xFFFF00);`,
+                `if_settext(${GE_INTERFACE_NAME}:com_${offer.quantity}, tostring($quantity_${offer.slot}));`,
+                `if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, false);`,
+            ],
+            [
+                `if_setposition(${GE_INTERFACE_NAME}:com_${offer.quantity}, 0, 0);`,
+                `if_setcolour(${GE_INTERFACE_NAME}:com_${offer.quantity}, 0x000000);`,
+                `if_settext(${GE_INTERFACE_NAME}:com_${offer.quantity}, \"\");`,
+                `if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, true);`,
+            ],
+            `slot ${offer.slot} quantity`
+        );
 
-        const emptyQuantityShow = `    if_sethide(${GE_INTERFACE_NAME}:com_${offer.quantity}, false);`;
-        const emptyReset = [
-            emptyQuantityShow,
-            `    if_setposition(${GE_INTERFACE_NAME}:com_${offer.quantity}, 0, 0);`,
-            `    if_setcolour(${GE_INTERFACE_NAME}:com_${offer.quantity}, 0x000000);`,
-            `    if_settext(${GE_INTERFACE_NAME}:com_${offer.quantity}, \"\");`,
-            `    if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, true);`,
-        ].join('\n');
-
-        // There are two occurrences after the occupied replacement above: the
-        // newly inserted occupied show and the original empty-state show. Patch
-        // the final one only so the real empty Buy action is restored in-place.
-        const lastEmptyShow = source.lastIndexOf(emptyQuantityShow);
-        if (lastEmptyShow === -1) {
-            throw new Error(`Grand Exchange waiting-offer presentation cannot find slot ${offer.slot} empty Buy action`);
-        }
-        source = source.slice(0, lastEmptyShow) + emptyReset + source.slice(lastEmptyShow + emptyQuantityShow.length);
+        source = patchVisualControl(
+            source,
+            offer.price,
+            [
+                `if_setposition(${GE_INTERFACE_NAME}:com_${offer.price}, -24, 10);`,
+                `if_setcolour(${GE_INTERFACE_NAME}:com_${offer.price}, 0xFFFF00);`,
+                `if_settext(${GE_INTERFACE_NAME}:com_${offer.price}, \"<tostring($price_${offer.slot})> gp\");`,
+            ],
+            [
+                `if_setposition(${GE_INTERFACE_NAME}:com_${offer.price}, 0, 0);`,
+                `if_setcolour(${GE_INTERFACE_NAME}:com_${offer.price}, 0x000000);`,
+                `if_settext(${GE_INTERFACE_NAME}:com_${offer.price}, \"\");`,
+            ],
+            `slot ${offer.slot} price/Sell`
+        );
 
         source = source.replaceAll(
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.title}, \"Buying\");`,
@@ -164,7 +187,7 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
         const partialDetail = `        if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, \"<oc_name($item_${offer.slot})> <tostring($filled_${offer.slot})>/<tostring($quantity_${offer.slot})> filled @ <tostring($price_${offer.slot})> gp\");`;
         const completedDetail = `        if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, \"Complete: <oc_name($item_${offer.slot})> x<tostring($quantity_${offer.slot})> @ <tostring($price_${offer.slot})> gp\");`;
         const cancelledDetail = `        if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, \"Cancelled: <oc_name($item_${offer.slot})> <tostring($filled_${offer.slot})>/<tostring($quantity_${offer.slot})> filled @ <tostring($price_${offer.slot})> gp\");`;
-        const compactDetail = `if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, \"<oc_name($item_${offer.slot})><br><col=FFFF00><tostring($price_${offer.slot})> gp</col>\");`;
+        const compactDetail = `if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, oc_name($item_${offer.slot}));`;
 
         for (const [needle, indent, label] of [
             [pendingDetail, '    ', 'pending'],
@@ -244,7 +267,8 @@ function validateWaitingPresentation(stagedContentDir: string) {
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.title}, \"Buy\");`,
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.title}, \"Sell\");`,
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.quantity}, tostring($quantity_${offer.slot}));`,
-            `<oc_name($item_${offer.slot})><br><col=FFFF00><tostring($price_${offer.slot})> gp</col>`,
+            `if_settext(${GE_INTERFACE_NAME}:com_${offer.price}, \"<tostring($price_${offer.slot})> gp\");`,
+            `if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, oc_name($item_${offer.slot}));`,
             `if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, false);`,
             `if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, true);`,
         ]) {
