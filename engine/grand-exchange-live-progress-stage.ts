@@ -14,12 +14,12 @@ const PROGRESS_HELPER_LOCAL_ID_BASE = 10792;
 // this stage; this stage then owns collision checks and exact mappings for this
 // narrow extension instead of weakening those validators for unrelated widgets.
 const ACTIVE_OFFERS = [
-    { slot: 1, layer: 19, background: 244, clip: 256, fill: 262 },
-    { slot: 2, layer: 35, background: 245, clip: 257, fill: 263 },
-    { slot: 3, layer: 51, background: 246, clip: 258, fill: 264 },
-    { slot: 4, layer: 70, background: 247, clip: 259, fill: 265 },
-    { slot: 5, layer: 89, background: 248, clip: 260, fill: 266 },
-    { slot: 6, layer: 108, background: 249, clip: 261, fill: 267 },
+    { slot: 1, activeContent: 32, background: 244, clip: 256, fill: 262 },
+    { slot: 2, activeContent: 48, background: 245, clip: 257, fill: 263 },
+    { slot: 3, activeContent: 64, background: 246, clip: 258, fill: 264 },
+    { slot: 4, activeContent: 83, background: 247, clip: 259, fill: 265 },
+    { slot: 5, activeContent: 102, background: 248, clip: 260, fill: 266 },
+    { slot: 6, activeContent: 121, background: 249, clip: 261, fill: 267 },
 ] as const;
 
 function getComponentBlock(source: string, componentId: number) {
@@ -97,7 +97,7 @@ function appendProgressHelpers(stagedContentDir: string) {
     for (const offer of ACTIVE_OFFERS) {
         const background = getComponentBlock(source, offer.background);
         for (const required of [
-            `layer=com_${offer.layer}`,
+            `layer=com_${offer.activeContent}`,
             'type=rect',
             'x=7',
             'y=82',
@@ -111,9 +111,12 @@ function appendProgressHelpers(stagedContentDir: string) {
             }
         }
 
+        // Keep both pieces of the meter under the occupied-slot layer. The
+        // native r254 client has always honoured hidden layers, whereas older
+        // paths can ignore IF_SETHIDE on individual rect/graphic leaves.
         clipHelpers.push(
             `[com_${offer.clip}]\n` +
-            `layer=com_${offer.layer}\n` +
+            `layer=com_${offer.activeContent}\n` +
             `type=layer\n` +
             `x=7\n` +
             `y=82\n` +
@@ -243,7 +246,7 @@ function validateLiveProgress(stagedContentDir: string) {
     for (const offer of ACTIVE_OFFERS) {
         const clip = getComponentBlock(interfaceSource, offer.clip);
         for (const required of [
-            `layer=com_${offer.layer}`,
+            `layer=com_${offer.activeContent}`,
             'type=layer',
             'x=7',
             'y=82',
