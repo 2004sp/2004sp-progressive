@@ -31,6 +31,7 @@ import { prepareGrandExchangeHoverStage } from './grand-exchange-hover-stage.js'
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
 import { prepareGrandExchangeClientStateStage } from './grand-exchange-client-state-stage.js';
 import { prepareGrandExchangeInterfaceCacheAdapter } from './grand-exchange-interface-cache-adapter.js';
+import { prepareGrandExchangeLiveProgressStage } from './grand-exchange-live-progress-stage.js';
 
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = path.join(ENGINE_DIR, '..');
@@ -129,6 +130,9 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
         prepareGrandExchangeClientStateStage(stagedContentDir);
         prepareGrandExchangeInterfaceCacheAdapter(stagedContentDir);
+        // Keep the generic 256-ID compatibility/cache checks intact. The live
+        // progress stage owns and validates its narrow post-check helper range.
+        prepareGrandExchangeLiveProgressStage(stagedContentDir);
         invalidateGrandExchangeServerConfigOutputs();
         return stagedContentDir;
     } catch (error) {
