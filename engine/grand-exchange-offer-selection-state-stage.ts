@@ -3,6 +3,7 @@ import path from 'path';
 
 const GE_INTERFACE_NAME = 'grand_exchange_overview';
 const SELL_INTERFACE_NAME = 'grand_exchange_sell_inventory';
+const HIDDEN_ITEM_MODEL_OFFSET_X = 600;
 
 function getScriptBlock(source: string, marker: string) {
     const start = source.indexOf(marker);
@@ -53,11 +54,11 @@ function patchOfferSetupReset(stagedContentDir: string) {
             throw new Error(`Grand Exchange ${title} setup no longer contains its title setter`);
         }
 
-        // IF1 keeps the previous object/model payload on the component even when
-        // the component is hidden. Clear the model source as well as the text so
-        // a previous Sell item cannot leak into a later Sell or Buy setup.
+        // IF1 retains the last object payload on a model component. This engine
+        // rejects -1/null for if_setmodel, so keep the cached payload harmlessly
+        // off-canvas until a fresh Buy/Sell selection restores the authored offset.
         const resetLines = [
-            `if_setmodel(${GE_INTERFACE_NAME}:com_138, -1);`,
+            `if_setposition(${GE_INTERFACE_NAME}:com_138, ${HIDDEN_ITEM_MODEL_OFFSET_X}, 0);`,
             `if_sethide(${GE_INTERFACE_NAME}:com_138, true);`,
             `if_settext(${GE_INTERFACE_NAME}:com_141, "Choose an item to exchange");`,
             `if_settext(${GE_INTERFACE_NAME}:com_142, "");`,
@@ -91,7 +92,7 @@ function patchOfferSetupReset(stagedContentDir: string) {
         'inv_clear(ge_selected_item);',
         'if_settab(inventory, ^tab_inventory);',
         'if_settabactive(^tab_inventory);',
-        `if_setmodel(${GE_INTERFACE_NAME}:com_138, -1);`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_138, ${HIDDEN_ITEM_MODEL_OFFSET_X}, 0);`,
         `if_sethide(${GE_INTERFACE_NAME}:com_138, true);`,
         `if_settext(${GE_INTERFACE_NAME}:com_141, "Choose an item to exchange");`,
         `if_settext(${GE_INTERFACE_NAME}:com_142, "");`,
@@ -133,7 +134,7 @@ function patchSellSelectionInPlace(stagedContentDir: string) {
     source = replaceExactlyOnce(
         source,
         itemSetter,
-        `if_sethide(${GE_INTERFACE_NAME}:com_138, false);\n${itemSetter}`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_138, 0, 0);\nif_sethide(${GE_INTERFACE_NAME}:com_138, false);\n${itemSetter}`,
         'sell selected-item model setter'
     );
 
@@ -170,7 +171,7 @@ function patchBuySelectionReveal(stagedContentDir: string) {
     source = replaceExactlyOnce(
         source,
         itemSetter,
-        `if_sethide(${GE_INTERFACE_NAME}:com_138, false);\n${itemSetter}`,
+        `if_setposition(${GE_INTERFACE_NAME}:com_138, 0, 0);\nif_sethide(${GE_INTERFACE_NAME}:com_138, false);\n${itemSetter}`,
         'buy selected-item model setter'
     );
     fs.writeFileSync(scriptPath, source, 'utf8');
