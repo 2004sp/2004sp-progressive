@@ -25,7 +25,7 @@ import { prepareGrandExchangeActiveOfferStage } from './grand-exchange-active-of
 import { prepareGrandExchangePartialFillStage } from './grand-exchange-partial-fill-stage.js';
 import { prepareGrandExchangeCompletedOfferStage } from './grand-exchange-completed-offer-stage.js';
 import { prepareGrandExchangeCancelledOfferStage } from './grand-exchange-cancelled-offer-stage.js';
-import { prepareGrandExchangeActiveOfferDetailStage } from './grand-exchange-active-offer-detail-stage.js';
+import { prepareGrandExchangeActiveOfferOverviewPresentationStage } from './grand-exchange-active-offer-overview-presentation-stage.js';
 import { prepareGrandExchangePersistedHistoryStage, restoreGrandExchangePersistedHistoryRuntime } from './grand-exchange-persisted-history-stage.js';
 import { prepareGrandExchangeHoverStage } from './grand-exchange-hover-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
@@ -79,9 +79,8 @@ function assertNativeR254ItemDefinitionBoundary() {
 function invalidateGrandExchangeServerConfigOutputs() {
     // Group 109 extends inv.pack with six option-2-only collection containers,
     // item search adds two temp result/selection containers, Confirm Offer adds
-    // two temp context/submission containers, authoritative active/partial/
-    // completed/cancelled offer state shares six per-player temp slot containers,
-    // and the active-detail screen adds one temp viewed-slot context container.
+    // two temp context/submission containers, and authoritative active/partial/
+    // completed/cancelled offer state shares six per-player temp slot containers.
     // Some installed engine packer revisions decide whether to rebuild inv.dat
     // from source mtimes alone, while the staged .inv files can retain their
     // checkout timestamps. That can leave the newly extended staged inv.pack
@@ -124,7 +123,7 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangePartialFillStage(stagedContentDir);
         prepareGrandExchangeCompletedOfferStage(stagedContentDir);
         prepareGrandExchangeCancelledOfferStage(stagedContentDir);
-        prepareGrandExchangeActiveOfferDetailStage(stagedContentDir);
+        prepareGrandExchangeActiveOfferOverviewPresentationStage(stagedContentDir);
         prepareGrandExchangePersistedHistoryStage(stagedContentDir);
         await prepareGrandExchangeHoverStage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
