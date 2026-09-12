@@ -274,11 +274,37 @@ function patchOverviewInterfaceForIf1() {
         replaceComponentField(componentId, 'colour', '0x5A5245', '0x817765');
     }
 
-    if (source.includes('[com_244]')) {
-        throw new Error('Grand Exchange overview IF1 bevel helper IDs 244-255 are already in use');
+    if (source.includes('[com_242]') || source.includes('[com_243]') || source.includes('[com_244]')) {
+        throw new Error('Grand Exchange overview IF1 helper IDs 242-255 are already in use');
     }
 
     const bevelHelpers = `
+// IF1-only text helpers let the price digits and their gp suffix use slightly
+// different baselines while remaining independently positionable at runtime.
+[com_242]
+layer=com_126
+type=text
+x=365
+y=180
+width=20
+height=16
+font=b12
+shadowed=yes
+text=gp
+colour=0xFFA861
+
+[com_243]
+layer=com_126
+type=text
+x=262
+y=240
+width=20
+height=16
+font=b12
+shadowed=yes
+text=gp
+colour=0xEBE573
+
 // Additional IF1-only bevel helpers for the six empty-offer panels. The outer
 // highlight/divider above use the existing helpers; these add the dark inset
 // edge and divider shadow seen in the reference image.
@@ -659,11 +685,33 @@ async function stageSprites() {
             color: 0x00000000,
         });
 
-        // Match the integer nearest-neighbour scaling used by the period client.
+        // The exported 150px source canvas can contain translucent padding/shadow
+        // outside the solid button face. IF1 turns partial alpha opaque, which made
+        // the right edge look like a faded vertical strip. Fit only the solid alpha
+        // bounds into the authored 120px component before palette conversion.
+        let visibleLeft = 0;
+        let visibleRight = confirmSourceImage.bitmap.width - 1;
+        let minSolidX = confirmSourceImage.bitmap.width;
+        let maxSolidX = -1;
+        for (let y = 0; y < confirmSourceImage.bitmap.height; y++) {
+            for (let x = 0; x < confirmSourceImage.bitmap.width; x++) {
+                const offset = (y * confirmSourceImage.bitmap.width + x) * 4;
+                if (confirmSourceImage.bitmap.data[offset + 3] >= 224) {
+                    minSolidX = Math.min(minSolidX, x);
+                    maxSolidX = Math.max(maxSolidX, x);
+                }
+            }
+        }
+        if (maxSolidX >= minSolidX) {
+            visibleLeft = minSolidX;
+            visibleRight = maxSolidX;
+        }
+        const visibleWidth = visibleRight - visibleLeft + 1;
+
         for (let y = 0; y < CONFIRM_OFFER_BUTTON_SIZE.height; y++) {
             const sourceY = Math.floor((y * confirmSourceImage.bitmap.height) / CONFIRM_OFFER_BUTTON_SIZE.height);
             for (let x = 0; x < CONFIRM_OFFER_BUTTON_SIZE.width; x++) {
-                const sourceX = Math.floor((x * confirmSourceImage.bitmap.width) / CONFIRM_OFFER_BUTTON_SIZE.width);
+                const sourceX = visibleLeft + Math.floor((x * visibleWidth) / CONFIRM_OFFER_BUTTON_SIZE.width);
                 const sourceOffset = (sourceY * confirmSourceImage.bitmap.width + sourceX) * 4;
                 const targetOffset = (y * CONFIRM_OFFER_BUTTON_SIZE.width + x) * 4;
 
@@ -673,9 +721,11 @@ async function stageSprites() {
             }
         }
 
-        // r254 PixPack uses magenta rather than alpha for transparent pixels.
+        // r254 PixPack cannot preserve partial alpha. Treat the source's soft
+        // edge/shadow pixels as transparent instead of forcing them opaque,
+        // which avoids the dark/faded strip that appeared on the button edge.
         for (let offset = 0; offset < confirmImage.bitmap.data.length; offset += 4) {
-            if (confirmImage.bitmap.data[offset + 3] < 128) {
+            if (confirmImage.bitmap.data[offset + 3] < 224) {
                 confirmImage.bitmap.data[offset + 0] = 0xff;
                 confirmImage.bitmap.data[offset + 1] = 0x00;
                 confirmImage.bitmap.data[offset + 2] = 0xff;

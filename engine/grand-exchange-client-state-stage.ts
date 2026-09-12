@@ -205,6 +205,7 @@ function requireTokens(file: string, tokens: readonly string[]) {
 function validateServerDrivenSubstitutions(stagedContentDir: string) {
     const scriptDir = path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts');
     requireTokens(path.join(scriptDir, 'grand_exchange.rs2'), [
+        'if_sethide(grand_exchange_overview:com_16, false);',
         'if_sethide(grand_exchange_overview:com_19, false);',
         'if_sethide(grand_exchange_group_106:com_16, false);',
         'if_openmain(grand_exchange_group_108);',
@@ -230,9 +231,8 @@ function validateServerDrivenSubstitutions(stagedContentDir: string) {
         'inv_transmit(ge_search_results, grand_exchange_item_search:com_8);',
         '[inv_button1,grand_exchange_item_search:com_8]',
         'inv_moveitem(ge_search_results, ge_selected_item, $item, 1);',
-        'inv_setslot(ge_selected_item, 1, coins, 1);',
-        'if_setobject(grand_exchange_overview:com_138, $item, 600);',
-        'if_settext(grand_exchange_overview:com_150, "1");'
+        'if_setobject(grand_exchange_overview:com_138, $item, 100);',
+        'if_settext(grand_exchange_overview:com_150, "0");'
     ]);
 
     requireTokens(path.join(scriptDir, 'grand_exchange_quantity.rs2'), [

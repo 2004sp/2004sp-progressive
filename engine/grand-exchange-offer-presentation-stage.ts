@@ -205,7 +205,7 @@ function patchSelectedItemLayoutRestore(stagedContentDir: string) {
     ].join('\n');
 
     if (!block.includes(restorePositions)) {
-        const selectionObject = `if_setobject(${GE_INTERFACE_NAME}:com_138, $item, 600);`;
+        const selectionObject = `if_setobject(${GE_INTERFACE_NAME}:com_138, $item, 100);`;
         if (!block.includes(selectionObject)) {
             throw new Error('Grand Exchange selected-item presentation can no longer find the group-105 selected item model setter');
         }

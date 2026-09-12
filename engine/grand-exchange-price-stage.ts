@@ -15,12 +15,20 @@ const RANGE_TEXT_COMPONENT = 145;
 const QUANTITY_TEXT_COMPONENT = 150;
 const PRICE_TEXT_COMPONENT = 155;
 const TOTAL_TEXT_COMPONENT = 189;
+const PRICE_GP_COMPONENT = 242;
+const TOTAL_GP_COMPONENT = 243;
+const QUANTITY_TEXT_Y = 181;
+const PRICE_TEXT_X = 287;
+const PRICE_TEXT_Y = 181;
+const TOTAL_TEXT_X = 178;
+const TOTAL_TEXT_Y = 242;
 const DECREASE_COMPONENT = 171;
 const INCREASE_COMPONENT = 173;
 const MINIMUM_COMPONENT = 177;
 const MARKET_COMPONENT = 180;
 const MAXIMUM_COMPONENT = 183;
 const EDIT_COMPONENT = 185;
+const PRICE_BUTTON_TEXT_Y = 212;
 const QUANTITY_DECREASE_COMPONENT = 157;
 const QUANTITY_INCREASE_COMPONENT = 159;
 const MAX_PRICE = 2147483647;
@@ -193,6 +201,81 @@ function convertArrowActionToIf1Button(source: string, componentId: number, opti
     return source.slice(0, start) + patched + source.slice(end);
 }
 
+function setButtonTextY(source: string, componentId: number) {
+    const { marker, start, end, block } = getComponentBlock(source, componentId);
+    if (!block.includes('type=text')) {
+        throw new Error(`Grand Exchange price button ${marker} is no longer an IF1 text component`);
+    }
+
+    const yMatch = block.match(/^y=(\d+)$/m);
+    if (!yMatch) {
+        throw new Error(`Grand Exchange price button ${marker} no longer exposes a y position`);
+    }
+
+    const currentY = Number.parseInt(yMatch[1], 10);
+    if (currentY === PRICE_BUTTON_TEXT_Y) return source;
+    if (currentY !== 205) {
+        throw new Error(`Grand Exchange price button ${marker} expected frozen y=205, found y=${currentY}`);
+    }
+
+    const patched = block.replace(/^y=\d+$/m, `y=${PRICE_BUTTON_TEXT_Y}`);
+    return source.slice(0, start) + patched + source.slice(end);
+}
+
+function setOfferValueTextY(
+    source: string,
+    componentId: number,
+    expectedY: number,
+    targetY: number,
+    label: string
+) {
+    const { marker, start, end, block } = getComponentBlock(source, componentId);
+    if (!block.includes('type=text')) {
+        throw new Error(`Grand Exchange ${label} ${marker} is no longer an IF1 text component`);
+    }
+
+    const yMatch = block.match(/^y=(\d+)$/m);
+    if (!yMatch) {
+        throw new Error(`Grand Exchange ${label} ${marker} no longer exposes a y position`);
+    }
+
+    const currentY = Number.parseInt(yMatch[1], 10);
+    if (currentY === targetY) return source;
+    if (currentY !== expectedY) {
+        throw new Error(`Grand Exchange ${label} ${marker} expected frozen y=${expectedY}, found y=${currentY}`);
+    }
+
+    const patched = block.replace(/^y=\d+$/m, `y=${targetY}`);
+    return source.slice(0, start) + patched + source.slice(end);
+}
+
+function setOfferValueTextX(
+    source: string,
+    componentId: number,
+    expectedX: number,
+    targetX: number,
+    label: string
+) {
+    const { marker, start, end, block } = getComponentBlock(source, componentId);
+    if (!block.includes('type=text')) {
+        throw new Error(`Grand Exchange ${label} ${marker} is no longer an IF1 text component`);
+    }
+
+    const xMatch = block.match(/^x=(\d+)$/m);
+    if (!xMatch) {
+        throw new Error(`Grand Exchange ${label} ${marker} no longer exposes an x position`);
+    }
+
+    const currentX = Number.parseInt(xMatch[1], 10);
+    if (currentX === targetX) return source;
+    if (currentX !== expectedX) {
+        throw new Error(`Grand Exchange ${label} ${marker} expected frozen x=${expectedX}, found x=${currentX}`);
+    }
+
+    const patched = block.replace(/^x=\d+$/m, `x=${targetX}`);
+    return source.slice(0, start) + patched + source.slice(end);
+}
+
 function patchPriceActions(stagedContentDir: string) {
     const interfacePath = path.join(
         stagedContentDir,
@@ -209,8 +292,19 @@ function patchPriceActions(stagedContentDir: string) {
     source = enableLayerAction(source, DECREASE_COMPONENT, 'Decrease Price');
     source = enableLayerAction(source, INCREASE_COMPONENT, 'Increase Price');
 
-    const priceText = getComponentBlock(source, PRICE_TEXT_COMPONENT).block;
-    if (!priceText.includes('type=text') || !priceText.includes('text=1 gp')) {
+    const quantityText = getComponentBlock(source, QUANTITY_TEXT_COMPONENT).block;
+    if (!quantityText.includes('type=text') || !quantityText.includes('text=1')) {
+        throw new Error('Grand Exchange quantity display com_150 no longer matches the frozen group-105 default');
+    }
+
+    const priceTextInfo = getComponentBlock(source, PRICE_TEXT_COMPONENT);
+    if (!priceTextInfo.block.includes('type=text')) {
+        throw new Error('Grand Exchange price display com_155 is no longer an IF1 text component');
+    }
+    if (priceTextInfo.block.includes('text=1 gp')) {
+        const patchedPriceText = priceTextInfo.block.replace('text=1 gp', 'text=1');
+        source = source.slice(0, priceTextInfo.start) + patchedPriceText + source.slice(priceTextInfo.end);
+    } else if (!priceTextInfo.block.includes('text=1')) {
         throw new Error('Grand Exchange price display com_155 no longer matches the frozen group-105 default');
     }
 
@@ -218,6 +312,22 @@ function patchPriceActions(stagedContentDir: string) {
     if (!totalText.includes('type=text')) {
         throw new Error('Grand Exchange total-price display com_189 is no longer an IF1 text component');
     }
+
+    for (const [componentId, label, expectedY] of [
+        [PRICE_GP_COMPONENT, 'price gp suffix', 180],
+        [TOTAL_GP_COMPONENT, 'total gp suffix', 240],
+    ] as const) {
+        const suffix = getComponentBlock(source, componentId).block;
+        if (!suffix.includes('type=text') || !suffix.includes('text=gp') || !suffix.includes(`y=${expectedY}`)) {
+            throw new Error(`Grand Exchange ${label} com_${componentId} no longer matches its IF1 helper`);
+        }
+    }
+
+    source = setOfferValueTextY(source, QUANTITY_TEXT_COMPONENT, 180, QUANTITY_TEXT_Y, 'quantity display');
+    source = setOfferValueTextY(source, PRICE_TEXT_COMPONENT, 180, PRICE_TEXT_Y, 'price-per-item display');
+    source = setOfferValueTextX(source, PRICE_TEXT_COMPONENT, 295, PRICE_TEXT_X, 'price-per-item display');
+    source = setOfferValueTextY(source, TOTAL_TEXT_COMPONENT, 239, TOTAL_TEXT_Y, 'total-price display');
+    source = setOfferValueTextX(source, TOTAL_TEXT_COMPONENT, 186, TOTAL_TEXT_X, 'total-price display');
 
     const expectedButtons = [
         { componentId: MINIMUM_COMPONENT, option: 'Offer Minimum Price' },
@@ -231,6 +341,7 @@ function patchPriceActions(stagedContentDir: string) {
         if (!block.includes('buttontype=normal') || !block.includes(`option=${expected.option}`)) {
             throw new Error(`Grand Exchange price action com_${expected.componentId} no longer exposes ${expected.option}`);
         }
+        source = setButtonTextY(source, expected.componentId);
     }
 
     // r254 IF1 containers do not take the normal button packet path. Preserve
@@ -281,10 +392,10 @@ function patchOfferSetupPresentation(stagedContentDir: string) {
             `if_settext(${GE_INTERFACE_NAME}:com_${MARKET_TEXT_COMPONENT}, "0 gp");`,
             `if_settext(${GE_INTERFACE_NAME}:com_${RANGE_TEXT_COMPONENT}, "");`,
             `if_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "0");`,
-            `if_settext(${GE_INTERFACE_NAME}:com_${PRICE_TEXT_COMPONENT}, "0 gp");`,
-            `if_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, "0 gp");`,
+            '~ge_offer_price_value_render(0);',
+            '~ge_offer_total_value_render(0);',
         ].join('\n');
-        if (!block.includes(`if_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, "0 gp");`)) {
+        if (!block.includes('~ge_offer_total_value_render(0);')) {
             block = block.replace(titleSetter, `${titleSetter}\n${initialState}`);
         }
 
@@ -374,12 +485,12 @@ function patchSelectedItemPriceReset(stagedContentDir: string) {
     const end = next === -1 ? source.length : next;
     let block = source.slice(start, end);
 
-    const quantityTextReset = `if_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "1");`;
+    const quantityTextReset = `if_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "0");`;
     if (!block.includes(quantityTextReset)) {
         throw new Error('Grand Exchange price state requires the quantity-stage selected-item reset');
     }
 
-    const priceReset = `def_int $guide_price = ~ge_offer_nostalgia_price($item);\nif ($guide_price < 1) {\n    $guide_price = oc_cost($item);\n}\nif ($guide_price < 1) {\n    $guide_price = 1;\n}\ndef_int $minimum_delta = calc($guide_price / 20);\nif (calc($guide_price % 20) ! 0) {\n    $minimum_delta = add($minimum_delta, 1);\n}\ndef_int $minimum_price = sub($guide_price, $minimum_delta);\nif ($minimum_price < 1) {\n    $minimum_price = 1;\n}\ndef_int $maximum_delta = calc($guide_price / 20);\ndef_int $maximum_price = ${MAX_PRICE};\nif ($guide_price <= sub(${MAX_PRICE}, $maximum_delta)) {\n    $maximum_price = add($guide_price, $maximum_delta);\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $guide_price);\nif_settext(${GE_INTERFACE_NAME}:com_${MARKET_TEXT_COMPONENT}, append(append_num("", $guide_price), " gp"));\ndef_string $minimum_text = append(append_num("", $minimum_price), " gp");\ndef_string $maximum_text = append(append_num("", $maximum_price), " gp");\nif_settext(${GE_INTERFACE_NAME}:com_${RANGE_TEXT_COMPONENT}, append(append($minimum_text, " - "), $maximum_text));\nif_settext(${GE_INTERFACE_NAME}:com_${PRICE_TEXT_COMPONENT}, append(append_num("", $guide_price), " gp"));\n~ge_offer_total_refresh;`;
+    const priceReset = `def_int $guide_price = ~ge_offer_nostalgia_price($item);\nif ($guide_price < 1) {\n    $guide_price = oc_cost($item);\n}\nif ($guide_price < 1) {\n    $guide_price = 1;\n}\ndef_int $minimum_delta = calc($guide_price / 20);\nif (calc($guide_price % 20) ! 0) {\n    $minimum_delta = add($minimum_delta, 1);\n}\ndef_int $minimum_price = sub($guide_price, $minimum_delta);\nif ($minimum_price < 1) {\n    $minimum_price = 1;\n}\ndef_int $maximum_delta = calc($guide_price / 20);\ndef_int $maximum_price = ${MAX_PRICE};\nif ($guide_price <= sub(${MAX_PRICE}, $maximum_delta)) {\n    $maximum_price = add($guide_price, $maximum_delta);\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $guide_price);\nif_settext(${GE_INTERFACE_NAME}:com_${MARKET_TEXT_COMPONENT}, append(append_num("", $guide_price), " gp"));\ndef_string $minimum_text = append(append_num("", $minimum_price), " gp");\ndef_string $maximum_text = append(append_num("", $maximum_price), " gp");\nif_settext(${GE_INTERFACE_NAME}:com_${RANGE_TEXT_COMPONENT}, append(append($minimum_text, " - "), $maximum_text));\n~ge_offer_price_value_render($guide_price);\n~ge_offer_total_refresh;`;
 
     if (!block.includes(`inv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $guide_price);`)) {
         block = block.replace(quantityTextReset, `${quantityTextReset}\n${priceReset}`);
@@ -392,7 +503,7 @@ function patchSelectedItemPriceReset(stagedContentDir: string) {
 }
 
 function buildPriceScript() {
-    return `// Option-2-only server-authoritative price state for group 105.\n// ge_selected_item slot 0 stores the selected native-r254 item, slot 1 stores\n// quantity, and slot 2 uses a private coins stack only as an integer price token.\n// Guide prices come from Nostalgia/2009scape's price_index for item IDs that\n// also exist in native r254. oc_cost is used only when that index has no row.\n\n[proc,ge_offer_total_refresh]\nif (map_feature("grandexchange") = false) return;\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT});\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($quantity <= 0 | $price <= 0) {\n    if_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, "0 gp");\n    return;\n}\ndef_int $total = ${MAX_PRICE};\nif ($price <= calc(${MAX_PRICE} / $quantity)) {\n    $total = calc($quantity * $price);\n}\nif_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, append(append_num("", $total), " gp"));\n\n[proc,ge_offer_guide_price]()(int)\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return (1);\ndef_obj $item = inv_getobj(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT});\ndef_int $guide = ~ge_offer_nostalgia_price($item);\nif ($guide < 1) {\n    $guide = oc_cost($item);\n}\nif ($guide < 1) {\n    $guide = 1;\n}\nreturn ($guide);\n\n[proc,ge_offer_price_set](int $price)\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $clamped = $price;\nif ($clamped < 1) {\n    $clamped = 1;\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $clamped);\nif_settext(${GE_INTERFACE_NAME}:com_${PRICE_TEXT_COMPONENT}, append(append_num("", $clamped), " gp"));\n~ge_offer_total_refresh;\n\n[if_button,${GE_INTERFACE_NAME}:com_${DECREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($price <= 1) return;\n~ge_offer_price_set(sub($price, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${INCREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($price <= 0) {\n    $price = ~ge_offer_guide_price;\n}\nif ($price >= ${MAX_PRICE}) return;\n~ge_offer_price_set(add($price, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${MINIMUM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $guide = ~ge_offer_guide_price;\ndef_int $delta = calc($guide / 20);\nif (calc($guide % 20) ! 0) {\n    $delta = add($delta, 1);\n}\ndef_int $minimum = sub($guide, $delta);\nif ($minimum < 1) {\n    $minimum = 1;\n}\n~ge_offer_price_set($minimum);\n\n[if_button,${GE_INTERFACE_NAME}:com_${MARKET_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\n~ge_offer_price_set(~ge_offer_guide_price);\n\n[if_button,${GE_INTERFACE_NAME}:com_${MAXIMUM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $guide = ~ge_offer_guide_price;\ndef_int $delta = calc($guide / 20);\nif ($guide > sub(${MAX_PRICE}, $delta)) {\n    ~ge_offer_price_set(${MAX_PRICE});\n    return;\n}\n~ge_offer_price_set(add($guide, $delta));\n\n[if_button,${GE_INTERFACE_NAME}:com_${EDIT_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\np_countdialog;\ndef_int $price = last_int;\nif ($price <= 0) return;\n~ge_offer_price_set($price);\n`;
+    return `// Option-2-only server-authoritative price state for group 105.\n// ge_selected_item slot 0 stores the selected native-r254 item, slot 1 stores\n// quantity, and slot 2 uses a private coins stack only as an integer price token.\n// Guide prices come from Nostalgia/2009scape's price_index for item IDs that\n// also exist in native r254. oc_cost is used only when that index has no row.\n\n[proc,ge_offer_gp_offset](int $value)(int)\nif ($value < 10) return (0);\nif ($value < 100) return (4);\nif ($value < 1000) return (7);\nif ($value < 10000) return (11);\nif ($value < 100000) return (14);\nif ($value < 1000000) return (18);\nif ($value < 10000000) return (21);\nif ($value < 100000000) return (25);\nif ($value < 1000000000) return (28);\nreturn (32);\n\n[proc,ge_offer_price_value_render](int $value)\nif_settext(${GE_INTERFACE_NAME}:com_${PRICE_TEXT_COMPONENT}, append_num("", $value));\ndef_int $gp_offset = ~ge_offer_gp_offset($value);\nif_setposition(${GE_INTERFACE_NAME}:com_${PRICE_GP_COMPONENT}, $gp_offset, 0);\n\n[proc,ge_offer_total_value_render](int $value)\nif_settext(${GE_INTERFACE_NAME}:com_${TOTAL_TEXT_COMPONENT}, append_num("", $value));\ndef_int $gp_offset = ~ge_offer_gp_offset($value);\nif_setposition(${GE_INTERFACE_NAME}:com_${TOTAL_GP_COMPONENT}, $gp_offset, 0);\n\n[proc,ge_offer_total_refresh]\nif (map_feature("grandexchange") = false) return;\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT});\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($quantity <= 0 | $price <= 0) {\n    ~ge_offer_total_value_render(0);\n    return;\n}\ndef_int $total = ${MAX_PRICE};\nif ($price <= calc(${MAX_PRICE} / $quantity)) {\n    $total = calc($quantity * $price);\n}\n~ge_offer_total_value_render($total);\n\n[proc,ge_offer_guide_price]()(int)\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return (1);\ndef_obj $item = inv_getobj(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT});\ndef_int $guide = ~ge_offer_nostalgia_price($item);\nif ($guide < 1) {\n    $guide = oc_cost($item);\n}\nif ($guide < 1) {\n    $guide = 1;\n}\nreturn ($guide);\n\n[proc,ge_offer_price_set](int $price)\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $clamped = $price;\nif ($clamped < 1) {\n    $clamped = 1;\n}\ninv_setslot(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT}, ${PRICE_STATE_OBJECT}, $clamped);\n~ge_offer_price_value_render($clamped);\n~ge_offer_total_refresh;\n\n[if_button,${GE_INTERFACE_NAME}:com_${DECREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($price <= 1) return;\n~ge_offer_price_set(sub($price, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${INCREASE_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($price <= 0) {\n    $price = ~ge_offer_guide_price;\n}\nif ($price >= ${MAX_PRICE}) return;\n~ge_offer_price_set(add($price, 1));\n\n[if_button,${GE_INTERFACE_NAME}:com_${MINIMUM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $guide = ~ge_offer_guide_price;\ndef_int $delta = calc($guide / 20);\nif (calc($guide % 20) ! 0) {\n    $delta = add($delta, 1);\n}\ndef_int $minimum = sub($guide, $delta);\nif ($minimum < 1) {\n    $minimum = 1;\n}\n~ge_offer_price_set($minimum);\n\n[if_button,${GE_INTERFACE_NAME}:com_${MARKET_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\n~ge_offer_price_set(~ge_offer_guide_price);\n\n[if_button,${GE_INTERFACE_NAME}:com_${MAXIMUM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\ndef_int $guide = ~ge_offer_guide_price;\ndef_int $delta = calc($guide / 20);\nif ($guide > sub(${MAX_PRICE}, $delta)) {\n    ~ge_offer_price_set(${MAX_PRICE});\n    return;\n}\n~ge_offer_price_set(add($guide, $delta));\n\n[if_button,${GE_INTERFACE_NAME}:com_${EDIT_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) return;\np_countdialog;\ndef_int $price = last_int;\nif ($price <= 0) return;\n~ge_offer_price_set($price);\n`;
 }
 
 function writePriceScript(stagedContentDir: string, prices: NostalgiaPrice[]) {
@@ -412,6 +523,9 @@ function writePriceScript(stagedContentDir: string, prices: NostalgiaPrice[]) {
 function injectPriceScriptMappings(stagedContentDir: string, nostalgiaTriggerNames: string[]) {
     const triggerNames = [
         ...nostalgiaTriggerNames,
+        '[proc,ge_offer_gp_offset]',
+        '[proc,ge_offer_price_value_render]',
+        '[proc,ge_offer_total_value_render]',
         '[proc,ge_offer_total_refresh]',
         '[proc,ge_offer_guide_price]',
         '[proc,ge_offer_price_set]',

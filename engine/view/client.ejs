@@ -323,13 +323,34 @@
     </script>
 
     <script type="module">
-        import { Client } from './client/client.js?v=marketplace-1';
+        import { Client } from './client/client.js?v=click-ref-fix-1';
+
+        // Temporary runtime diagnostics: surface fatal async client-loop failures on-page.
+        const runtimeDiagnostic = document.createElement('pre');
+        runtimeDiagnostic.id = 'runtime-diagnostic';
+        runtimeDiagnostic.style.cssText = 'display:none;position:fixed;left:8px;right:8px;top:8px;z-index:2147483647;max-height:45vh;overflow:auto;margin:0;padding:10px;background:#210000;color:#ffb3b3;border:1px solid #ff4d4d;font:12px/1.4 monospace;white-space:pre-wrap;text-align:left;';
+        document.body.appendChild(runtimeDiagnostic);
+
+        const showRuntimeDiagnostic = (kind, value) => {
+            const error = value instanceof Error ? value : null;
+            const message = error?.stack || error?.message || String(value ?? 'Unknown error');
+            runtimeDiagnostic.textContent = `[client runtime ${kind}]\n${message}`;
+            runtimeDiagnostic.style.display = 'block';
+            console.error(`[client runtime ${kind}]`, value);
+        };
+
+        window.addEventListener('error', (event) => {
+            showRuntimeDiagnostic('error', event.error || `${event.message} @ ${event.filename}:${event.lineno}:${event.colno}`);
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            showRuntimeDiagnostic('unhandled rejection', event.reason);
+        });
 
         function resetCompassAndCamera(client) {
             client.tw = 0;
             client.uw = 0;
             client.ww = 0;
-            client.northLock = 20;
             client.bw = true;
             client.Vc[1] = 0;
             client.Vc[2] = 0;
@@ -456,30 +477,6 @@
             this.mobileRotateX = undefined;
             this.mobileRotateY = undefined;
             return originalPointerLeave.call(this, event);
-        };
-
-        const originalMinimapClick = Client.prototype.WA;
-        Client.prototype.WA = function () {
-            if (this.Qc === 1 && isCompassClick(this, this.Rc, this.Sc)) {
-                resetCompassAndCamera(this);
-                return;
-            }
-
-            return originalMinimapClick.call(this);
-        };
-
-        const originalCameraUpdate = Client.prototype.ZA;
-        Client.prototype.ZA = function () {
-            const result = originalCameraUpdate.call(this);
-
-            if (this.northLock > 0) {
-                this.tw = 0;
-                this.uw = 0;
-                this.ww = 0;
-                this.northLock--;
-            }
-
-            return result;
         };
 
         (() => {

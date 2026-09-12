@@ -154,7 +154,11 @@ export class Client extends GameShell {
     private randomIn: Isaac | null = null;
     private out: Packet = Packet.alloc(1);
     private loginout: Packet = Packet.alloc(1);
-    private in: Packet = Packet.alloc(1);
+    // Custom worlds can send PLAYER_INFO packets larger than the original 5 KB
+    // client buffer (for example when many bot players are visible at login).
+    // Use the existing max Packet pool so an oversized update cannot truncate
+    // into the DataView and kill the async game loop.
+    private in: Packet = Packet.alloc(2);
     private psize: number = 0;
     private ptype: number = 0;
     private timeoutTimer: number = 0;
@@ -481,6 +485,7 @@ export class Client extends GameShell {
     private grandExchangeItemSearchCatalogue: Array<{ id: number; name: string }> | null = null;
     private grandExchangeItemSearchLastQuery: string = '';
     private grandExchangeItemSearchLastResults: Array<{ id: number; name: string }> = [];
+    private movementDebugReported: boolean = false;
 
     private dialogInputOpen: boolean = false;
     private dialogInput: string = '';
@@ -2602,12 +2607,11 @@ export class Client extends GameShell {
         const checkClickInput = !this.isMobile || (this.isMobile && !MobileKeyboard.isWithinCanvasKeyboard(this.mouseClickX, this.mouseClickY));
 
         if (checkClickInput) {
-            if (!this.handleGrandExchangeItemSearchClick()) {
-                this.mouseLoop();
-                this.minimapLoop();
-                this.tabLoop();
-                this.chatModeLoop();
-            }
+            this.handleGrandExchangeItemSearchClick();
+            this.mouseLoop();
+            this.minimapLoop();
+            this.tabLoop();
+            this.chatModeLoop();
         }
 
         if (this.mouseButton === 1 || this.mouseClickButton === 1) {
@@ -4545,6 +4549,21 @@ export class Client extends GameShell {
 
         Pix2D.cls();
         this.world?.renderAll(this.camX, this.camY, this.camZ, level, this.camYaw, this.camPitch, this.loopCycle);
+        // Floor coordinates are discovered while the scene triangles are rendered.
+        // Consume them here so the click is not dependent on surviving until the next logic tick.
+        if (World.groundX !== -1 && this.localPlayer) {
+            const x: number = World.groundX;
+            const z: number = World.groundZ;
+            World.groundX = -1;
+            World.groundZ = -1;
+
+            if (this.tryMove(this.localPlayer.routeX[0], this.localPlayer.routeZ[0], x, z, true, 0, 0, 0, 0, 0, 0)) {
+                this.crossX = this.mouseClickX;
+                this.crossY = this.mouseClickY;
+                this.crossMode = 1;
+                this.crossCycle = 0;
+            }
+        }
         this.world?.removeSprites();
         this.entityOverlays();
         this.coordArrow();
@@ -5906,10 +5925,41 @@ export class Client extends GameShell {
         return true;
     }
 
+    private sendServerRoutedMove(dx: number, dz: number, type: number): boolean {
+        if (type !== 0 && type !== 1) {
+            return false;
+        }
+
+        if (type === 0) {
+            this.out.pIsaac(ClientProt.MOVE_GAMECLICK);
+            this.out.p1(5);
+        } else {
+            this.out.pIsaac(ClientProt.MOVE_MINIMAPCLICK);
+            this.out.p1(19);
+        }
+
+        this.out.p1(this.keyHeld[5] === 1 ? 1 : 0);
+        this.out.p2(dx + this.mapBuildBaseX);
+        this.out.p2(dz + this.mapBuildBaseZ);
+        this.tryMoveNearest = 0;
+        this.minimapFlagX = dx;
+        this.minimapFlagZ = dz;
+        if (!this.movementDebugReported) {
+            this.movementDebugReported = true;
+            this.addChat(0, `[movement debug] Client queued ${type === 0 ? 'floor' : 'minimap'} destination ${dx + this.mapBuildBaseX},${dz + this.mapBuildBaseZ}.`, '');
+        }
+        return true;
+    }
+
     private tryMove(srcX: number, srcZ: number, dx: number, dz: number, tryNearest: boolean, locWidth: number, locLength: number, locAngle: number, locShape: number, forceapproach: number, type: number): boolean {
+        // This distribution uses server-side routefinding, so these clicks only transmit their destination.
+        if (type === 0 || type === 1) {
+            return this.sendServerRoutedMove(dx, dz, type);
+        }
+
         const collisionMap: CollisionMap | null = this.collision[this.minusedlevel];
         if (!collisionMap) {
-            return false;
+            return this.sendServerRoutedMove(dx, dz, type);
         }
 
         const sceneWidth: number = BuildArea.SIZE;
@@ -6095,7 +6145,7 @@ export class Client extends GameShell {
             }
 
             if (!arrived) {
-                return false;
+                return this.sendServerRoutedMove(dx, dz, type);
             }
         }
 
@@ -6426,6 +6476,15 @@ export class Client extends GameShell {
                 IfType.list[c].model1Id = obj;
                 IfType.list[c].modelXAn = type.xan2d;
                 IfType.list[c].modelYAn = type.yan2d;
+                // grand_exchange_overview:com_138 is flat component 9138. The
+                // original GE item canvas relies on each object's complete 2D
+                // inventory presentation, including roll and per-item offsets.
+                // Keep this compatibility behaviour scoped to that component so
+                // unrelated r254 TYPE_MODEL widgets retain their native framing.
+                IfType.list[c].modelUseObj2dPresentation = c === 9138;
+                IfType.list[c].modelZAn = c === 9138 ? type.zan2d : 0;
+                IfType.list[c].modelXOf = c === 9138 ? type.xof2d : 0;
+                IfType.list[c].modelYOf = c === 9138 ? type.yof2d : 0;
                 IfType.list[c].modelZoom = ((type.zoom2d * 100) / zoom) | 0;
 
                 this.ptype = -1;
@@ -6438,6 +6497,7 @@ export class Client extends GameShell {
 
                 IfType.list[com].model1Type = 1;
                 IfType.list[com].model1Id = m;
+                IfType.list[com].modelUseObj2dPresentation = false;
 
                 this.ptype = -1;
                 return true;
@@ -6456,6 +6516,7 @@ export class Client extends GameShell {
 
                 if (this.localPlayer) {
                     IfType.list[comId].model1Type = 3;
+                    IfType.list[comId].modelUseObj2dPresentation = false;
                     IfType.list[comId].model1Id = (this.localPlayer.appearance[8] << 6) + (this.localPlayer.appearance[0] << 12) + (this.localPlayer.colour[0] << 24) + (this.localPlayer.colour[4] << 18) + this.localPlayer.appearance[11];
                 }
 
@@ -6483,6 +6544,7 @@ export class Client extends GameShell {
 
                 IfType.list[com].model1Type = 2;
                 IfType.list[com].model1Id = npcId;
+                IfType.list[com].modelUseObj2dPresentation = false;
 
                 this.ptype = -1;
                 return true;
@@ -8594,6 +8656,9 @@ export class Client extends GameShell {
     }
 
     private mouseLoop(): void {
+        if (this.mouseClickButton !== 0) {
+            this.addChat(5, `[input trace] shared click button=${this.mouseClickButton} drag=${this.objDragArea} entries=${this.menuNumEntries}.`, '');
+        }
         if (this.objDragArea !== 0) {
             return;
         }
@@ -8904,6 +8969,7 @@ export class Client extends GameShell {
         if (action >= MiniMenuAction._PRIORITY) {
             action -= MiniMenuAction._PRIORITY;
         }
+        
 
         return action === MiniMenuAction.FRIENDLIST_ADD;
     }
@@ -10629,7 +10695,22 @@ export class Client extends GameShell {
                 }
 
                 if (model) {
-                    model.objRender(0, child.modelYAn, 0, child.modelXAn, 0, eyeY, eyeZ);
+                    if (child.modelUseObj2dPresentation) {
+                        // Match ObjType.getIcon's framing for GE item models: the
+                        // item's own Z rotation and X/Y offsets are part of how
+                        // Jagex authored its 2D inventory presentation.
+                        model.objRender(
+                            0,
+                            child.modelYAn,
+                            child.modelZAn,
+                            child.modelXAn,
+                            child.modelXOf,
+                            eyeY + ((model.minY / 2) | 0) + child.modelYOf,
+                            eyeZ + child.modelYOf
+                        );
+                    } else {
+                        model.objRender(0, child.modelYAn, 0, child.modelXAn, 0, eyeY, eyeZ);
+                    }
                 }
 
                 Pix3D.originX = tmpX;
@@ -11540,10 +11621,13 @@ export class Client extends GameShell {
 
     // todo: order
     private closeGrandExchangeItemSearch(): void {
+        const grandExchangeOpen =
+            this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+            this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID;
         if (
             !this.socialInputOpen ||
             this.socialInputType !== 6 ||
-            this.socialInputHeader !== GRAND_EXCHANGE_ITEM_SEARCH_HEADER
+            (!grandExchangeOpen && this.socialInputHeader !== GRAND_EXCHANGE_ITEM_SEARCH_HEADER)
         ) {
             return;
         }
@@ -11563,7 +11647,7 @@ export class Client extends GameShell {
     }
 
     private isGrandExchangeItemSearchActive(): boolean {
-        if (!this.socialInputOpen || this.socialInputType !== 6 || this.socialInputHeader !== GRAND_EXCHANGE_ITEM_SEARCH_HEADER) {
+        if (!this.socialInputOpen || this.socialInputType !== 6) {
             return false;
         }
 
