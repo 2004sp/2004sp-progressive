@@ -24,6 +24,7 @@ import { prepareGrandExchangeOfferSubmitStage } from './grand-exchange-offer-sub
 import { prepareGrandExchangeActiveOfferStage } from './grand-exchange-active-offer-stage.js';
 import { prepareGrandExchangePartialFillStage } from './grand-exchange-partial-fill-stage.js';
 import { prepareGrandExchangeCompletedOfferStage } from './grand-exchange-completed-offer-stage.js';
+import { prepareGrandExchangeCancelledOfferStage } from './grand-exchange-cancelled-offer-stage.js';
 import { prepareGrandExchangeHoverStage } from './grand-exchange-hover-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
 import { prepareGrandExchangeClientStateStage } from './grand-exchange-client-state-stage.js';
@@ -73,7 +74,7 @@ function invalidateGrandExchangeServerConfigOutputs() {
     // Group 109 extends inv.pack with six option-2-only collection containers,
     // item search adds two temp result/selection containers, Confirm Offer adds
     // two temp context/submission containers, and authoritative active/partial/
-    // completed offer state shares six per-player temp slot containers.
+    // completed/cancelled offer state shares six per-player temp slot containers.
     // Some installed engine packer revisions decide whether to rebuild inv.dat
     // from source mtimes alone, while the staged .inv files can retain their
     // checkout timestamps. That can leave the newly extended staged inv.pack
@@ -115,6 +116,7 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangeActiveOfferStage(stagedContentDir);
         prepareGrandExchangePartialFillStage(stagedContentDir);
         prepareGrandExchangeCompletedOfferStage(stagedContentDir);
+        prepareGrandExchangeCancelledOfferStage(stagedContentDir);
         await prepareGrandExchangeHoverStage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
         prepareGrandExchangeClientStateStage(stagedContentDir);
