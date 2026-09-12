@@ -77,7 +77,7 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
             source = source.replace(titleBlock, completedTitleBlock);
         }
 
-        const activeDetail = `        if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, \"<oc_name($item_${offer.slot})> x<tostring($quantity_${offer.slot})> @ <tostring($price_${offer.slot})> gp\");`;
+        const activeDetail = `    if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, \"<oc_name($item_${offer.slot})> x<tostring($quantity_${offer.slot})> @ <tostring($price_${offer.slot})> gp\");`;
         const partialBlock = [
             `    if ($state_${offer.slot} = ${PARTIAL_STATE} & $filled_${offer.slot} > 0 & $filled_${offer.slot} < $quantity_${offer.slot}) {`,
             `        if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, \"<oc_name($item_${offer.slot})> <tostring($filled_${offer.slot})>/<tostring($quantity_${offer.slot})> filled @ <tostring($price_${offer.slot})> gp\");`,
