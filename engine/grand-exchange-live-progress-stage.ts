@@ -92,7 +92,8 @@ function appendProgressHelpers(stagedContentDir: string) {
         }
     }
 
-    const helpers: string[] = [];
+    const clipHelpers: string[] = [];
+    const fillHelpers: string[] = [];
     for (const offer of ACTIVE_OFFERS) {
         const background = getComponentBlock(source, offer.background);
         for (const required of [
@@ -110,7 +111,7 @@ function appendProgressHelpers(stagedContentDir: string) {
             }
         }
 
-        helpers.push(
+        clipHelpers.push(
             `[com_${offer.clip}]\n` +
             `layer=com_${offer.layer}\n` +
             `type=layer\n` +
@@ -120,7 +121,7 @@ function appendProgressHelpers(stagedContentDir: string) {
             `height=${PROGRESS_HEIGHT}\n` +
             `scroll=${PROGRESS_HEIGHT}`
         );
-        helpers.push(
+        fillHelpers.push(
             `[com_${offer.fill}]\n` +
             `layer=com_${offer.clip}\n` +
             `type=rect\n` +
@@ -133,7 +134,7 @@ function appendProgressHelpers(stagedContentDir: string) {
         );
     }
 
-    source = source.trimEnd() + '\n\n' + helpers.join('\n\n') + '\n';
+    source = source.trimEnd() + '\n\n' + [...clipHelpers, ...fillHelpers].join('\n\n') + '\n';
     fs.writeFileSync(interfacePath, source, 'utf8');
 }
 
