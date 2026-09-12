@@ -26,8 +26,11 @@ const ROWS = [
 export { restoreGrandExchangePersistedHistoryRuntime };
 
 function scriptBlock(source: string, marker: string) {
-    const start = source.indexOf(marker);
-    if (start < 0) throw new Error(`GE persisted history is missing ${marker}`);
+    // RuneScript trigger names can also appear in comments. Only match a trigger
+    // when the marker occupies an actual source line, never a prose substring.
+    let start = source.startsWith(marker) ? 0 : source.indexOf(`\n${marker}`);
+    if (start < 0) throw new Error(`GE persisted history is missing trigger ${marker}`);
+    if (start !== 0) start++;
     const next = source.indexOf('\n[', start + marker.length);
     return { start, end: next < 0 ? source.length : next, block: source.slice(start, next < 0 ? source.length : next) };
 }
@@ -64,7 +67,7 @@ function patchSubmission(root: string) {
     const current = scriptBlock(source, marker);
     const commit = 'inv_clear(ge_offer_submission);\ninv_moveitem(ge_selected_item, ge_offer_submission, $item, 1);';
     if (!current.block.includes(commit)) throw new Error('Cannot find GE Confirm Offer commit boundary');
-    const guard = `if (ge_history_record($offer_slot, $item, $mode, $quantity, $price) = false) {\n    mes(\"Your Grand Exchange offer could not be persisted. Please try again.\");\n    return;\n}\n`;
+    const guard = `if (ge_history_record($offer_slot, $item, $mode, $quantity, $price) = false) {\n    mes("Your Grand Exchange offer could not be persisted. Please try again.");\n    return;\n}\n`;
     const block = current.block.replace(commit, `${guard}${commit}`);
     source = source.slice(0, current.start) + block + source.slice(current.end);
     fs.writeFileSync(file, source, 'utf8');
@@ -82,8 +85,8 @@ function patchTransition(root: string, relative: string, status: number, mutatio
 }
 
 function liveHistoryDebugproc() {
-    const rows = ROWS.map(r => `if (ge_history_exists(${r.row})) {\n    def_obj $history_item_${r.row} = ge_history_item(${r.row});\n    def_int $history_type_${r.row} = ge_history_int(${r.row}, 0);\n    def_int $history_status_${r.row} = ge_history_int(${r.row}, 1);\n    def_int $history_quantity_${r.row} = ge_history_int(${r.row}, 2);\n    def_int $history_price_${r.row} = ge_history_int(${r.row}, 3);\n    if ($history_type_${r.row} = 1) {\n        if_settext(grand_exchange_group_643:com_${r.type}, \"Buy\");\n    } else {\n        if_settext(grand_exchange_group_643:com_${r.type}, \"Sell\");\n    }\n    if_settext(grand_exchange_group_643:com_${r.quantity}, tostring($history_quantity_${r.row}));\n    if_settext(grand_exchange_group_643:com_${r.name}, oc_name($history_item_${r.row}));\n    if_settext(grand_exchange_group_643:com_${r.price}, \"<tostring($history_price_${r.row})> gp\");\n    if_setobject(grand_exchange_group_643:com_${r.model}, $history_item_${r.row}, 250);\n    if ($history_status_${r.row} = 1) {\n        if_settext(grand_exchange_group_643:com_${r.status}, \"Pending\");\n    } else if ($history_status_${r.row} = 2) {\n        if_settext(grand_exchange_group_643:com_${r.status}, \"Partial\");\n    } else if ($history_status_${r.row} = 3) {\n        if_settext(grand_exchange_group_643:com_${r.status}, \"Complete\");\n    } else {\n        if_settext(grand_exchange_group_643:com_${r.status}, \"Cancelled\");\n    }\n    if_settext(grand_exchange_group_643:com_${r.timestamp}, ge_history_timestamp(${r.row}));\n    if_sethide(grand_exchange_group_643:com_${r.model}, false);\n    if_sethide(grand_exchange_group_643:com_${r.status}, false);\n    if_sethide(grand_exchange_group_643:com_${r.timestamp}, false);\n} else {\n    if_settext(grand_exchange_group_643:com_${r.type}, \"\");\n    if_settext(grand_exchange_group_643:com_${r.quantity}, \"\");\n    if_settext(grand_exchange_group_643:com_${r.name}, \"\");\n    if_settext(grand_exchange_group_643:com_${r.price}, \"\");\n    if_sethide(grand_exchange_group_643:com_${r.model}, true);\n    if_sethide(grand_exchange_group_643:com_${r.status}, true);\n    if_sethide(grand_exchange_group_643:com_${r.timestamp}, true);\n}`).join('\n\n');
-    return `[debugproc,ge643]\nif (map_feature(\"grandexchange\") = false) {\n    mes(\"Grand Exchange custom content is disabled.\");\n    return;\n}\n\nif_openmain(grand_exchange_group_643);\n\n// Live rows come only from the option-2 persisted server history.\n${rows}\n`;
+    const rows = ROWS.map(r => `if (ge_history_exists(${r.row})) {\n    def_obj $history_item_${r.row} = ge_history_item(${r.row});\n    def_int $history_type_${r.row} = ge_history_int(${r.row}, 0);\n    def_int $history_status_${r.row} = ge_history_int(${r.row}, 1);\n    def_int $history_quantity_${r.row} = ge_history_int(${r.row}, 2);\n    def_int $history_price_${r.row} = ge_history_int(${r.row}, 3);\n    if ($history_type_${r.row} = 1) {\n        if_settext(grand_exchange_group_643:com_${r.type}, "Buy");\n    } else {\n        if_settext(grand_exchange_group_643:com_${r.type}, "Sell");\n    }\n    if_settext(grand_exchange_group_643:com_${r.quantity}, tostring($history_quantity_${r.row}));\n    if_settext(grand_exchange_group_643:com_${r.name}, oc_name($history_item_${r.row}));\n    if_settext(grand_exchange_group_643:com_${r.price}, "<tostring($history_price_${r.row})> gp");\n    if_setobject(grand_exchange_group_643:com_${r.model}, $history_item_${r.row}, 250);\n    if ($history_status_${r.row} = 1) {\n        if_settext(grand_exchange_group_643:com_${r.status}, "Pending");\n    } else if ($history_status_${r.row} = 2) {\n        if_settext(grand_exchange_group_643:com_${r.status}, "Partial");\n    } else if ($history_status_${r.row} = 3) {\n        if_settext(grand_exchange_group_643:com_${r.status}, "Complete");\n    } else {\n        if_settext(grand_exchange_group_643:com_${r.status}, "Cancelled");\n    }\n    if_settext(grand_exchange_group_643:com_${r.timestamp}, ge_history_timestamp(${r.row}));\n    if_sethide(grand_exchange_group_643:com_${r.model}, false);\n    if_sethide(grand_exchange_group_643:com_${r.status}, false);\n    if_sethide(grand_exchange_group_643:com_${r.timestamp}, false);\n} else {\n    if_settext(grand_exchange_group_643:com_${r.type}, "");\n    if_settext(grand_exchange_group_643:com_${r.quantity}, "");\n    if_settext(grand_exchange_group_643:com_${r.name}, "");\n    if_settext(grand_exchange_group_643:com_${r.price}, "");\n    if_sethide(grand_exchange_group_643:com_${r.model}, true);\n    if_sethide(grand_exchange_group_643:com_${r.status}, true);\n    if_sethide(grand_exchange_group_643:com_${r.timestamp}, true);\n}`).join('\n\n');
+    return `[debugproc,ge643]\nif (map_feature("grandexchange") = false) {\n    mes("Grand Exchange custom content is disabled.");\n    return;\n}\n\nif_openmain(grand_exchange_group_643);\n\n// Live rows come only from the option-2 persisted server history.\n${rows}\n`;
 }
 
 function patchHistory(root: string) {
@@ -93,7 +96,7 @@ function patchHistory(root: string) {
     source = source.slice(0, current.start) + liveHistoryDebugproc() + source.slice(current.end);
     source = source.replace(
         '// Source rows are intentionally opened empty by [debugproc,ge643]. The later\n// authoritative server-side GE system can populate the same stable component\n// contract with if_settext/if_setobject.',
-        '// [debugproc,ge643] renders the latest persisted rows from the authoritative\n// option-2 server history. [debugproc,ge643test] remains the visual regression fixture.'
+        '// The ge643 debug procedure renders the latest persisted rows from the authoritative\n// option-2 server history. [debugproc,ge643test] remains the visual regression fixture.'
     );
     fs.writeFileSync(file, source, 'utf8');
 }
@@ -127,7 +130,8 @@ function validate(root: string) {
         if (!fs.readFileSync(path.join(root, file), 'utf8').includes(hook)) throw new Error(`GE history hook ${hook} missing`);
     }
     const history = fs.readFileSync(path.join(root, HISTORY), 'utf8').replace(/\r/g, '');
-    if ((history.match(/\[debugproc,ge643\]/g) ?? []).length !== 1) throw new Error('GE live history renderer must contain exactly one [debugproc,ge643] trigger');
+    const liveTriggerCount = history.split('\n').filter(line => line === '[debugproc,ge643]').length;
+    if (liveTriggerCount !== 1) throw new Error(`GE live history renderer must contain exactly one [debugproc,ge643] trigger line; found ${liveTriggerCount}`);
     if (!history.includes('[debugproc,ge643]\nif (map_feature("grandexchange") = false) {')) throw new Error('GE live history trigger header was not preserved');
     for (const required of ['ge_history_exists(0)', 'ge_history_item(0)', 'ge_history_int(0, 1)', 'ge_history_timestamp(0)', 'oc_name($history_item_0)']) {
         if (!history.includes(required)) throw new Error(`GE live history renderer missing ${required}`);
