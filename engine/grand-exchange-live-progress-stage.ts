@@ -208,7 +208,7 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
             '    } else {',
             `        def_int $progress_scaled_${offer.slot} = multiply($filled_${offer.slot}, ${PROGRESS_WIDTH});`,
             `        def_int $progress_pixels_${offer.slot} = divide($progress_scaled_${offer.slot}, $quantity_${offer.slot});`,
-            `        def_int $progress_offset_${offer.slot} = $progress_pixels_${offer.slot} - ${PROGRESS_WIDTH};`,
+            `        def_int $progress_offset_${offer.slot} = sub($progress_pixels_${offer.slot}, ${PROGRESS_WIDTH});`,
             `        if_setposition(${GE_INTERFACE_NAME}:com_${offer.fill}, $progress_offset_${offer.slot}, 0);`,
             '    }',
         ].join('\n');
@@ -291,7 +291,7 @@ function validateLiveProgress(stagedContentDir: string) {
             `if_setposition(${GE_INTERFACE_NAME}:com_${offer.fill}, 0, 0);`,
             `def_int $progress_scaled_${offer.slot} = multiply($filled_${offer.slot}, ${PROGRESS_WIDTH});`,
             `def_int $progress_pixels_${offer.slot} = divide($progress_scaled_${offer.slot}, $quantity_${offer.slot});`,
-            `def_int $progress_offset_${offer.slot} = $progress_pixels_${offer.slot} - ${PROGRESS_WIDTH};`,
+            `def_int $progress_offset_${offer.slot} = sub($progress_pixels_${offer.slot}, ${PROGRESS_WIDTH});`,
             `if_setposition(${GE_INTERFACE_NAME}:com_${offer.fill}, $progress_offset_${offer.slot}, 0);`,
             `if_sethide(${GE_INTERFACE_NAME}:com_${offer.clip}, true);`,
         ]) {
