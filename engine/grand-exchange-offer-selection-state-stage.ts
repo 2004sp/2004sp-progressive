@@ -53,7 +53,11 @@ function patchOfferSetupReset(stagedContentDir: string) {
             throw new Error(`Grand Exchange ${title} setup no longer contains its title setter`);
         }
 
+        // IF1 keeps the previous object/model payload on the component even when
+        // the component is hidden. Clear the model source as well as the text so
+        // a previous Sell item cannot leak into a later Sell or Buy setup.
         const resetLines = [
+            `if_setmodel(${GE_INTERFACE_NAME}:com_138, -1);`,
             `if_sethide(${GE_INTERFACE_NAME}:com_138, true);`,
             `if_settext(${GE_INTERFACE_NAME}:com_141, "Choose an item to exchange");`,
             `if_settext(${GE_INTERFACE_NAME}:com_142, "");`,
@@ -65,6 +69,39 @@ function patchOfferSetupReset(stagedContentDir: string) {
 
         source = source.slice(0, start) + block + source.slice(end);
     }
+
+    // The Sell selector only needs a selectable version of the inventory tab.
+    // Using IF_OPENMAIN_SIDE turns the selector into a side modal, which means
+    // Back can only remove it by closing/reopening the GE main interface. Swap
+    // the normal inventory tab instead so the main GE remains mounted in place.
+    source = replaceExactlyOnce(
+        source,
+        `if_openmain_side(${GE_INTERFACE_NAME}, ${SELL_INTERFACE_NAME});`,
+        `if_settab(${SELL_INTERFACE_NAME}, ^tab_inventory);\nif_settabactive(^tab_inventory);`,
+        'sell inventory side-modal open'
+    );
+
+    const backCleanup = [
+        `inv_stoptransmit(${SELL_INTERFACE_NAME}:inv);`,
+        'inv_clear(ge_selected_item);',
+        `if_openmain(${GE_INTERFACE_NAME});`,
+    ].join('\n');
+    const inPlaceBackCleanup = [
+        `inv_stoptransmit(${SELL_INTERFACE_NAME}:inv);`,
+        'inv_clear(ge_selected_item);',
+        'if_settab(inventory, ^tab_inventory);',
+        'if_settabactive(^tab_inventory);',
+        `if_setmodel(${GE_INTERFACE_NAME}:com_138, -1);`,
+        `if_sethide(${GE_INTERFACE_NAME}:com_138, true);`,
+        `if_settext(${GE_INTERFACE_NAME}:com_141, "Choose an item to exchange");`,
+        `if_settext(${GE_INTERFACE_NAME}:com_142, "");`,
+    ].join('\n');
+    source = replaceExactlyOnce(
+        source,
+        backCleanup,
+        inPlaceBackCleanup,
+        'offer-summary Back close/reopen sequence'
+    );
 
     fs.writeFileSync(scriptPath, source, 'utf8');
 }
@@ -83,15 +120,12 @@ function patchSellSelectionInPlace(stagedContentDir: string) {
 
     let source = fs.readFileSync(scriptPath, 'utf8').replace(/\r/g, '');
 
-    // The main GE is already open as the main half of IF_OPENMAIN_SIDE. Reopening
-    // it here closes both modals and immediately recreates the main interface,
-    // producing a visible flash and restoring source-default layers long enough
-    // for the sell prompt to cover the selected item's examine text. Keep the
-    // existing main + side pair alive and update the offer components in place.
+    // The GE main interface is already open. Restore the native inventory tab
+    // after choosing an item, but never reopen the GE itself.
     source = replaceExactlyOnce(
         source,
         `inv_stoptransmit(${SELL_INTERFACE_NAME}:inv);\nif_openmain(${GE_INTERFACE_NAME});\n`,
-        '',
+        `inv_stoptransmit(${SELL_INTERFACE_NAME}:inv);\nif_settab(inventory, ^tab_inventory);\nif_settabactive(^tab_inventory);\n`,
         'sell-selection stop/reopen sequence'
     );
 
@@ -102,6 +136,19 @@ function patchSellSelectionInPlace(stagedContentDir: string) {
         `if_sethide(${GE_INTERFACE_NAME}:com_138, false);\n${itemSetter}`,
         'sell selected-item model setter'
     );
+
+    const closeMarker = `[if_close,${GE_INTERFACE_NAME}]`;
+    const { start, end, block: originalCloseBlock } = getScriptBlock(source, closeMarker);
+    let closeBlock = originalCloseBlock;
+    const stopTransmit = `inv_stoptransmit(${SELL_INTERFACE_NAME}:inv);`;
+    const restoreInventory = 'if_settab(inventory, ^tab_inventory);';
+    if (!closeBlock.includes(stopTransmit)) {
+        throw new Error('Grand Exchange sell-selection close handler no longer stops the sell inventory transmit');
+    }
+    if (!closeBlock.includes(restoreInventory)) {
+        closeBlock = closeBlock.replace(stopTransmit, `${stopTransmit}\n${restoreInventory}`);
+    }
+    source = source.slice(0, start) + closeBlock + source.slice(end);
 
     fs.writeFileSync(scriptPath, source, 'utf8');
 }
