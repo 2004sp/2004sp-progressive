@@ -9,6 +9,7 @@ if_openmain(grand_exchange_overview);
 
 // r481 group 105 owns several mutually exclusive layers. IF1 has no onload CS2
 // to establish them, so initialise the overview state explicitly on open.
+if_sethide(grand_exchange_overview:com_16, false);
 if_sethide(grand_exchange_overview:com_19, false);
 if_sethide(grand_exchange_overview:com_35, false);
 if_sethide(grand_exchange_overview:com_51, false);
