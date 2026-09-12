@@ -485,7 +485,6 @@ export class Client extends GameShell {
     private grandExchangeItemSearchCatalogue: Array<{ id: number; name: string }> | null = null;
     private grandExchangeItemSearchLastQuery: string = '';
     private grandExchangeItemSearchLastResults: Array<{ id: number; name: string }> = [];
-    private movementDebugReported: boolean = false;
 
     private dialogInputOpen: boolean = false;
     private dialogInput: string = '';
@@ -5944,10 +5943,6 @@ export class Client extends GameShell {
         this.tryMoveNearest = 0;
         this.minimapFlagX = dx;
         this.minimapFlagZ = dz;
-        if (!this.movementDebugReported) {
-            this.movementDebugReported = true;
-            this.addChat(0, `[movement debug] Client queued ${type === 0 ? 'floor' : 'minimap'} destination ${dx + this.mapBuildBaseX},${dz + this.mapBuildBaseZ}.`, '');
-        }
         return true;
     }
 
@@ -8656,9 +8651,6 @@ export class Client extends GameShell {
     }
 
     private mouseLoop(): void {
-        if (this.mouseClickButton !== 0) {
-            this.addChat(5, `[input trace] shared click button=${this.mouseClickButton} drag=${this.objDragArea} entries=${this.menuNumEntries}.`, '');
-        }
         if (this.objDragArea !== 0) {
             return;
         }
