@@ -19,7 +19,7 @@ const SUBMISSION_PRICE_SLOT = 1;
 const SUBMISSION_TOTAL_SLOT = 2;
 const BUY_MODE = 1;
 const SELL_MODE = 2;
-const CONFIRM_COMPONENT = 191;
+const CONFIRM_COMPONENT = 190;
 const MAX_INT = 2147483647;
 
 const BUY_ACTIONS = [
@@ -103,7 +103,7 @@ function getScriptBlock(source: string, marker: string) {
     return { start, end, block: source.slice(start, end) };
 }
 
-function patchConfirmButton(stagedContentDir: string) {
+function assertConfirmButton(stagedContentDir: string) {
     const interfacePath = path.join(
         stagedContentDir,
         'scripts',
@@ -115,31 +115,22 @@ function patchConfirmButton(stagedContentDir: string) {
         throw new Error(`Grand Exchange offer submission interface is missing: ${interfacePath}`);
     }
 
-    let source = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
-    const { start, end, block } = getComponentBlock(source, CONFIRM_COMPONENT);
-
+    const source = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
+    const { block } = getComponentBlock(source, CONFIRM_COMPONENT);
     for (const required of [
-        'layer=com_156',
-        'type=text',
+        'buttontype=normal',
+        'option=Confirm Offer',
+        'type=graphic',
         'x=200',
         'y=270',
         'width=120',
         'height=43',
-        'text=Confirm Offer',
+        'graphic=r481_ge_confirm_offer_button,0',
     ]) {
         if (!block.includes(required)) {
-            throw new Error(`Grand Exchange Confirm Offer ${required} no longer matches frozen group 105`);
+            throw new Error(`Grand Exchange Confirm Offer action no longer contains ${required}`);
         }
     }
-
-    if (!block.includes('buttontype=')) {
-        const patched = block.replace('type=text', 'buttontype=normal\noption=Confirm Offer\ntype=text');
-        source = source.slice(0, start) + patched + source.slice(end);
-    } else if (!block.includes('buttontype=normal') || !block.includes('option=Confirm Offer')) {
-        throw new Error('Grand Exchange Confirm Offer already has incompatible IF1 action metadata');
-    }
-
-    fs.writeFileSync(interfacePath, source, 'utf8');
 }
 
 function writeOfferStateInventoryConfig(stagedContentDir: string) {
@@ -300,7 +291,7 @@ function injectOfferSubmissionScriptMapping(stagedContentDir: string) {
 }
 
 export function prepareGrandExchangeOfferSubmitStage(stagedContentDir: string) {
-    patchConfirmButton(stagedContentDir);
+    assertConfirmButton(stagedContentDir);
     writeOfferStateInventoryConfig(stagedContentDir);
     injectOfferStateInventoryMappings(stagedContentDir);
     patchOfferContext(stagedContentDir);
