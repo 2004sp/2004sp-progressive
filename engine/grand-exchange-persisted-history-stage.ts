@@ -32,6 +32,31 @@ function scriptBlock(source: string, marker: string) {
     return { start, end: next < 0 ? source.length : next, block: source.slice(start, next < 0 ? source.length : next) };
 }
 
+function patchRuneScriptArithmetic(root: string) {
+    const partialFile = path.join(root, PARTIAL);
+    let partial = fs.readFileSync(partialFile, 'utf8').replace(/\r/g, '');
+    for (const offer of OFFERS) {
+        const remainingInline = `def_int $remaining_${offer.slot} = $requested_${offer.slot} - $filled_${offer.slot};`;
+        const remainingCommand = `def_int $remaining_${offer.slot} = sub($requested_${offer.slot}, $filled_${offer.slot});`;
+        const nextInline = `def_int $next_filled_${offer.slot} = $filled_${offer.slot} + $fill_quantity;`;
+        const nextCommand = `def_int $next_filled_${offer.slot} = add($filled_${offer.slot}, $fill_quantity);`;
+        if (!partial.includes(remainingInline)) throw new Error(`Cannot find GE partial remaining arithmetic for slot ${offer.slot}`);
+        if (!partial.includes(nextInline)) throw new Error(`Cannot find GE partial next-filled arithmetic for slot ${offer.slot}`);
+        partial = partial.replace(remainingInline, remainingCommand).replace(nextInline, nextCommand);
+    }
+    fs.writeFileSync(partialFile, partial, 'utf8');
+
+    const completedFile = path.join(root, COMPLETED);
+    let completed = fs.readFileSync(completedFile, 'utf8').replace(/\r/g, '');
+    for (const offer of OFFERS) {
+        const remainingInline = `def_int $remaining_${offer.slot} = $requested_${offer.slot} - $filled_${offer.slot};`;
+        const remainingCommand = `def_int $remaining_${offer.slot} = sub($requested_${offer.slot}, $filled_${offer.slot});`;
+        if (!completed.includes(remainingInline)) throw new Error(`Cannot find GE completed remaining arithmetic for slot ${offer.slot}`);
+        completed = completed.replace(remainingInline, remainingCommand);
+    }
+    fs.writeFileSync(completedFile, completed, 'utf8');
+}
+
 function patchSubmission(root: string) {
     const file = path.join(root, OFFER_SUBMISSION);
     let source = fs.readFileSync(file, 'utf8').replace(/\r/g, '');
@@ -74,12 +99,36 @@ function patchHistory(root: string) {
 }
 
 function validate(root: string) {
+    const partial = fs.readFileSync(path.join(root, PARTIAL), 'utf8').replace(/\r/g, '');
+    const completed = fs.readFileSync(path.join(root, COMPLETED), 'utf8').replace(/\r/g, '');
+    for (const offer of OFFERS) {
+        for (const forbidden of [
+            `def_int $remaining_${offer.slot} = $requested_${offer.slot} - $filled_${offer.slot};`,
+            `def_int $next_filled_${offer.slot} = $filled_${offer.slot} + $fill_quantity;`,
+        ]) {
+            if (partial.includes(forbidden)) throw new Error(`GE partial script still contains unsupported inline arithmetic: ${forbidden}`);
+        }
+        if (!partial.includes(`def_int $remaining_${offer.slot} = sub($requested_${offer.slot}, $filled_${offer.slot});`)) {
+            throw new Error(`GE partial script is missing sub() arithmetic for slot ${offer.slot}`);
+        }
+        if (!partial.includes(`def_int $next_filled_${offer.slot} = add($filled_${offer.slot}, $fill_quantity);`)) {
+            throw new Error(`GE partial script is missing add() arithmetic for slot ${offer.slot}`);
+        }
+        const completedInline = `def_int $remaining_${offer.slot} = $requested_${offer.slot} - $filled_${offer.slot};`;
+        if (completed.includes(completedInline)) throw new Error(`GE completed script still contains unsupported inline arithmetic: ${completedInline}`);
+        if (!completed.includes(`def_int $remaining_${offer.slot} = sub($requested_${offer.slot}, $filled_${offer.slot});`)) {
+            throw new Error(`GE completed script is missing sub() arithmetic for slot ${offer.slot}`);
+        }
+    }
+
     const submission = fs.readFileSync(path.join(root, OFFER_SUBMISSION), 'utf8');
     if (!submission.includes('ge_history_record($offer_slot, $item, $mode, $quantity, $price)')) throw new Error('GE history submission hook missing');
     for (const [file, hook] of [[PARTIAL, 'ge_history_set_status(1, 2)'], [COMPLETED, 'ge_history_set_status(1, 3)'], [CANCELLED, 'ge_history_set_status(1, 4)']] as const) {
         if (!fs.readFileSync(path.join(root, file), 'utf8').includes(hook)) throw new Error(`GE history hook ${hook} missing`);
     }
-    const history = fs.readFileSync(path.join(root, HISTORY), 'utf8');
+    const history = fs.readFileSync(path.join(root, HISTORY), 'utf8').replace(/\r/g, '');
+    if ((history.match(/\[debugproc,ge643\]/g) ?? []).length !== 1) throw new Error('GE live history renderer must contain exactly one [debugproc,ge643] trigger');
+    if (!history.includes('[debugproc,ge643]\nif (map_feature("grandexchange") = false) {')) throw new Error('GE live history trigger header was not preserved');
     for (const required of ['ge_history_exists(0)', 'ge_history_item(0)', 'ge_history_int(0, 1)', 'ge_history_timestamp(0)', 'oc_name($history_item_0)']) {
         if (!history.includes(required)) throw new Error(`GE live history renderer missing ${required}`);
     }
@@ -88,6 +137,7 @@ function validate(root: string) {
 export function prepareGrandExchangePersistedHistoryStage(stagedContentDir: string) {
     prepareGrandExchangePersistedHistoryRuntime(stagedContentDir);
     try {
+        patchRuneScriptArithmetic(stagedContentDir);
         patchSubmission(stagedContentDir);
         patchTransition(stagedContentDir, PARTIAL, 2, (name, slot) => `inv_setslot(${name}, 6, coins, $next_filled_${slot});`);
         patchTransition(stagedContentDir, COMPLETED, 3, (name, slot) => `inv_setslot(${name}, 6, coins, $requested_${slot});`);
