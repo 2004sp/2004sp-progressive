@@ -18,8 +18,10 @@ const COMPLETED_STATE = 3;
 const CANCELLED_STATE = 4;
 const DETAIL_ROOT = 200;
 const DETAIL_TEXT = 201;
-const PROGRESS_BAR = 202;
+const PROGRESS_BACKGROUND = 202;
 const ABORT_BUTTON = 203;
+const PROGRESS_CLIP = 212;
+const PROGRESS_FILL = 213;
 const COLLECTION_COMPONENTS = [204, 205, 206, 207, 208, 209, 210, 211] as const;
 
 const ACTIVE_OFFERS = [
@@ -55,6 +57,11 @@ function getComponentBlock(source: string, componentId: number) {
     return { marker, start, end, block: source.slice(start, end) };
 }
 
+function replaceComponent(source: string, componentId: number, replacement: string) {
+    const { start, end } = getComponentBlock(source, componentId);
+    return source.slice(0, start) + replacement.trimEnd() + source.slice(end);
+}
+
 function getScriptBlock(source: string, marker: string) {
     let start = source.startsWith(marker) ? 0 : source.indexOf(`\n${marker}`);
     if (start < 0) throw new Error(`Grand Exchange active-offer detail is missing trigger ${marker}`);
@@ -86,7 +93,7 @@ function patchDetailInterface(stagedContentDir: string) {
         source = patchAction(source, offer.detail, 'text');
     }
 
-    const progress = getComponentBlock(source, PROGRESS_BAR);
+    const progress = getComponentBlock(source, PROGRESS_BACKGROUND);
     for (const required of [
         `layer=com_${DETAIL_ROOT}`,
         'type=layer',
@@ -97,11 +104,33 @@ function patchDetailInterface(stagedContentDir: string) {
         'scroll=15',
     ]) {
         if (!progress.block.includes(required)) {
-            throw new Error(`Grand Exchange active-offer progress host com_${PROGRESS_BAR} no longer contains ${required}`);
+            throw new Error(`Grand Exchange active-offer progress host com_${PROGRESS_BACKGROUND} no longer contains ${required}`);
         }
     }
-    const progressRect = `[com_${PROGRESS_BAR}]\nlayer=com_${DETAIL_ROOT}\ntype=rect\nx=70\ny=299\nwidth=300\nheight=15\nfill=yes\ncolour=0x3B352C\n`;
-    source = source.slice(0, progress.start) + progressRect.trimEnd() + source.slice(progress.end);
+    source = replaceComponent(
+        source,
+        PROGRESS_BACKGROUND,
+        `[com_${PROGRESS_BACKGROUND}]\nlayer=com_${DETAIL_ROOT}\ntype=rect\nx=70\ny=299\nwidth=300\nheight=15\nfill=yes\ncolour=0x3B352C\n`
+    );
+
+    const clip = getComponentBlock(source, PROGRESS_CLIP).block;
+    const fill = getComponentBlock(source, PROGRESS_FILL).block;
+    if (!clip.includes('type=layer') || !clip.includes('width=512') || !clip.includes('height=334')) {
+        throw new Error(`Grand Exchange active-offer progress clip com_${PROGRESS_CLIP} no longer matches the unused frozen helper root`);
+    }
+    if (!fill.includes(`layer=com_${PROGRESS_CLIP}`) || !fill.includes('type=layer')) {
+        throw new Error(`Grand Exchange active-offer progress fill com_${PROGRESS_FILL} no longer matches the unused frozen helper child`);
+    }
+    source = replaceComponent(
+        source,
+        PROGRESS_CLIP,
+        `[com_${PROGRESS_CLIP}]\nlayer=com_${DETAIL_ROOT}\ntype=layer\nx=70\ny=299\nwidth=300\nheight=15\nscroll=15\n`
+    );
+    source = replaceComponent(
+        source,
+        PROGRESS_FILL,
+        `[com_${PROGRESS_FILL}]\nlayer=com_${PROGRESS_CLIP}\ntype=rect\nx=0\ny=1\nwidth=300\nheight=13\nfill=yes\ncolour=0xB28A2E\n`
+    );
 
     const status = getComponentBlock(source, DETAIL_TEXT).block;
     if (!status.includes(`layer=com_${DETAIL_ROOT}`) || !status.includes('type=text')) {
@@ -143,7 +172,7 @@ function patchViewInventory(stagedContentDir: string) {
 
 function buildOpenProc(offer: (typeof ACTIVE_OFFERS)[number]) {
     const hideCollection = COLLECTION_COMPONENTS.map(component => `if_sethide(${GE_INTERFACE_NAME}:com_${component}, true);`).join('\n');
-    return `[proc,ge_open_active_offer_${offer.slot}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${offer.name}, ${ACTIVE_ITEM_SLOT}) <= 0) {\n    ~ge_return_to_offer_summary;\n    return;\n}\ninv_clear(${VIEW_INV});\ninv_setslot(${VIEW_INV}, 0, coins, ${offer.slot});\ndef_obj $item = inv_getobj(${offer.name}, ${ACTIVE_ITEM_SLOT});\ndef_int $mode = inv_getnum(${offer.name}, ${ACTIVE_MODE_SLOT});\ndef_int $quantity = inv_getnum(${offer.name}, ${ACTIVE_QUANTITY_SLOT});\ndef_int $price = inv_getnum(${offer.name}, ${ACTIVE_PRICE_SLOT});\ndef_int $total = inv_getnum(${offer.name}, ${ACTIVE_TOTAL_SLOT});\ndef_int $state = inv_getnum(${offer.name}, ${ACTIVE_STATE_SLOT});\ndef_int $filled = inv_getnum(${offer.name}, ${ACTIVE_FILLED_SLOT});\nif_sethide(${GE_INTERFACE_NAME}:com_16, true);\nif_sethide(${GE_INTERFACE_NAME}:com_126, false);\nif_sethide(${GE_INTERFACE_NAME}:com_156, true);\nif_sethide(${GE_INTERFACE_NAME}:com_192, true);\nif_sethide(${GE_INTERFACE_NAME}:com_197, true);\nif_sethide(${GE_INTERFACE_NAME}:com_${DETAIL_ROOT}, false);\nif_setposition(${GE_INTERFACE_NAME}:com_138, 0, 0);\nif_sethide(${GE_INTERFACE_NAME}:com_138, false);\nif_setobject(${GE_INTERFACE_NAME}:com_138, $item, 100);\nif_settext(${GE_INTERFACE_NAME}:com_141, oc_name($item));\nif_settext(${GE_INTERFACE_NAME}:com_140, "<tostring($price)> gp");\nif_settext(${GE_INTERFACE_NAME}:com_145, "");\nif_settext(${GE_INTERFACE_NAME}:com_150, tostring($quantity));\n~ge_offer_price_value_render($price);\n~ge_offer_total_value_render($total);\n${hideCollection}\nif ($mode = ${BUY_MODE}) {\n    if_settext(${GE_INTERFACE_NAME}:com_133, "Buy Offer");\n} else {\n    if_settext(${GE_INTERFACE_NAME}:com_133, "Sell Offer");\n}\nif ($state = ${ACTIVE_STATE}) {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, false);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_BAR}, 0x5A4A22);\n    if ($mode = ${BUY_MODE}) {\n        if_settext(${GE_INTERFACE_NAME}:com_142, "Waiting for a seller to match your offer.");\n        if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Waiting to buy: <tostring($filled)>/<tostring($quantity)> filled");\n    } else {\n        if_settext(${GE_INTERFACE_NAME}:com_142, "Waiting for a buyer to match your offer.");\n        if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Waiting to sell: <tostring($filled)>/<tostring($quantity)> filled");\n    }\n} else if ($state = ${PARTIAL_STATE}) {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, false);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_BAR}, 0x8A6A18);\n    if ($mode = ${BUY_MODE}) {\n        if_settext(${GE_INTERFACE_NAME}:com_142, "Your buy offer has partially completed.");\n    } else {\n        if_settext(${GE_INTERFACE_NAME}:com_142, "Your sell offer has partially completed.");\n    }\n    if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Progress: <tostring($filled)>/<tostring($quantity)> filled");\n} else if ($state = ${COMPLETED_STATE}) {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, true);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_BAR}, 0x376B32);\n    if_settext(${GE_INTERFACE_NAME}:com_142, "Your offer has completed.");\n    if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Complete: <tostring($quantity)>/<tostring($quantity)> filled");\n} else if ($state = ${CANCELLED_STATE}) {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, true);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_BAR}, 0x6B3430);\n    if_settext(${GE_INTERFACE_NAME}:com_142, "Your offer has been cancelled.");\n    if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Cancelled: <tostring($filled)>/<tostring($quantity)> filled");\n} else {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, true);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_BAR}, 0x3B352C);\n    if_settext(${GE_INTERFACE_NAME}:com_142, "This offer is not in a displayable state.");\n    if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "");\n}\n`;
+    return `[proc,ge_open_active_offer_${offer.slot}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${offer.name}, ${ACTIVE_ITEM_SLOT}) <= 0) {\n    ~ge_return_to_offer_summary;\n    return;\n}\ninv_clear(${VIEW_INV});\ninv_setslot(${VIEW_INV}, 0, coins, ${offer.slot});\ndef_obj $item = inv_getobj(${offer.name}, ${ACTIVE_ITEM_SLOT});\ndef_int $mode = inv_getnum(${offer.name}, ${ACTIVE_MODE_SLOT});\ndef_int $quantity = inv_getnum(${offer.name}, ${ACTIVE_QUANTITY_SLOT});\ndef_int $price = inv_getnum(${offer.name}, ${ACTIVE_PRICE_SLOT});\ndef_int $total = inv_getnum(${offer.name}, ${ACTIVE_TOTAL_SLOT});\ndef_int $state = inv_getnum(${offer.name}, ${ACTIVE_STATE_SLOT});\ndef_int $filled = inv_getnum(${offer.name}, ${ACTIVE_FILLED_SLOT});\ndef_int $progress_offset = -300;\nif ($quantity > 0 & $filled >= 0) {\n    $progress_offset = interpolate(-300, 0, 0, $quantity, $filled);\n}\nif_sethide(${GE_INTERFACE_NAME}:com_16, true);\nif_sethide(${GE_INTERFACE_NAME}:com_126, false);\nif_sethide(${GE_INTERFACE_NAME}:com_156, true);\nif_sethide(${GE_INTERFACE_NAME}:com_192, true);\nif_sethide(${GE_INTERFACE_NAME}:com_197, true);\nif_sethide(${GE_INTERFACE_NAME}:com_${DETAIL_ROOT}, false);\nif_sethide(${GE_INTERFACE_NAME}:com_${PROGRESS_CLIP}, false);\nif_sethide(${GE_INTERFACE_NAME}:com_${PROGRESS_FILL}, false);\nif_setposition(${GE_INTERFACE_NAME}:com_${PROGRESS_FILL}, $progress_offset, 0);\nif_setposition(${GE_INTERFACE_NAME}:com_138, 0, 0);\nif_sethide(${GE_INTERFACE_NAME}:com_138, false);\nif_setobject(${GE_INTERFACE_NAME}:com_138, $item, 100);\nif_settext(${GE_INTERFACE_NAME}:com_141, oc_name($item));\nif_settext(${GE_INTERFACE_NAME}:com_140, "<tostring($price)> gp");\nif_settext(${GE_INTERFACE_NAME}:com_145, "");\nif_settext(${GE_INTERFACE_NAME}:com_150, tostring($quantity));\n~ge_offer_price_value_render($price);\n~ge_offer_total_value_render($total);\n${hideCollection}\nif ($mode = ${BUY_MODE}) {\n    if_settext(${GE_INTERFACE_NAME}:com_133, "Buy Offer");\n} else {\n    if_settext(${GE_INTERFACE_NAME}:com_133, "Sell Offer");\n}\nif ($state = ${ACTIVE_STATE}) {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, false);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_FILL}, 0xB28A2E);\n    if ($mode = ${BUY_MODE}) {\n        if_settext(${GE_INTERFACE_NAME}:com_142, "Waiting for a seller to match your offer.");\n        if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Waiting to buy: <tostring($filled)>/<tostring($quantity)> filled");\n    } else {\n        if_settext(${GE_INTERFACE_NAME}:com_142, "Waiting for a buyer to match your offer.");\n        if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Waiting to sell: <tostring($filled)>/<tostring($quantity)> filled");\n    }\n} else if ($state = ${PARTIAL_STATE}) {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, false);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_FILL}, 0xC69A28);\n    if ($mode = ${BUY_MODE}) {\n        if_settext(${GE_INTERFACE_NAME}:com_142, "Your buy offer has partially completed.");\n    } else {\n        if_settext(${GE_INTERFACE_NAME}:com_142, "Your sell offer has partially completed.");\n    }\n    if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Progress: <tostring($filled)>/<tostring($quantity)> filled");\n} else if ($state = ${COMPLETED_STATE}) {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, true);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_FILL}, 0x4A8A43);\n    if_settext(${GE_INTERFACE_NAME}:com_142, "Your offer has completed.");\n    if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Complete: <tostring($quantity)>/<tostring($quantity)> filled");\n} else if ($state = ${CANCELLED_STATE}) {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, true);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_FILL}, 0x8A403A);\n    if_settext(${GE_INTERFACE_NAME}:com_142, "Your offer has been cancelled.");\n    if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "Cancelled: <tostring($filled)>/<tostring($quantity)> filled");\n} else {\n    if_sethide(${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}, true);\n    if_setcolour(${GE_INTERFACE_NAME}:com_${PROGRESS_FILL}, 0x3B352C);\n    if_settext(${GE_INTERFACE_NAME}:com_142, "This offer is not in a displayable state.");\n    if_settext(${GE_INTERFACE_NAME}:com_${DETAIL_TEXT}, "");\n}\n`;
 }
 
 function patchOverviewScript(stagedContentDir: string) {
@@ -192,9 +221,17 @@ function injectScriptMappings(stagedContentDir: string) {
 
 function validate(stagedContentDir: string) {
     const interfaceSource = fs.readFileSync(path.join(stagedContentDir, 'scripts', 'grand_exchange', 'interfaces', `${GE_INTERFACE_NAME}.if`), 'utf8').replace(/\r/g, '');
-    const progress = getComponentBlock(interfaceSource, PROGRESS_BAR).block;
+    const background = getComponentBlock(interfaceSource, PROGRESS_BACKGROUND).block;
     for (const required of ['type=rect', 'fill=yes', 'colour=0x3B352C']) {
-        if (!progress.includes(required)) throw new Error(`Grand Exchange active-offer progress bar is missing ${required}`);
+        if (!background.includes(required)) throw new Error(`Grand Exchange active-offer progress background is missing ${required}`);
+    }
+    const clip = getComponentBlock(interfaceSource, PROGRESS_CLIP).block;
+    for (const required of [`layer=com_${DETAIL_ROOT}`, 'type=layer', 'width=300', 'height=15', 'scroll=15']) {
+        if (!clip.includes(required)) throw new Error(`Grand Exchange active-offer progress clip is missing ${required}`);
+    }
+    const fill = getComponentBlock(interfaceSource, PROGRESS_FILL).block;
+    for (const required of [`layer=com_${PROGRESS_CLIP}`, 'type=rect', 'width=300', 'height=13', 'fill=yes']) {
+        if (!fill.includes(required)) throw new Error(`Grand Exchange active-offer progress fill is missing ${required}`);
     }
     for (const offer of ACTIVE_OFFERS) {
         for (const component of [offer.model, offer.detail]) {
@@ -213,6 +250,8 @@ function validate(stagedContentDir: string) {
         `[if_button,${GE_INTERFACE_NAME}:com_${ABORT_BUTTON}]`,
         'Waiting for a seller to match your offer.',
         'Waiting for a buyer to match your offer.',
+        'interpolate(-300, 0, 0, $quantity, $filled)',
+        `if_setposition(${GE_INTERFACE_NAME}:com_${PROGRESS_FILL}, $progress_offset, 0);`,
         `~ge_active_offer_apply_cancelled(1);`,
         `inv_clear(${VIEW_INV});`,
     ]) {
