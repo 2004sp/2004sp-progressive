@@ -121,7 +121,7 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
 function buildCancelledOfferScript() {
     const branches = ACTIVE_OFFERS.map((offer, index) => {
         const prefix = index === 0 ? 'if' : 'else if';
-        return `${prefix} ($offer_slot = ${offer.slot}) {\n    if (inv_getnum(${offer.name}, ${ACTIVE_ITEM_SLOT}) <= 0) return;\n    def_int $requested_${offer.slot} = inv_getnum(${offer.name}, ${ACTIVE_QUANTITY_SLOT});\n    def_int $state_${offer.slot} = inv_getnum(${offer.name}, ${ACTIVE_STATE_SLOT});\n    def_int $filled_${offer.slot} = inv_getnum(${offer.name}, ${ACTIVE_FILLED_SLOT});\n    if ($requested_${offer.slot} <= 0) return;\n    if ($state_${offer.slot} != ${ACTIVE_STATE} & $state_${offer.slot} != ${PARTIAL_STATE}) return;\n    if ($filled_${offer.slot} < 0 | $filled_${offer.slot} >= $requested_${offer.slot}) return;\n    // Cancellation preserves all authoritative fill progress. The later economy\n    // phase will derive collectible bought items/proceeds and recover only the\n    // unfilled reservation; this milestone must not manufacture that output.\n    inv_setslot(${offer.name}, ${ACTIVE_STATE_SLOT}, coins, ${CANCELLED_STATE});\n}`;
+        return `${prefix} ($offer_slot = ${offer.slot}) {\n    if (inv_getnum(${offer.name}, ${ACTIVE_ITEM_SLOT}) <= 0) return;\n    def_int $requested_${offer.slot} = inv_getnum(${offer.name}, ${ACTIVE_QUANTITY_SLOT});\n    def_int $state_${offer.slot} = inv_getnum(${offer.name}, ${ACTIVE_STATE_SLOT});\n    def_int $filled_${offer.slot} = inv_getnum(${offer.name}, ${ACTIVE_FILLED_SLOT});\n    if ($requested_${offer.slot} <= 0) return;\n    if ($state_${offer.slot} ! ${ACTIVE_STATE} & $state_${offer.slot} ! ${PARTIAL_STATE}) return;\n    if ($filled_${offer.slot} < 0 | $filled_${offer.slot} >= $requested_${offer.slot}) return;\n    // Cancellation preserves all authoritative fill progress. The later economy\n    // phase will derive collectible bought items/proceeds and recover only the\n    // unfilled reservation; this milestone must not manufacture that output.\n    inv_setslot(${offer.name}, ${ACTIVE_STATE_SLOT}, coins, ${CANCELLED_STATE});\n}`;
     }).join('\n');
 
     return `// Option-2-only authoritative cancelled/aborted-offer transition.\n// The r481 flow allows an outstanding offer to be aborted while retaining any\n// already-filled portion for collection. This server procedure owns that state\n// transition, keeps the slot occupied, and deliberately does not refund/move\n// wealth until the persistent reservation/collection economy exists.\n\n[proc,ge_active_offer_apply_cancelled](int $offer_slot)\nif (map_feature(\"grandexchange\") = false) return;\nif ($offer_slot < 1 | $offer_slot > 6) return;\n${branches}\n~ge_active_offer_refresh;\n`;
@@ -175,7 +175,7 @@ function validateCancelledOfferStage(stagedContentDir: string) {
     const cancelledScript = fs.readFileSync(cancelledScriptPath, 'utf8').replace(/\r/g, '');
     for (const required of [
         '[proc,ge_active_offer_apply_cancelled](int $offer_slot)',
-        `if ($state_1 != ${ACTIVE_STATE} & $state_1 != ${PARTIAL_STATE}) return;`,
+        `if ($state_1 ! ${ACTIVE_STATE} & $state_1 ! ${PARTIAL_STATE}) return;`,
         'if ($filled_1 < 0 | $filled_1 >= $requested_1) return;',
         `inv_setslot(${ACTIVE_OFFERS[0].name}, ${ACTIVE_STATE_SLOT}, coins, ${CANCELLED_STATE});`,
         '~ge_active_offer_refresh;',
