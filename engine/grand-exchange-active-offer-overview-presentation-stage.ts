@@ -6,16 +6,14 @@ const GE_INTERFACE_NAME = 'grand_exchange_overview';
 // unfilled portion of an occupied offer's progress meter. Pure black makes the
 // meter look like a missing sprite and is visibly harsher than the source UI.
 const PENDING_PROGRESS_COLOUR = '0x211D19';
-const PARKED_CONTROL_X = -200;
-const PARKED_CONTROL_Y = -200;
 
 const ACTIVE_OFFERS = [
-    { name: 'ge_active_offer_1', slot: 1, layer: 19, activeContent: 32, model: 33, title: 216, detail: 250, quantity: 30, price: 31, sellAction: 31, progress: 244, emptyVisuals: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29] },
-    { name: 'ge_active_offer_2', slot: 2, layer: 35, activeContent: 48, model: 49, title: 221, detail: 251, quantity: 46, price: 47, sellAction: 47, progress: 245, emptyVisuals: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45] },
-    { name: 'ge_active_offer_3', slot: 3, layer: 51, activeContent: 64, model: 65, title: 226, detail: 252, quantity: 62, price: 63, sellAction: 63, progress: 246, emptyVisuals: [52, 53, 54, 55, 56, 57, 58, 59, 60, 61] },
-    { name: 'ge_active_offer_4', slot: 4, layer: 70, activeContent: 83, model: 84, title: 231, detail: 253, quantity: 81, price: 82, sellAction: 82, progress: 247, emptyVisuals: [71, 72, 73, 74, 75, 76, 77, 78, 79, 80] },
-    { name: 'ge_active_offer_5', slot: 5, layer: 89, activeContent: 102, model: 103, title: 236, detail: 254, quantity: 100, price: 101, sellAction: 101, progress: 248, emptyVisuals: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99] },
-    { name: 'ge_active_offer_6', slot: 6, layer: 108, activeContent: 121, model: 122, title: 241, detail: 255, quantity: 119, price: 120, sellAction: 120, progress: 249, emptyVisuals: [109, 110, 111, 112, 113, 114, 115, 116, 117, 118] },
+    { name: 'ge_active_offer_1', slot: 1, layer: 19, activeContent: 32, model: 33, title: 216, detail: 250, quantity: 30, price: 31, sellAction: 31, progress: 244 },
+    { name: 'ge_active_offer_2', slot: 2, layer: 35, activeContent: 48, model: 49, title: 221, detail: 251, quantity: 46, price: 47, sellAction: 47, progress: 245 },
+    { name: 'ge_active_offer_3', slot: 3, layer: 51, activeContent: 64, model: 65, title: 226, detail: 252, quantity: 62, price: 63, sellAction: 63, progress: 246 },
+    { name: 'ge_active_offer_4', slot: 4, layer: 70, activeContent: 83, model: 84, title: 231, detail: 253, quantity: 81, price: 82, sellAction: 82, progress: 247 },
+    { name: 'ge_active_offer_5', slot: 5, layer: 89, activeContent: 102, model: 103, title: 236, detail: 254, quantity: 100, price: 101, sellAction: 101, progress: 248 },
+    { name: 'ge_active_offer_6', slot: 6, layer: 108, activeContent: 121, model: 122, title: 241, detail: 255, quantity: 119, price: 120, sellAction: 120, progress: 249 },
 ] as const;
 
 function getComponentBlock(source: string, componentId: number) {
@@ -91,9 +89,8 @@ function patchOverviewInterface(stagedContentDir: string) {
                 throw new Error(`Grand Exchange waiting-offer detail com_${offer.detail} no longer contains ${required}`);
             }
         }
-        // Keep active-only text beneath the source active-content layer. IF1's
-        // runtime hide flag is reliable for layers on every supported client,
-        // while older render paths can still draw hidden leaf widgets.
+        // Active-only text belongs under the occupied-content layer. This keeps
+        // it out of an empty slot without touching the original Buy/Sell chrome.
         source = replaceComponent(
             source,
             offer.detail,
@@ -114,10 +111,9 @@ function patchOverviewInterface(stagedContentDir: string) {
                 throw new Error(`Grand Exchange waiting-offer progress helper com_${offer.progress} no longer contains ${required}`);
             }
         }
-        // The progress background is active-only too. Parenting it beneath the
-        // active-content layer prevents the six black bars from appearing on a
-        // freshly opened all-empty overview even on clients that ignore leaf
-        // IF_SETHIDE updates.
+        // Parent the meter background to the occupied-content layer instead of
+        // moving/hiding the source Buy/Sell graphics. The latter are authored
+        // relative to the empty-slot layer and must keep their original layout.
         source = replaceComponent(
             source,
             offer.progress,
@@ -174,30 +170,10 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
     let source = fs.readFileSync(scriptPath, 'utf8').replace(/\r/g, '');
 
     for (const offer of ACTIVE_OFFERS) {
-        // The original IF1 renderer only honoured IF_SETHIDE consistently for
-        // layers. Keep the hide calls for corrected clients, but also park the
-        // empty-slot bevels and crate graphics offscreen while a live offer is
-        // shown. IF_SETPOSITION is native r254 behaviour and is already used by
-        // the quantity/price presentation, so this works on both client paths.
-        for (const componentId of offer.emptyVisuals) {
-            const { x, y } = getComponentPosition(interfaceSource, componentId);
-            const hidden = `    if_sethide(${GE_INTERFACE_NAME}:com_${componentId}, true);`;
-            source = replaceExactlyOnce(
-                source,
-                hidden,
-                `${hidden}\n    if_setposition(${GE_INTERFACE_NAME}:com_${componentId}, ${PARKED_CONTROL_X}, ${PARKED_CONTROL_Y});`,
-                `slot ${offer.slot} occupied empty visual com_${componentId}`
-            );
-
-            const visible = `    if_sethide(${GE_INTERFACE_NAME}:com_${componentId}, false);`;
-            source = replaceExactlyOnce(
-                source,
-                visible,
-                `${visible}\n    if_setposition(${GE_INTERFACE_NAME}:com_${componentId}, ${x}, ${y});`,
-                `slot ${offer.slot} empty visual com_${componentId}`
-            );
-        }
-
+        // com_quantity/com_price are the invisible Buy/Sell action widgets in an
+        // empty slot and are reused as text while occupied. Only those two need
+        // runtime position changes; the visible button frames/icons stay at the
+        // exact source positions and are controlled solely by IF_SETHIDE.
         const quantityEmptyPosition = getComponentPosition(interfaceSource, offer.quantity);
         const priceEmptyPosition = getComponentPosition(interfaceSource, offer.price);
 
@@ -323,21 +299,18 @@ function validateWaitingPresentation(stagedContentDir: string) {
         }
 
         const progress = getComponentBlock(interfaceSource, offer.progress).block;
-        for (const required of [`layer=com_${offer.activeContent}`, 'type=rect', 'x=7', 'y=82', 'width=126', 'height=14', 'fill=yes', `colour=${PENDING_PROGRESS_COLOUR}`]) {
+        for (const required of [
+            `layer=com_${offer.activeContent}`,
+            'type=rect',
+            'x=7',
+            'y=82',
+            'width=126',
+            'height=14',
+            'fill=yes',
+            `colour=${PENDING_PROGRESS_COLOUR}`,
+        ]) {
             if (!progress.includes(required)) {
                 throw new Error(`Grand Exchange waiting-offer progress bar com_${offer.progress} lost ${required}`);
-            }
-        }
-
-        for (const componentId of offer.emptyVisuals) {
-            const { x, y } = getComponentPosition(interfaceSource, componentId);
-            for (const required of [
-                `if_setposition(${GE_INTERFACE_NAME}:com_${componentId}, ${PARKED_CONTROL_X}, ${PARKED_CONTROL_Y});`,
-                `if_setposition(${GE_INTERFACE_NAME}:com_${componentId}, ${x}, ${y});`,
-            ]) {
-                if (!refreshSource.includes(required)) {
-                    throw new Error(`Grand Exchange waiting-offer slot ${offer.slot} visual com_${componentId} lost ${required}`);
-                }
             }
         }
 
