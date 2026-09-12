@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { prepareGrandExchangeStage as prepareGrandExchangeBaseStage, restoreGrandExchangeStage } from './grand-exchange-stage-base.js';
+import { prepareGrandExchangeStage as prepareGrandExchangeBaseStage, restoreGrandExchangeStage as restoreGrandExchangeBaseStage } from './grand-exchange-stage-base.js';
 import { prepareGrandExchangeFontCompatibilityStage } from './grand-exchange-font-compatibility.js';
 import { prepareGrandExchangeSpriteStage } from './grand-exchange-sprite-stage.js';
 import { prepareGrandExchangeGroup106Stage } from './grand-exchange-group106-stage.js';
@@ -25,6 +25,7 @@ import { prepareGrandExchangeActiveOfferStage } from './grand-exchange-active-of
 import { prepareGrandExchangePartialFillStage } from './grand-exchange-partial-fill-stage.js';
 import { prepareGrandExchangeCompletedOfferStage } from './grand-exchange-completed-offer-stage.js';
 import { prepareGrandExchangeCancelledOfferStage } from './grand-exchange-cancelled-offer-stage.js';
+import { prepareGrandExchangePersistedHistoryStage, restoreGrandExchangePersistedHistoryRuntime } from './grand-exchange-persisted-history-stage.js';
 import { prepareGrandExchangeHoverStage } from './grand-exchange-hover-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
 import { prepareGrandExchangeClientStateStage } from './grand-exchange-client-state-stage.js';
@@ -34,7 +35,11 @@ const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = path.join(ENGINE_DIR, '..');
 const PLUGIN_SCRIPT_DIR = path.join(REPO_DIR, 'plugins', 'grand-exchange', 'content', 'scripts');
 
-export { restoreGrandExchangeStage };
+export function restoreGrandExchangeStage() {
+    const runtimeRestored = restoreGrandExchangePersistedHistoryRuntime();
+    const baseRestored = restoreGrandExchangeBaseStage();
+    return runtimeRestored || baseRestored;
+}
 
 function assertNativeR254ItemDefinitionBoundary() {
     if (!fs.existsSync(PLUGIN_SCRIPT_DIR)) {
@@ -117,6 +122,7 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangePartialFillStage(stagedContentDir);
         prepareGrandExchangeCompletedOfferStage(stagedContentDir);
         prepareGrandExchangeCancelledOfferStage(stagedContentDir);
+        prepareGrandExchangePersistedHistoryStage(stagedContentDir);
         await prepareGrandExchangeHoverStage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
         prepareGrandExchangeClientStateStage(stagedContentDir);
