@@ -9403,6 +9403,13 @@ public class Client extends GameShell {
 			IfType var14 = IfType.list[arg2.children[var11]];
 			int var15 = var12 + var14.x;
 			int var16 = var13 + var14.y;
+			boolean hiddenHoverLayer = var14.type == 0 && (this.overMainLayerId == var14.id || this.overSideLayerId == var14.id || this.overChatLayerId == var14.id);
+			// IF_SETHIDE is also used for individual leaf components by later
+			// interfaces backported onto this IF1 client. Do not draw those hidden
+			// widgets, while preserving the original hover-layer exception.
+			if (var14.hidden && !hiddenHoverLayer) {
+				continue;
+			}
 			if (var14.clientCode > 0) {
 				this.updateInterfaceContent(var14);
 			}
@@ -9928,6 +9935,10 @@ public class Client extends GameShell {
 			IfType var12 = IfType.list[arg3.children[var9]];
 			int var13 = var10 + var12.x;
 			int var14 = var11 + var12.y;
+			// A hidden leaf component must not leave an interactive hitbox behind.
+			if (var12.hidden) {
+				continue;
+			}
 			if ((var12.overlayer >= 0 || var12.colourOver != 0) && arg5 >= var13 && arg0 >= var14 && arg5 < var13 + var12.width && arg0 < var14 + var12.height) {
 				if (var12.overlayer >= 0) {
 					this.lastOverLayerId = var12.overlayer;

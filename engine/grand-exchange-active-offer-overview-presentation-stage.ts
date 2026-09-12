@@ -2,6 +2,10 @@ import fs from 'fs';
 import path from 'path';
 
 const GE_INTERFACE_NAME = 'grand_exchange_overview';
+// The 28 November 2007 overview uses an inset, near-black brown for the
+// unfilled portion of an occupied offer's progress meter. Pure black makes the
+// meter look like a missing sprite and is visibly harsher than the source UI.
+const PENDING_PROGRESS_COLOUR = '0x211D19';
 
 const ACTIVE_OFFERS = [
     { name: 'ge_active_offer_1', slot: 1, layer: 19, model: 33, title: 216, detail: 250, quantity: 30, price: 31, sellAction: 31, progress: 244 },
@@ -95,7 +99,7 @@ function patchOverviewInterface(stagedContentDir: string) {
         source = replaceComponent(
             source,
             offer.progress,
-            `[com_${offer.progress}]\nlayer=com_${offer.layer}\ntype=rect\nx=7\ny=82\nwidth=126\nheight=14\nfill=yes\ncolour=0x000000\n`
+            `[com_${offer.progress}]\nlayer=com_${offer.layer}\ntype=rect\nx=7\ny=82\nwidth=126\nheight=14\nfill=yes\ncolour=${PENDING_PROGRESS_COLOUR}\n`
         );
     }
 
@@ -257,7 +261,7 @@ function validateWaitingPresentation(stagedContentDir: string) {
 
     for (const offer of ACTIVE_OFFERS) {
         const progress = getComponentBlock(interfaceSource, offer.progress).block;
-        for (const required of ['type=rect', 'x=7', 'y=82', 'width=126', 'height=14', 'fill=yes', 'colour=0x000000']) {
+        for (const required of ['type=rect', 'x=7', 'y=82', 'width=126', 'height=14', 'fill=yes', `colour=${PENDING_PROGRESS_COLOUR}`]) {
             if (!progress.includes(required)) {
                 throw new Error(`Grand Exchange waiting-offer progress bar com_${offer.progress} lost ${required}`);
             }

@@ -10069,6 +10069,12 @@ export class Client extends GameShell {
             childX += child.x;
             childY += child.y;
 
+            // Hidden leaf widgets must not retain clickable hitboxes. Hidden
+            // layers already stop recursively at the top of this method.
+            if (child.hide) {
+                continue;
+            }
+
             if ((child.overLayerId >= 0 || child.colourOver !== 0) && mouseX >= childX && mouseY >= childY && mouseX < childX + child.width && mouseY < childY + child.height) {
                 if (child.overLayerId >= 0) {
                     this.lastOverComId = child.overLayerId;
@@ -10358,6 +10364,19 @@ export class Client extends GameShell {
             const child: IfType = IfType.list[com.children[i]];
             childX += child.x;
             childY += child.y;
+
+            // IF_SETHIDE can target any component, even though the original
+            // IF1 cache format only stores authored hide flags on layers.
+            // Later interfaces backported onto this client rely on runtime
+            // hide updates for individual graphics, text and rectangles.
+            const hiddenHoverLayer =
+                child.type === ComponentType.TYPE_LAYER &&
+                (this.overMainComId === child.id ||
+                    this.overSideComId === child.id ||
+                    this.overChatComId === child.id);
+            if (child.hide && !hiddenHoverLayer) {
+                continue;
+            }
 
             if (child.clientCode > 0) {
                 this.clientComponent(child);

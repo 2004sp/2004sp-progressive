@@ -63,7 +63,24 @@ The frozen r481 buy hitboxes are source components `30`, `46`, `62`, `81`, `100`
 
 The server-side `[if_button]` handlers keep the setup state authoritative. **Buy** switches the overview root (`com_16`) to the group-105 setup root (`com_126`), keeps the frozen `Buy Offer` title, and shows the buy-search prompt (`com_192`). **Sell** switches to the same source setup root, changes the shared title (`com_133`) to `Sell Offer`, hides the buy-search prompt, and shows the frozen sell-inventory prompt (`com_197`). The source Back control (`com_127`) returns to the six-slot summary without resetting the individual slot sub-states. Opening Buy explicitly restores the `Buy Offer` title so alternating Sell → Back → Buy cannot leave stale sell text behind.
 
-Buy-item search/result selection and the quantity/price setup state are wired; sell inventory selection and offer submission remain deliberately unwired, so no server-side GE transaction or player-wealth mutation is introduced by this slice.
+Buy search, sell inventory selection, quantity/price setup and submission into
+the option-2 per-player offer slots are wired. Market matching and real wealth
+reservation/settlement remain outside this presentation slice.
+
+## Submitted-offer overview presentation
+
+The occupied-slot layout follows the archived 28 November 2007 overview: the
+empty Buy/Sell controls disappear, the offer side and item details take their
+place, and a 126x14 inset progress meter appears at the bottom of that occupied
+slot only. An unfilled waiting offer uses the source UI's near-black brown meter
+background rather than pure black. Empty slots do not show progress meters.
+
+The r254 clients originally honoured runtime `IF_SETHIDE` updates only while
+recursing into layer components. The staged r481 overview also hides individual
+graphics, text and rectangles, so both the web and Java render/input loops now
+honour the same runtime flag for leaf widgets. This prevents hidden empty-slot
+buttons and progress helpers from continuing to render or receive clicks after
+an offer-state transition.
 
 ## Native r254 item search and selection
 
