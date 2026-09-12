@@ -13,13 +13,15 @@ const QUANTITY_STATE_SLOT = 1;
 const PRICE_STATE_SLOT = 2;
 const CONTEXT_MODE_SLOT = 0;
 const CONTEXT_OFFER_SLOT = 1;
-const CONTEXT_SOURCE_ITEM_SLOT = 2;
+const CONTEXT_SOURCE_INV_SLOT = 2;
 const SUBMISSION_ITEM_SLOT = 0;
-const SUBMISSION_PRICE_SLOT = 1;
-const SUBMISSION_TOTAL_SLOT = 2;
+const SUBMISSION_QUANTITY_SLOT = 1;
+const SUBMISSION_PRICE_SLOT = 2;
+const SUBMISSION_TOTAL_SLOT = 3;
 const BUY_MODE = 1;
 const SELL_MODE = 2;
 const CONFIRM_COMPONENT = 190;
+const INVENTORY_SIZE = 28;
 const MAX_INT = 2147483647;
 
 const BUY_ACTIONS = [
@@ -144,7 +146,7 @@ function writeOfferStateInventoryConfig(stagedContentDir: string) {
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(
         configPath,
-        `// Option-2-only session state for Confirm Offer. These containers are\n// deliberately temporary: the authoritative persistent GE economy remains a\n// later phase, so confirmation must not move or reserve player wealth yet.\n\n[${OFFER_CONTEXT_INV}]\nscope=temp\nsize=3\nstackall=yes\n\n[${OFFER_SUBMISSION_INV}]\nscope=temp\nsize=3\nstackall=yes\n`,
+        `// Option-2-only session state for Confirm Offer. These containers are\n// deliberately temporary: the authoritative persistent GE economy remains a\n// later phase, so confirmation must not move or reserve player wealth yet.\n// Runtime obj values cannot be passed to inv_setslot in this compiler, so the\n// sell context stores the originating inventory slot as an integer token, while\n// the submitted runtime item is moved from ge_selected_item into the snapshot.\n\n[${OFFER_CONTEXT_INV}]\nscope=temp\nsize=3\nstackall=yes\n\n[${OFFER_SUBMISSION_INV}]\nscope=temp\nsize=4\nstackall=yes\n`,
         'utf8'
     );
 }
@@ -233,7 +235,7 @@ function patchOfferContext(stagedContentDir: string) {
     fs.writeFileSync(scriptPath, source, 'utf8');
 }
 
-function patchSellSourceItemContext(stagedContentDir: string) {
+function patchSellSourceSlotContext(stagedContentDir: string) {
     const scriptPath = path.join(
         stagedContentDir,
         'scripts',
@@ -250,11 +252,11 @@ function patchSellSourceItemContext(stagedContentDir: string) {
     const { start, end, block: originalBlock } = getScriptBlock(source, marker);
     let block = originalBlock;
     const oldSelection = `def_obj $item = oc_uncert(inv_getobj(inv, $slot));\n~ge_sell_apply_selection($item, $quantity);`;
-    const newSelection = `def_obj $source_item = inv_getobj(inv, $slot);\ndef_obj $item = oc_uncert($source_item);\ninv_setslot(${OFFER_CONTEXT_INV}, ${CONTEXT_SOURCE_ITEM_SLOT}, $source_item, 1);\n~ge_sell_apply_selection($item, $quantity);`;
+    const newSelection = `def_obj $item = oc_uncert(inv_getobj(inv, $slot));\ninv_setslot(${OFFER_CONTEXT_INV}, ${CONTEXT_SOURCE_INV_SLOT}, coins, add($slot, 1));\n~ge_sell_apply_selection($item, $quantity);`;
 
     if (!block.includes(newSelection)) {
         if (!block.includes(oldSelection)) {
-            throw new Error('Grand Exchange sell-item selection no longer matches the expected source-item normalization flow');
+            throw new Error('Grand Exchange sell-item selection no longer matches the expected source-slot flow');
         }
         block = block.replace(oldSelection, newSelection);
     }
@@ -264,7 +266,7 @@ function patchSellSourceItemContext(stagedContentDir: string) {
 }
 
 function buildOfferSubmissionScript() {
-    return `// Option-2-only Confirm Offer transaction boundary. This milestone\n// validates and snapshots the submission intent server-side, but deliberately\n// does not reserve wealth, match offers or persist state. Those operations need\n// the later authoritative GE service so logout/restart paths cannot lose wealth.\n\n[if_button,${GE_INTERFACE_NAME}:com_${CONFIRM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${OFFER_SUBMISSION_INV}, ${SUBMISSION_ITEM_SLOT}) > 0) return;\ndef_int $mode = inv_getnum(${OFFER_CONTEXT_INV}, ${CONTEXT_MODE_SLOT});\ndef_int $offer_slot = inv_getnum(${OFFER_CONTEXT_INV}, ${CONTEXT_OFFER_SLOT});\nif (($mode ! ${BUY_MODE} & $mode ! ${SELL_MODE}) | $offer_slot < 1 | $offer_slot > 6) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) {\n    mes("Choose an item before confirming your offer.");\n    return;\n}\ndef_obj $item = inv_getobj(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT});\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT});\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($item = coins | oc_uncert($item) ! $item | oc_tradeable($item) = false) {\n    mes("You can't exchange this item on the Grand Exchange.");\n    return;\n}\nif (map_members = ^false & oc_members($item) = true) {\n    mes("You can't exchange this item on a free world.");\n    return;\n}\nif ($quantity <= 0 | $price <= 0) {\n    mes("Set a quantity and price before confirming your offer.");\n    return;\n}\nif ($price > calc(${MAX_INT} / $quantity)) {\n    mes("The total value of this offer is too large.");\n    return;\n}\ndef_int $total = calc($quantity * $price);\nif ($mode = ${BUY_MODE}) {\n    if (inv_total(inv, coins) < $total) {\n        mes("You do not have enough coins for this offer.");\n        return;\n    }\n} else {\n    def_obj $source_item = $item;\n    if (inv_getnum(${OFFER_CONTEXT_INV}, ${CONTEXT_SOURCE_ITEM_SLOT}) > 0) {\n        $source_item = inv_getobj(${OFFER_CONTEXT_INV}, ${CONTEXT_SOURCE_ITEM_SLOT});\n    }\n    if (oc_uncert($source_item) ! $item | inv_total(inv, $source_item) < $quantity) {\n        mes("You do not have enough of this item for this offer.");\n        return;\n    }\n}\ninv_clear(${OFFER_SUBMISSION_INV});\ninv_setslot(${OFFER_SUBMISSION_INV}, ${SUBMISSION_ITEM_SLOT}, $item, $quantity);\ninv_setslot(${OFFER_SUBMISSION_INV}, ${SUBMISSION_PRICE_SLOT}, coins, $price);\ninv_setslot(${OFFER_SUBMISSION_INV}, ${SUBMISSION_TOTAL_SLOT}, coins, $total);\nif_settext(${GE_INTERFACE_NAME}:com_133, "Offer Submitted");\nif_settext(${GE_INTERFACE_NAME}:com_142, "Your offer passed validation. Matching is not enabled yet.");\nif_sethide(${GE_INTERFACE_NAME}:com_156, true);\n`;
+    return `// Option-2-only Confirm Offer transaction boundary. This milestone\n// validates and snapshots the submission intent server-side, but deliberately\n// does not reserve wealth, match offers or persist state. Those operations need\n// the later authoritative GE service so logout/restart paths cannot lose wealth.\n// Runtime inventory reads yield obj rather than namedobj, so dynamic items are\n// moved between temp inventories instead of being passed to inv_setslot.\n\n[if_button,${GE_INTERFACE_NAME}:com_${CONFIRM_COMPONENT}]\nif (map_feature("grandexchange") = false) return;\nif (inv_getnum(${OFFER_SUBMISSION_INV}, ${SUBMISSION_ITEM_SLOT}) > 0) return;\ndef_int $mode = inv_getnum(${OFFER_CONTEXT_INV}, ${CONTEXT_MODE_SLOT});\ndef_int $offer_slot = inv_getnum(${OFFER_CONTEXT_INV}, ${CONTEXT_OFFER_SLOT});\nif (($mode ! ${BUY_MODE} & $mode ! ${SELL_MODE}) | $offer_slot < 1 | $offer_slot > 6) return;\nif (inv_getnum(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT}) <= 0) {\n    mes("Choose an item before confirming your offer.");\n    return;\n}\ndef_obj $item = inv_getobj(${SELECTED_ITEM_INV}, ${SELECTED_ITEM_SLOT});\ndef_int $quantity = inv_getnum(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT});\ndef_int $price = inv_getnum(${SELECTED_ITEM_INV}, ${PRICE_STATE_SLOT});\nif ($item = coins | oc_uncert($item) ! $item | oc_tradeable($item) = false) {\n    mes("You can't exchange this item on the Grand Exchange.");\n    return;\n}\nif (map_members = ^false & oc_members($item) = true) {\n    mes("You can't exchange this item on a free world.");\n    return;\n}\nif ($quantity <= 0 | $price <= 0) {\n    mes("Set a quantity and price before confirming your offer.");\n    return;\n}\nif ($price > calc(${MAX_INT} / $quantity)) {\n    mes("The total value of this offer is too large.");\n    return;\n}\ndef_int $total = calc($quantity * $price);\nif ($mode = ${BUY_MODE}) {\n    if (inv_total(inv, coins) < $total) {\n        mes("You do not have enough coins for this offer.");\n        return;\n    }\n} else {\n    def_int $source_slot_token = inv_getnum(${OFFER_CONTEXT_INV}, ${CONTEXT_SOURCE_INV_SLOT});\n    if ($source_slot_token <= 0) {\n        mes("Select the item from your inventory again before confirming.");\n        return;\n    }\n    def_int $source_slot = sub($source_slot_token, 1);\n    if ($source_slot < 0 | $source_slot >= ${INVENTORY_SIZE} | inv_getnum(inv, $source_slot) <= 0) {\n        mes("Select the item from your inventory again before confirming.");\n        return;\n    }\n    def_obj $source_item = inv_getobj(inv, $source_slot);\n    if (oc_uncert($source_item) ! $item | inv_total(inv, $source_item) < $quantity) {\n        mes("You do not have enough of this item for this offer.");\n        return;\n    }\n}\ninv_clear(${OFFER_SUBMISSION_INV});\ninv_moveitem(${SELECTED_ITEM_INV}, ${OFFER_SUBMISSION_INV}, $item, 1);\ninv_setslot(${OFFER_SUBMISSION_INV}, ${SUBMISSION_QUANTITY_SLOT}, coins, $quantity);\ninv_setslot(${OFFER_SUBMISSION_INV}, ${SUBMISSION_PRICE_SLOT}, coins, $price);\ninv_setslot(${OFFER_SUBMISSION_INV}, ${SUBMISSION_TOTAL_SLOT}, coins, $total);\nif_settext(${GE_INTERFACE_NAME}:com_133, "Offer Submitted");\nif_settext(${GE_INTERFACE_NAME}:com_142, "Your offer passed validation. Matching is not enabled yet.");\nif_sethide(${GE_INTERFACE_NAME}:com_156, true);\n`;
 }
 
 function writeOfferSubmissionScript(stagedContentDir: string) {
@@ -295,7 +297,7 @@ export function prepareGrandExchangeOfferSubmitStage(stagedContentDir: string) {
     writeOfferStateInventoryConfig(stagedContentDir);
     injectOfferStateInventoryMappings(stagedContentDir);
     patchOfferContext(stagedContentDir);
-    patchSellSourceItemContext(stagedContentDir);
+    patchSellSourceSlotContext(stagedContentDir);
     writeOfferSubmissionScript(stagedContentDir);
     injectOfferSubmissionScriptMapping(stagedContentDir);
 }
