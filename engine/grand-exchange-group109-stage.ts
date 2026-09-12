@@ -22,6 +22,8 @@ const GROUP109_COLLECT_BUTTONS = [61, 65, 69, 73, 77, 81] as const;
 const GROUP109_SCRIPT_TRIGGERS = [
     '[debugproc,ge109]',
     '[debugproc,ge109empty]',
+    '[proc,ge_collection_collect_slot]',
+    ...Array.from({ length: 6 }, (_, index) => `[proc,ge_collection_refresh_offer_${index}]`),
     ...GROUP109_SLOT_INVS.map(componentId => `[inv_button1,grand_exchange_group_109:com_${componentId}]`),
     ...GROUP109_COLLECT_BUTTONS.map(componentId => `[if_button,grand_exchange_group_109:com_${componentId}]`),
 ] as const;
