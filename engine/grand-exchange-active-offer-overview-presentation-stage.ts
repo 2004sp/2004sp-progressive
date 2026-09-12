@@ -198,6 +198,9 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
             );
         }
 
+        const quantityEmptyPosition = getComponentPosition(interfaceSource, offer.quantity);
+        const priceEmptyPosition = getComponentPosition(interfaceSource, offer.price);
+
         source = patchVisualControl(
             source,
             offer.quantity,
@@ -208,12 +211,12 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
                 `if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, false);`,
             ],
             [
-                `if_setposition(${GE_INTERFACE_NAME}:com_${offer.quantity}, 0, 0);`,
+                `if_setposition(${GE_INTERFACE_NAME}:com_${offer.quantity}, ${quantityEmptyPosition.x}, ${quantityEmptyPosition.y});`,
                 `if_setcolour(${GE_INTERFACE_NAME}:com_${offer.quantity}, 0x000000);`,
                 `if_settext(${GE_INTERFACE_NAME}:com_${offer.quantity}, \"\");`,
                 `if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, true);`,
             ],
-            `slot ${offer.slot} quantity`
+            `slot ${offer.slot} quantity/Buy`
         );
 
         source = patchVisualControl(
@@ -225,7 +228,7 @@ function patchActiveOfferRefresh(stagedContentDir: string) {
                 `if_settext(${GE_INTERFACE_NAME}:com_${offer.price}, \"<tostring($price_${offer.slot})> gp\");`,
             ],
             [
-                `if_setposition(${GE_INTERFACE_NAME}:com_${offer.price}, 0, 0);`,
+                `if_setposition(${GE_INTERFACE_NAME}:com_${offer.price}, ${priceEmptyPosition.x}, ${priceEmptyPosition.y});`,
                 `if_setcolour(${GE_INTERFACE_NAME}:com_${offer.price}, 0x000000);`,
                 `if_settext(${GE_INTERFACE_NAME}:com_${offer.price}, \"\");`,
             ],
@@ -338,11 +341,15 @@ function validateWaitingPresentation(stagedContentDir: string) {
             }
         }
 
+        const quantityEmptyPosition = getComponentPosition(interfaceSource, offer.quantity);
+        const priceEmptyPosition = getComponentPosition(interfaceSource, offer.price);
         for (const required of [
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.title}, \"Buy\");`,
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.title}, \"Sell\");`,
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.quantity}, tostring($quantity_${offer.slot}));`,
+            `if_setposition(${GE_INTERFACE_NAME}:com_${offer.quantity}, ${quantityEmptyPosition.x}, ${quantityEmptyPosition.y});`,
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.price}, \"<tostring($price_${offer.slot})> gp\");`,
+            `if_setposition(${GE_INTERFACE_NAME}:com_${offer.price}, ${priceEmptyPosition.x}, ${priceEmptyPosition.y});`,
             `if_settext(${GE_INTERFACE_NAME}:com_${offer.detail}, oc_name($item_${offer.slot}));`,
             `if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, false);`,
             `if_sethide(${GE_INTERFACE_NAME}:com_${offer.progress}, true);`,
