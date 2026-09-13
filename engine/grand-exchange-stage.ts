@@ -26,13 +26,16 @@ import { prepareGrandExchangeActiveOfferStage } from './grand-exchange-active-of
 import { prepareGrandExchangePartialFillStage } from './grand-exchange-partial-fill-stage.js';
 import { prepareGrandExchangeCompletedOfferStage } from './grand-exchange-completed-offer-stage.js';
 import { prepareGrandExchangeCancelledOfferStage } from './grand-exchange-cancelled-offer-stage.js';
+import { prepareGrandExchangeActiveOfferDetailStage } from './grand-exchange-active-offer-detail-stage.js';
 import { prepareGrandExchangeActiveOfferOverviewPresentationStage } from './grand-exchange-active-offer-overview-presentation-stage.js';
 import { prepareGrandExchangePersistedHistoryStage, restoreGrandExchangePersistedHistoryRuntime } from './grand-exchange-persisted-history-stage.js';
+import { prepareGrandExchangeSettlementStage } from './grand-exchange-settlement-stage.js';
 import { prepareGrandExchangeHoverStage } from './grand-exchange-hover-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
 import { prepareGrandExchangeClientStateStage } from './grand-exchange-client-state-stage.js';
 import { prepareGrandExchangeInterfaceCacheAdapter } from './grand-exchange-interface-cache-adapter.js';
 import { prepareGrandExchangeLiveProgressStage } from './grand-exchange-live-progress-stage.js';
+import { prepareGrandExchangeNpcStage } from './grand-exchange-npc-stage.js';
 
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = path.join(ENGINE_DIR, '..');
@@ -127,14 +130,17 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangeCompletedOfferStage(stagedContentDir);
         prepareGrandExchangeCancelledOfferStage(stagedContentDir);
         prepareGrandExchangeActiveOfferOverviewPresentationStage(stagedContentDir);
+        prepareGrandExchangeActiveOfferDetailStage(stagedContentDir);
         prepareGrandExchangePersistedHistoryStage(stagedContentDir);
+        prepareGrandExchangeSettlementStage(stagedContentDir);
         await prepareGrandExchangeHoverStage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
         prepareGrandExchangeClientStateStage(stagedContentDir);
         prepareGrandExchangeInterfaceCacheAdapter(stagedContentDir);
         // Keep the generic 256-ID compatibility/cache checks intact. The live
         // progress stage owns and validates its narrow post-check helper range.
-        prepareGrandExchangeLiveProgressStage(stagedContentDir);
+        await prepareGrandExchangeLiveProgressStage(stagedContentDir);
+        prepareGrandExchangeNpcStage(stagedContentDir);
         invalidateGrandExchangeServerConfigOutputs();
         return stagedContentDir;
     } catch (error) {

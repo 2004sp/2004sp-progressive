@@ -121,14 +121,23 @@ function patchSellSelectionInPlace(stagedContentDir: string) {
 
     let source = fs.readFileSync(scriptPath, 'utf8').replace(/\r/g, '');
 
-    // The GE main interface is already open. Restore the native inventory tab
-    // after choosing an item, but never reopen the GE itself.
+    // The GE main interface is already open. Keep the selectable GE inventory
+    // tab mounted after choosing an item so a later click replaces the offer
+    // item instead of falling through to Equip/Use on the normal inventory.
     source = replaceExactlyOnce(
         source,
         `inv_stoptransmit(${SELL_INTERFACE_NAME}:inv);\nif_openmain(${GE_INTERFACE_NAME});\n`,
-        `inv_stoptransmit(${SELL_INTERFACE_NAME}:inv);\nif_settab(inventory, ^tab_inventory);\nif_settabactive(^tab_inventory);\n`,
+        `if_settab(${SELL_INTERFACE_NAME}, ^tab_inventory);\nif_settabactive(^tab_inventory);\n`,
         'sell-selection stop/reopen sequence'
     );
+
+    const selectionBlock = getScriptBlock(source, '[proc,ge_sell_apply_selection]').block;
+    if (selectionBlock.includes(`inv_stoptransmit(${SELL_INTERFACE_NAME}:inv);`)) {
+        throw new Error('Grand Exchange sell selection still disables item replacement after the first choice');
+    }
+    if (!selectionBlock.includes(`if_settab(${SELL_INTERFACE_NAME}, ^tab_inventory);`)) {
+        throw new Error('Grand Exchange sell selection no longer keeps the selectable inventory tab active');
+    }
 
     const itemSetter = `if_setobject(${GE_INTERFACE_NAME}:com_138, $item, 100);`;
     source = replaceExactlyOnce(

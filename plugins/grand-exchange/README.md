@@ -71,9 +71,14 @@ reservation/settlement remain outside this presentation slice.
 
 The occupied-slot layout follows the archived 28 November 2007 overview: the
 empty Buy/Sell controls disappear, the offer side and item details take their
-place, and a 126x14 inset progress meter appears at the bottom of that occupied
-slot only. An unfilled waiting offer uses the source UI's near-black brown meter
-background rather than pure black. Empty slots do not show progress meters.
+place, each native item model is seated in the same authentic dark sprite-`1137`
+box used beneath the Buy Offer search control, and a 126x15 black-framed progress
+meter with a translucent 124x13 inset that preserves the source panel texture
+appears at the bottom of that occupied slot only. An unfilled waiting offer uses
+the source UI's `0x302520` brown-grey inset at transparency `100`, rather than a
+flat opaque black bar. Progress is `0xC68B01` amber for both Buy and Sell, then
+turns `0x3F821E` green when complete or `0x8A0010` red when aborted.
+Empty slots do not show item boxes or progress meters.
 
 The r254 clients originally honoured runtime `IF_SETHIDE` updates only while
 recursing into layer components. The staged r481 overview also hides individual
@@ -100,7 +105,7 @@ The older synthetic search interface reservation (`8989`, components `11304–11
 
 This keeps the item boundary stronger than a copied lookup table: every searchable and selectable object still comes from the native r254 catalogue used by the rest of the server/client, while r481 assets remain chrome/reference material only.
 
-##  Grand Exchange guide prices
+## Grand Exchange guide prices
 
 `engine/grand-exchange-price-stage.ts` reads `2009scape/Server/data/eco/grandexchange.db` on each option-2 staging run and imports the current `price_index.value` rows used by `GrandExchange.getRecommendedPrice` path. Only IDs also present in the staged native r254 `obj.pack` are emitted into the generated RuneScript lookup, so later-revision items never enter the r254 GE.
 

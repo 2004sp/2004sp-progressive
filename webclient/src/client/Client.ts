@@ -86,10 +86,30 @@ const SCROLLBAR_GRIP_LOWLIGHT = 0x332d25;
 const GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID = 9136;
 const GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID = 9137;
 const GRAND_EXCHANGE_SEARCH_PROMPT_COMPONENT_ID = 9192;
+const GRAND_EXCHANGE_SEARCH_ICON_COMPONENT_ID = 9195;
 const GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS = 2000;
 const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;
+// GE item-model widgets should honour each object's native 2D icon offsets so
+// asymmetric models are visually centred in their authored item boxes.
+const GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS = new Set<number>([9138, 9033, 9049, 9065, 9084, 9103, 9122, 9209, 9211]);
 const GRAND_EXCHANGE_ITEM_SEARCH_HEADER = 'Grand Exchange Item Search';
 const GRAND_EXCHANGE_BACK_COMPONENT_ID = 9127; // group 105 local component formula: 9000 + source com_127
+// Group-105 quantity controls are still server-authoritative, but these flat
+// component IDs let the webclient provide immediate visual feedback while the
+// matching IF_BUTTON packet is in flight.
+const GRAND_EXCHANGE_QUANTITY_TEXT_COMPONENT_ID = 9150;
+const GRAND_EXCHANGE_PRICE_TEXT_COMPONENT_ID = 9155;
+const GRAND_EXCHANGE_TOTAL_TEXT_COMPONENT_ID = 9189;
+const GRAND_EXCHANGE_TOTAL_GP_COMPONENT_ID = 9243;
+const GRAND_EXCHANGE_MAX_OFFER_VALUE = 2147483647;
+const GRAND_EXCHANGE_QUANTITY_BUTTON_DELTAS = new Map<number, number>([
+    [9157, -1],
+    [9159, 1],
+    [9162, 1],
+    [9164, 10],
+    [9166, 100],
+    [9168, 500],
+]);
 const CUSTOM_CONTENT = (globalThis as typeof globalThis & { __customContent?: { clans?: boolean; antiMacroRotation?: boolean } }).__customContent;
 const CLANS_ENABLED = CUSTOM_CONTENT?.clans === true;
 const ANTI_MACRO_ROTATION_ENABLED = CUSTOM_CONTENT?.antiMacroRotation !== false;
@@ -485,6 +505,8 @@ export class Client extends GameShell {
     private grandExchangeItemSearchCatalogue: Array<{ id: number; name: string }> | null = null;
     private grandExchangeItemSearchLastQuery: string = '';
     private grandExchangeItemSearchLastResults: Array<{ id: number; name: string }> = [];
+    private grandExchangeItemSearchHoverRow: number = -1;
+    private grandExchangeQuantityPendingAcks: number = 0;
 
     private dialogInputOpen: boolean = false;
     private dialogInput: string = '';
@@ -1283,7 +1305,7 @@ export class Client extends GameShell {
                 if ((this.onDemand.getModelUse(req.file) & 0x62) != 0) {
                     this.redrawSidebar = true;
 
-                    if (this.chatComId !== -1) {
+                    if (this.chatComId !== -1 || this.isGrandExchangeItemSearchActive()) {
                         this.redrawChatback = true;
                     }
                 }
@@ -2785,6 +2807,99 @@ export class Client extends GameShell {
         }
     }
 
+    private grandExchangeGpOffset(value: number): number {
+        if (value < 10) return 0;
+        if (value < 100) return 4;
+        if (value < 1000) return 7;
+        if (value < 10000) return 11;
+        if (value < 100000) return 14;
+        if (value < 1000000) return 18;
+        if (value < 10000000) return 21;
+        if (value < 100000000) return 25;
+        if (value < 1000000000) return 28;
+        return 32;
+    }
+
+    private optimisticGrandExchangeQuantityButton(componentId: number): void {
+        const delta = GRAND_EXCHANGE_QUANTITY_BUTTON_DELTAS.get(componentId);
+        if (typeof delta === 'undefined') {
+            return;
+        }
+
+        const quantityComponent = IfType.list[GRAND_EXCHANGE_QUANTITY_TEXT_COMPONENT_ID];
+        if (!quantityComponent) {
+            return;
+        }
+
+        const current = Number.parseInt(quantityComponent.text ?? '', 10);
+        // Quantity 0 is the unselected-item setup state. Do not speculate before
+        // the server has accepted an item selection.
+        if (!Number.isFinite(current) || current < 1) {
+            return;
+        }
+
+        let next = current;
+        if (delta < 0) {
+            if (current <= 1) {
+                return;
+            }
+            next = Math.max(1, current + delta);
+        } else {
+            if (current >= GRAND_EXCHANGE_MAX_OFFER_VALUE) {
+                return;
+            }
+            next = current > GRAND_EXCHANGE_MAX_OFFER_VALUE - delta
+                ? GRAND_EXCHANGE_MAX_OFFER_VALUE
+                : current + delta;
+        }
+
+        if (next === current) {
+            return;
+        }
+
+        quantityComponent.text = next.toString();
+        this.grandExchangeQuantityPendingAcks++;
+
+        // Keep the total visually in lock-step with quantity. The server remains
+        // authoritative and its final acknowledgement replaces this value.
+        const priceComponent = IfType.list[GRAND_EXCHANGE_PRICE_TEXT_COMPONENT_ID];
+        const totalComponent = IfType.list[GRAND_EXCHANGE_TOTAL_TEXT_COMPONENT_ID];
+        const totalGpComponent = IfType.list[GRAND_EXCHANGE_TOTAL_GP_COMPONENT_ID];
+        const price = Number.parseInt(priceComponent?.text ?? '', 10);
+        if (totalComponent && Number.isFinite(price) && price > 0) {
+            const total = price <= Math.floor(GRAND_EXCHANGE_MAX_OFFER_VALUE / next)
+                ? next * price
+                : GRAND_EXCHANGE_MAX_OFFER_VALUE;
+            totalComponent.text = total.toString();
+            if (totalGpComponent) {
+                totalGpComponent.x = this.grandExchangeGpOffset(total);
+            }
+        }
+    }
+
+    private shouldApplyGrandExchangeTextUpdate(componentId: number): boolean {
+        if (componentId === GRAND_EXCHANGE_QUANTITY_TEXT_COMPONENT_ID && this.grandExchangeQuantityPendingAcks > 0) {
+            this.grandExchangeQuantityPendingAcks--;
+            if (this.grandExchangeQuantityPendingAcks > 0) {
+                return false;
+            }
+            return true;
+        }
+
+        // Each quantity change emits quantity text first and total text second.
+        // While multiple clicks are queued, ignore intermediate total values so
+        // the optimistic final value does not visibly jump backwards.
+        if (componentId === GRAND_EXCHANGE_TOTAL_TEXT_COMPONENT_ID && this.grandExchangeQuantityPendingAcks > 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private resetGrandExchangeOptimisticQuantity(): void {
+        this.grandExchangeQuantityPendingAcks = 0;
+    }
+
     // todo: order
     private buildMinimenu(): void {
         if (this.objDragArea !== 0) {
@@ -4281,6 +4396,8 @@ export class Client extends GameShell {
         if (this.tutComMessage) {
             this.redrawChatback = true;
         }
+
+        this.updateGrandExchangeItemSearchHover();
 
         if (this.isMenuOpen && this.menuArea === 2) {
             this.redrawChatback = true;
@@ -6322,6 +6439,7 @@ export class Client extends GameShell {
                 closingOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID
             ) {
                 this.closeGrandExchangeItemSearch();
+                this.resetGrandExchangeOptimisticQuantity();
             }
                 if (this.sideModalId !== -1) {
                     this.sideModalId = -1;
@@ -6389,6 +6507,9 @@ export class Client extends GameShell {
                 }
 
                 this.mainModalId = com;
+                if (com === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID) {
+                    this.resetGrandExchangeOptimisticQuantity();
+                }
                 this.resumedPauseButton = false;
 
                 this.ptype = -1;
@@ -6476,10 +6597,10 @@ export class Client extends GameShell {
                 // inventory presentation, including roll and per-item offsets.
                 // Keep this compatibility behaviour scoped to that component so
                 // unrelated r254 TYPE_MODEL widgets retain their native framing.
-                IfType.list[c].modelUseObj2dPresentation = c === 9138;
-                IfType.list[c].modelZAn = c === 9138 ? type.zan2d : 0;
-                IfType.list[c].modelXOf = c === 9138 ? type.xof2d : 0;
-                IfType.list[c].modelYOf = c === 9138 ? type.yof2d : 0;
+                IfType.list[c].modelUseObj2dPresentation = GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS.has(c);
+                IfType.list[c].modelZAn = GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS.has(c) ? type.zan2d : 0;
+                IfType.list[c].modelXOf = GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS.has(c) ? type.xof2d : 0;
+                IfType.list[c].modelYOf = GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS.has(c) ? type.yof2d : 0;
                 IfType.list[c].modelZoom = ((type.zoom2d * 100) / zoom) | 0;
 
                 this.ptype = -1;
@@ -6523,7 +6644,9 @@ export class Client extends GameShell {
                 const comId: number = this.in.g2();
                 const text = this.in.gjstr();
 
-                IfType.list[comId].text = text;
+                if (this.shouldApplyGrandExchangeTextUpdate(comId)) {
+                    IfType.list[comId].text = text;
+                }
 
                 if (IfType.list[comId].layerId === this.sideOverlayId[this.sideTab]) {
                     this.redrawSidebar = true;
@@ -6550,9 +6673,15 @@ export class Client extends GameShell {
                 const x: number = this.in.g2b();
                 const z: number = this.in.g2b();
 
-                const com: IfType = IfType.list[comId];
-                com.x = x;
-                com.y = z;
+                // Quantity changes also reposition the total's "gp" suffix.
+                // Suppress intermediate acknowledgements while rapid clicks are
+                // queued, just like the intermediate quantity/total text packets,
+                // so the suffix cannot visibly jump backwards between clicks.
+                if (!(comId === GRAND_EXCHANGE_TOTAL_GP_COMPONENT_ID && this.grandExchangeQuantityPendingAcks > 0)) {
+                    const com: IfType = IfType.list[comId];
+                    com.x = x;
+                    com.y = z;
+                }
 
                 this.ptype = -1;
                 return true;
@@ -9582,6 +9711,7 @@ export class Client extends GameShell {
             }
 
             if (notify) {
+                this.optimisticGrandExchangeQuantityButton(c);
                 this.out.pIsaac(ClientProt.IF_BUTTON);
                 this.out.p2(c);
             }
@@ -11654,6 +11784,7 @@ export class Client extends GameShell {
         this.socialInputHeader = '';
         this.grandExchangeItemSearchLastQuery = '';
         this.grandExchangeItemSearchLastResults = [];
+        this.grandExchangeItemSearchHoverRow = -1;
         this.redrawChatback = true;
     }
 
@@ -11719,6 +11850,7 @@ export class Client extends GameShell {
     private submitGrandExchangeItemSearchResult(name: string): void {
         this.socialInput = name;
         this.socialInputOpen = false;
+        this.grandExchangeItemSearchHoverRow = -1;
         this.redrawChatback = true;
 
         this.out.pIsaac(ClientProt.RESUME_P_NAMEDIALOG);
@@ -11726,20 +11858,34 @@ export class Client extends GameShell {
         this.out.pjstr(name);
     }
 
+    private getGrandExchangeItemSearchRowAt(x: number, y: number, resultCount: number): number {
+        const localX = x - 17;
+        const localY = y - 357;
+        if (localX < 47 || localX >= 463 || localY < 0 || localY >= resultCount * 12) {
+            return -1;
+        }
+
+        return Math.floor(localY / 12);
+    }
+
+    private updateGrandExchangeItemSearchHover(): void {
+        const nextRow = this.isGrandExchangeItemSearchActive()
+            ? this.getGrandExchangeItemSearchRowAt(this.mouseX, this.mouseY, this.getGrandExchangeItemSearchResults(7).length)
+            : -1;
+        if (nextRow !== this.grandExchangeItemSearchHoverRow) {
+            this.grandExchangeItemSearchHoverRow = nextRow;
+            this.redrawChatback = true;
+        }
+    }
+
     private handleGrandExchangeItemSearchClick(): boolean {
         if (!this.isGrandExchangeItemSearchActive() || this.mouseClickButton !== 1) {
             return false;
         }
 
-        const localX = this.mouseClickX - 17;
-        const localY = this.mouseClickY - 357;
-        if (localX < 0 || localX >= 479 || localY < 0 || localY >= 84) {
-            return false;
-        }
-
         const results = this.getGrandExchangeItemSearchResults(7);
-        const row = Math.floor(localY / 12);
-        if (row < 0 || row >= results.length) {
+        const row = this.getGrandExchangeItemSearchRowAt(this.mouseClickX, this.mouseClickY, results.length);
+        if (row === -1) {
             return false;
         }
 
@@ -11751,8 +11897,6 @@ export class Client extends GameShell {
     private drawGrandExchangeItemSearchChatbox(): void {
         const query = this.socialInput.trim();
         if (!query) {
-            Pix2D.drawRect(0, 0, 38, 36, 0x6b6252);
-            Pix2D.drawRect(1, 1, 36, 34, 0xb4a783);
             this.b12?.centreString('Grand Exchange Item Search', 239, 18, 0x7e3200);
             this.p11?.centreString('To search for an item, start by typing part of its name.', 239, 49, 0x7e3200);
             this.p11?.centreString('Then, simply select the item you want from the results on display.', 239, 64, 0x7e3200);
@@ -11761,28 +11905,32 @@ export class Client extends GameShell {
             if (results.length === 0) {
                 this.p12?.centreString('No matching tradeable items.', 239, 36, 0x7e3200);
             } else {
+                const hoveredRow = this.getGrandExchangeItemSearchRowAt(this.mouseX, this.mouseY, results.length);
+
+                // The preview box belongs to the populated result view only.
+                Pix2D.drawRect(0, 0, 38, 36, 0x6b6252);
+                Pix2D.drawRect(1, 1, 36, 34, 0xb4a783);
+                if (hoveredRow !== -1) {
+                    const hoveredItem = results[hoveredRow];
+                    ObjType.getSprite(hoveredItem.id, 1, 0)?.plotSprite(3, 2);
+                }
+
                 for (let row = 0; row < results.length; row++) {
                     const item = results[row];
                     const y = row * 12;
-                const hoverX = this.mouseX - 17;
-                const hoverY = this.mouseY - 357;
-                if (hoverX >= 47 && hoverX < 463 && hoverY >= y && hoverY < y + 12) {
-                    Pix2D.fillRect(47, y, 416, 12, 0xb4a783);
-                }
+                    const hovered = row === hoveredRow;
+                    if (hovered) {
+                        Pix2D.fillRect(47, y, 416, 12, 0xb4a783);
+                    }
                     // Java-style GE search results are a compact text list; no per-row icon tile.
-                    
-                    
-                    this.p12?.drawString(item.name, 48, y + 12, 0x7e3200);
+                    this.p12?.drawString(item.name, 48, y + 12, hovered ? Colour.ORANGE1 : 0x7e3200);
                 }
             }
         }
 
-        // Match the later GE chatbox search affordance: a small magnifier at the
-        // left of the live text entry line rather than the generic name-dialog label.
-        Pix2D.fillCircle(10, 86, 5, 0x4b4638, 256);
-        Pix2D.fillCircle(10, 86, 3, 0xd5c7a6, 256);
-        Pix2D.fillRect(14, 90, 4, 2, 0x4b4638);
-        Pix2D.fillRect(16, 92, 3, 2, 0x4b4638);
+        // Reuse the authentic b481 GE magnifier (source sprite 1154) already
+        // loaded by the group-105 search prompt instead of approximating it.
+        IfType.list[GRAND_EXCHANGE_SEARCH_ICON_COMPONENT_ID]?.graphic?.plotSprite(2, 79);
         this.p12?.drawString(this.socialInput + '*', 24, 92, Colour.DARKBLUE);
     }
 

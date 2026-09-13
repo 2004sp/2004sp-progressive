@@ -485,7 +485,7 @@ function patchSelectedItemPriceReset(stagedContentDir: string) {
     const end = next === -1 ? source.length : next;
     let block = source.slice(start, end);
 
-    const quantityTextReset = `if_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "0");`;
+    const quantityTextReset = `if_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "1");`;
     if (!block.includes(quantityTextReset)) {
         throw new Error('Grand Exchange price state requires the quantity-stage selected-item reset');
     }

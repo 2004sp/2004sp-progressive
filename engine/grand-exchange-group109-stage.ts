@@ -20,6 +20,7 @@ const GROUP109_SLOT_INVS = [59, 63, 67, 71, 75, 79] as const;
 const GROUP109_COLLECT_BUTTONS = [61, 65, 69, 73, 77, 81] as const;
 
 const GROUP109_SCRIPT_TRIGGERS = [
+    '[proc,ge_open_collection_box]',
     '[debugproc,ge109]',
     '[debugproc,ge109empty]',
     '[proc,ge_collection_collect_slot]',

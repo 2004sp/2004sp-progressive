@@ -1,0 +1,16 @@
+// The primary clerk from the frozen r481 reference (source NPC 6528).
+// This file is present only in the option-2 Grand Exchange content stage.
+[opnpc1,grand_exchange_clerk]
+~chatnpc("<p,neutral>Hello. How may I help you with the Grand Exchange?");
+
+[opnpc2,grand_exchange_clerk]
+~ge_open_collection_box;
+
+[opnpc3,grand_exchange_clerk]
+~ge_open_overview;
+
+[opnpc4,grand_exchange_clerk]
+~ge_open_history;
+
+[opnpc5,grand_exchange_clerk]
+mes("Item sets are not available in this Grand Exchange backport yet.");

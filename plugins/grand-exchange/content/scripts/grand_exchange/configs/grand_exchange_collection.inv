@@ -3,10 +3,10 @@
 // Each offer slot can present up to two outputs (item/coins), so each
 // compatibility container has two stackable slots.
 //
-// These remain temporary player containers. Collection now transfers their
-// contents into the player's real inventory; the later server-side GE
-// settlement phase will populate them from authoritative offer state using
-// native r254 item IDs only.
+// These remain temporary player containers. Confirming an offer immediately
+// settles against the player's inventory and deposits the purchased items or
+// sale proceeds here. Collection transfers those outputs into the real player
+// inventory and releases the corresponding offer slot when it becomes empty.
 
 [ge_collection_offer_0]
 scope=temp

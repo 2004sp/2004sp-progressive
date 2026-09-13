@@ -231,8 +231,9 @@ function validateServerDrivenSubstitutions(stagedContentDir: string) {
         'inv_transmit(ge_search_results, grand_exchange_item_search:com_8);',
         '[inv_button1,grand_exchange_item_search:com_8]',
         'inv_moveitem(ge_search_results, ge_selected_item, $item, 1);',
+        'inv_setslot(ge_selected_item, 1, coins, 1);',
         'if_setobject(grand_exchange_overview:com_138, $item, 100);',
-        'if_settext(grand_exchange_overview:com_150, "0");'
+        'if_settext(grand_exchange_overview:com_150, "1");'
     ]);
 
     requireTokens(path.join(scriptDir, 'grand_exchange_quantity.rs2'), [

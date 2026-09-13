@@ -154,9 +154,11 @@ function patchSelectedItemReset(stagedContentDir: string) {
         throw new Error('Grand Exchange quantity state requires the selected runtime item to be moved into ge_selected_item');
     }
 
-    const textReset = `if_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "0");`;
-    if (!block.includes(textReset)) {
-        block = block.replace(selectedItemMove, `${selectedItemMove}\n${textReset}`);
+    // A newly selected Buy item starts at quantity 1, matching the original GE
+    // interaction instead of briefly presenting an invalid zero-quantity offer.
+    const quantityDefault = `inv_setslot(${SELECTED_ITEM_INV}, ${QUANTITY_STATE_SLOT}, ${QUANTITY_STATE_OBJECT}, 1);\nif_settext(${GE_INTERFACE_NAME}:com_${QUANTITY_TEXT_COMPONENT}, "1");`;
+    if (!block.includes(quantityDefault)) {
+        block = block.replace(selectedItemMove, `${selectedItemMove}\n${quantityDefault}`);
     }
 
     source = source.slice(0, start) + block + source.slice(end);
