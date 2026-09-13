@@ -1,7 +1,7 @@
 import { Client } from './Client.js';
-import { Colour } from '../graphics/Colour.js';
-import Pix2D from '../graphics/Pix2D.js';
-import PixFont from '../graphics/PixFont.js';
+import { Colour } from '#/graphics/Colour.js';
+import Pix2D from '#/graphics/Pix2D.js';
+import PixFont from '#/graphics/PixFont.js';
 
 type GrandExchangeSearchResult = {
     name: string;
