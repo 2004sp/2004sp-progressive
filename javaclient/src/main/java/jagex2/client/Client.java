@@ -9381,11 +9381,6 @@ public class Client extends GameShell {
 		}
 	}
 
-	private boolean isGrandExchangeHoverGraphic(int x, int y, int width, int height) {
-		boolean grandExchangeOpen = this.mainLayerId == 8990 || this.mainOverlayLayerId == 8990;
-		return grandExchangeOpen && super.mouseX >= x && super.mouseY >= y && super.mouseX < x + width && super.mouseY < y + height;
-	}
-
 	@ObfuscatedName("client.a(IILd;II)V")
 	public void drawLayer(int arg1, IfType arg2, int arg3, int arg4) {
 		if (arg2.type != 0 || arg2.children == null || arg2.hidden && this.overMainLayerId != arg2.id && this.overSideLayerId != arg2.id && this.overChatLayerId != arg2.id) {
@@ -9403,13 +9398,6 @@ public class Client extends GameShell {
 			IfType var14 = IfType.list[arg2.children[var11]];
 			int var15 = var12 + var14.x;
 			int var16 = var13 + var14.y;
-			boolean hiddenHoverLayer = var14.type == 0 && (this.overMainLayerId == var14.id || this.overSideLayerId == var14.id || this.overChatLayerId == var14.id);
-			// IF_SETHIDE is also used for individual leaf components by later
-			// interfaces backported onto this IF1 client. Do not draw those hidden
-			// widgets, while preserving the original hover-layer exception.
-			if (var14.hidden && !hiddenHoverLayer) {
-				continue;
-			}
 			if (var14.clientCode > 0) {
 				this.updateInterfaceContent(var14);
 			}
@@ -9618,10 +9606,7 @@ public class Client extends GameShell {
 					}
 				} else if (var14.type == 5) {
 					Pix32 var45;
-					boolean var45Hovered = this.isGrandExchangeHoverGraphic(var15, var16, var14.width, var14.height);
-					if (var45Hovered && var14.graphic2 != null) {
-						var45 = var14.graphic2;
-					} else if (this.getIfActive(var14)) {
+					if (this.getIfActive(var14)) {
 						var45 = var14.graphic2;
 					} else {
 						var45 = var14.graphic;
@@ -9935,10 +9920,6 @@ public class Client extends GameShell {
 			IfType var12 = IfType.list[arg3.children[var9]];
 			int var13 = var10 + var12.x;
 			int var14 = var11 + var12.y;
-			// A hidden leaf component must not leave an interactive hitbox behind.
-			if (var12.hidden) {
-				continue;
-			}
 			if ((var12.overlayer >= 0 || var12.colourOver != 0) && arg5 >= var13 && arg0 >= var14 && arg5 < var13 + var12.width && arg0 < var14 + var12.height) {
 				if (var12.overlayer >= 0) {
 					this.lastOverLayerId = var12.overlayer;
