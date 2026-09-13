@@ -32,8 +32,9 @@ Because a regular r254 IF1 interface needs an opening/root component while the r
 8. convert and copy the frozen PNGs into the staged native sprite source directory;
 9. apply the IF1-only buy/sell action compatibility shims to the twelve frozen group-105 offer hitboxes;
 10. generate the option-2-only item-search interface, two temporary server inventories and RuneScript search catalogue directly from the staged native r254 `obj.pack`;
-11. build and start option 2 with `BUILD_SRC_DIR` pointing at the stage;
-12. restore the native pack and compiler wrapper after the option-2 server exits.
+11. losslessly convert the primary r481 Grand Exchange clerk's compatible body meshes to the r254 model footer, register NPC `1200`, and spawn him at `3180, 3440, 0`;
+12. build and start option 2 with `BUILD_SRC_DIR` pointing at the stage;
+13. restore the native pack and compiler wrapper after the option-2 server exits.
 
 Launcher options 1 and 3 explicitly force `NODE_FEATURE_GRANDEXCHANGE=false`. The launcher also restores a stale snapshot on its next start if an option-2 run was interrupted before its `finally` cleanup could run.
 
@@ -123,7 +124,9 @@ The r481 offer setup/state variant is reconstructed as `grand_exchange_group_108
 
 This variant carries the buy-offer layout, item/price labels, quantity and price step controls, preset buttons, confirm state, yellow progress/state frames and submitted-offer popup. The IF1 reconstruction preserves the source hover affordances with native `activecolour`/`activegraphic` fields where possible. Source fonts `494`, `495` and `496` reuse the established native `p11`, `p12` and `b12` compatibility mappings.
 
-Group 108 reuses the exact IF1 component renders already staged for source-equivalent group-105/group-106 tiled or canvas-offset graphics, so no duplicate derived PNGs are committed. The source model-2810 component keeps its source canvas and zoom as a runtime model slot; activating the reserved imported model is intentionally deferred with the wider item/model dependency work. No quantity, price, confirm or continue control in this milestone performs a server-side Grand Exchange transaction.
+Group 108 reuses the exact IF1 component renders already staged for source-equivalent group-105/group-106 tiled or canvas-offset graphics, so no duplicate derived PNGs are committed. The source model-2810 component keeps its source canvas and zoom as a runtime model slot; activating the reserved imported model is intentionally deferred with the wider item/model dependency work.
+
+Confirming a valid offer now settles it immediately. Buy removes the full coin total and deposits the requested item quantity in the matching Collection Box slot. Sell removes the requested item quantity and deposits the full coin total. Outputs can be claimed from the completed-offer detail or through the clerk's **Collect** option; once claimed, that offer slot becomes reusable.
 
 With Grand Exchange custom content enabled, `~ge108` opens the reconstructed state variant for isolated verification. The stage validates the full 98-component mapping and the dimensions of every reused media dependency before the temporary option-2 pack is built.
 
@@ -133,6 +136,7 @@ After copying this overlay onto the normal r254 base installation:
 
 - enable **Grand Exchange (option 2 only)** under launcher **Custom Content**;
 - start launcher option **2 — Custom Server + Hiscores** and allow the normal local build/repack to complete;
+- confirm the primary r481 **Grand Exchange clerk** appears at `3180, 3440, 0`; **Exchange** opens the offer overview, **History** opens persisted offer history, and **Talk-to** uses the imported clerk chathead;
 - log in and run `~ge`, then click **Buy** in any of the six empty offer slots;
 - confirm **Buy** only opens the Buy Offer setup, then click the visible sprite-`1140` Search button and confirm the normal chatbox becomes **Grand Exchange Item Search**, with the instruction text and magnifier/input line shown while the Buy Offer interface remains open;
 - type a native r254 item substring such as `bronze sword`, `lobster` or `rune` and confirm the visible native item names/icons update live; refine broad queries to reach the desired item, and confirm explicitly non-tradeable/noted objects never appear as selectable results;
