@@ -1,4 +1,5 @@
 [grand_exchange_clerk]
+vislevel=hide
 name=Grand Exchange clerk
 desc=He can help you use the Grand Exchange.
 op1=Talk-to
@@ -9,7 +10,6 @@ op5=Sets
 model1=r481_ge_clerk_body_29890
 model2=r481_ge_clerk_body_29887
 head1=r481_ge_clerk_head_103
-readyanim=human_ready
 alwaysontop=yes
 moverestrict=nomove
 wanderrange=0
