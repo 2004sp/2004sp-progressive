@@ -101,6 +101,43 @@ function invalidateGrandExchangeServerConfigOutputs() {
     }
 }
 
+function insetGrandExchangeOverviewItemModels(stagedContentDir: string) {
+    const interfacePath = path.join(
+        stagedContentDir,
+        'scripts',
+        'grand_exchange',
+        'interfaces',
+        'grand_exchange_overview.if'
+    );
+    let source = fs.readFileSync(interfacePath, 'utf8').replace(/\r/g, '');
+
+    for (const componentId of [33, 49, 65, 84, 103, 122]) {
+        const marker = `[com_${componentId}]`;
+        const start = source.indexOf(marker);
+        if (start < 0) {
+            throw new Error(`Grand Exchange active-offer item model is missing ${marker}`);
+        }
+        const next = source.indexOf('\n[com_', start + marker.length);
+        const end = next < 0 ? source.length : next;
+        const block = source.slice(start, end);
+
+        for (const required of ['type=model', 'x=7', 'y=38', 'width=40', 'height=36']) {
+            if (!block.includes(required)) {
+                throw new Error(`Grand Exchange active-offer item model ${marker} no longer contains ${required}`);
+            }
+        }
+
+        const insetBlock = block
+            .replace('\nx=7\n', '\nx=9\n')
+            .replace('\ny=38\n', '\ny=40\n')
+            .replace('\nwidth=40\n', '\nwidth=36\n')
+            .replace('\nheight=36\n', '\nheight=32\n');
+        source = source.slice(0, start) + insetBlock + source.slice(end);
+    }
+
+    fs.writeFileSync(interfacePath, source, 'utf8');
+}
+
 export async function prepareGrandExchangeStage() {
     assertNativeR254ItemDefinitionBoundary();
     const stagedContentDir = await prepareGrandExchangeBaseStage();
@@ -129,6 +166,7 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangePartialFillStage(stagedContentDir);
         prepareGrandExchangeCompletedOfferStage(stagedContentDir);
         prepareGrandExchangeCancelledOfferStage(stagedContentDir);
+        insetGrandExchangeOverviewItemModels(stagedContentDir);
         prepareGrandExchangeActiveOfferOverviewPresentationStage(stagedContentDir);
         prepareGrandExchangeActiveOfferDetailStage(stagedContentDir);
         prepareGrandExchangePersistedHistoryStage(stagedContentDir);
