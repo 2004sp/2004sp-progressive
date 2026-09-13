@@ -12,6 +12,12 @@ npc_facesquare(movecoord(npc_coord, 1, 0, 0));
 
 [opnpc2,grand_exchange_clerk]
 ~ge_open_collection_box;
+// r481 shipped slots 3-6 with disabled overlays. The backport supports six
+// collection containers, so remove those overlays when opening via the clerk.
+if_sethide(grand_exchange_group_109:com_31, true);
+if_sethide(grand_exchange_group_109:com_39, true);
+if_sethide(grand_exchange_group_109:com_47, true);
+if_sethide(grand_exchange_group_109:com_55, true);
 
 [opnpc3,grand_exchange_clerk]
 ~ge_open_overview;
