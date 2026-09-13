@@ -15,6 +15,7 @@ import { prepareGrandExchangeBuyOfferSetupStage } from './grand-exchange-buy-off
 import { prepareGrandExchangeSellOfferSetupStage } from './grand-exchange-sell-offer-stage.js';
 import { prepareGrandExchangeOverviewInteractionStage } from './grand-exchange-overview-interaction-stage.js';
 import { prepareGrandExchangeItemSearchStage } from './grand-exchange-item-search-stage.js';
+import { prepareGrandExchangeItemSearchQolStage } from './grand-exchange-item-search-qol-stage.js';
 import { prepareGrandExchangeRuneScriptTypeCompatibilityStage } from './grand-exchange-runescript-type-compatibility.js';
 import { prepareGrandExchangeQuantityStage } from './grand-exchange-quantity-stage.js';
 import { prepareGrandExchangePriceStage } from './grand-exchange-price-stage.js';
@@ -114,6 +115,7 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangeSellOfferSetupStage(stagedContentDir);
         prepareGrandExchangeOverviewInteractionStage(stagedContentDir);
         prepareGrandExchangeItemSearchStage(stagedContentDir);
+        prepareGrandExchangeItemSearchQolStage(stagedContentDir);
         prepareGrandExchangeRuneScriptTypeCompatibilityStage(stagedContentDir);
         prepareGrandExchangeQuantityStage(stagedContentDir);
         prepareGrandExchangePriceStage(stagedContentDir);
