@@ -67,7 +67,7 @@ if_settext(grand_exchange_group_643:com_25, "Buy");
 if_settext(grand_exchange_group_643:com_30, "25");
 if_settext(grand_exchange_group_643:com_35, "Lobster");
 if_settext(grand_exchange_group_643:com_40, "120 gp");
-if_setobject(grand_exchange_group_643:com_51, lobster, 500);
+if_setobject(grand_exchange_group_643:com_51, lobster, 100);
 if_settext(grand_exchange_group_643:com_56, "Complete");
 if_settext(grand_exchange_group_643:com_61, "12 Dec 12:00");
 
@@ -76,7 +76,7 @@ if_settext(grand_exchange_group_643:com_26, "Sell");
 if_settext(grand_exchange_group_643:com_31, "1");
 if_settext(grand_exchange_group_643:com_36, "Rune longsword");
 if_settext(grand_exchange_group_643:com_41, "32,000 gp");
-if_setobject(grand_exchange_group_643:com_52, rune_longsword, 500);
+if_setobject(grand_exchange_group_643:com_52, rune_longsword, 100);
 if_settext(grand_exchange_group_643:com_57, "Partial");
 if_settext(grand_exchange_group_643:com_62, "12 Dec 11:45");
 
@@ -85,7 +85,7 @@ if_settext(grand_exchange_group_643:com_27, "Buy");
 if_settext(grand_exchange_group_643:com_32, "100");
 if_settext(grand_exchange_group_643:com_37, "Lobster");
 if_settext(grand_exchange_group_643:com_42, "110 gp");
-if_setobject(grand_exchange_group_643:com_53, lobster, 500);
+if_setobject(grand_exchange_group_643:com_53, lobster, 100);
 if_settext(grand_exchange_group_643:com_58, "Cancelled");
 if_settext(grand_exchange_group_643:com_63, "12 Dec 11:20");
 
@@ -94,7 +94,7 @@ if_settext(grand_exchange_group_643:com_28, "Sell");
 if_settext(grand_exchange_group_643:com_33, "2");
 if_settext(grand_exchange_group_643:com_38, "Rune longsword");
 if_settext(grand_exchange_group_643:com_43, "31,500 gp");
-if_setobject(grand_exchange_group_643:com_54, rune_longsword, 500);
+if_setobject(grand_exchange_group_643:com_54, rune_longsword, 100);
 if_settext(grand_exchange_group_643:com_59, "Complete");
 if_settext(grand_exchange_group_643:com_64, "12 Dec 10:55");
 
@@ -103,7 +103,7 @@ if_settext(grand_exchange_group_643:com_29, "Buy");
 if_settext(grand_exchange_group_643:com_34, "50");
 if_settext(grand_exchange_group_643:com_39, "Lobster");
 if_settext(grand_exchange_group_643:com_44, "125 gp");
-if_setobject(grand_exchange_group_643:com_55, lobster, 500);
+if_setobject(grand_exchange_group_643:com_55, lobster, 100);
 if_settext(grand_exchange_group_643:com_60, "Pending");
 if_settext(grand_exchange_group_643:com_65, "12 Dec 10:30");
 
