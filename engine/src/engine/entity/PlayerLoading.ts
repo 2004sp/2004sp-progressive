@@ -111,11 +111,9 @@ export class PlayerLoading {
         for (let i = 0; i < invCount; i++) {
             const type = sav.g2();
             const invType = InvType.get(type);
-            // Save v5+ carries each inventory's encoded size, which lets a
-            // server safely consume and ignore optional/custom inventory types
-            // that are not present in the currently loaded content pack. Older
-            // saves do not carry that size and therefore cannot be skipped
-            // without losing packet alignment.
+            // Save v5+ carries each inventory's encoded size, which lets us
+            // safely consume optional/custom inventory records even when their
+            // config is not loaded. Legacy saves do not carry that size.
             if (version < 5 && !invType) {
                 throw new Error(`Unknown inventory type ${type} in legacy save`);
             }
@@ -136,7 +134,21 @@ export class PlayerLoading {
                 objs.push({ slot, id, count });
             }
 
-            if (invType && invType.scope === InvType.SCOPE_PERM) {
+            if (!invType) {
+                // Empty optional inventories are harmless when switching to a
+                // content mode that does not define them. A non-empty one may
+                // contain reserved/collectible wealth (for example GE state).
+                // Refuse to silently drop it: logging into the owning content
+                // mode and emptying the state makes the save portable again.
+                if (objs.length > 0) {
+                    throw new Error(
+                        `Saved inventory type ${type} contains data but is unavailable in this content mode; re-enable the custom content that owns it before logging in`
+                    );
+                }
+                continue;
+            }
+
+            if (invType.scope === InvType.SCOPE_PERM) {
                 const inv = player.getInventory(type);
                 if (inv) {
                     for (const obj of objs) {
