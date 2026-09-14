@@ -4,7 +4,6 @@ import path from 'path';
 const OVERVIEW_INTERFACE = 'grand_exchange_overview';
 const SEARCH_INTERFACE = 'grand_exchange_item_search';
 const CHATBOX_SELECTION_PREFIX = '__ge_select__:';
-const SEARCH_RESULT_CAP = 80;
 
 function getScriptBlock(source: string, marker: string) {
     const start = source.indexOf(marker);
@@ -76,10 +75,11 @@ function patchSearchScript(stagedContentDir: string) {
         );
 
         // A live chatbox result click and the Enter key both resume p_namedialog.
-        // ClientEntry prefixes only a clicked result. For a click, reuse the
-        // existing 80-result server search and select only an exact display-name
-        // match. RuneScript strings cannot be compared with '='; compare() is the
-        // native string comparison opcode and returns zero for an exact match.
+        // ClientEntry prefixes only a clicked result. A click populates the
+        // existing search inventory directly through the catalogue dispatcher,
+        // without ge_item_search_run: that avoids registering an inv_transmit on
+        // the advanced browser when it never opens. RuneScript strings cannot be
+        // compared with '='; compare() returns zero for an exact match.
         // An unmarked Enter response remains the advanced-browser path.
         const autoSelectTail = [
             'p_namedialog;',
@@ -99,9 +99,11 @@ function patchSearchScript(stagedContentDir: string) {
             `    $query = substring($query, ${CHATBOX_SELECTION_PREFIX.length}, string_length($query));`,
             '    if (string_length($query) < 1) return;',
             '    def_string $needle = lowercase($query);',
-            '    ~ge_item_search_run($query);',
+            '    inv_clear(ge_search_results);',
+            '    def_int $count = ~ge_item_search_catalogue($needle);',
+            '    if ($count < 1) return;',
             '    def_int $slot = 0;',
-            `    while ($slot < ${SEARCH_RESULT_CAP}) {`,
+            '    while ($slot < $count) {',
             '        if (inv_getnum(ge_search_results, $slot) > 0) {',
             '            def_obj $item = inv_getobj(ge_search_results, $slot);',
             '            if (oc_uncert($item) = $item) {',
@@ -178,7 +180,9 @@ function validate(stagedContentDir: string) {
         `string_indexof_string("${CHATBOX_SELECTION_PREFIX}", $query) = 0`,
         `substring($query, ${CHATBOX_SELECTION_PREFIX.length}, string_length($query))`,
         'def_string $needle = lowercase($query);',
-        `while ($slot < ${SEARCH_RESULT_CAP}) {`,
+        'inv_clear(ge_search_results);',
+        'def_int $count = ~ge_item_search_catalogue($needle);',
+        'while ($slot < $count) {',
         'inv_getobj(ge_search_results, $slot)',
         'compare(lowercase(oc_name($item)), $needle) = 0',
         '~ge_item_search_apply_selection($item);',
