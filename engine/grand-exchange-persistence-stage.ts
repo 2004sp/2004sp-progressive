@@ -189,10 +189,9 @@ function enforceDefaultOfferPrice(stagedContentDir: string) {
 function stabilizeInterfaceSwitching(stagedContentDir: string) {
     const scriptDir = path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts');
 
-    // Prepare the destination interface completely before opening it. The native
-    // r254 scripts use the same pattern for shops: text/inventory packets are sent
-    // first, then IF_OPENMAIN(_SIDE) makes the fully-populated interface visible.
-    // This avoids exposing authored defaults or stale state for a render frame.
+    // Prepare genuinely separate destination interfaces completely before opening
+    // them. The native r254 scripts use the same pattern for shops: state packets
+    // are sent first, then IF_OPENMAIN makes the populated interface visible.
     const searchPath = path.join(scriptDir, 'grand_exchange_item_search.rs2');
     let searchSource = fs.readFileSync(searchPath, 'utf8').replace(/\r/g, '');
     searchSource = moveCommandToEnd(
@@ -215,30 +214,52 @@ function stabilizeInterfaceSwitching(stagedContentDir: string) {
     );
     fs.writeFileSync(searchPath, searchSource, 'utf8');
 
+    // Sell setup is intentionally different: offer-selection state keeps the GE
+    // main interface mounted and swaps only the inventory tab. Reopening the main
+    // interface here would be less fluid and would undo that earlier optimization.
     const sellPath = path.join(scriptDir, 'grand_exchange_sell_item_selection.rs2');
-    let sellSource = fs.readFileSync(sellPath, 'utf8').replace(/\r/g, '');
-    sellSource = moveCommandToEnd(
-        sellSource,
-        '[proc,ge_sell_apply_selection]',
-        `if_openmain(${GE_INTERFACE_NAME});`,
-        'sell selection transition'
-    );
-    fs.writeFileSync(sellPath, sellSource, 'utf8');
+    const sellSource = fs.readFileSync(sellPath, 'utf8').replace(/\r/g, '');
+    const sellSelection = scriptBlock(sellSource, '[proc,ge_sell_apply_selection]', 'sell selection transition').block;
+    for (const required of [
+        'if_settab(grand_exchange_sell_inventory, ^tab_inventory);',
+        'if_settabactive(^tab_inventory);',
+    ]) {
+        if (!sellSelection.includes(required)) {
+            throw new Error(`Grand Exchange in-place sell selection lost ${required}`);
+        }
+    }
+    if (sellSelection.includes(`if_openmain(${GE_INTERFACE_NAME});`)) {
+        throw new Error('Grand Exchange sell selection unexpectedly reopens the main interface');
+    }
 
     const overviewPath = path.join(scriptDir, 'grand_exchange.rs2');
     let overviewSource = fs.readFileSync(overviewPath, 'utf8').replace(/\r/g, '');
-    overviewSource = moveCommandToEnd(
-        overviewSource,
-        '[proc,ge_open_sell_offer_setup]',
-        `if_openmain_side(${GE_INTERFACE_NAME}, grand_exchange_sell_inventory);`,
-        'sell setup transition'
-    );
-    overviewSource = moveCommandToEnd(
-        overviewSource,
-        '[proc,ge_return_to_offer_summary]',
-        `if_openmain(${GE_INTERFACE_NAME});`,
-        'offer-summary Back transition'
-    );
+    const sellSetup = scriptBlock(overviewSource, '[proc,ge_open_sell_offer_setup]', 'sell setup transition').block;
+    for (const required of [
+        'if_settab(grand_exchange_sell_inventory, ^tab_inventory);',
+        'if_settabactive(^tab_inventory);',
+    ]) {
+        if (!sellSetup.includes(required)) {
+            throw new Error(`Grand Exchange in-place sell setup lost ${required}`);
+        }
+    }
+    if (sellSetup.includes(`if_openmain_side(${GE_INTERFACE_NAME}, grand_exchange_sell_inventory);`)) {
+        throw new Error('Grand Exchange sell setup unexpectedly reopens the main/side interfaces');
+    }
+
+    const offerSummaryBack = scriptBlock(overviewSource, '[proc,ge_return_to_offer_summary]', 'offer-summary Back transition').block;
+    for (const required of [
+        'if_settab(inventory, ^tab_inventory);',
+        'if_settabactive(^tab_inventory);',
+    ]) {
+        if (!offerSummaryBack.includes(required)) {
+            throw new Error(`Grand Exchange in-place sell Back flow lost ${required}`);
+        }
+    }
+    if (offerSummaryBack.includes(`if_openmain(${GE_INTERFACE_NAME});`)) {
+        throw new Error('Grand Exchange sell Back flow unexpectedly reopens the main interface');
+    }
+
     overviewSource = moveCommandToEnd(
         overviewSource,
         '[proc,ge_open_overview]',
@@ -285,9 +306,6 @@ function stabilizeInterfaceSwitching(stagedContentDir: string) {
     assertCommandLast(searchSource, `[if_button,${GE_INTERFACE_NAME}:com_194]`, 'if_openmain(grand_exchange_item_search);', 'item-search browser transition');
     assertCommandLast(searchSource, '[proc,ge_item_search_apply_selection]', `if_openmain(${GE_INTERFACE_NAME});`, 'item-search selection transition');
     assertCommandLast(searchSource, '[if_button,grand_exchange_item_search:com_6]', `if_openmain(${GE_INTERFACE_NAME});`, 'item-search Back transition');
-    assertCommandLast(sellSource, '[proc,ge_sell_apply_selection]', `if_openmain(${GE_INTERFACE_NAME});`, 'sell selection transition');
-    assertCommandLast(overviewSource, '[proc,ge_open_sell_offer_setup]', `if_openmain_side(${GE_INTERFACE_NAME}, grand_exchange_sell_inventory);`, 'sell setup transition');
-    assertCommandLast(overviewSource, '[proc,ge_return_to_offer_summary]', `if_openmain(${GE_INTERFACE_NAME});`, 'offer-summary Back transition');
     assertCommandLast(overviewSource, '[proc,ge_open_overview]', `if_openmain(${GE_INTERFACE_NAME});`, 'overview opening transition');
     assertCommandLast(collectionSource, '[proc,ge_open_collection_box]', 'if_openmain(grand_exchange_group_109);', 'Collection Box opening transition');
     assertCommandLast(historySource, '[proc,ge_open_history]', 'if_openmain(grand_exchange_group_643);', 'history opening transition');
