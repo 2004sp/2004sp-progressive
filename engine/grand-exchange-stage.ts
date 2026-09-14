@@ -30,6 +30,7 @@ import { prepareGrandExchangeCancelledOfferStage } from './grand-exchange-cancel
 import { prepareGrandExchangeActiveOfferDetailStage } from './grand-exchange-active-offer-detail-stage.js';
 import { prepareGrandExchangeActiveOfferOverviewPresentationStage } from './grand-exchange-active-offer-overview-presentation-stage.js';
 import { prepareGrandExchangePersistedHistoryStage, restoreGrandExchangePersistedHistoryRuntime } from './grand-exchange-persisted-history-stage.js';
+import { prepareGrandExchangeHistoryPresentationStage } from './grand-exchange-history-presentation-stage.js';
 import { prepareGrandExchangeSettlementStage } from './grand-exchange-settlement-stage.js';
 import { prepareGrandExchangeHoverStage } from './grand-exchange-hover-stage.js';
 import { prepareGrandExchangeWidgetCompatibilityStage } from './grand-exchange-widget-compatibility.js';
@@ -175,6 +176,7 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangeActiveOfferOverviewPresentationStage(stagedContentDir);
         prepareGrandExchangeActiveOfferDetailStage(stagedContentDir);
         prepareGrandExchangePersistedHistoryStage(stagedContentDir);
+        prepareGrandExchangeHistoryPresentationStage(stagedContentDir);
         prepareGrandExchangeSettlementStage(stagedContentDir);
         await prepareGrandExchangeHoverStage(stagedContentDir);
         prepareGrandExchangeWidgetCompatibilityStage(stagedContentDir);
