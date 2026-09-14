@@ -8,6 +8,7 @@ import { tryParseBoolean } from '#/util/TryParse.js';
 const STORE_VERSION = 1 as const;
 const MAX_HISTORY_ENTRIES = 100;
 const DISPLAY_ROWS = 5;
+const MAX_CACHED_PLAYERS = 256;
 
 export const enum GrandExchangeHistoryStatus {
     PENDING = 1,
@@ -104,27 +105,35 @@ function parseStore(raw: string): HistoryStore {
     };
 }
 
+function remember(key: string, value: CachedHistoryStore) {
+    // Refresh insertion order on access so this Map doubles as a tiny LRU. The
+    // old unbounded cache retained every account that ever opened GE history for
+    // the lifetime of the world process; bounding it keeps long-running worlds
+    // from accumulating up to 100 history rows per unique player indefinitely.
+    cache.delete(key);
+    cache.set(key, value);
+    if (cache.size > MAX_CACHED_PLAYERS) {
+        const oldest = cache.keys().next().value;
+        if (typeof oldest === 'string') cache.delete(oldest);
+    }
+    return value;
+}
+
 function load(player: Player): CachedHistoryStore {
     const key = playerKey(player);
     const cached = cache.get(key);
-    if (cached) return cached;
+    if (cached) return remember(key, cached);
 
     const file = historyPath(player);
     if (!fs.existsSync(file)) {
-        const created = { store: emptyStore(), writable: true };
-        cache.set(key, created);
-        return created;
+        return remember(key, { store: emptyStore(), writable: true });
     }
 
     try {
-        const loaded = { store: parseStore(fs.readFileSync(file, 'utf8')), writable: true };
-        cache.set(key, loaded);
-        return loaded;
+        return remember(key, { store: parseStore(fs.readFileSync(file, 'utf8')), writable: true });
     } catch (error) {
         console.error(`[GrandExchangeHistory] Refusing to overwrite corrupt history ${file}: ${error instanceof Error ? error.message : String(error)}`);
-        const corrupt = { store: emptyStore(), writable: false };
-        cache.set(key, corrupt);
-        return corrupt;
+        return remember(key, { store: emptyStore(), writable: false });
     }
 }
 
