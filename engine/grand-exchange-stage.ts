@@ -9,6 +9,7 @@ import { prepareGrandExchangeGroup106Stage } from './grand-exchange-group106-sta
 import { prepareGrandExchangeGroup107Stage } from './grand-exchange-group107-stage.js';
 import { prepareGrandExchangeGroup108Stage } from './grand-exchange-group108-stage.js';
 import { prepareGrandExchangeGroup109Stage } from './grand-exchange-group109-stage.js';
+import { prepareGrandExchangeCollectionPresentationStage } from './grand-exchange-collection-presentation-stage.js';
 import { prepareGrandExchangeGroup110Stage } from './grand-exchange-group110-stage.js';
 import { prepareGrandExchangeGroup643Stage } from './grand-exchange-group643-stage.js';
 import { prepareGrandExchangeBuyOfferSetupStage } from './grand-exchange-buy-offer-stage.js';
@@ -149,6 +150,7 @@ export async function prepareGrandExchangeStage() {
         await prepareGrandExchangeGroup107Stage(stagedContentDir);
         await prepareGrandExchangeGroup108Stage(stagedContentDir);
         await prepareGrandExchangeGroup109Stage(stagedContentDir);
+        prepareGrandExchangeCollectionPresentationStage(stagedContentDir);
         await prepareGrandExchangeGroup110Stage(stagedContentDir);
         await prepareGrandExchangeGroup643Stage(stagedContentDir);
         prepareGrandExchangeBuyOfferSetupStage(stagedContentDir);
