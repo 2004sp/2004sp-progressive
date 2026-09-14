@@ -109,6 +109,38 @@ function injectPackEntry(packPath: string, id: number, name: string) {
     fs.writeFileSync(packPath, lines.join('\n') + '\n', 'utf8');
 }
 
+function injectBankCollectionScriptTriggers(packPath: string) {
+    const lines = fs.readFileSync(packPath, 'utf8').replace(/\r/g, '').split('\n').filter(Boolean);
+    const names = new Set<string>();
+    let maxId = -1;
+
+    for (const line of lines) {
+        const equals = line.indexOf('=');
+        if (equals < 1) continue;
+        const id = Number.parseInt(line.slice(0, equals), 10);
+        if (Number.isInteger(id)) maxId = Math.max(maxId, id);
+        names.add(line.slice(equals + 1));
+    }
+
+    // These native triggers establish that bankbooth is the shared booth type
+    // used by normal banks, while newbiebankbooth covers Tutorial Island.
+    for (const required of ['[oploc1,bankbooth]', '[oploc2,bankbooth]', '[oploc1,newbiebankbooth]']) {
+        if (!names.has(required)) {
+            throw new Error(`Grand Exchange bank collection expected native trigger ${required}`);
+        }
+    }
+
+    for (const trigger of ['[oploc3,bankbooth]', '[oploc3,newbiebankbooth]']) {
+        if (names.has(trigger)) continue;
+        maxId++;
+        lines.push(`${maxId}=${trigger}`);
+        names.add(trigger);
+    }
+
+    lines.sort((a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10));
+    fs.writeFileSync(packPath, lines.join('\n') + '\n', 'utf8');
+}
+
 function injectSpawn(mapPath: string, npcId: number, x: number, z: number, level: number) {
     const mapX = Math.floor(x / 64);
     const mapZ = Math.floor(z / 64);
@@ -168,4 +200,6 @@ export function prepareGrandExchangeNpcStage(stagedContentDir: string) {
     const scriptDir = path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts');
     shareDebugBodyWithProcedure(path.join(scriptDir, 'grand_exchange.rs2'), 'ge', 'ge_open_overview');
     shareDebugBodyWithProcedure(path.join(scriptDir, 'grand_exchange_history.rs2'), 'ge643', 'ge_open_history');
+
+    injectBankCollectionScriptTriggers(path.join(stagedContentDir, 'pack', 'script.pack'));
 }
