@@ -12,6 +12,7 @@ const ACTIVE_STATE_SLOT = 5;
 const ACTIVE_FILLED_SLOT = 6;
 const BUY_MODE = 1;
 const SELL_MODE = 2;
+const ACTIVE_STATE = 1;
 const COMPLETED_STATE = 3;
 const COLLECTION_ITEM_COMPONENT = 209;
 const COLLECTION_COIN_COMPONENT = 211;
@@ -56,24 +57,37 @@ function settlementBranch(offer: (typeof OFFERS)[number], index: number) {
         mes("Collect your previous offer before using this slot again.");
         return;
     }
-    if (ge_history_set_status(${offer.slot}, ${COMPLETED_STATE}) = false) {
-        mes("Your Grand Exchange offer could not be completed. Please try again.");
-        return;
-    }
-    inv_clear(${offer.active});
-    inv_moveitem(${OFFER_SUBMISSION_INV}, ${offer.active}, $item, 1);
-    inv_setslot(${offer.active}, ${ACTIVE_MODE_SLOT}, coins, $mode);
-    inv_setslot(${offer.active}, ${ACTIVE_QUANTITY_SLOT}, coins, $quantity);
-    inv_setslot(${offer.active}, ${ACTIVE_PRICE_SLOT}, coins, $price);
-    inv_setslot(${offer.active}, ${ACTIVE_TOTAL_SLOT}, coins, $total);
-    inv_setslot(${offer.active}, ${ACTIVE_STATE_SLOT}, coins, ${COMPLETED_STATE});
-    inv_setslot(${offer.active}, ${ACTIVE_FILLED_SLOT}, coins, $quantity);
-    if ($mode = ${BUY_MODE}) {
-        inv_del(inv, coins, $total);
-        inv_add(${offer.collection}, $item, $quantity);
+    if ($price = $execution_price) {
+        if (ge_history_set_status(${offer.slot}, ${COMPLETED_STATE}) = false) {
+            mes("Your Grand Exchange offer could not be completed. Please try again.");
+            return;
+        }
+        inv_clear(${offer.active});
+        inv_moveitem(${OFFER_SUBMISSION_INV}, ${offer.active}, $item, 1);
+        inv_setslot(${offer.active}, ${ACTIVE_MODE_SLOT}, coins, $mode);
+        inv_setslot(${offer.active}, ${ACTIVE_QUANTITY_SLOT}, coins, $quantity);
+        inv_setslot(${offer.active}, ${ACTIVE_PRICE_SLOT}, coins, $price);
+        inv_setslot(${offer.active}, ${ACTIVE_TOTAL_SLOT}, coins, $total);
+        inv_setslot(${offer.active}, ${ACTIVE_STATE_SLOT}, coins, ${COMPLETED_STATE});
+        inv_setslot(${offer.active}, ${ACTIVE_FILLED_SLOT}, coins, $quantity);
+        if ($mode = ${BUY_MODE}) {
+            inv_del(inv, coins, $total);
+            inv_add(${offer.collection}, $item, $quantity);
+        } else {
+            inv_del(inv, $item, $quantity);
+            inv_add(${offer.collection}, coins, $total);
+        }
     } else {
-        inv_del(inv, $item, $quantity);
-        inv_add(${offer.collection}, coins, $total);
+        // Synthetic liquidity exists only at the exact guide/default price.
+        // Any lower or higher limit remains a normal pending offer forever
+        // (until the player cancels it) and does not reserve or move wealth.
+        inv_clear(${offer.active});
+        inv_moveitem(${OFFER_SUBMISSION_INV}, ${offer.active}, $item, 1);
+        inv_setslot(${offer.active}, ${ACTIVE_MODE_SLOT}, coins, $mode);
+        inv_setslot(${offer.active}, ${ACTIVE_QUANTITY_SLOT}, coins, $quantity);
+        inv_setslot(${offer.active}, ${ACTIVE_PRICE_SLOT}, coins, $price);
+        inv_setslot(${offer.active}, ${ACTIVE_TOTAL_SLOT}, coins, $total);
+        inv_setslot(${offer.active}, ${ACTIVE_STATE_SLOT}, coins, ${ACTIVE_STATE});
     }
 }`;
 }
@@ -85,10 +99,9 @@ function patchSubmission(stagedContentDir: string) {
     let block = current.block;
 
     // There is not yet a persisted player-to-player order book in the backport.
-    // Treat the player's entered price as a limit, and only cross the synthetic
-    // liquidity at the server-side guide price. Without this boundary a seller
-    // could enter an arbitrary price and the old immediate-settlement path would
-    // mint that many coins without a counterparty.
+    // The server-side guide/default price is therefore the only synthetic
+    // liquidity point. Prices above or below it are valid limit offers, but they
+    // remain pending rather than manufacturing items or coins without a match.
     const historyRecord = 'if (ge_history_record($offer_slot, $item, $mode, $quantity, $price) = false) {';
     const guidePriceGuard = `def_int $execution_price = ~ge_offer_nostalgia_price($item);
 if ($execution_price < 1) {
@@ -97,20 +110,10 @@ if ($execution_price < 1) {
 if ($execution_price < 1) {
     $execution_price = 1;
 }
-if ($mode = ${BUY_MODE} & $price < $execution_price) {
-    mes("Your buy offer must reach the guide price for instant matching.");
-    return;
-}
-if ($mode = ${SELL_MODE} & $price > $execution_price) {
-    mes("Your sell offer must be at or below the guide price for instant matching.");
-    return;
-}
 if ($execution_price > calc(${MAX_INT} / $quantity)) {
-    mes("The total value of this offer is too large.");
+    mes("The default-price total for this offer is too large.");
     return;
-}
-$price = $execution_price;
-$total = calc($quantity * $price);`;
+}`;
     if (!block.includes(guidePriceGuard)) {
         if (!block.includes(historyRecord)) {
             throw new Error('Grand Exchange settlement cannot find the persisted-history commit boundary');
@@ -229,14 +232,22 @@ function validate(stagedContentDir: string) {
 
     for (const required of [
         'def_int $execution_price = ~ge_offer_nostalgia_price($item);',
-        `if ($mode = ${BUY_MODE} & $price < $execution_price) {`,
-        `if ($mode = ${SELL_MODE} & $price > $execution_price) {`,
         `if ($execution_price > calc(${MAX_INT} / $quantity)) {`,
-        '$price = $execution_price;',
-        '$total = calc($quantity * $price);',
+        'if ($price = $execution_price) {',
+        `inv_setslot(${OFFERS[0].active}, ${ACTIVE_STATE_SLOT}, coins, ${ACTIVE_STATE});`,
+        `inv_setslot(${OFFERS[0].active}, ${ACTIVE_STATE_SLOT}, coins, ${COMPLETED_STATE});`,
     ]) {
         if (!submission.includes(required)) {
             throw new Error(`Grand Exchange settlement pricing is missing ${required}`);
+        }
+    }
+    for (const forbidden of [
+        `if ($mode = ${BUY_MODE} & $price < $execution_price) {`,
+        `if ($mode = ${SELL_MODE} & $price > $execution_price) {`,
+        '$price = $execution_price;',
+    ]) {
+        if (submission.includes(forbidden)) {
+            throw new Error(`Grand Exchange settlement must not reject or rewrite non-default limit prices: ${forbidden}`);
         }
     }
 
@@ -247,6 +258,7 @@ function validate(stagedContentDir: string) {
             'inv_del(inv, $item, $quantity);',
             `inv_add(${offer.collection}, coins, $total);`,
             `inv_setslot(${offer.active}, ${ACTIVE_STATE_SLOT}, coins, ${COMPLETED_STATE});`,
+            `inv_setslot(${offer.active}, ${ACTIVE_STATE_SLOT}, coins, ${ACTIVE_STATE});`,
             `inv_setslot(${offer.active}, ${ACTIVE_FILLED_SLOT}, coins, $quantity);`
         ]) {
             if (!submission.includes(required)) {
