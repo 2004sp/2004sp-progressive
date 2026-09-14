@@ -111,7 +111,15 @@ export class PlayerLoading {
         for (let i = 0; i < invCount; i++) {
             const type = sav.g2();
             const invType = InvType.get(type);
-            const size = version >= 5 ? sav.g2() : invType.size;
+            // Save v5+ carries each inventory's encoded size, which lets a
+            // server safely consume and ignore optional/custom inventory types
+            // that are not present in the currently loaded content pack. Older
+            // saves do not carry that size and therefore cannot be skipped
+            // without losing packet alignment.
+            if (version < 5 && !invType) {
+                throw new Error(`Unknown inventory type ${type} in legacy save`);
+            }
+            const size = version >= 5 ? sav.g2() : invType!.size;
 
             const objs = [];
             for (let slot = 0; slot < size; slot++) {
@@ -128,7 +136,7 @@ export class PlayerLoading {
                 objs.push({ slot, id, count });
             }
 
-            if (invType.scope === InvType.SCOPE_PERM) {
+            if (invType && invType.scope === InvType.SCOPE_PERM) {
                 const inv = player.getInventory(type);
                 if (inv) {
                     for (const obj of objs) {
