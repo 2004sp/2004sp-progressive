@@ -9,7 +9,6 @@ type PersistentInventoryGroup = {
 
 const GE_INTERFACE_NAME = 'grand_exchange_overview';
 const SELECTED_ITEM_INV = 'ge_selected_item';
-const SELECTED_ITEM_SLOT = 0;
 const PRICE_STATE_SLOT = 2;
 const PRICE_STATE_OBJECT = 'coins';
 const RANGE_TEXT_COMPONENT = 145;
