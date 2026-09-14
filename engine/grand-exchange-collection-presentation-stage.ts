@@ -18,12 +18,12 @@ const SLOT_FRAME_SHA256 = 'd9344569a73d36e211a421dcada9ba6f39d0691e0729c6d52ef27
 const SLOT_FRAME_SPRITE = 'r481_ge_collection_slot_frame';
 
 const SLOT_BACKGROUNDS = [
-    { component: 16, x: 93, y: 100 },
-    { component: 21, x: 209, y: 100 },
-    { component: 26, x: 325, y: 100 },
-    { component: 34, x: 93, y: 190 },
-    { component: 42, x: 209, y: 190 },
-    { component: 50, x: 325, y: 190 },
+    { component: 16, sourceX: 93, sourceY: 100, x: 88, y: 95 },
+    { component: 21, sourceX: 209, sourceY: 100, x: 204, y: 95 },
+    { component: 26, sourceX: 325, sourceY: 100, x: 320, y: 95 },
+    { component: 34, sourceX: 93, sourceY: 190, x: 88, y: 185 },
+    { component: 42, sourceX: 209, sourceY: 190, x: 204, y: 185 },
+    { component: 50, sourceX: 325, sourceY: 190, x: 320, y: 185 },
 ] as const;
 
 const EMPTY_STATUS_COMPONENTS = [58, 62, 66, 70, 74, 78] as const;
@@ -69,8 +69,8 @@ function patchCollectionInterface(stagedContentDir: string) {
         const current = componentBlock(source, slot.component);
         for (const required of [
             'type=rect',
-            `x=${slot.x}`,
-            `y=${slot.y}`,
+            `x=${slot.sourceX}`,
+            `y=${slot.sourceY}`,
             'width=106',
             'height=80',
             'trans=200',
