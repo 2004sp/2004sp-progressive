@@ -9,6 +9,7 @@ const WEBCLIENT_DIR = path.join(REPO_DIR, 'webclient');
 const CLIENT_ENTRY_PATH = path.join(WEBCLIENT_DIR, 'src', 'client', 'ClientEntry.ts');
 const BUILD_OUTPUT_PATH = path.join(WEBCLIENT_DIR, 'out', 'client.js');
 const PUBLIC_CLIENT_PATH = path.join(ENGINE_DIR, 'public', 'client', 'client.js');
+const GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX = '__ge_select__:';
 
 function runCommand(command: string, args: string[]) {
     return new Promise<void>((resolve, reject) => {
@@ -43,11 +44,23 @@ function validateCollectHook(source: string, label: string) {
     }
 }
 
-// The Grand Exchange adds an OPLOC3 server trigger for Bank booth collection,
-// but that trigger is unreachable unless the browser client also exposes the
-// otherwise-unused third location option. ClientEntry owns that narrow native
-// loc-config adapter. Build and publish it whenever option-2 GE staging runs so
-// a stale engine/public/client/client.js cannot silently omit the Collect menu.
+function validateChatboxSelectionHook(source: string, label: string) {
+    for (const required of [
+        GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX,
+        'submitGrandExchangeItemSearchResult',
+        'originalSubmitGrandExchangeItemSearchResult.call',
+    ]) {
+        if (!source.includes(required)) {
+            throw new Error(`Grand Exchange ${label} is missing chatbox selection hook token: ${required}`);
+        }
+    }
+}
+
+// The Grand Exchange adds client-side adapters for native r254 UI/config data:
+// Bank booths need their otherwise-unused OPLOC3 label, and live chatbox result
+// clicks need to be distinguishable from an Enter-key p_namedialog response.
+// Build and publish ClientEntry whenever option-2 GE staging runs so a stale
+// engine/public/client/client.js cannot silently omit either adapter.
 export async function prepareGrandExchangeWebClientStage() {
     if (!fs.existsSync(CLIENT_ENTRY_PATH)) {
         throw new Error(`Grand Exchange webclient source is missing: ${CLIENT_ENTRY_PATH}`);
@@ -55,6 +68,7 @@ export async function prepareGrandExchangeWebClientStage() {
 
     const clientEntry = fs.readFileSync(CLIENT_ENTRY_PATH, 'utf8').replace(/\r/g, '');
     validateCollectHook(clientEntry, 'webclient source');
+    validateChatboxSelectionHook(clientEntry, 'webclient source');
 
     if (!fs.existsSync(path.join(WEBCLIENT_DIR, 'node_modules', 'terser'))) {
         await runCommand('bun', ['install']);
@@ -70,6 +84,9 @@ export async function prepareGrandExchangeWebClientStage() {
     if (!builtClient.includes('Collect')) {
         throw new Error('Grand Exchange webclient bundle does not contain the Bank booth Collect action');
     }
+    if (!builtClient.includes(GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX)) {
+        throw new Error('Grand Exchange webclient bundle does not contain the chatbox-selection routing marker');
+    }
 
     fs.mkdirSync(path.dirname(PUBLIC_CLIENT_PATH), { recursive: true });
     fs.copyFileSync(BUILD_OUTPUT_PATH, PUBLIC_CLIENT_PATH);
@@ -77,5 +94,8 @@ export async function prepareGrandExchangeWebClientStage() {
     const publishedClient = fs.readFileSync(PUBLIC_CLIENT_PATH, 'utf8');
     if (!publishedClient.includes('Collect')) {
         throw new Error('Grand Exchange published webclient lost the Bank booth Collect action');
+    }
+    if (!publishedClient.includes(GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX)) {
+        throw new Error('Grand Exchange published webclient lost the chatbox-selection routing marker');
     }
 }
