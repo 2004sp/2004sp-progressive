@@ -40,6 +40,7 @@ import { prepareGrandExchangeLiveProgressStage } from './grand-exchange-live-pro
 import { prepareGrandExchangeActiveOfferHoverPresentationStage } from './grand-exchange-active-offer-hover-presentation-stage.js';
 import { prepareGrandExchangeNpcStage } from './grand-exchange-npc-stage.js';
 import { prepareGrandExchangePersistenceStage } from './grand-exchange-persistence-stage.js';
+import { prepareGrandExchangeSellNativeInventoryStage } from './grand-exchange-sell-native-inventory-stage.js';
 import { prepareGrandExchangeWebClientStage } from './grand-exchange-webclient-stage.js';
 
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -188,6 +189,7 @@ export async function prepareGrandExchangeStage() {
         prepareGrandExchangeActiveOfferHoverPresentationStage(stagedContentDir);
         prepareGrandExchangeNpcStage(stagedContentDir);
         prepareGrandExchangePersistenceStage(stagedContentDir);
+        prepareGrandExchangeSellNativeInventoryStage(stagedContentDir);
         await prepareGrandExchangeWebClientStage();
         invalidateGrandExchangeServerConfigOutputs();
         return stagedContentDir;
