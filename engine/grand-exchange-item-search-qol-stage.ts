@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const OVERVIEW_INTERFACE = 'grand_exchange_overview';
+const SEARCH_INTERFACE = 'grand_exchange_item_search';
 
 function getScriptBlock(source: string, marker: string) {
     const start = source.indexOf(marker);
@@ -65,12 +66,35 @@ function patchSearchScript(stagedContentDir: string) {
         // Re-searching and then cancelling must preserve the currently selected
         // item. ge_item_search_apply_selection replaces this inventory only once
         // the player actually chooses a new result.
-        return replaceExactlyOnce(
+        block = replaceExactlyOnce(
             block,
             'inv_clear(ge_selected_item);\n',
             '',
             'search-button selected-item clear'
         );
+
+        // The generated compatibility script historically ran the search and
+        // immediately selected result zero. That made broad searches feel like
+        // the click had ignored the player and left the fully built 80-row IF1
+        // result browser unused. Open that browser and let the player choose.
+        const autoSelectTail = [
+            'p_namedialog;',
+            'def_string $query = last_string;',
+            'if (string_length($query) < 1) return;',
+            '~ge_item_search_run($query);',
+            'if (inv_getnum(ge_search_results, 0) <= 0) return;',
+            'def_obj $item = inv_getobj(ge_search_results, 0);',
+            'if (oc_uncert($item) ! $item) return;',
+            '~ge_item_search_apply_selection($item);',
+        ].join('\n');
+        const browseTail = [
+            'p_namedialog;',
+            'def_string $query = last_string;',
+            'if (string_length($query) < 1) return;',
+            `if_openmain(${SEARCH_INTERFACE});`,
+            '~ge_item_search_run($query);',
+        ].join('\n');
+        return replaceExactlyOnce(block, autoSelectTail, browseTail, 'overview search auto-selection tail');
     });
 
     fs.writeFileSync(file, source, 'utf8');
@@ -125,6 +149,22 @@ function validate(stagedContentDir: string) {
     const searchButton = getScriptBlock(searchSource, `[if_button,${OVERVIEW_INTERFACE}:com_194]`).block;
     if (searchButton.includes('inv_clear(ge_selected_item);')) {
         throw new Error('Grand Exchange re-search button still clears the selected item before replacement');
+    }
+    for (const required of [
+        `if_openmain(${SEARCH_INTERFACE});`,
+        '~ge_item_search_run($query);',
+    ]) {
+        if (!searchButton.includes(required)) {
+            throw new Error(`Grand Exchange overview search browser lost ${required}`);
+        }
+    }
+    for (const forbidden of [
+        'inv_getobj(ge_search_results, 0)',
+        '~ge_item_search_apply_selection($item);',
+    ]) {
+        if (searchButton.includes(forbidden)) {
+            throw new Error(`Grand Exchange overview search still auto-selects its first result via ${forbidden}`);
+        }
     }
 
     const overviewSource = fs.readFileSync(
