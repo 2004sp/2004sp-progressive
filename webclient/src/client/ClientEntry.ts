@@ -1,10 +1,35 @@
 import { Client } from './Client.js';
 
+import IfType from '#/config/IfType.js';
+import LocType from '#/config/LocType.js';
+
 const CUSTOM_CONTENT = (globalThis as typeof globalThis & {
     __customContent?: {
         scrollwheelZoom?: boolean;
     };
 }).__customContent;
+
+const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;
+const GRAND_EXCHANGE_BANK_BOOTH_NAME = 'bank booth';
+
+// Bank-booth location configs live in the native r254 cache rather than the
+// staged RuneScript sources. When the GE interface root is present, expose the
+// backport's collection action in the otherwise-unused third booth option. The
+// matching oploc3 handlers are staged server-side for both normal and Tutorial
+// Island booths, so this remains completely dormant on vanilla content.
+const originalLocList = LocType.list.bind(LocType);
+LocType.list = (id: number): LocType => {
+    const loc = originalLocList(id);
+    if (
+        IfType.list[GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID] &&
+        loc.name?.toLowerCase() === GRAND_EXCHANGE_BANK_BOOTH_NAME &&
+        loc.op &&
+        !loc.op[2]
+    ) {
+        loc.op[2] = 'Collect';
+    }
+    return loc;
+};
 
 const SCROLLWHEEL_ZOOM_ENABLED = CUSTOM_CONTENT?.scrollwheelZoom === true;
 const SCROLLWHEEL_ZOOM_MIN_DISTANCE = 768;
