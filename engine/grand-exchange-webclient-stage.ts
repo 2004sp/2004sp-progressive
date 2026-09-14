@@ -11,6 +11,7 @@ const CLIENT_SOURCE_PATH = path.join(WEBCLIENT_DIR, 'src', 'client', 'Client.ts'
 const BUILD_OUTPUT_PATH = path.join(WEBCLIENT_DIR, 'out', 'client.js');
 const PUBLIC_CLIENT_PATH = path.join(ENGINE_DIR, 'public', 'client', 'client.js');
 const GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX = '__ge_select__:';
+const GRAND_EXCHANGE_NATIVE_SELL_ACTION_TEXT = 'Offer @lre@';
 
 function runCommand(command: string, args: string[]) {
     return new Promise<void>((resolve, reject) => {
@@ -68,52 +69,75 @@ function validateChatboxSelectionHook(source: string, label: string) {
     }
 }
 
-function patchGrandExchangeSidebarRedraws(source: string) {
-    // The Sell flow first populates a hidden replacement inventory component,
-    // then swaps that component into the inventory tab, then activates the tab.
-    // Native r254 redraws the sidebar for every one of those packets, which can
-    // expose one frame of the old inventory between updates. While the GE main
-    // interface is mounted, repaint inventory packets only when their component
-    // is already visible and suppress redundant tab/interface redraws.
+function patchGrandExchangeNativeSellInventory(source: string) {
+    // Keep the already-rendered native r254 inventory component mounted during
+    // GE Sell setup. Replacing the inventory tab, even only once, is visibly
+    // cleared/repainted by this client and makes every item icon flash. The
+    // synthetic GE sell component remains useful as the INV_BUTTON1 trigger
+    // identity, so route a temporary Offer menu entry to that component ID while
+    // the server-driven Sell setup layers are visible.
     source = replaceExactlyOnce(
         source,
-        `            if (this.ptype === ServerProt.UPDATE_INV_FULL) {\n                this.redrawSidebar = true;\n\n                const component: number = this.in.g2();\n                const inv: IfType = IfType.list[component];`,
-        `            if (this.ptype === ServerProt.UPDATE_INV_FULL) {\n                const component: number = this.in.g2();\n                const inv: IfType = IfType.list[component];\n                if (\n                    this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                    inv.layerId === this.sideOverlayId[this.sideTab]\n                ) {\n                    this.redrawSidebar = true;\n                }`,
-        'GE full-inventory redraw path'
+        'const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;',
+        [
+            'const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;',
+            'const GRAND_EXCHANGE_NATIVE_INVENTORY_COMPONENT_ID = 3214;',
+            'const GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID = 11393;',
+            'const GRAND_EXCHANGE_OFFER_TITLE_COMPONENT_ID = 9133;',
+            'const GRAND_EXCHANGE_SELECTED_SETUP_ROOT_COMPONENT_ID = 9156;',
+            'const GRAND_EXCHANGE_SELL_PROMPT_ROOT_COMPONENT_ID = 9197;',
+            'const GRAND_EXCHANGE_DETAIL_ROOT_COMPONENT_ID = 9200;',
+        ].join('\n'),
+        'GE overview client constant anchor'
     );
+
+    const inventoryOptionAnchor = '                            if (child.iop) {';
+    const nativeSellOffer = [
+        '                            if (',
+        '                                child.id === GRAND_EXCHANGE_NATIVE_INVENTORY_COMPONENT_ID &&',
+        '                                this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID &&',
+        "                                IfType.list[GRAND_EXCHANGE_OFFER_TITLE_COMPONENT_ID]?.text === 'Sell Offer' &&",
+        '                                IfType.list[GRAND_EXCHANGE_DETAIL_ROOT_COMPONENT_ID]?.hide !== false &&',
+        '                                (',
+        '                                    IfType.list[GRAND_EXCHANGE_SELECTED_SETUP_ROOT_COMPONENT_ID]?.hide === false ||',
+        '                                    IfType.list[GRAND_EXCHANGE_SELL_PROMPT_ROOT_COMPONENT_ID]?.hide === false',
+        '                                )',
+        '                            ) {',
+        `                                this.menuOption[this.menuNumEntries] = '${GRAND_EXCHANGE_NATIVE_SELL_ACTION_TEXT}' + obj.name;`,
+        '                                this.menuAction[this.menuNumEntries] = MiniMenuAction.INV_BUTTON1;',
+        '                                this.menuParamA[this.menuNumEntries] = obj.id;',
+        '                                this.menuParamB[this.menuNumEntries] = slot;',
+        '                                this.menuParamC[this.menuNumEntries] = GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID;',
+        '                                this.menuNumEntries++;',
+        '                            }',
+        '',
+        inventoryOptionAnchor,
+    ].join('\n');
 
     source = replaceExactlyOnce(
         source,
-        `            if (this.ptype === ServerProt.UPDATE_INV_PARTIAL) {\n                this.redrawSidebar = true;\n\n                const component: number = this.in.g2();\n                const inv: IfType = IfType.list[component];`,
-        `            if (this.ptype === ServerProt.UPDATE_INV_PARTIAL) {\n                const component: number = this.in.g2();\n                const inv: IfType = IfType.list[component];\n                if (\n                    this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                    inv.layerId === this.sideOverlayId[this.sideTab]\n                ) {\n                    this.redrawSidebar = true;\n                }`,
-        'GE partial-inventory redraw path'
-    );
-
-    source = replaceExactlyOnce(
-        source,
-        `                this.sideOverlayId[tab] = com;\n                this.redrawSidebar = true;\n                this.redrawSideicons = true;`,
-        `                const previousTabInterface = this.sideOverlayId[tab];\n                this.sideOverlayId[tab] = com;\n                if (\n                    this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                    previousTabInterface !== com\n                ) {\n                    if (\n                        this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                        tab === this.sideTab\n                    ) {\n                        this.redrawSidebar = true;\n                    }\n                    this.redrawSideicons = true;\n                }`,
-        'GE inventory-tab replacement redraw path'
-    );
-
-    source = replaceExactlyOnce(
-        source,
-        `            if (this.ptype === ServerProt.IF_SETTAB_ACTIVE) {\n                this.sideTab = this.in.g1();\n\n                this.redrawSidebar = true;\n                this.redrawSideicons = true;`,
-        `            if (this.ptype === ServerProt.IF_SETTAB_ACTIVE) {\n                const tab = this.in.g1();\n                if (\n                    this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                    this.sideTab !== tab\n                ) {\n                    this.sideTab = tab;\n                    this.redrawSidebar = true;\n                    this.redrawSideicons = true;\n                }`,
-        'GE active-tab redraw path'
+        inventoryOptionAnchor,
+        nativeSellOffer,
+        'native inventory option insertion point'
     );
 
     return source;
 }
 
-function validateSidebarRedrawPatch(source: string) {
+function validateNativeSellInventoryPatch(source: string) {
     for (const required of [
-        'previousTabInterface !== com',
-        'inv.layerId === this.sideOverlayId[this.sideTab]',
-        'this.sideTab !== tab',
+        'GRAND_EXCHANGE_NATIVE_INVENTORY_COMPONENT_ID = 3214',
+        'GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID = 11393',
+        "IfType.list[GRAND_EXCHANGE_OFFER_TITLE_COMPONENT_ID]?.text === 'Sell Offer'",
+        'IfType.list[GRAND_EXCHANGE_SELECTED_SETUP_ROOT_COMPONENT_ID]?.hide === false',
+        'IfType.list[GRAND_EXCHANGE_SELL_PROMPT_ROOT_COMPONENT_ID]?.hide === false',
+        'IfType.list[GRAND_EXCHANGE_DETAIL_ROOT_COMPONENT_ID]?.hide !== false',
+        `this.menuOption[this.menuNumEntries] = '${GRAND_EXCHANGE_NATIVE_SELL_ACTION_TEXT}' + obj.name;`,
+        'this.menuAction[this.menuNumEntries] = MiniMenuAction.INV_BUTTON1;',
+        'this.menuParamC[this.menuNumEntries] = GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID;',
     ]) {
         if (!source.includes(required)) {
-            throw new Error(`Grand Exchange webclient source is missing sell-flicker guard: ${required}`);
+            throw new Error(`Grand Exchange webclient source is missing native Sell bridge token: ${required}`);
         }
     }
 }
@@ -121,9 +145,9 @@ function validateSidebarRedrawPatch(source: string) {
 // The Grand Exchange adds client-side adapters for native r254 UI/config data:
 // Bank booths need their otherwise-unused OPLOC3 label, live chatbox result
 // clicks need to be distinguishable from an Enter-key p_namedialog response,
-// and the Sell inventory tab needs its staged packets coalesced into one visible
-// redraw. Build and publish the webclient whenever option-2 GE staging runs so a
-// stale engine/public/client/client.js cannot silently omit those adapters.
+// and Sell must reuse the already-mounted native inventory to avoid icon flicker.
+// Build and publish the webclient whenever option-2 GE staging runs so a stale
+// engine/public/client/client.js cannot silently omit those adapters.
 export async function prepareGrandExchangeWebClientStage() {
     if (!fs.existsSync(CLIENT_ENTRY_PATH)) {
         throw new Error(`Grand Exchange webclient source is missing: ${CLIENT_ENTRY_PATH}`);
@@ -141,11 +165,11 @@ export async function prepareGrandExchangeWebClientStage() {
     }
 
     // Keep the generic r254 client source pristine in the checkout. Option 2
-    // temporarily applies the GE-only redraw guards for its bundle, then restores
-    // the source even if the build fails.
+    // temporarily adds the GE-only native-inventory Offer bridge for its bundle,
+    // then restores Client.ts even when the build fails.
     const originalClientSource = fs.readFileSync(CLIENT_SOURCE_PATH, 'utf8');
-    const patchedClientSource = patchGrandExchangeSidebarRedraws(originalClientSource.replace(/\r/g, ''));
-    validateSidebarRedrawPatch(patchedClientSource);
+    const patchedClientSource = patchGrandExchangeNativeSellInventory(originalClientSource.replace(/\r/g, ''));
+    validateNativeSellInventoryPatch(patchedClientSource);
 
     try {
         fs.writeFileSync(CLIENT_SOURCE_PATH, patchedClientSource, 'utf8');
@@ -165,6 +189,9 @@ export async function prepareGrandExchangeWebClientStage() {
     if (!builtClient.includes(GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX)) {
         throw new Error('Grand Exchange webclient bundle does not contain the chatbox-selection routing marker');
     }
+    if (!builtClient.includes(GRAND_EXCHANGE_NATIVE_SELL_ACTION_TEXT)) {
+        throw new Error('Grand Exchange webclient bundle does not contain the native-inventory Sell action');
+    }
 
     fs.mkdirSync(path.dirname(PUBLIC_CLIENT_PATH), { recursive: true });
     fs.copyFileSync(BUILD_OUTPUT_PATH, PUBLIC_CLIENT_PATH);
@@ -175,5 +202,8 @@ export async function prepareGrandExchangeWebClientStage() {
     }
     if (!publishedClient.includes(GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX)) {
         throw new Error('Grand Exchange published webclient lost the chatbox-selection routing marker');
+    }
+    if (!publishedClient.includes(GRAND_EXCHANGE_NATIVE_SELL_ACTION_TEXT)) {
+        throw new Error('Grand Exchange published webclient lost the native-inventory Sell action');
     }
 }
