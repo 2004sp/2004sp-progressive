@@ -61,12 +61,31 @@ function scriptBlock(source: string, marker: string, label: string) {
 function replaceExactlyOnce(source: string, needle: string, replacement: string, label: string) {
     const first = source.indexOf(needle);
     if (first < 0) {
-        throw new Error(`Grand Exchange fixed-price stage cannot find ${label}`);
+        throw new Error(`Grand Exchange final stage cannot find ${label}`);
     }
     if (source.indexOf(needle, first + needle.length) !== -1) {
-        throw new Error(`Grand Exchange fixed-price stage found multiple ${label} occurrences`);
+        throw new Error(`Grand Exchange final stage found multiple ${label} occurrences`);
     }
     return source.slice(0, first) + replacement + source.slice(first + needle.length);
+}
+
+function moveCommandToEnd(source: string, marker: string, command: string, label: string) {
+    const current = scriptBlock(source, marker, label);
+    const commandLine = `${command}\n`;
+    if (current.block.trimEnd().endsWith(command)) {
+        return source;
+    }
+
+    const withoutCommand = replaceExactlyOnce(current.block, commandLine, '', `${label} open command`).trimEnd();
+    const block = `${withoutCommand}\n${command}\n`;
+    return source.slice(0, current.start) + block + source.slice(current.end);
+}
+
+function assertCommandLast(source: string, marker: string, command: string, label: string) {
+    const block = scriptBlock(source, marker, label).block.trimEnd();
+    if (!block.endsWith(command)) {
+        throw new Error(`Grand Exchange ${label} must finish with ${command}`);
+    }
 }
 
 function enforceDefaultOfferPrice(stagedContentDir: string) {
@@ -167,6 +186,114 @@ function enforceDefaultOfferPrice(stagedContentDir: string) {
     }
 }
 
+function stabilizeInterfaceSwitching(stagedContentDir: string) {
+    const scriptDir = path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts');
+
+    // Prepare the destination interface completely before opening it. The native
+    // r254 scripts use the same pattern for shops: text/inventory packets are sent
+    // first, then IF_OPENMAIN(_SIDE) makes the fully-populated interface visible.
+    // This avoids exposing authored defaults or stale state for a render frame.
+    const searchPath = path.join(scriptDir, 'grand_exchange_item_search.rs2');
+    let searchSource = fs.readFileSync(searchPath, 'utf8').replace(/\r/g, '');
+    searchSource = moveCommandToEnd(
+        searchSource,
+        `[if_button,${GE_INTERFACE_NAME}:com_194]`,
+        'if_openmain(grand_exchange_item_search);',
+        'item-search browser transition'
+    );
+    searchSource = moveCommandToEnd(
+        searchSource,
+        '[proc,ge_item_search_apply_selection]',
+        `if_openmain(${GE_INTERFACE_NAME});`,
+        'item-search selection transition'
+    );
+    searchSource = moveCommandToEnd(
+        searchSource,
+        '[if_button,grand_exchange_item_search:com_6]',
+        `if_openmain(${GE_INTERFACE_NAME});`,
+        'item-search Back transition'
+    );
+    fs.writeFileSync(searchPath, searchSource, 'utf8');
+
+    const sellPath = path.join(scriptDir, 'grand_exchange_sell_item_selection.rs2');
+    let sellSource = fs.readFileSync(sellPath, 'utf8').replace(/\r/g, '');
+    sellSource = moveCommandToEnd(
+        sellSource,
+        '[proc,ge_sell_apply_selection]',
+        `if_openmain(${GE_INTERFACE_NAME});`,
+        'sell selection transition'
+    );
+    fs.writeFileSync(sellPath, sellSource, 'utf8');
+
+    const overviewPath = path.join(scriptDir, 'grand_exchange.rs2');
+    let overviewSource = fs.readFileSync(overviewPath, 'utf8').replace(/\r/g, '');
+    overviewSource = moveCommandToEnd(
+        overviewSource,
+        '[proc,ge_open_sell_offer_setup]',
+        `if_openmain_side(${GE_INTERFACE_NAME}, grand_exchange_sell_inventory);`,
+        'sell setup transition'
+    );
+    overviewSource = moveCommandToEnd(
+        overviewSource,
+        '[proc,ge_return_to_offer_summary]',
+        `if_openmain(${GE_INTERFACE_NAME});`,
+        'offer-summary Back transition'
+    );
+    overviewSource = moveCommandToEnd(
+        overviewSource,
+        '[proc,ge_open_overview]',
+        `if_openmain(${GE_INTERFACE_NAME});`,
+        'overview opening transition'
+    );
+    fs.writeFileSync(overviewPath, overviewSource, 'utf8');
+
+    const collectionPath = path.join(scriptDir, 'grand_exchange_collection.rs2');
+    let collectionSource = fs.readFileSync(collectionPath, 'utf8').replace(/\r/g, '');
+    collectionSource = moveCommandToEnd(
+        collectionSource,
+        '[proc,ge_open_collection_box]',
+        'if_openmain(grand_exchange_group_109);',
+        'Collection Box opening transition'
+    );
+    fs.writeFileSync(collectionPath, collectionSource, 'utf8');
+
+    const historyPath = path.join(scriptDir, 'grand_exchange_history.rs2');
+    let historySource = fs.readFileSync(historyPath, 'utf8').replace(/\r/g, '');
+    historySource = moveCommandToEnd(
+        historySource,
+        '[proc,ge_open_history]',
+        'if_openmain(grand_exchange_group_643);',
+        'history opening transition'
+    );
+    fs.writeFileSync(historyPath, historySource, 'utf8');
+
+    const clerkPath = path.join(scriptDir, 'grand_exchange_clerk.rs2');
+    let clerkSource = fs.readFileSync(clerkPath, 'utf8').replace(/\r/g, '');
+    const collectionFromBank = scriptBlock(clerkSource, '[proc,ge_open_collection_from_bank]', 'bank Collection Box transition');
+    if (!collectionFromBank.block.trimEnd().endsWith('~ge_open_collection_box;')) {
+        const withoutOpen = replaceExactlyOnce(
+            collectionFromBank.block,
+            '~ge_open_collection_box;\n',
+            '',
+            'bank Collection Box open call'
+        ).trimEnd();
+        const block = `${withoutOpen}\n~ge_open_collection_box;\n`;
+        clerkSource = clerkSource.slice(0, collectionFromBank.start) + block + clerkSource.slice(collectionFromBank.end);
+    }
+    fs.writeFileSync(clerkPath, clerkSource, 'utf8');
+
+    assertCommandLast(searchSource, `[if_button,${GE_INTERFACE_NAME}:com_194]`, 'if_openmain(grand_exchange_item_search);', 'item-search browser transition');
+    assertCommandLast(searchSource, '[proc,ge_item_search_apply_selection]', `if_openmain(${GE_INTERFACE_NAME});`, 'item-search selection transition');
+    assertCommandLast(searchSource, '[if_button,grand_exchange_item_search:com_6]', `if_openmain(${GE_INTERFACE_NAME});`, 'item-search Back transition');
+    assertCommandLast(sellSource, '[proc,ge_sell_apply_selection]', `if_openmain(${GE_INTERFACE_NAME});`, 'sell selection transition');
+    assertCommandLast(overviewSource, '[proc,ge_open_sell_offer_setup]', `if_openmain_side(${GE_INTERFACE_NAME}, grand_exchange_sell_inventory);`, 'sell setup transition');
+    assertCommandLast(overviewSource, '[proc,ge_return_to_offer_summary]', `if_openmain(${GE_INTERFACE_NAME});`, 'offer-summary Back transition');
+    assertCommandLast(overviewSource, '[proc,ge_open_overview]', `if_openmain(${GE_INTERFACE_NAME});`, 'overview opening transition');
+    assertCommandLast(collectionSource, '[proc,ge_open_collection_box]', 'if_openmain(grand_exchange_group_109);', 'Collection Box opening transition');
+    assertCommandLast(historySource, '[proc,ge_open_history]', 'if_openmain(grand_exchange_group_643);', 'history opening transition');
+    assertCommandLast(clerkSource, '[proc,ge_open_collection_from_bank]', '~ge_open_collection_box;', 'bank Collection Box transition');
+}
+
 // Earlier compatibility stages intentionally validate the frozen r481-derived
 // inventories while they are temporary. Promote only the final staged copies,
 // after all offer/collection stages have finished shaping them, so the native
@@ -188,8 +315,9 @@ export function prepareGrandExchangePersistenceStage(stagedContentDir: string) {
         fs.writeFileSync(configPath, source, 'utf8');
     }
 
-    // This is intentionally the final GE staging step. Settlement's internal
-    // validation still proves the legacy limit-offer path before we narrow the
-    // finished staged scripts to the only price the synthetic matcher supports.
+    // These are intentionally the final GE staging passes. Earlier stages can
+    // validate their source-era assumptions; the finished option-2 scripts then
+    // narrow pricing and make cross-interface visibility changes atomic.
     enforceDefaultOfferPrice(stagedContentDir);
+    stabilizeInterfaceSwitching(stagedContentDir);
 }
