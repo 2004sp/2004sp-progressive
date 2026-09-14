@@ -206,7 +206,12 @@ ${branches}
     const lines = packSource.split('\n').filter(Boolean);
     const names = new Set(lines.map(line => line.slice(line.indexOf('=') + 1)));
     let maxId = Math.max(-1, ...lines.map(line => Number.parseInt(line.slice(0, line.indexOf('=')), 10)).filter(Number.isInteger));
-    const triggers = [...[COLLECTION_ITEM_COMPONENT, COLLECTION_COIN_COMPONENT].map(componentId => `[if_button,${GE_INTERFACE_NAME}:com_${componentId}]`), '[proc,ge_open_collection_box]', '[opnpc2,grand_exchange_clerk]'];
+    const triggers = [
+        ...[COLLECTION_ITEM_COMPONENT, COLLECTION_COIN_COMPONENT].map(componentId => `[if_button,${GE_INTERFACE_NAME}:com_${componentId}]`),
+        '[proc,ge_open_collection_box]',
+        '[if_close,grand_exchange_group_109]',
+        '[opnpc2,grand_exchange_clerk]'
+    ];
     for (const trigger of triggers) {
         if (!names.has(trigger)) {
             lines.push(`${++maxId}=${trigger}`);
@@ -251,6 +256,9 @@ function validate(stagedContentDir: string) {
         if (!collection.includes(`inv_clear(${offer.active});`)) {
             throw new Error(`Grand Exchange collection cleanup for slot ${offer.slot} is missing`);
         }
+    }
+    if (!collection.includes('[if_close,grand_exchange_group_109]')) {
+        throw new Error('Grand Exchange Collection Box is missing its inventory-listener cleanup trigger');
     }
     for (const componentId of [COLLECTION_ITEM_COMPONENT, COLLECTION_COIN_COMPONENT]) {
         if (!overview.includes(`[if_button,${GE_INTERFACE_NAME}:com_${componentId}]`)) {
