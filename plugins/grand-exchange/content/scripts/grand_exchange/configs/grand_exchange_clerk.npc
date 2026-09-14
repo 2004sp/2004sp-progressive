@@ -3,7 +3,6 @@ vislevel=hide
 name=Grand Exchange clerk
 desc=He can help you use the Grand Exchange.
 op1=Talk-to
-op2=Collect
 op3=Exchange
 op4=History
 op5=Sets
