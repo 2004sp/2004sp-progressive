@@ -33,19 +33,19 @@ const SLOT_BACKGROUNDS = [
 ] as const;
 
 const COLLECTION_SLOTS = [
-    { slot: 0, source: 'ge_collection_offer_0', host: 17, status: 58, inv: 59, detail: 60, legacyCollect: 61 },
-    { slot: 1, source: 'ge_collection_offer_1', host: 22, status: 62, inv: 63, detail: 64, legacyCollect: 65 },
-    { slot: 2, source: 'ge_collection_offer_2', host: 27, status: 66, inv: 67, detail: 68, legacyCollect: 69 },
-    { slot: 3, source: 'ge_collection_offer_3', host: 35, status: 70, inv: 71, detail: 72, legacyCollect: 73 },
-    { slot: 4, source: 'ge_collection_offer_4', host: 43, status: 74, inv: 75, detail: 76, legacyCollect: 77 },
-    { slot: 5, source: 'ge_collection_offer_5', host: 51, status: 78, inv: 79, detail: 80, legacyCollect: 81 },
+    { slot: 0, host: 17, status: 58, inv: 59, detail: 60, legacyCollect: 61 },
+    { slot: 1, host: 22, status: 62, inv: 63, detail: 64, legacyCollect: 65 },
+    { slot: 2, host: 27, status: 66, inv: 67, detail: 68, legacyCollect: 69 },
+    { slot: 3, host: 35, status: 70, inv: 71, detail: 72, legacyCollect: 73 },
+    { slot: 4, host: 43, status: 74, inv: 75, detail: 76, legacyCollect: 77 },
+    { slot: 5, host: 51, status: 78, inv: 79, detail: 80, legacyCollect: 81 },
 ] as const;
 
 function collectionOutputs() {
     return COLLECTION_SLOTS.flatMap(slot => [0, 1].map(output => ({
         ...slot,
         output,
-        button: 82 + slot.slot * 2 + output,
+        hoverSensor: 82 + slot.slot * 2 + output,
         hoverLayer: 94 + slot.slot * 2 + output,
         hoverRect: 106 + slot.slot * 2 + output,
         x: output === 0 ? 10 : 55,
@@ -168,15 +168,16 @@ function patchCollectionInterface(stagedContentDir: string) {
         }
     }
 
-    const buttons: string[] = [];
+    const hoverSensors: string[] = [];
     const hoverLayers: string[] = [];
     const hoverRects: string[] = [];
     for (const output of collectionOutputs()) {
-        buttons.push(
-            `[com_${output.button}]\n` +
+        // IF1 hover tracking checks overlayer independently of buttonType. Keep
+        // this sensor non-interactive so the inventory underneath contributes
+        // the only menu entry: "Collect <item name>".
+        hoverSensors.push(
+            `[com_${output.hoverSensor}]\n` +
                 `layer=com_${output.host}\n` +
-                'buttontype=normal\n' +
-                'option=Collect\n' +
                 'type=text\n' +
                 `x=${output.x}\n` +
                 'y=31\n' +
@@ -212,7 +213,7 @@ function patchCollectionInterface(stagedContentDir: string) {
         );
     }
 
-    source = source.trimEnd() + '\n\n' + [...buttons, ...hoverLayers, ...hoverRects].join('\n\n') + '\n';
+    source = source.trimEnd() + '\n\n' + [...hoverSensors, ...hoverLayers, ...hoverRects].join('\n\n') + '\n';
     fs.writeFileSync(file, source, 'utf8');
 }
 
@@ -246,20 +247,6 @@ function patchCollectionRuntime(stagedContentDir: string) {
                 `if_sethide(${GROUP109_INTERFACE_NAME}:com_${componentId}, true);`
             );
         }
-    }
-
-    for (const output of collectionOutputs()) {
-        const marker = `[if_button,${GROUP109_INTERFACE_NAME}:com_${output.button}]`;
-        if (source.includes(marker)) {
-            throw new Error(`Grand Exchange collection hover action already contains ${marker}`);
-        }
-        source +=
-            `\n\n${marker}\n` +
-            `~ge_collection_collect_slot(${output.source}, ${output.output});\n` +
-            `if (inv_getobj(${output.source}, ${output.output}) ! null) {\n` +
-            `    mes("You don't have enough inventory space.");\n` +
-            `}\n` +
-            `~ge_collection_refresh_offer_${output.slot};`;
     }
 
     fs.writeFileSync(file, source.trimEnd() + '\n', 'utf8');
@@ -306,30 +293,9 @@ function injectCollectionHoverInterfaceMappings(stagedContentDir: string) {
     fs.writeFileSync(orderPath, order.join('\n') + '\n', 'utf8');
 }
 
-function injectCollectionHoverScriptMappings(stagedContentDir: string) {
-    const packPath = path.join(stagedContentDir, 'pack', 'script.pack');
-    const { content, values } = readPack(packPath);
-    const existingNames = new Set(values.values());
-    const additions: string[] = [];
-    let maxId = Math.max(-1, ...values.keys());
-
-    for (const output of collectionOutputs()) {
-        const trigger = `[if_button,${GROUP109_INTERFACE_NAME}:com_${output.button}]`;
-        if (existingNames.has(trigger)) continue;
-        maxId++;
-        additions.push(`${maxId}=${trigger}`);
-        existingNames.add(trigger);
-    }
-
-    if (!additions.length) return;
-    const normalized = content.endsWith('\n') ? content : `${content}\n`;
-    fs.writeFileSync(packPath, normalized + additions.join('\n') + '\n', 'utf8');
-}
-
 export function prepareGrandExchangeCollectionPresentationStage(stagedContentDir: string) {
     stageSlotFrame(stagedContentDir);
     patchCollectionInterface(stagedContentDir);
     patchCollectionRuntime(stagedContentDir);
     injectCollectionHoverInterfaceMappings(stagedContentDir);
-    injectCollectionHoverScriptMappings(stagedContentDir);
 }
