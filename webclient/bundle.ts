@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import './scripts/generate-ge-untradeable.ts';
 import { minify } from 'terser';
 
 import { nth_identifier } from './identifier.js';

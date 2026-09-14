@@ -1,0 +1,436 @@
+{
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "interface": {
+    "source_group_id": 108,
+    "synthetic_if1_root_local_id": 8993,
+    "source_component_block_base": 9768,
+    "component_formula": "local = 9768 + source_component_id",
+    "source_component_count": 98,
+    "source_component_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97
+    ],
+    "canvas": {
+      "width": 512,
+      "height": 334
+    },
+    "source_component_types": {
+      "3": 11,
+      "5": 57,
+      "4": 22,
+      "0": 4,
+      "6": 4
+    },
+    "source_sprite_ids": [
+      297,
+      828,
+      831,
+      841,
+      846,
+      847,
+      848,
+      849,
+      851,
+      954,
+      955,
+      956,
+      957,
+      958,
+      959,
+      960,
+      961,
+      962,
+      963,
+      964,
+      1074,
+      1075,
+      1137,
+      1146,
+      1147,
+      1150,
+      1151,
+      1152,
+      1153,
+      1157,
+      1158,
+      1161,
+      1162,
+      1163,
+      1164,
+      1174
+    ],
+    "source_font_ids": [
+      494,
+      495,
+      496
+    ],
+    "source_model_ids": [
+      2810
+    ],
+    "font_compatibility": [
+      {
+        "source_font_id": 494,
+        "candidate_native_font": "p11",
+        "status": "reused-as-established-by-group105"
+      },
+      {
+        "source_font_id": 495,
+        "candidate_native_font": "p12",
+        "status": "reused-as-established-by-group106"
+      },
+      {
+        "source_font_id": 496,
+        "candidate_native_font": "b12",
+        "status": "reused-as-established-by-group105"
+      }
+    ],
+    "model_compatibility": [
+      {
+        "source_component_id": 72,
+        "source_model_id": 2810,
+        "imported_model_id": null,
+        "status": "native-r254-runtime-item-host",
+        "item_source": "native-r254-only",
+        "note": "The frozen r481 model reference is retained only as source metadata. The IF1 component must remain unbound until the GE server/client state supplies a native r254 object ID through native item rendering; model 2810 is never imported or remapped."
+      },
+      {
+        "source_component_ids": [
+          73,
+          83,
+          96
+        ],
+        "status": "runtime-empty-model-hosts"
+      }
+    ],
+    "listener_fallbacks": [
+      {
+        "source_component_id": 13,
+        "if1": "buttontype=close + activegraphic",
+        "status": "preserved"
+      },
+      {
+        "source_component_id": 95,
+        "source_hover_sprite_id": 1175,
+        "if1_activegraphic": "r481_ge_sprite_1174",
+        "reason": "hover-only sprite 1175 is not present in the frozen Phase 1 extraction"
+      },
+      {
+        "source_component_id": 97,
+        "source_hover_colour": "0xFFFFFF",
+        "if1_field": "activecolour",
+        "status": "preserved"
+      },
+      {
+        "source_component_ids": [
+          43,
+          45,
+          47,
+          49,
+          51,
+          56,
+          59,
+          62,
+          64,
+          71
+        ],
+        "if1_field": "activecolour",
+        "value": "0xFFFFFF",
+        "status": "display-scaffolding"
+      }
+    ],
+    "derived_media_note": "Group 108 reuses exact IF1 component renders already committed for source-equivalent group-105/group-106 components; no duplicate derived PNGs are added."
+  },
+  "reused_staged_media": [
+    {
+      "name": "r481_ge_component_1",
+      "width": 485,
+      "height": 300
+    },
+    {
+      "name": "r481_ge_component_2",
+      "width": 7,
+      "height": 241
+    },
+    {
+      "name": "r481_ge_component_4",
+      "width": 32,
+      "height": 243
+    },
+    {
+      "name": "r481_ge_component_5",
+      "width": 424,
+      "height": 7
+    },
+    {
+      "name": "r481_ge_component_6",
+      "width": 423,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_1174",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "r481_ge_sprite_200011",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_200012",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_200127",
+      "width": 35,
+      "height": 35
+    },
+    {
+      "name": "r481_ge_sprite_200128",
+      "width": 474,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_200130",
+      "width": 32,
+      "height": 87
+    },
+    {
+      "name": "r481_ge_sprite_200132",
+      "width": 32,
+      "height": 81
+    },
+    {
+      "name": "r481_ge_sprite_200134",
+      "width": 16,
+      "height": 14
+    },
+    {
+      "name": "r481_ge_sprite_200135",
+      "width": 157,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_200136",
+      "width": 40,
+      "height": 36
+    },
+    {
+      "name": "r481_ge_sprite_200139",
+      "width": 16,
+      "height": 14
+    },
+    {
+      "name": "r481_ge_sprite_200143",
+      "width": 16,
+      "height": 14
+    },
+    {
+      "name": "r481_ge_sprite_200144",
+      "width": 16,
+      "height": 14
+    },
+    {
+      "name": "r481_ge_sprite_200147",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "name": "r481_ge_sprite_200148",
+      "width": 113,
+      "height": 20
+    },
+    {
+      "name": "r481_ge_sprite_200149",
+      "width": 20,
+      "height": 20
+    },
+    {
+      "name": "r481_ge_sprite_200153",
+      "width": 108,
+      "height": 20
+    },
+    {
+      "name": "r481_ge_sprite_200158",
+      "width": 16,
+      "height": 14
+    },
+    {
+      "name": "r481_ge_sprite_200160",
+      "width": 16,
+      "height": 14
+    },
+    {
+      "name": "r481_ge_sprite_200161",
+      "width": 35,
+      "height": 35
+    },
+    {
+      "name": "r481_ge_sprite_210010",
+      "width": 465,
+      "height": 6
+    },
+    {
+      "name": "r481_ge_sprite_210828",
+      "width": 252,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_210841",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_211164",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "name": "r481_ge_sprite_831",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "name": "r481_ge_sprite_846",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_847",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_848",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_849",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_958",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_959",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_960",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "name": "r481_ge_sprite_961",
+      "width": 32,
+      "height": 32
+    }
+  ]
+}
