@@ -38,6 +38,7 @@ import { prepareGrandExchangeInterfaceCacheAdapter } from './grand-exchange-inte
 import { prepareGrandExchangeLiveProgressStage } from './grand-exchange-live-progress-stage.js';
 import { prepareGrandExchangeActiveOfferHoverPresentationStage } from './grand-exchange-active-offer-hover-presentation-stage.js';
 import { prepareGrandExchangeNpcStage } from './grand-exchange-npc-stage.js';
+import { prepareGrandExchangePersistenceStage } from './grand-exchange-persistence-stage.js';
 
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_DIR = path.join(ENGINE_DIR, '..');
@@ -183,6 +184,7 @@ export async function prepareGrandExchangeStage() {
         await prepareGrandExchangeLiveProgressStage(stagedContentDir);
         prepareGrandExchangeActiveOfferHoverPresentationStage(stagedContentDir);
         prepareGrandExchangeNpcStage(stagedContentDir);
+        prepareGrandExchangePersistenceStage(stagedContentDir);
         invalidateGrandExchangeServerConfigOutputs();
         return stagedContentDir;
     } catch (error) {
