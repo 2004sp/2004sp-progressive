@@ -11,9 +11,11 @@ const ACTIVE_TOTAL_SLOT = 4;
 const ACTIVE_STATE_SLOT = 5;
 const ACTIVE_FILLED_SLOT = 6;
 const BUY_MODE = 1;
+const SELL_MODE = 2;
 const COMPLETED_STATE = 3;
 const COLLECTION_ITEM_COMPONENT = 209;
 const COLLECTION_COIN_COMPONENT = 211;
+const MAX_INT = 2147483647;
 
 const OFFERS = [
     { active: 'ge_active_offer_1', collection: 'ge_collection_offer_0', slot: 1 },
@@ -80,15 +82,51 @@ function patchSubmission(stagedContentDir: string) {
     const file = path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts', 'grand_exchange_offer_submission.rs2');
     let source = fs.readFileSync(file, 'utf8').replace(/\r/g, '');
     const current = scriptBlock(source, `[if_button,${GE_INTERFACE_NAME}:com_190]`);
+    let block = current.block;
+
+    // There is not yet a persisted player-to-player order book in the backport.
+    // Treat the player's entered price as a limit, and only cross the synthetic
+    // liquidity at the server-side guide price. Without this boundary a seller
+    // could enter an arbitrary price and the old immediate-settlement path would
+    // mint that many coins without a counterparty.
+    const historyRecord = 'if (ge_history_record($offer_slot, $item, $mode, $quantity, $price) = false) {';
+    const guidePriceGuard = `def_int $execution_price = ~ge_offer_nostalgia_price($item);
+if ($execution_price < 1) {
+    $execution_price = oc_cost($item);
+}
+if ($execution_price < 1) {
+    $execution_price = 1;
+}
+if ($mode = ${BUY_MODE} & $price < $execution_price) {
+    mes("Your buy offer must reach the guide price for instant matching.");
+    return;
+}
+if ($mode = ${SELL_MODE} & $price > $execution_price) {
+    mes("Your sell offer must be at or below the guide price for instant matching.");
+    return;
+}
+if ($execution_price > calc(${MAX_INT} / $quantity)) {
+    mes("The total value of this offer is too large.");
+    return;
+}
+$price = $execution_price;
+$total = calc($quantity * $price);`;
+    if (!block.includes(guidePriceGuard)) {
+        if (!block.includes(historyRecord)) {
+            throw new Error('Grand Exchange settlement cannot find the persisted-history commit boundary');
+        }
+        block = block.replace(historyRecord, `${guidePriceGuard}\n${historyRecord}`);
+    }
+
     const oldBranches = OFFERS.map(
         (offer, index) =>
             `${index === 0 ? 'if' : 'else if'} ($offer_slot = ${offer.slot}) {\n    inv_clear(${offer.active});\n    inv_moveitem(${OFFER_SUBMISSION_INV}, ${offer.active}, $item, 1);\n    inv_setslot(${offer.active}, 1, coins, $mode);\n    inv_setslot(${offer.active}, 2, coins, $quantity);\n    inv_setslot(${offer.active}, 3, coins, $price);\n    inv_setslot(${offer.active}, 4, coins, $total);\n    inv_setslot(${offer.active}, 5, coins, 1);\n}`
     ).join('\n');
-    if (!current.block.includes(oldBranches)) {
+    if (!block.includes(oldBranches)) {
         throw new Error('Grand Exchange settlement cannot find the active-offer commit branches');
     }
 
-    const block = current.block.replace(oldBranches, OFFERS.map(settlementBranch).join('\n'));
+    block = block.replace(oldBranches, OFFERS.map(settlementBranch).join('\n'));
     source = source.slice(0, current.start) + block + source.slice(current.end);
     fs.writeFileSync(file, source, 'utf8');
 }
@@ -159,7 +197,7 @@ ${branches}
 `;
     };
     if (!scriptSource.includes(`[if_button,${GE_INTERFACE_NAME}:com_${COLLECTION_ITEM_COMPONENT}]`)) {
-        scriptSource = scriptSource.trimEnd() + '\n\n' + buildHandler(COLLECTION_ITEM_COMPONENT, BUY_MODE) + '\n' + buildHandler(COLLECTION_COIN_COMPONENT, 2);
+        scriptSource = scriptSource.trimEnd() + '\n\n' + buildHandler(COLLECTION_ITEM_COMPONENT, BUY_MODE) + '\n' + buildHandler(COLLECTION_COIN_COMPONENT, SELL_MODE);
     }
     fs.writeFileSync(scriptFile, scriptSource, 'utf8');
 
@@ -183,6 +221,19 @@ function validate(stagedContentDir: string) {
     const submission = fs.readFileSync(path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts', 'grand_exchange_offer_submission.rs2'), 'utf8').replace(/\r/g, '');
     const collection = fs.readFileSync(path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts', 'grand_exchange_collection.rs2'), 'utf8').replace(/\r/g, '');
     const overview = fs.readFileSync(path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts', 'grand_exchange.rs2'), 'utf8').replace(/\r/g, '');
+
+    for (const required of [
+        'def_int $execution_price = ~ge_offer_nostalgia_price($item);',
+        `if ($mode = ${BUY_MODE} & $price < $execution_price) {`,
+        `if ($mode = ${SELL_MODE} & $price > $execution_price) {`,
+        `if ($execution_price > calc(${MAX_INT} / $quantity)) {`,
+        '$price = $execution_price;',
+        '$total = calc($quantity * $price);',
+    ]) {
+        if (!submission.includes(required)) {
+            throw new Error(`Grand Exchange settlement pricing is missing ${required}`);
+        }
+    }
 
     for (const offer of OFFERS) {
         for (const required of [
