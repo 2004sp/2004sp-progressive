@@ -70,18 +70,18 @@ function validateChatboxSelectionHook(source: string, label: string) {
 }
 
 function patchGrandExchangeNativeSellInventory(source: string) {
-    // Keep the already-rendered native r254 inventory component mounted during
-    // GE Sell setup. Replacing the inventory tab, even only once, is visibly
-    // cleared/repainted by this client and makes every item icon flash. The
-    // synthetic GE sell component remains useful as the INV_BUTTON1 trigger
-    // identity, so route a temporary Offer menu entry to that component ID while
-    // the server-driven Sell setup layers are visible.
+    // The server keeps the synthetic side inventory as a compatibility fallback
+    // for the Java client. In the browser, keep native inventory:inv mounted and
+    // consume those Sell-tab packets without swapping the visible component.
+    // A temporary Offer menu entry routes its INV_BUTTON1 packet to the existing
+    // synthetic component ID, so the authoritative server handler is unchanged.
     source = replaceExactlyOnce(
         source,
         'const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;',
         [
             'const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;',
             'const GRAND_EXCHANGE_NATIVE_INVENTORY_COMPONENT_ID = 3214;',
+            'const GRAND_EXCHANGE_SELL_INVENTORY_ROOT_ID = 8988;',
             'const GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID = 11393;',
             'const GRAND_EXCHANGE_OFFER_TITLE_COMPONENT_ID = 9133;',
             'const GRAND_EXCHANGE_SELECTED_SETUP_ROOT_COMPONENT_ID = 9156;',
@@ -89,6 +89,44 @@ function patchGrandExchangeNativeSellInventory(source: string) {
             'const GRAND_EXCHANGE_DETAIL_ROOT_COMPONENT_ID = 9200;',
         ].join('\n'),
         'GE overview client constant anchor'
+    );
+
+    // The synthetic inventory is populated before the server asks to mount it.
+    // Process its item data so protocol state stays coherent, but do not repaint
+    // the currently visible native inventory for an off-screen component update.
+    source = replaceExactlyOnce(
+        source,
+        `            if (this.ptype === ServerProt.UPDATE_INV_FULL) {\n                this.redrawSidebar = true;\n\n                const component: number = this.in.g2();\n                const inv: IfType = IfType.list[component];`,
+        `            if (this.ptype === ServerProt.UPDATE_INV_FULL) {\n                const component: number = this.in.g2();\n                const inv: IfType = IfType.list[component];\n                if (\n                    this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                    component !== GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID\n                ) {\n                    this.redrawSidebar = true;\n                }`,
+        'GE full sell-inventory update redraw'
+    );
+
+    source = replaceExactlyOnce(
+        source,
+        `            if (this.ptype === ServerProt.UPDATE_INV_PARTIAL) {\n                this.redrawSidebar = true;\n\n                const component: number = this.in.g2();\n                const inv: IfType = IfType.list[component];`,
+        `            if (this.ptype === ServerProt.UPDATE_INV_PARTIAL) {\n                const component: number = this.in.g2();\n                const inv: IfType = IfType.list[component];\n                if (\n                    this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                    component !== GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID\n                ) {\n                    this.redrawSidebar = true;\n                }`,
+        'GE partial sell-inventory update redraw'
+    );
+
+    // IF_SETTAB is the packet that caused the remaining visible icon flash: the
+    // old native inventory was actually replaced by a second, visually identical
+    // inventory component. Ignore only that GE Sell replacement in the browser.
+    // Restoring inventory on Back becomes a no-op because it never left.
+    source = replaceExactlyOnce(
+        source,
+        `                this.sideOverlayId[tab] = com;\n                this.redrawSidebar = true;\n                this.redrawSideicons = true;`,
+        `                const suppressGrandExchangeSellTabSwap =\n                    this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID &&\n                    tab === 3 &&\n                    com === GRAND_EXCHANGE_SELL_INVENTORY_ROOT_ID;\n\n                if (!suppressGrandExchangeSellTabSwap) {\n                    const previousTabInterface = this.sideOverlayId[tab];\n                    this.sideOverlayId[tab] = com;\n                    if (\n                        this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                        previousTabInterface !== com\n                    ) {\n                        this.redrawSidebar = true;\n                        this.redrawSideicons = true;\n                    }\n                }`,
+        'GE sell inventory-tab swap'
+    );
+
+    // The Sell proc also asks to activate the inventory tab. Preserve that when
+    // the player is on another tab, but avoid repainting an already-active native
+    // inventory tab just because the server repeated the same tab index.
+    source = replaceExactlyOnce(
+        source,
+        `            if (this.ptype === ServerProt.IF_SETTAB_ACTIVE) {\n                this.sideTab = this.in.g1();\n\n                this.redrawSidebar = true;\n                this.redrawSideicons = true;`,
+        `            if (this.ptype === ServerProt.IF_SETTAB_ACTIVE) {\n                const tab = this.in.g1();\n                if (\n                    this.mainModalId !== GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||\n                    this.sideTab !== tab\n                ) {\n                    this.sideTab = tab;\n                    this.redrawSidebar = true;\n                    this.redrawSideicons = true;\n                }`,
+        'GE sell active-tab refresh'
     );
 
     const inventoryOptionAnchor = '                            if (child.iop) {';
@@ -127,7 +165,12 @@ function patchGrandExchangeNativeSellInventory(source: string) {
 function validateNativeSellInventoryPatch(source: string) {
     for (const required of [
         'GRAND_EXCHANGE_NATIVE_INVENTORY_COMPONENT_ID = 3214',
+        'GRAND_EXCHANGE_SELL_INVENTORY_ROOT_ID = 8988',
         'GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID = 11393',
+        'component !== GRAND_EXCHANGE_SELL_INVENTORY_COMPONENT_ID',
+        'suppressGrandExchangeSellTabSwap',
+        'previousTabInterface !== com',
+        'this.sideTab !== tab',
         "IfType.list[GRAND_EXCHANGE_OFFER_TITLE_COMPONENT_ID]?.text === 'Sell Offer'",
         'IfType.list[GRAND_EXCHANGE_SELECTED_SETUP_ROOT_COMPONENT_ID]?.hide === false',
         'IfType.list[GRAND_EXCHANGE_SELL_PROMPT_ROOT_COMPONENT_ID]?.hide === false',
@@ -165,8 +208,8 @@ export async function prepareGrandExchangeWebClientStage() {
     }
 
     // Keep the generic r254 client source pristine in the checkout. Option 2
-    // temporarily adds the GE-only native-inventory Offer bridge for its bundle,
-    // then restores Client.ts even when the build fails.
+    // temporarily adds the GE-only native-inventory routing for its browser
+    // bundle, then restores Client.ts even when the build fails.
     const originalClientSource = fs.readFileSync(CLIENT_SOURCE_PATH, 'utf8');
     const patchedClientSource = patchGrandExchangeNativeSellInventory(originalClientSource.replace(/\r/g, ''));
     validateNativeSellInventoryPatch(patchedClientSource);
