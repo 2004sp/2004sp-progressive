@@ -4,7 +4,7 @@ import path from 'path';
 const OVERVIEW_INTERFACE = 'grand_exchange_overview';
 const SEARCH_INTERFACE = 'grand_exchange_item_search';
 const CHATBOX_SELECTION_PREFIX = '__ge_select__:';
-const EXACT_SELECTION_CHUNK_SIZE = 128;
+const SEARCH_RESULT_CAP = 80;
 
 function getScriptBlock(source: string, marker: string) {
     const start = source.indexOf(marker);
@@ -33,95 +33,6 @@ function patchBlock(source: string, marker: string, patch: (block: string) => st
     return source.slice(0, start) + patch(block) + source.slice(end);
 }
 
-function extractCatalogueSymbols(source: string) {
-    const symbols: string[] = [];
-    const pattern = /if \(oc_uncert\(([^)\n]+)\) = ([^)\n]+)\) \{/g;
-    let match: RegExpExecArray | null;
-
-    while ((match = pattern.exec(source)) !== null) {
-        const left = match[1].trim();
-        const right = match[2].trim();
-        if (left !== right) {
-            throw new Error(`Grand Exchange item-search catalogue guard drifted: ${left} != ${right}`);
-        }
-        symbols.push(left);
-    }
-
-    const unique = [...new Set(symbols)];
-    if (!unique.length) {
-        throw new Error('Grand Exchange item-search QoL stage could not recover the generated native catalogue');
-    }
-    return unique;
-}
-
-function buildExactSelectionScripts(symbols: string[]) {
-    const chunks: string[][] = [];
-    for (let index = 0; index < symbols.length; index += EXACT_SELECTION_CHUNK_SIZE) {
-        chunks.push(symbols.slice(index, index + EXACT_SELECTION_CHUNK_SIZE));
-    }
-
-    const chunkScripts = chunks.map((chunk, chunkIndex) => {
-        const checks = chunk.map(symbol => [
-            `if (oc_uncert(${symbol}) = ${symbol}) {`,
-            `    if (lowercase(oc_name(${symbol})) = $needle) {`,
-            `        ~ge_item_search_apply_selection(${symbol});`,
-            '        return (true);',
-            '    }',
-            '}',
-        ].join('\n')).join('\n');
-
-        return [
-            `[proc,ge_item_search_select_exact_${chunkIndex}](string $needle)(boolean)`,
-            checks,
-            'return (false);',
-        ].join('\n');
-    });
-
-    const dispatcher = [
-        '[proc,ge_item_search_select_exact](string $needle)(boolean)',
-        ...chunks.map((_, chunkIndex) =>
-            `if (~ge_item_search_select_exact_${chunkIndex}($needle) = true) return (true);`
-        ),
-        'return (false);',
-    ].join('\n');
-
-    return {
-        source: `${chunkScripts.join('\n\n')}\n\n${dispatcher}\n`,
-        triggerNames: [
-            ...chunks.map((_, chunkIndex) => `[proc,ge_item_search_select_exact_${chunkIndex}]`),
-            '[proc,ge_item_search_select_exact]',
-        ],
-    };
-}
-
-function appendScriptMappings(stagedContentDir: string, triggerNames: string[]) {
-    const packPath = path.join(stagedContentDir, 'pack', 'script.pack');
-    const content = fs.readFileSync(packPath, 'utf8').replace(/\r/g, '');
-    const existingNames = new Set<string>();
-    let maxId = -1;
-
-    for (const line of content.split('\n')) {
-        if (!line) continue;
-        const equals = line.indexOf('=');
-        if (equals === -1) continue;
-        const id = Number.parseInt(line.slice(0, equals), 10);
-        if (Number.isInteger(id)) maxId = Math.max(maxId, id);
-        existingNames.add(line.slice(equals + 1));
-    }
-
-    const additions: string[] = [];
-    for (const triggerName of triggerNames) {
-        if (existingNames.has(triggerName)) continue;
-        maxId++;
-        additions.push(`${maxId}=${triggerName}`);
-        existingNames.add(triggerName);
-    }
-
-    if (!additions.length) return;
-    const normalized = content.endsWith('\n') ? content : `${content}\n`;
-    fs.writeFileSync(packPath, normalized + additions.join('\n') + '\n', 'utf8');
-}
-
 function patchSearchScript(stagedContentDir: string) {
     const file = path.join(
         stagedContentDir,
@@ -135,8 +46,6 @@ function patchSearchScript(stagedContentDir: string) {
     }
 
     let source = fs.readFileSync(file, 'utf8').replace(/\r/g, '');
-    const catalogueSymbols = extractCatalogueSymbols(source);
-    const exactSelection = buildExactSelectionScripts(catalogueSymbols);
 
     source = patchBlock(source, '[proc,ge_item_search_apply_selection]', block => {
         // Keep the transparent Search hitbox alive after an item is selected.
@@ -167,9 +76,11 @@ function patchSearchScript(stagedContentDir: string) {
         );
 
         // A live chatbox result click and the Enter key both resume p_namedialog.
-        // ClientEntry prefixes only a clicked result. Resolve that exact display
-        // name directly against the full generated native catalogue; otherwise
-        // the unmarked Enter path opens the 80-result advanced browser.
+        // ClientEntry prefixes only a clicked result. For a click, reuse the
+        // existing 80-result server search and select only an exact display-name
+        // match. RuneScript strings cannot be compared with '='; compare() is the
+        // native string comparison opcode and returns zero for an exact match.
+        // An unmarked Enter response remains the advanced-browser path.
         const autoSelectTail = [
             'p_namedialog;',
             'def_string $query = last_string;',
@@ -187,7 +98,21 @@ function patchSearchScript(stagedContentDir: string) {
             `if (string_indexof_string("${CHATBOX_SELECTION_PREFIX}", $query) = 0) {`,
             `    $query = substring($query, ${CHATBOX_SELECTION_PREFIX.length}, string_length($query));`,
             '    if (string_length($query) < 1) return;',
-            '    if (~ge_item_search_select_exact(lowercase($query)) = true) return;',
+            '    def_string $needle = lowercase($query);',
+            '    ~ge_item_search_run($query);',
+            '    def_int $slot = 0;',
+            `    while ($slot < ${SEARCH_RESULT_CAP}) {`,
+            '        if (inv_getnum(ge_search_results, $slot) > 0) {',
+            '            def_obj $item = inv_getobj(ge_search_results, $slot);',
+            '            if (oc_uncert($item) = $item) {',
+            '                if (compare(lowercase(oc_name($item)), $needle) = 0) {',
+            '                    ~ge_item_search_apply_selection($item);',
+            '                    return;',
+            '                }',
+            '            }',
+            '        }',
+            '        $slot = add($slot, 1);',
+            '    }',
             '    return;',
             '}',
             `if_openmain(${SEARCH_INTERFACE});`,
@@ -196,14 +121,7 @@ function patchSearchScript(stagedContentDir: string) {
         return replaceExactlyOnce(block, autoSelectTail, browseTail, 'overview search auto-selection tail');
     });
 
-    if (source.includes('[proc,ge_item_search_select_exact]')) {
-        throw new Error('Grand Exchange exact chatbox-selection scripts were already staged');
-    }
-    source = `${source.trimEnd()}\n\n${exactSelection.source}`;
-
     fs.writeFileSync(file, source, 'utf8');
-    appendScriptMappings(stagedContentDir, exactSelection.triggerNames);
-    return exactSelection.triggerNames;
 }
 
 function patchBuySetup(stagedContentDir: string) {
@@ -236,7 +154,7 @@ function patchBuySetup(stagedContentDir: string) {
     fs.writeFileSync(file, source, 'utf8');
 }
 
-function validate(stagedContentDir: string, exactTriggerNames: string[]) {
+function validate(stagedContentDir: string) {
     const searchSource = fs.readFileSync(
         path.join(stagedContentDir, 'scripts', 'grand_exchange', 'scripts', 'grand_exchange_item_search.rs2'),
         'utf8'
@@ -259,7 +177,11 @@ function validate(stagedContentDir: string, exactTriggerNames: string[]) {
     for (const required of [
         `string_indexof_string("${CHATBOX_SELECTION_PREFIX}", $query) = 0`,
         `substring($query, ${CHATBOX_SELECTION_PREFIX.length}, string_length($query))`,
-        '~ge_item_search_select_exact(lowercase($query))',
+        'def_string $needle = lowercase($query);',
+        `while ($slot < ${SEARCH_RESULT_CAP}) {`,
+        'inv_getobj(ge_search_results, $slot)',
+        'compare(lowercase(oc_name($item)), $needle) = 0',
+        '~ge_item_search_apply_selection($item);',
         `if_openmain(${SEARCH_INTERFACE});`,
         '~ge_item_search_run($query);',
     ]) {
@@ -268,35 +190,19 @@ function validate(stagedContentDir: string, exactTriggerNames: string[]) {
         }
     }
     if (
-        searchButton.indexOf('~ge_item_search_select_exact(lowercase($query))') >
+        searchButton.indexOf('compare(lowercase(oc_name($item)), $needle) = 0') >
         searchButton.indexOf(`if_openmain(${SEARCH_INTERFACE});`)
     ) {
         throw new Error('Grand Exchange advanced browser opens before chatbox result selection is handled');
     }
-    for (const forbidden of [
-        'inv_getobj(ge_search_results, 0)',
-        '~ge_item_search_apply_selection($item);',
-    ]) {
-        if (searchButton.includes(forbidden)) {
-            throw new Error(`Grand Exchange overview search still auto-selects its first result via ${forbidden}`);
-        }
+    if (searchButton.includes('inv_getobj(ge_search_results, 0)')) {
+        throw new Error('Grand Exchange overview search still auto-selects result zero');
     }
-
-    for (const triggerName of exactTriggerNames) {
-        if (!searchSource.includes(triggerName)) {
-            throw new Error(`Grand Exchange exact chatbox selector lost ${triggerName}`);
-        }
+    if (/lowercase\(oc_name\([^\n]+\)\) = \$needle/.test(searchSource)) {
+        throw new Error('Grand Exchange exact item selector still compares RuneScript strings with =');
     }
-    const exactDispatcher = getScriptBlock(searchSource, '[proc,ge_item_search_select_exact]').block;
-    if (!exactDispatcher.includes('return (false);')) {
-        throw new Error('Grand Exchange exact chatbox selector lost its no-match return');
-    }
-
-    const scriptPack = fs.readFileSync(path.join(stagedContentDir, 'pack', 'script.pack'), 'utf8').replace(/\r/g, '');
-    for (const triggerName of exactTriggerNames) {
-        if (!scriptPack.split('\n').some(line => line.endsWith(`=${triggerName}`))) {
-            throw new Error(`Grand Exchange exact chatbox selector is missing script.pack mapping ${triggerName}`);
-        }
+    if (searchSource.includes('[proc,ge_item_search_select_exact')) {
+        throw new Error('Grand Exchange item search still emits the oversized exact-selector catalogue');
     }
 
     const overviewSource = fs.readFileSync(
@@ -315,7 +221,7 @@ function validate(stagedContentDir: string, exactTriggerNames: string[]) {
 }
 
 export function prepareGrandExchangeItemSearchQolStage(stagedContentDir: string) {
-    const exactTriggerNames = patchSearchScript(stagedContentDir);
+    patchSearchScript(stagedContentDir);
     patchBuySetup(stagedContentDir);
-    validate(stagedContentDir, exactTriggerNames);
+    validate(stagedContentDir);
 }
