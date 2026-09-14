@@ -372,3 +372,12 @@ if (inv_getobj(ge_collection_offer_5, 0) ! null | inv_getobj(ge_collection_offer
     mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_5;
+
+// Do not leave six inventory listeners attached after the Collection Box closes.
+[if_close,grand_exchange_group_109]
+inv_stoptransmit(grand_exchange_group_109:com_59);
+inv_stoptransmit(grand_exchange_group_109:com_63);
+inv_stoptransmit(grand_exchange_group_109:com_67);
+inv_stoptransmit(grand_exchange_group_109:com_71);
+inv_stoptransmit(grand_exchange_group_109:com_75);
+inv_stoptransmit(grand_exchange_group_109:com_79);
