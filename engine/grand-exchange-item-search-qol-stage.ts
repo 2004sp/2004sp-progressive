@@ -64,6 +64,12 @@ function buildExactSelectionScripts(symbols: string[]) {
         const checks = chunk.map(symbol => [
             `if (oc_uncert(${symbol}) = ${symbol}) {`,
             `    if (compare(lowercase(oc_name(${symbol})), $needle) = 0) {`,
+            // ge_item_search_apply_selection accepts a runtime obj and therefore
+            // moves it out of ge_search_results. The chatbox exact-match route
+            // has not populated that inventory, so seed the matched namedobj
+            // before applying it or the offer will only be updated visually.
+            '        inv_clear(ge_search_results);',
+            `        inv_setslot(ge_search_results, 0, ${symbol}, 1);`,
             `        ~ge_item_search_apply_selection(${symbol});`,
             '        return (true);',
             '    }',
@@ -295,6 +301,12 @@ function validate(stagedContentDir: string, exactTriggerNames: string[]) {
     }
     if (!searchSource.includes('compare(lowercase(oc_name(') || !searchSource.includes('), $needle) = 0')) {
         throw new Error('Grand Exchange exact chatbox selector lost compare()-based string equality');
+    }
+    if (
+        !searchSource.includes('inv_clear(ge_search_results);\n        inv_setslot(ge_search_results, 0, ') ||
+        !searchSource.includes(', 1);\n        ~ge_item_search_apply_selection(')
+    ) {
+        throw new Error('Grand Exchange exact chatbox selector no longer seeds the runtime item transfer');
     }
     if (/lowercase\(oc_name\([^\n]+\)\) = \$needle/.test(searchSource)) {
         throw new Error('Grand Exchange exact chatbox selector still compares RuneScript strings with =');
