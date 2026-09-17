@@ -3,6 +3,7 @@ import path from 'path';
 
 const GE_INTERFACE_NAME = 'grand_exchange_overview';
 const OFFER_SUBMISSION_INV = 'ge_offer_submission';
+const OFFER_CONTEXT_INV = 'ge_offer_context';
 const ACTIVE_VIEW_INV = 'ge_active_offer_view';
 const ACTIVE_MODE_SLOT = 1;
 const ACTIVE_QUANTITY_SLOT = 2;
@@ -10,6 +11,8 @@ const ACTIVE_PRICE_SLOT = 3;
 const ACTIVE_TOTAL_SLOT = 4;
 const ACTIVE_STATE_SLOT = 5;
 const ACTIVE_FILLED_SLOT = 6;
+const CONTEXT_SOURCE_INV_SLOT = 2;
+const INVENTORY_SIZE = 28;
 const BUY_MODE = 1;
 const SELL_MODE = 2;
 const ACTIVE_STATE = 1;
@@ -74,7 +77,7 @@ function settlementBranch(offer: (typeof OFFERS)[number], index: number) {
             inv_del(inv, coins, $total);
             inv_add(${offer.collection}, $item, $quantity);
         } else {
-            inv_del(inv, $item, $quantity);
+            inv_del(inv, $settlement_item, $quantity);
             inv_add(${offer.collection}, coins, $total);
         }
     } else {
@@ -103,6 +106,24 @@ function patchSubmission(stagedContentDir: string) {
     // liquidity point. Prices above or below it are valid limit offers, but they
     // remain pending rather than manufacturing items or coins without a match.
     const historyRecord = 'if (ge_history_record($offer_slot, $item, $mode, $quantity, $price) = false) {';
+    const sellSourceGuard = `def_obj $settlement_item = $item;
+if ($mode = ${SELL_MODE}) {
+    def_int $settlement_source_slot_token = inv_getnum(${OFFER_CONTEXT_INV}, ${CONTEXT_SOURCE_INV_SLOT});
+    if ($settlement_source_slot_token <= 0) {
+        mes("Select the item from your inventory again before confirming.");
+        return;
+    }
+    def_int $settlement_source_slot = sub($settlement_source_slot_token, 1);
+    if ($settlement_source_slot < 0 | $settlement_source_slot >= ${INVENTORY_SIZE} | inv_getnum(inv, $settlement_source_slot) <= 0) {
+        mes("Select the item from your inventory again before confirming.");
+        return;
+    }
+    $settlement_item = inv_getobj(inv, $settlement_source_slot);
+    if (oc_uncert($settlement_item) ! $item | inv_total(inv, $settlement_item) < $quantity) {
+        mes("You do not have enough of this item for this offer.");
+        return;
+    }
+}`;
     const guidePriceGuard = `def_int $execution_price = ~ge_offer_nostalgia_price($item);
 if ($execution_price < 1) {
     $execution_price = oc_cost($item);
@@ -119,6 +140,12 @@ if ($execution_price > calc(${MAX_INT} / $quantity)) {
             throw new Error('Grand Exchange settlement cannot find the persisted-history commit boundary');
         }
         block = block.replace(historyRecord, `${guidePriceGuard}\n${historyRecord}`);
+    }
+    if (!block.includes(sellSourceGuard)) {
+        if (!block.includes(historyRecord)) {
+            throw new Error('Grand Exchange settlement cannot find the sell-source commit boundary');
+        }
+        block = block.replace(historyRecord, `${sellSourceGuard}\n${historyRecord}`);
     }
 
     const oldBranches = OFFERS.map(
@@ -234,6 +261,8 @@ function validate(stagedContentDir: string) {
         'def_int $execution_price = ~ge_offer_nostalgia_price($item);',
         `if ($execution_price > calc(${MAX_INT} / $quantity)) {`,
         'if ($price = $execution_price) {',
+        `def_obj $settlement_item = $item;`,
+        `$settlement_item = inv_getobj(inv, $settlement_source_slot);`,
         `inv_setslot(${OFFERS[0].active}, ${ACTIVE_STATE_SLOT}, coins, ${ACTIVE_STATE});`,
         `inv_setslot(${OFFERS[0].active}, ${ACTIVE_STATE_SLOT}, coins, ${COMPLETED_STATE});`,
     ]) {
@@ -255,7 +284,7 @@ function validate(stagedContentDir: string) {
         for (const required of [
             'inv_del(inv, coins, $total);',
             `inv_add(${offer.collection}, $item, $quantity);`,
-            'inv_del(inv, $item, $quantity);',
+            'inv_del(inv, $settlement_item, $quantity);',
             `inv_add(${offer.collection}, coins, $total);`,
             `inv_setslot(${offer.active}, ${ACTIVE_STATE_SLOT}, coins, ${COMPLETED_STATE});`,
             `inv_setslot(${offer.active}, ${ACTIVE_STATE_SLOT}, coins, ${ACTIVE_STATE});`,
