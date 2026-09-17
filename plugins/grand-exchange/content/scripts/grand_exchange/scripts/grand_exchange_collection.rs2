@@ -294,42 +294,42 @@ if_sethide(grand_exchange_group_109:com_81, false);
 [inv_button1,grand_exchange_group_109:com_59]
 ~ge_collection_collect_slot(ge_collection_offer_0, last_slot);
 if (inv_getobj(ge_collection_offer_0, last_slot) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_0;
 
 [inv_button1,grand_exchange_group_109:com_63]
 ~ge_collection_collect_slot(ge_collection_offer_1, last_slot);
 if (inv_getobj(ge_collection_offer_1, last_slot) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_1;
 
 [inv_button1,grand_exchange_group_109:com_67]
 ~ge_collection_collect_slot(ge_collection_offer_2, last_slot);
 if (inv_getobj(ge_collection_offer_2, last_slot) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_2;
 
 [inv_button1,grand_exchange_group_109:com_71]
 ~ge_collection_collect_slot(ge_collection_offer_3, last_slot);
 if (inv_getobj(ge_collection_offer_3, last_slot) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_3;
 
 [inv_button1,grand_exchange_group_109:com_75]
 ~ge_collection_collect_slot(ge_collection_offer_4, last_slot);
 if (inv_getobj(ge_collection_offer_4, last_slot) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_4;
 
 [inv_button1,grand_exchange_group_109:com_79]
 ~ge_collection_collect_slot(ge_collection_offer_5, last_slot);
 if (inv_getobj(ge_collection_offer_5, last_slot) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_5;
 
@@ -339,7 +339,7 @@ if (inv_getobj(ge_collection_offer_5, last_slot) ! null) {
 ~ge_collection_collect_slot(ge_collection_offer_0, 0);
 ~ge_collection_collect_slot(ge_collection_offer_0, 1);
 if (inv_getobj(ge_collection_offer_0, 0) ! null | inv_getobj(ge_collection_offer_0, 1) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_0;
 
@@ -347,7 +347,7 @@ if (inv_getobj(ge_collection_offer_0, 0) ! null | inv_getobj(ge_collection_offer
 ~ge_collection_collect_slot(ge_collection_offer_1, 0);
 ~ge_collection_collect_slot(ge_collection_offer_1, 1);
 if (inv_getobj(ge_collection_offer_1, 0) ! null | inv_getobj(ge_collection_offer_1, 1) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_1;
 
@@ -355,7 +355,7 @@ if (inv_getobj(ge_collection_offer_1, 0) ! null | inv_getobj(ge_collection_offer
 ~ge_collection_collect_slot(ge_collection_offer_2, 0);
 ~ge_collection_collect_slot(ge_collection_offer_2, 1);
 if (inv_getobj(ge_collection_offer_2, 0) ! null | inv_getobj(ge_collection_offer_2, 1) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_2;
 
@@ -363,7 +363,7 @@ if (inv_getobj(ge_collection_offer_2, 0) ! null | inv_getobj(ge_collection_offer
 ~ge_collection_collect_slot(ge_collection_offer_3, 0);
 ~ge_collection_collect_slot(ge_collection_offer_3, 1);
 if (inv_getobj(ge_collection_offer_3, 0) ! null | inv_getobj(ge_collection_offer_3, 1) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_3;
 
@@ -371,7 +371,7 @@ if (inv_getobj(ge_collection_offer_3, 0) ! null | inv_getobj(ge_collection_offer
 ~ge_collection_collect_slot(ge_collection_offer_4, 0);
 ~ge_collection_collect_slot(ge_collection_offer_4, 1);
 if (inv_getobj(ge_collection_offer_4, 0) ! null | inv_getobj(ge_collection_offer_4, 1) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_4;
 
@@ -379,7 +379,7 @@ if (inv_getobj(ge_collection_offer_4, 0) ! null | inv_getobj(ge_collection_offer
 ~ge_collection_collect_slot(ge_collection_offer_5, 0);
 ~ge_collection_collect_slot(ge_collection_offer_5, 1);
 if (inv_getobj(ge_collection_offer_5, 0) ! null | inv_getobj(ge_collection_offer_5, 1) ! null) {
-    mes("Unable to withdraw, bank your items");
+    mes("You don't have enough inventory space.");
 }
 ~ge_collection_refresh_offer_5;
 
