@@ -5,6 +5,7 @@ import LocType from '#/config/LocType.js';
 
 const CUSTOM_CONTENT = (globalThis as typeof globalThis & {
     __customContent?: {
+        grandExchange?: boolean;
         scrollwheelZoom?: boolean;
     };
 }).__customContent;
@@ -12,25 +13,29 @@ const CUSTOM_CONTENT = (globalThis as typeof globalThis & {
 const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;
 const GRAND_EXCHANGE_BANK_BOOTH_NAME = 'bank booth';
 const GRAND_EXCHANGE_ITEM_SEARCH_SELECTION_PREFIX = '__ge_select__:';
+const GRAND_EXCHANGE_ENABLED = CUSTOM_CONTENT?.grandExchange === true;
 
 // Bank-booth location configs live in the native r254 cache rather than the
-// staged RuneScript sources. When the GE interface root is present, expose the
-// backport's collection action in the otherwise-unused third booth option. The
-// matching oploc3 handlers are staged server-side for both normal and Tutorial
-// Island booths, so this remains completely dormant on vanilla content.
-const originalLocList = LocType.list.bind(LocType);
-LocType.list = (id: number): LocType => {
-    const loc = originalLocList(id);
-    if (
-        IfType.list[GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID] &&
-        loc.name?.toLowerCase() === GRAND_EXCHANGE_BANK_BOOTH_NAME &&
-        loc.op &&
-        !loc.op[2]
-    ) {
-        loc.op[2] = 'Collect';
-    }
-    return loc;
-};
+// staged RuneScript sources. The option-2 GE build can remain published while
+// launcher options 1 and 3 run, so interface presence alone is not a safe feature
+// test. Require the runtime GE flag as well as the staged interface root before
+// exposing the otherwise-unused third booth option. The matching oploc3 handlers
+// are staged server-side only while the same feature flag is enabled.
+if (GRAND_EXCHANGE_ENABLED) {
+    const originalLocList = LocType.list.bind(LocType);
+    LocType.list = (id: number): LocType => {
+        const loc = originalLocList(id);
+        if (
+            IfType.list[GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID] &&
+            loc.name?.toLowerCase() === GRAND_EXCHANGE_BANK_BOOTH_NAME &&
+            loc.op &&
+            !loc.op[2]
+        ) {
+            loc.op[2] = 'Collect';
+        }
+        return loc;
+    };
+}
 
 // The live GE chatbox search and the Enter key both resume the same
 // p_namedialog server suspension. Prefix only a clicked chatbox result so the

@@ -300,6 +300,7 @@
 
     <script>
         window.__customContent = {
+            grandExchange: <%= typeof grandExchangeEnabled !== 'undefined' && grandExchangeEnabled ? 'true' : 'false' %>,
             clans: <%= typeof clansEnabled !== 'undefined' && clansEnabled ? 'true' : 'false' %>,
             middleMouseRotation: <%= typeof middleMouseRotationEnabled !== 'undefined' && middleMouseRotationEnabled ? 'true' : 'false' %>,
             compassReset: <%= typeof compassResetEnabled !== 'undefined' && compassResetEnabled ? 'true' : 'false' %>,

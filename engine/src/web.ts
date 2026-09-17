@@ -138,6 +138,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                     nodeid: Environment.NODE_ID,
                     lowmem,
                     members: Environment.NODE_MEMBERS,
+                    grandExchangeEnabled: tryParseBoolean(process.env.NODE_FEATURE_GRANDEXCHANGE, false),
                     clansEnabled: Environment.NODE_FEATURE_CLANS,
                     middleMouseRotationEnabled: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
                     compassResetEnabled: Environment.NODE_QOL_COMPASS_RESET,
@@ -153,6 +154,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
             // clients (e.g. the desktop wrapper) can mirror the in-game map_feature() gating
             // instead of hardcoding their own values.
             return jsonResponse(res, {
+                grandExchange: tryParseBoolean(process.env.NODE_FEATURE_GRANDEXCHANGE, false),
                 clans: Environment.NODE_FEATURE_CLANS,
                 middleMouseRotation: Environment.NODE_QOL_MIDDLE_MOUSE_ROTATION,
                 compassReset: Environment.NODE_QOL_COMPASS_RESET,
