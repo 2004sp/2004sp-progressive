@@ -213,7 +213,7 @@ function patchDetailCollectionButtons(stagedContentDir: string) {
     if (inv_getnum(${offer.active}, ${ACTIVE_MODE_SLOT}) ! ${mode}) return;
     ~ge_collection_collect_slot(${offer.collection}, 0);
     if (inv_getobj(${offer.collection}, 0) ! null) {
-        mes("Unable to withdraw, bank your items");
+        mes("You don't have enough inventory space.");
     }
     ~ge_collection_refresh_offer_${offer.slot - 1};
     ~ge_open_active_offer_${offer.slot};
@@ -298,8 +298,8 @@ function validate(stagedContentDir: string) {
             throw new Error(`Grand Exchange collection cleanup for slot ${offer.slot} is missing`);
         }
     }
-    if (!collection.includes('mes("Unable to withdraw, bank your items");')) {
-        throw new Error('Grand Exchange Collection Box is missing the full-inventory warning');
+    if (!collection.includes('mes("You don't have enough inventory space.");')) {
+        throw new Error('Grand Exchange Collection Box is missing the inventory-space warning');
     }
     if (!collection.includes('[if_close,grand_exchange_group_109]')) {
         throw new Error('Grand Exchange Collection Box is missing its inventory-listener cleanup trigger');
