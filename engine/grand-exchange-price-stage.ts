@@ -57,8 +57,7 @@ function readPack(file: string) {
 
 function readNostalgiaPrices(stagedContentDir: string): NostalgiaPrice[] {
     const progressiveRoot = path.resolve(stagedContentDir, '..', '..', '..', '..');
-    const nostalgiaRoot = process.env.NOSTALGIA_ROOT?.trim() || path.resolve(progressiveRoot, '..', 'Nostalgia');
-    const databasePath = path.join(nostalgiaRoot, '2009scape', 'Server', 'data', 'eco', 'grandexchange.db');
+    const databasePath = path.join(progressiveRoot, 'plugins', 'grand-exchange', 'grandexchange.db');
     if (!fs.existsSync(databasePath)) {
         throw new Error(`Nostalgia Grand Exchange price database is missing: ${databasePath}`);
     }
