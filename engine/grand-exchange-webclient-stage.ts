@@ -10,6 +10,7 @@ const CLIENT_ENTRY_PATH = path.join(WEBCLIENT_DIR, 'src', 'client', 'ClientEntry
 const CLIENT_SOURCE_PATH = path.join(WEBCLIENT_DIR, 'src', 'client', 'Client.ts');
 const BUILD_OUTPUT_PATH = path.join(WEBCLIENT_DIR, 'out', 'client.js');
 const PUBLIC_CLIENT_PATH = path.join(ENGINE_DIR, 'public', 'client', 'client.js');
+const WEBCLIENT_BUNDLE_PATH = path.join(WEBCLIENT_DIR, 'bundle.ts');
 const GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX = '__ge_select__:';
 const GRAND_EXCHANGE_NATIVE_SELL_ACTION_TEXT = 'Offer @lre@';
 
@@ -199,6 +200,14 @@ export async function prepareGrandExchangeWebClientStage() {
     }
     if (!fs.existsSync(CLIENT_SOURCE_PATH)) {
         throw new Error(`Grand Exchange webclient core source is missing: ${CLIENT_SOURCE_PATH}`);
+    }
+    if (!fs.existsSync(WEBCLIENT_BUNDLE_PATH)) {
+        throw new Error(`Grand Exchange webclient bundle config is missing: ${WEBCLIENT_BUNDLE_PATH}`);
+    }
+
+    const bundleConfig = fs.readFileSync(WEBCLIENT_BUNDLE_PATH, 'utf8').replace(/\r/g, '');
+    if (!bundleConfig.includes("'grandExchange',")) {
+        throw new Error('Grand Exchange webclient bundle config does not reserve the runtime grandExchange flag from property mangling');
     }
 
     const clientEntry = fs.readFileSync(CLIENT_ENTRY_PATH, 'utf8').replace(/\r/g, '');
