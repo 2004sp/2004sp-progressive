@@ -298,7 +298,7 @@ function validate(stagedContentDir: string) {
             throw new Error(`Grand Exchange collection cleanup for slot ${offer.slot} is missing`);
         }
     }
-    if (!collection.includes('mes("You don't have enough inventory space.");')) {
+    if (!collection.includes(`mes("You don't have enough inventory space.");`)) {
         throw new Error('Grand Exchange Collection Box is missing the inventory-space warning');
     }
     if (!collection.includes('[if_close,grand_exchange_group_109]')) {
