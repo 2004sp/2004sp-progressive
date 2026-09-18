@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import './scripts/generate-ge-untradeable.ts';
 import { minify } from 'terser';
 
 import { nth_identifier } from './identifier.js';
@@ -59,6 +60,7 @@ async function applyTerser(script: BunOutput): Promise<boolean> {
                     // custom content flags set via inline (non-bundled) HTML script in view/client.ejs —
                     // must keep literal names or CUSTOM_CONTENT?.clans lookups break after mangling
                     '__customContent',
+                    'grandExchange',
                     'clans',
                     'middleMouseRotation',
                     'compassReset',

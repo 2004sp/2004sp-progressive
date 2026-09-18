@@ -12,6 +12,7 @@ import FloType from '#/config/FloType.js';
 import SeqType, { PostanimMove, PreanimMove, RestartMode } from '#/config/SeqType.js';
 import LocType from '#/config/LocType.js';
 import ObjType from '#/config/ObjType.js';
+import { GRAND_EXCHANGE_UNTRADEABLE_ITEM_IDS } from '#/generated/GrandExchangeUntradeable.js';
 import NpcType from '#/config/NpcType.js';
 import IdkType from '#/config/IdkType.js';
 import SpotType from '#/config/SpotType.js';
@@ -81,6 +82,34 @@ const SCROLLBAR_TRACK = 0x23201b;
 const SCROLLBAR_GRIP_FOREGROUND = 0x4d4233;
 const SCROLLBAR_GRIP_HIGHLIGHT = 0x766654;
 const SCROLLBAR_GRIP_LOWLIGHT = 0x332d25;
+// Frozen interface.pack IDs for the Grand Exchange buy-search prompt.
+const GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID = 9136;
+const GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID = 9137;
+const GRAND_EXCHANGE_SEARCH_PROMPT_COMPONENT_ID = 9192;
+const GRAND_EXCHANGE_SEARCH_ICON_COMPONENT_ID = 9195;
+const GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS = 2000;
+const GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID = 8990;
+// GE item-model widgets should honour each object's native 2D icon offsets so
+// asymmetric models are visually centred in their authored item boxes.
+const GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS = new Set<number>([9138, 9033, 9049, 9065, 9084, 9103, 9122, 9209, 9211]);
+const GRAND_EXCHANGE_ITEM_SEARCH_HEADER = 'Grand Exchange Item Search';
+const GRAND_EXCHANGE_BACK_COMPONENT_ID = 9127; // group 105 local component formula: 9000 + source com_127
+// Group-105 quantity controls are still server-authoritative, but these flat
+// component IDs let the webclient provide immediate visual feedback while the
+// matching IF_BUTTON packet is in flight.
+const GRAND_EXCHANGE_QUANTITY_TEXT_COMPONENT_ID = 9150;
+const GRAND_EXCHANGE_PRICE_TEXT_COMPONENT_ID = 9155;
+const GRAND_EXCHANGE_TOTAL_TEXT_COMPONENT_ID = 9189;
+const GRAND_EXCHANGE_TOTAL_GP_COMPONENT_ID = 9243;
+const GRAND_EXCHANGE_MAX_OFFER_VALUE = 2147483647;
+const GRAND_EXCHANGE_QUANTITY_BUTTON_DELTAS = new Map<number, number>([
+    [9157, -1],
+    [9159, 1],
+    [9162, 1],
+    [9164, 10],
+    [9166, 100],
+    [9168, 500],
+]);
 const CUSTOM_CONTENT = (globalThis as typeof globalThis & { __customContent?: { clans?: boolean; antiMacroRotation?: boolean } }).__customContent;
 const CLANS_ENABLED = CUSTOM_CONTENT?.clans === true;
 const ANTI_MACRO_ROTATION_ENABLED = CUSTOM_CONTENT?.antiMacroRotation !== false;
@@ -145,7 +174,11 @@ export class Client extends GameShell {
     private randomIn: Isaac | null = null;
     private out: Packet = Packet.alloc(1);
     private loginout: Packet = Packet.alloc(1);
-    private in: Packet = Packet.alloc(1);
+    // Custom worlds can send PLAYER_INFO packets larger than the original 5 KB
+    // client buffer (for example when many bot players are visible at login).
+    // Use the existing max Packet pool so an oversized update cannot truncate
+    // into the DataView and kill the async game loop.
+    private in: Packet = Packet.alloc(2);
     private psize: number = 0;
     private ptype: number = 0;
     private timeoutTimer: number = 0;
@@ -469,6 +502,11 @@ export class Client extends GameShell {
     private socialInput: string = '';
     private socialInputType: number = 0;
     private socialInputHeader: string = '';
+    private grandExchangeItemSearchCatalogue: Array<{ id: number; name: string }> | null = null;
+    private grandExchangeItemSearchLastQuery: string = '';
+    private grandExchangeItemSearchLastResults: Array<{ id: number; name: string }> = [];
+    private grandExchangeItemSearchHoverRow: number = -1;
+    private grandExchangeQuantityPendingAcks: number = 0;
 
     private dialogInputOpen: boolean = false;
     private dialogInput: string = '';
@@ -1267,7 +1305,7 @@ export class Client extends GameShell {
                 if ((this.onDemand.getModelUse(req.file) & 0x62) != 0) {
                     this.redrawSidebar = true;
 
-                    if (this.chatComId !== -1) {
+                    if (this.chatComId !== -1 || this.isGrandExchangeItemSearchActive()) {
                         this.redrawChatback = true;
                     }
                 }
@@ -2590,6 +2628,7 @@ export class Client extends GameShell {
         const checkClickInput = !this.isMobile || (this.isMobile && !MobileKeyboard.isWithinCanvasKeyboard(this.mouseClickX, this.mouseClickY));
 
         if (checkClickInput) {
+            this.handleGrandExchangeItemSearchClick();
             this.mouseLoop();
             this.minimapLoop();
             this.tabLoop();
@@ -2768,6 +2807,99 @@ export class Client extends GameShell {
         }
     }
 
+    private grandExchangeGpOffset(value: number): number {
+        if (value < 10) return 0;
+        if (value < 100) return 4;
+        if (value < 1000) return 7;
+        if (value < 10000) return 11;
+        if (value < 100000) return 14;
+        if (value < 1000000) return 18;
+        if (value < 10000000) return 21;
+        if (value < 100000000) return 25;
+        if (value < 1000000000) return 28;
+        return 32;
+    }
+
+    private optimisticGrandExchangeQuantityButton(componentId: number): void {
+        const delta = GRAND_EXCHANGE_QUANTITY_BUTTON_DELTAS.get(componentId);
+        if (typeof delta === 'undefined') {
+            return;
+        }
+
+        const quantityComponent = IfType.list[GRAND_EXCHANGE_QUANTITY_TEXT_COMPONENT_ID];
+        if (!quantityComponent) {
+            return;
+        }
+
+        const current = Number.parseInt(quantityComponent.text ?? '', 10);
+        // Quantity 0 is the unselected-item setup state. Do not speculate before
+        // the server has accepted an item selection.
+        if (!Number.isFinite(current) || current < 1) {
+            return;
+        }
+
+        let next = current;
+        if (delta < 0) {
+            if (current <= 1) {
+                return;
+            }
+            next = Math.max(1, current + delta);
+        } else {
+            if (current >= GRAND_EXCHANGE_MAX_OFFER_VALUE) {
+                return;
+            }
+            next = current > GRAND_EXCHANGE_MAX_OFFER_VALUE - delta
+                ? GRAND_EXCHANGE_MAX_OFFER_VALUE
+                : current + delta;
+        }
+
+        if (next === current) {
+            return;
+        }
+
+        quantityComponent.text = next.toString();
+        this.grandExchangeQuantityPendingAcks++;
+
+        // Keep the total visually in lock-step with quantity. The server remains
+        // authoritative and its final acknowledgement replaces this value.
+        const priceComponent = IfType.list[GRAND_EXCHANGE_PRICE_TEXT_COMPONENT_ID];
+        const totalComponent = IfType.list[GRAND_EXCHANGE_TOTAL_TEXT_COMPONENT_ID];
+        const totalGpComponent = IfType.list[GRAND_EXCHANGE_TOTAL_GP_COMPONENT_ID];
+        const price = Number.parseInt(priceComponent?.text ?? '', 10);
+        if (totalComponent && Number.isFinite(price) && price > 0) {
+            const total = price <= Math.floor(GRAND_EXCHANGE_MAX_OFFER_VALUE / next)
+                ? next * price
+                : GRAND_EXCHANGE_MAX_OFFER_VALUE;
+            totalComponent.text = total.toString();
+            if (totalGpComponent) {
+                totalGpComponent.x = this.grandExchangeGpOffset(total);
+            }
+        }
+    }
+
+    private shouldApplyGrandExchangeTextUpdate(componentId: number): boolean {
+        if (componentId === GRAND_EXCHANGE_QUANTITY_TEXT_COMPONENT_ID && this.grandExchangeQuantityPendingAcks > 0) {
+            this.grandExchangeQuantityPendingAcks--;
+            if (this.grandExchangeQuantityPendingAcks > 0) {
+                return false;
+            }
+            return true;
+        }
+
+        // Each quantity change emits quantity text first and total text second.
+        // While multiple clicks are queued, ignore intermediate total values so
+        // the optimistic final value does not visibly jump backwards.
+        if (componentId === GRAND_EXCHANGE_TOTAL_TEXT_COMPONENT_ID && this.grandExchangeQuantityPendingAcks > 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private resetGrandExchangeOptimisticQuantity(): void {
+        this.grandExchangeQuantityPendingAcks = 0;
+    }
+
     // todo: order
     private buildMinimenu(): void {
         if (this.objDragArea !== 0) {
@@ -2918,6 +3050,9 @@ export class Client extends GameShell {
 
     // todo: order
     private addChatOptions(_mouseX: number, mouseY: number): void {
+        if (this.isGrandExchangeItemSearchActive()) {
+            return;
+        }
         let line: number = 0;
         for (let i: number = 0; i < 100; i++) {
             if (!this.chatText[i]) {
@@ -4262,6 +4397,8 @@ export class Client extends GameShell {
             this.redrawChatback = true;
         }
 
+        this.updateGrandExchangeItemSearchHover();
+
         if (this.isMenuOpen && this.menuArea === 2) {
             this.redrawChatback = true;
         }
@@ -4528,6 +4665,21 @@ export class Client extends GameShell {
 
         Pix2D.cls();
         this.world?.renderAll(this.camX, this.camY, this.camZ, level, this.camYaw, this.camPitch, this.loopCycle);
+        // Floor coordinates are discovered while the scene triangles are rendered.
+        // Consume them here so the click is not dependent on surviving until the next logic tick.
+        if (World.groundX !== -1 && this.localPlayer) {
+            const x: number = World.groundX;
+            const z: number = World.groundZ;
+            World.groundX = -1;
+            World.groundZ = -1;
+
+            if (this.tryMove(this.localPlayer.routeX[0], this.localPlayer.routeZ[0], x, z, true, 0, 0, 0, 0, 0, 0)) {
+                this.crossX = this.mouseClickX;
+                this.crossY = this.mouseClickY;
+                this.crossMode = 1;
+                this.crossCycle = 0;
+            }
+        }
         this.world?.removeSprites();
         this.entityOverlays();
         this.coordArrow();
@@ -5889,10 +6041,37 @@ export class Client extends GameShell {
         return true;
     }
 
+    private sendServerRoutedMove(dx: number, dz: number, type: number): boolean {
+        if (type !== 0 && type !== 1) {
+            return false;
+        }
+
+        if (type === 0) {
+            this.out.pIsaac(ClientProt.MOVE_GAMECLICK);
+            this.out.p1(5);
+        } else {
+            this.out.pIsaac(ClientProt.MOVE_MINIMAPCLICK);
+            this.out.p1(19);
+        }
+
+        this.out.p1(this.keyHeld[5] === 1 ? 1 : 0);
+        this.out.p2(dx + this.mapBuildBaseX);
+        this.out.p2(dz + this.mapBuildBaseZ);
+        this.tryMoveNearest = 0;
+        this.minimapFlagX = dx;
+        this.minimapFlagZ = dz;
+        return true;
+    }
+
     private tryMove(srcX: number, srcZ: number, dx: number, dz: number, tryNearest: boolean, locWidth: number, locLength: number, locAngle: number, locShape: number, forceapproach: number, type: number): boolean {
+        // This distribution uses server-side routefinding, so these clicks only transmit their destination.
+        if (type === 0 || type === 1) {
+            return this.sendServerRoutedMove(dx, dz, type);
+        }
+
         const collisionMap: CollisionMap | null = this.collision[this.minusedlevel];
         if (!collisionMap) {
-            return false;
+            return this.sendServerRoutedMove(dx, dz, type);
         }
 
         const sceneWidth: number = BuildArea.SIZE;
@@ -6078,7 +6257,7 @@ export class Client extends GameShell {
             }
 
             if (!arrived) {
-                return false;
+                return this.sendServerRoutedMove(dx, dz, type);
             }
         }
 
@@ -6251,6 +6430,17 @@ export class Client extends GameShell {
             }
 
             if (this.ptype === ServerProt.IF_CLOSE) {
+                // IF_CLOSE closes every viewport interface. Preserve the old overlay id long enough
+                // to recognise a closing GE, then clear it so scene/minimap input is restored.
+                const closingOverlayId = this.mainOverlayId;
+                this.mainOverlayId = -1;
+            if (
+                this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+                closingOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID
+            ) {
+                this.closeGrandExchangeItemSearch();
+                this.resetGrandExchangeOptimisticQuantity();
+            }
                 if (this.sideModalId !== -1) {
                     this.sideModalId = -1;
                     this.redrawSidebar = true;
@@ -6317,6 +6507,9 @@ export class Client extends GameShell {
                 }
 
                 this.mainModalId = com;
+                if (com === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID) {
+                    this.resetGrandExchangeOptimisticQuantity();
+                }
                 this.resumedPauseButton = false;
 
                 this.ptype = -1;
@@ -6399,6 +6592,15 @@ export class Client extends GameShell {
                 IfType.list[c].model1Id = obj;
                 IfType.list[c].modelXAn = type.xan2d;
                 IfType.list[c].modelYAn = type.yan2d;
+                // grand_exchange_overview:com_138 is flat component 9138. The
+                // original GE item canvas relies on each object's complete 2D
+                // inventory presentation, including roll and per-item offsets.
+                // Keep this compatibility behaviour scoped to that component so
+                // unrelated r254 TYPE_MODEL widgets retain their native framing.
+                IfType.list[c].modelUseObj2dPresentation = GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS.has(c);
+                IfType.list[c].modelZAn = GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS.has(c) ? type.zan2d : 0;
+                IfType.list[c].modelXOf = GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS.has(c) ? type.xof2d : 0;
+                IfType.list[c].modelYOf = GRAND_EXCHANGE_ITEM_MODEL_COMPONENT_IDS.has(c) ? type.yof2d : 0;
                 IfType.list[c].modelZoom = ((type.zoom2d * 100) / zoom) | 0;
 
                 this.ptype = -1;
@@ -6411,6 +6613,7 @@ export class Client extends GameShell {
 
                 IfType.list[com].model1Type = 1;
                 IfType.list[com].model1Id = m;
+                IfType.list[com].modelUseObj2dPresentation = false;
 
                 this.ptype = -1;
                 return true;
@@ -6429,6 +6632,7 @@ export class Client extends GameShell {
 
                 if (this.localPlayer) {
                     IfType.list[comId].model1Type = 3;
+                    IfType.list[comId].modelUseObj2dPresentation = false;
                     IfType.list[comId].model1Id = (this.localPlayer.appearance[8] << 6) + (this.localPlayer.appearance[0] << 12) + (this.localPlayer.colour[0] << 24) + (this.localPlayer.colour[4] << 18) + this.localPlayer.appearance[11];
                 }
 
@@ -6440,7 +6644,9 @@ export class Client extends GameShell {
                 const comId: number = this.in.g2();
                 const text = this.in.gjstr();
 
-                IfType.list[comId].text = text;
+                if (this.shouldApplyGrandExchangeTextUpdate(comId)) {
+                    IfType.list[comId].text = text;
+                }
 
                 if (IfType.list[comId].layerId === this.sideOverlayId[this.sideTab]) {
                     this.redrawSidebar = true;
@@ -6456,6 +6662,7 @@ export class Client extends GameShell {
 
                 IfType.list[com].model1Type = 2;
                 IfType.list[com].model1Id = npcId;
+                IfType.list[com].modelUseObj2dPresentation = false;
 
                 this.ptype = -1;
                 return true;
@@ -6466,9 +6673,15 @@ export class Client extends GameShell {
                 const x: number = this.in.g2b();
                 const z: number = this.in.g2b();
 
-                const com: IfType = IfType.list[comId];
-                com.x = x;
-                com.y = z;
+                // Quantity changes also reposition the total's "gp" suffix.
+                // Suppress intermediate acknowledgements while rapid clicks are
+                // queued, just like the intermediate quantity/total text packets,
+                // so the suffix cannot visibly jump backwards between clicks.
+                if (!(comId === GRAND_EXCHANGE_TOTAL_GP_COMPONENT_ID && this.grandExchangeQuantityPendingAcks > 0)) {
+                    const com: IfType = IfType.list[comId];
+                    com.x = x;
+                    com.y = z;
+                }
 
                 this.ptype = -1;
                 return true;
@@ -7080,7 +7293,9 @@ export class Client extends GameShell {
                 this.socialInputOpen = true;
                 this.socialInput = '';
                 this.socialInputType = 6;
-                this.socialInputHeader = 'Enter clan name:';
+                this.socialInputHeader = (this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID || this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID)
+                    ? GRAND_EXCHANGE_ITEM_SEARCH_HEADER
+                    : 'Enter clan name:';
                 this.redrawChatback = true;
 
                 if (this.isMobile) {
@@ -8875,6 +9090,7 @@ export class Client extends GameShell {
         if (action >= MiniMenuAction._PRIORITY) {
             action -= MiniMenuAction._PRIORITY;
         }
+        
 
         return action === MiniMenuAction.FRIENDLIST_ADD;
     }
@@ -8893,6 +9109,17 @@ export class Client extends GameShell {
         const a: number = this.menuParamA[optionId];
         const b: number = this.menuParamB[optionId];
         const c: number = this.menuParamC[optionId];
+        const normalizedAction = action >= MiniMenuAction._PRIORITY ? action - MiniMenuAction._PRIORITY : action;
+        if (
+            normalizedAction === MiniMenuAction.IF_BUTTON &&
+            c === GRAND_EXCHANGE_BACK_COMPONENT_ID &&
+            this.isGrandExchangeItemSearchActive()
+        ) {
+            this.closeGrandExchangeItemSearch();
+        }
+        if (normalizedAction === MiniMenuAction.CLOSE_BUTTON && this.isGrandExchangeItemSearchActive()) {
+            this.closeGrandExchangeItemSearch();
+        }
 
         if (action >= MiniMenuAction._PRIORITY) {
             action -= MiniMenuAction._PRIORITY;
@@ -9484,6 +9711,7 @@ export class Client extends GameShell {
             }
 
             if (notify) {
+                this.optimisticGrandExchangeQuantityButton(c);
                 this.out.pIsaac(ClientProt.IF_BUTTON);
                 this.out.p2(c);
             }
@@ -9971,6 +10199,12 @@ export class Client extends GameShell {
             childX += child.x;
             childY += child.y;
 
+            // Hidden leaf widgets must not retain clickable hitboxes. Hidden
+            // layers already stop recursively at the top of this method.
+            if (child.hide) {
+                continue;
+            }
+
             if ((child.overLayerId >= 0 || child.colourOver !== 0) && mouseX >= childX && mouseY >= childY && mouseX < childX + child.width && mouseY < childY + child.height) {
                 if (child.overLayerId >= 0) {
                     this.lastOverComId = child.overLayerId;
@@ -10229,6 +10463,13 @@ export class Client extends GameShell {
         }
     }
 
+    private isGrandExchangeHoverGraphic(x: number, y: number, width: number, height: number): boolean {
+        const grandExchangeOpen =
+            this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+            this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID;
+        return grandExchangeOpen && this.mouseX >= x && this.mouseY >= y && this.mouseX < x + width && this.mouseY < y + height;
+    }
+
     private drawInterface(com: IfType, x: number, y: number, scrollY: number): void {
         if (com.type !== 0 || !com.children || (com.hide && this.overMainComId !== com.id && this.overSideComId !== com.id && this.overChatComId !== com.id)) {
             return;
@@ -10253,6 +10494,19 @@ export class Client extends GameShell {
             const child: IfType = IfType.list[com.children[i]];
             childX += child.x;
             childY += child.y;
+
+            // IF_SETHIDE can target any component, even though the original
+            // IF1 cache format only stores authored hide flags on layers.
+            // Later interfaces backported onto this client rely on runtime
+            // hide updates for individual graphics, text and rectangles.
+            const hiddenHoverLayer =
+                child.type === ComponentType.TYPE_LAYER &&
+                (this.overMainComId === child.id ||
+                    this.overSideComId === child.id ||
+                    this.overChatComId === child.id);
+            if (child.hide && !hiddenHoverLayer) {
+                continue;
+            }
 
             if (child.clientCode > 0) {
                 this.clientComponent(child);
@@ -10515,13 +10769,43 @@ export class Client extends GameShell {
                 }
             } else if (child.type === ComponentType.TYPE_GRAPHIC) {
                 let image: Pix32 | null;
-                if (this.getIfActive(child)) {
+                const hovered = this.isGrandExchangeHoverGraphic(childX, childY, child.width, child.height);
+                if (hovered && child.graphic2 !== null) {
+                    image = child.graphic2;
+                } else if (this.getIfActive(child)) {
                     image = child.graphic2;
                 } else {
                     image = child.graphic;
                 }
 
-                image?.plotSprite(childX, childY);
+                if (child.id !== GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID) {
+                    if (
+                        child.id === GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID &&
+                        image !== null
+                    ) {
+                        image = child.graphic;
+                    }
+                    image?.plotSprite(childX, childY);
+
+                    if (
+                        child.id === GRAND_EXCHANGE_SEARCH_BASE_COMPONENT_ID &&
+                        IfType.list[GRAND_EXCHANGE_SEARCH_PROMPT_COMPONENT_ID]?.hide === false
+                    ) {
+                        const glow = IfType.list[GRAND_EXCHANGE_SEARCH_GLOW_COMPONENT_ID]?.graphic;
+                        if (glow) {
+                            const phase = (Date.now() % GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS) / GRAND_EXCHANGE_SEARCH_GLOW_PERIOD_MS;
+                            const hovered =
+                                this.mouseX - 4 >= childX &&
+                                this.mouseX - 4 < childX + child.width &&
+                                this.mouseY - 4 >= childY &&
+                                this.mouseY - 4 < childY + child.height;
+                            const alpha = hovered
+                                ? 256
+                                : Math.round((1 - Math.abs(phase * 2 - 1)) * 256);
+                            glow.transPlotSprite(childX, childY, alpha);
+                        }
+                    }
+                }
             } else if (child.type === ComponentType.TYPE_MODEL) {
                 const tmpX: number = Pix3D.originX;
                 const tmpY: number = Pix3D.originY;
@@ -10552,7 +10836,22 @@ export class Client extends GameShell {
                 }
 
                 if (model) {
-                    model.objRender(0, child.modelYAn, 0, child.modelXAn, 0, eyeY, eyeZ);
+                    if (child.modelUseObj2dPresentation) {
+                        // Match ObjType.getIcon's framing for GE item models: the
+                        // item's own Z rotation and X/Y offsets are part of how
+                        // Jagex authored its 2D inventory presentation.
+                        model.objRender(
+                            0,
+                            child.modelYAn,
+                            child.modelZAn,
+                            child.modelXAn,
+                            child.modelXOf,
+                            eyeY + ((model.minY / 2) | 0) + child.modelYOf,
+                            eyeZ + child.modelYOf
+                        );
+                    } else {
+                        model.objRender(0, child.modelYAn, 0, child.modelXAn, 0, eyeY, eyeZ);
+                    }
                 }
 
                 Pix3D.originX = tmpX;
@@ -11270,6 +11569,15 @@ export class Client extends GameShell {
     }
 
     private closeModal(): void {
+        const closingGrandExchange =
+            this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+            this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID;
+        if (closingGrandExchange) {
+            this.closeGrandExchangeItemSearch();
+        }
+        // CLOSE_MODAL clears the locally-open viewport overlay immediately. Waiting for
+        // a server IF_CLOSE leaves GE input state behind and blocks scene/minimap movement.
+        this.mainOverlayId = -1;
         this.out.pIsaac(ClientProt.CLOSE_MODAL);
 
         if (this.sideModalId !== -1) {
@@ -11453,6 +11761,179 @@ export class Client extends GameShell {
     }
 
     // todo: order
+    private closeGrandExchangeItemSearch(): void {
+        const grandExchangeOpen =
+            this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+            this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID;
+        if (
+            !this.socialInputOpen ||
+            this.socialInputType !== 6 ||
+            (!grandExchangeOpen && this.socialInputHeader !== GRAND_EXCHANGE_ITEM_SEARCH_HEADER)
+        ) {
+            return;
+        }
+
+        // Release the server-side p_namedialog suspension when Back/X cancels the GE search.
+        this.out.pIsaac(ClientProt.RESUME_P_NAMEDIALOG);
+        this.out.p1(1);
+        this.out.pjstr('');
+
+        this.socialInputOpen = false;
+        this.socialInput = '';
+        this.socialInputType = 0;
+        this.socialInputHeader = '';
+        this.grandExchangeItemSearchLastQuery = '';
+        this.grandExchangeItemSearchLastResults = [];
+        this.grandExchangeItemSearchHoverRow = -1;
+        this.redrawChatback = true;
+    }
+
+    private isGrandExchangeItemSearchActive(): boolean {
+        if (!this.socialInputOpen || this.socialInputType !== 6) {
+            return false;
+        }
+
+        return this.mainModalId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID ||
+            this.mainOverlayId === GRAND_EXCHANGE_OVERVIEW_ROOT_COMPONENT_ID;
+    }
+
+    private getGrandExchangeItemSearchCatalogue(): Array<{ id: number; name: string }> {
+        if (this.grandExchangeItemSearchCatalogue) {
+            return this.grandExchangeItemSearchCatalogue;
+        }
+
+        const catalogue: Array<{ id: number; name: string }> = [];
+        for (let id = 0; id < ObjType.numDefinitions; id++) {
+            if (GRAND_EXCHANGE_UNTRADEABLE_ITEM_IDS.has(id)) {
+                continue;
+            }
+
+            const obj = ObjType.list(id);
+            const name = obj.name?.trim();
+            if (!name || name.toLowerCase() === 'null' || obj.certtemplate !== -1) {
+                continue;
+            }
+
+            catalogue.push({ id, name });
+        }
+
+        this.grandExchangeItemSearchCatalogue = catalogue;
+        return catalogue;
+    }
+
+    private getGrandExchangeItemSearchResults(limit: number = 7): Array<{ id: number; name: string }> {
+        const needle = this.socialInput.trim().toLowerCase();
+        if (!needle) {
+            this.grandExchangeItemSearchLastQuery = '';
+            this.grandExchangeItemSearchLastResults = [];
+            return [];
+        }
+
+        if (needle !== this.grandExchangeItemSearchLastQuery) {
+            const matches = this.getGrandExchangeItemSearchCatalogue().filter(item => item.name.toLowerCase().includes(needle));
+            matches.sort((a, b) => {
+                const aName = a.name.toLowerCase();
+                const bName = b.name.toLowerCase();
+                const aExact = aName === needle ? 0 : aName.startsWith(needle) ? 1 : 2;
+                const bExact = bName === needle ? 0 : bName.startsWith(needle) ? 1 : 2;
+                if (aExact !== bExact) return aExact - bExact;
+                const byName = aName.localeCompare(bName);
+                return byName !== 0 ? byName : a.id - b.id;
+            });
+            this.grandExchangeItemSearchLastQuery = needle;
+            this.grandExchangeItemSearchLastResults = matches;
+        }
+
+        return this.grandExchangeItemSearchLastResults.slice(0, limit);
+    }
+
+    private submitGrandExchangeItemSearchResult(name: string): void {
+        this.socialInput = name;
+        this.socialInputOpen = false;
+        this.grandExchangeItemSearchHoverRow = -1;
+        this.redrawChatback = true;
+
+        this.out.pIsaac(ClientProt.RESUME_P_NAMEDIALOG);
+        this.out.p1(name.length + 1);
+        this.out.pjstr(name);
+    }
+
+    private getGrandExchangeItemSearchRowAt(x: number, y: number, resultCount: number): number {
+        const localX = x - 17;
+        const localY = y - 357;
+        if (localX < 47 || localX >= 463 || localY < 0 || localY >= resultCount * 12) {
+            return -1;
+        }
+
+        return Math.floor(localY / 12);
+    }
+
+    private updateGrandExchangeItemSearchHover(): void {
+        const nextRow = this.isGrandExchangeItemSearchActive()
+            ? this.getGrandExchangeItemSearchRowAt(this.mouseX, this.mouseY, this.getGrandExchangeItemSearchResults(7).length)
+            : -1;
+        if (nextRow !== this.grandExchangeItemSearchHoverRow) {
+            this.grandExchangeItemSearchHoverRow = nextRow;
+            this.redrawChatback = true;
+        }
+    }
+
+    private handleGrandExchangeItemSearchClick(): boolean {
+        if (!this.isGrandExchangeItemSearchActive() || this.mouseClickButton !== 1) {
+            return false;
+        }
+
+        const results = this.getGrandExchangeItemSearchResults(7);
+        const row = this.getGrandExchangeItemSearchRowAt(this.mouseClickX, this.mouseClickY, results.length);
+        if (row === -1) {
+            return false;
+        }
+
+        this.submitGrandExchangeItemSearchResult(results[row].name);
+        this.mouseClickButton = 0;
+        return true;
+    }
+
+    private drawGrandExchangeItemSearchChatbox(): void {
+        const query = this.socialInput.trim();
+        if (!query) {
+            this.b12?.centreString('Grand Exchange Item Search', 239, 18, 0x7e3200);
+            this.p11?.centreString('To search for an item, start by typing part of its name.', 239, 49, 0x7e3200);
+            this.p11?.centreString('Then, simply select the item you want from the results on display.', 239, 64, 0x7e3200);
+        } else {
+            const results = this.getGrandExchangeItemSearchResults(7);
+            if (results.length === 0) {
+                this.p12?.centreString('No matching tradeable items.', 239, 36, 0x7e3200);
+            } else {
+                const hoveredRow = this.getGrandExchangeItemSearchRowAt(this.mouseX, this.mouseY, results.length);
+
+                // The preview box belongs to the populated result view only.
+                Pix2D.drawRect(0, 0, 38, 36, 0x6b6252);
+                Pix2D.drawRect(1, 1, 36, 34, 0xb4a783);
+                if (hoveredRow !== -1) {
+                    const hoveredItem = results[hoveredRow];
+                    ObjType.getSprite(hoveredItem.id, 1, 0)?.plotSprite(3, 2);
+                }
+
+                for (let row = 0; row < results.length; row++) {
+                    const item = results[row];
+                    const y = row * 12;
+                    const hovered = row === hoveredRow;
+                    if (hovered) {
+                        Pix2D.fillRect(47, y, 416, 12, 0xb4a783);
+                    }
+                    // Java-style GE search results are a compact text list; no per-row icon tile.
+                    this.p12?.drawString(item.name, 48, y + 12, hovered ? Colour.ORANGE1 : 0x7e3200);
+                }
+            }
+        }
+
+        // Reuse the authentic b481 GE magnifier (source sprite 1154) already
+        // loaded by the group-105 search prompt instead of approximating it.
+        IfType.list[GRAND_EXCHANGE_SEARCH_ICON_COMPONENT_ID]?.graphic?.plotSprite(2, 79);
+        this.p12?.drawString(this.socialInput + '*', 24, 92, Colour.DARKBLUE);
+    }
+
     private drawChat(): void {
         this.areaChatback?.setPixels();
         if (this.chatbackScanline) {
@@ -11462,8 +11943,12 @@ export class Client extends GameShell {
         this.chatback?.plotSprite(0, 0);
 
         if (this.socialInputOpen) {
-            this.b12?.centreString(this.socialInputHeader, 239, 40, Colour.BLACK);
-            this.b12?.centreString(this.socialInput + '*', 239, 60, Colour.DARKBLUE);
+            if (this.isGrandExchangeItemSearchActive()) {
+                this.drawGrandExchangeItemSearchChatbox();
+            } else {
+                this.b12?.centreString(this.socialInputHeader, 239, 40, Colour.BLACK);
+                this.b12?.centreString(this.socialInput + '*', 239, 60, Colour.DARKBLUE);
+            }
         } else if (this.dialogInputOpen) {
             this.b12?.centreString('Enter amount:', 239, 40, Colour.BLACK);
             this.b12?.centreString(this.dialogInput + '*', 239, 60, Colour.DARKBLUE);

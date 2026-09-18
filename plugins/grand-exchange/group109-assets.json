@@ -1,0 +1,83 @@
+{
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "interface": {
+    "source_group_id": 109,
+    "synthetic_if1_root_local_id": 8994,
+    "source_component_block_base": 10024,
+    "component_formula": "local = 10024 + source_component_id",
+    "source_component_count": 58,
+    "source_component_ids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57],
+    "if1_helper_component_ids": [58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81],
+    "reserved_component_block_end": 10279,
+    "canvas": { "width": 512, "height": 334 },
+    "source_component_types": { "3": 11, "5": 18, "4": 1, "0": 28 },
+    "source_sprite_ids": [297, 831, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 1164, 1167],
+    "source_font_ids": [496],
+    "source_model_ids": [],
+    "source_listener_hooks": [
+      {
+        "source_component_id": 15,
+        "source_onload_script": 654,
+        "source_oninvtransmit_script": 656,
+        "source_inventory_triggers": [523, 524, 525, 526, 527, 528],
+        "status": "mapped-to-stable-local-temp-containers"
+      },
+      {
+        "source_component_ids": [17, 22, 27, 35, 43, 51],
+        "source_onload_script": 581,
+        "status": "represented-by-if1-slot-host-layers-and-helper-presentations"
+      }
+    ],
+    "listener_fallbacks": [
+      {
+        "source_component_id": 13,
+        "if1": "buttontype=close + activegraphic",
+        "source_hover_sprite_id": 832,
+        "fallback_sprite_id": 831,
+        "status": "preserved-with-frozen-reference-boundary"
+      }
+    ],
+    "derived_media_note": "Source components 0-57 preserve the frozen r481 geometry. IF1-only helper components 58-81 remain inside group 109's reserved 256-ID block and provide native-r254 inventory/icon, status-text and collect-control compatibility where r481 CS2 dynamically populated the slot hosts."
+  },
+  "inventory_hooks": [
+    { "source_inv_id": 523, "local_inv_id": 158, "local_name": "ge_collection_offer_0", "slot": 0, "host_component_id": 17, "size": 2, "scope": "temp" },
+    { "source_inv_id": 524, "local_inv_id": 159, "local_name": "ge_collection_offer_1", "slot": 1, "host_component_id": 22, "size": 2, "scope": "temp" },
+    { "source_inv_id": 525, "local_inv_id": 160, "local_name": "ge_collection_offer_2", "slot": 2, "host_component_id": 27, "size": 2, "scope": "temp" },
+    { "source_inv_id": 526, "local_inv_id": 161, "local_name": "ge_collection_offer_3", "slot": 3, "host_component_id": 35, "size": 2, "scope": "temp" },
+    { "source_inv_id": 527, "local_inv_id": 162, "local_name": "ge_collection_offer_4", "slot": 4, "host_component_id": 43, "size": 2, "scope": "temp" },
+    { "source_inv_id": 528, "local_inv_id": 163, "local_name": "ge_collection_offer_5", "slot": 5, "host_component_id": 51, "size": 2, "scope": "temp" }
+  ],
+  "placeholder_states": [
+    { "state": "empty", "presentation": "status only" },
+    { "state": "bought_items", "presentation": "native r254 item icon/quantity + Collect control" },
+    { "state": "sale_proceeds", "presentation": "native r254 coins icon/gp quantity + Collect control" },
+    { "state": "refund", "presentation": "native r254 coins icon/gp quantity + Collect control" },
+    { "state": "unsold_item", "presentation": "native r254 item icon/quantity + Collect control" },
+    { "state": "bought_with_refund", "presentation": "native r254 item + coins in both output slots + Collect control" }
+  ],
+  "sprites": [
+    { "source_id": 219001, "file": "assets/derived/group109/com_1.png", "width": 362, "height": 220, "sha256": "a6b93bb31b151c335dbe27c10b6209d7b6438a39947fa48b849056d508a693eb", "kind": "if1_component_render", "derived_from_source_group": 109, "derived_from_source_sprite": 297, "source_component_id": 1, "source_tiling": true },
+    { "source_id": 219002, "file": "assets/derived/group109/com_2.png", "width": 7, "height": 161, "sha256": "f4231546f4e17f888d5fe86c10c72c154acc9160efcf88c0698d964f7ef1ef6b", "kind": "if1_component_render", "derived_from_source_group": 109, "derived_from_source_sprite": 955, "source_component_id": 2, "source_tiling": true },
+    { "source_id": 219004, "file": "assets/derived/group109/com_4.png", "width": 32, "height": 161, "sha256": "1adc2ab7b5fbd8de248405aa9fdf8843cdbc021353e2ee03fc80f8d2a4741395", "kind": "if1_component_render", "derived_from_source_group": 109, "derived_from_source_sprite": 957, "source_component_id": 4, "source_tiling": true },
+    { "source_id": 219005, "file": "assets/derived/group109/com_5.png", "width": 302, "height": 7, "sha256": "2b025e738b73febe3b1c51a2443e41a4db279997cf884d012b3d8febf064d656", "kind": "if1_component_render", "derived_from_source_group": 109, "derived_from_source_sprite": 954, "source_component_id": 5, "source_tiling": true },
+    { "source_id": 219006, "file": "assets/derived/group109/com_6.png", "width": 302, "height": 32, "sha256": "aad9427584154299a65a8603ea6dfbb5cab5a6df2594728acb07dd68a329d219", "kind": "if1_component_render", "derived_from_source_group": 109, "derived_from_source_sprite": 956, "source_component_id": 6, "source_tiling": true },
+    { "source_id": 219010, "file": "assets/derived/group109/com_10.png", "width": 344, "height": 6, "sha256": "03ea388e5ad3bdecdd2c78ec706edef2737918c599da03950049df715a8f53e4", "kind": "if1_component_render", "derived_from_source_group": 109, "derived_from_source_sprite": 962, "source_component_id": 10, "source_tiling": true },
+    { "source_id": 219033, "file": "assets/derived/group109/tiled_1167_120x80.png", "width": 120, "height": 80, "sha256": "a71c36ff6823261a0fd40eca31ee52440da804f9bed79c160b10340220d97e19", "kind": "if1_component_render", "derived_from_source_group": 109, "derived_from_source_sprite": 1167, "source_component_id": 33, "source_tiling": true }
+  ],
+  "reused_staged_media": [
+    { "name": "r481_ge_sprite_831", "width": 16, "height": 16 },
+    { "name": "r481_ge_sprite_958", "width": 32, "height": 32 },
+    { "name": "r481_ge_sprite_959", "width": 32, "height": 32 },
+    { "name": "r481_ge_sprite_960", "width": 32, "height": 32 },
+    { "name": "r481_ge_sprite_961", "width": 32, "height": 32 },
+    { "name": "r481_ge_sprite_200011", "width": 32, "height": 32 },
+    { "name": "r481_ge_sprite_200012", "width": 32, "height": 32 },
+    { "name": "r481_ge_sprite_211164", "width": 25, "height": 25 },
+    { "name": "r481_ge_sprite_211167", "width": 140, "height": 110 }
+  ]
+}

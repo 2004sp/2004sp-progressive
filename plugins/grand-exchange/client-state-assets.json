@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "scope": {
+    "in_scope_interface_groups": [105, 106, 107, 108, 109, 110, 643],
+    "excluded_interface_groups": [645, 646]
+  },
+  "variable_mapping": {
+    "strategy": "server-authoritative-if1-substitution",
+    "source_varp_ids": [],
+    "source_varbit_ids": [],
+    "local_varp_configs": [],
+    "local_varbit_configs": [],
+    "reason": "No reconstructed in-scope IF1 component directly reads an r481 varp or varbit. The frozen r481 references are indirect CS2 presentation dependencies, so the r254 compatibility port replaces those client-side state transitions with explicit server-driven IF1 state instead of importing opaque unused variable IDs."
+  },
+  "client_script_mappings": [
+    {
+      "source_script_id": 581,
+      "source_role": "collection slot onload presentation",
+      "source_component_ids": [17, 22, 27, 35, 43, 51],
+      "replacement": "server-driven-if1-slot-host-layers-and-helper-presentations",
+      "local_script": "grand_exchange_collection.rs2"
+    },
+    {
+      "source_script_id": 654,
+      "source_role": "collection box onload",
+      "source_component_ids": [15],
+      "replacement": "server-driven-open-and-initialisation",
+      "local_script": "grand_exchange_collection.rs2"
+    },
+    {
+      "source_script_id": 656,
+      "source_role": "collection box inventory transmit",
+      "source_component_ids": [15],
+      "source_inventory_triggers": [523, 524, 525, 526, 527, 528],
+      "local_inventory_ids": [158, 159, 160, 161, 162, 163],
+      "replacement": "native-r254-inv-transmit",
+      "local_script": "grand_exchange_collection.rs2"
+    }
+  ],
+  "server_state_substitutions": [
+    {
+      "groups": [105],
+      "mechanism": "if_sethide",
+      "local_script": "grand_exchange.rs2",
+      "purpose": "overview mutually-exclusive layers and initial state"
+    },
+    {
+      "groups": [105],
+      "mechanism": "native obj.pack-derived search catalogue plus temp inventories 164/165, inv_transmit, runtime inv_moveitem and if_setobject",
+      "local_script": "generated grand_exchange_item_search.rs2",
+      "purpose": "buy-item search, scrollable result presentation and selected native-r254 item state"
+    },
+    {
+      "groups": [105],
+      "mechanism": "ge_selected_item slot-1 private coins-count token plus IF1 quantity button triggers and p_countdialog numeric input",
+      "local_script": "generated grand_exchange_quantity.rs2",
+      "purpose": "server-authoritative offer quantity decrement/increment, preset selection and numeric entry"
+    },
+    {
+      "groups": [106],
+      "mechanism": "if_sethide",
+      "local_script": "grand_exchange.rs2",
+      "purpose": "submitted-offer initial visibility"
+    },
+    {
+      "groups": [108, 110],
+      "mechanism": "if_openmain plus explicit server setters",
+      "local_script": "grand_exchange.rs2",
+      "purpose": "offer setup/state roots without an r481 CS2 runtime"
+    },
+    {
+      "groups": [109],
+      "mechanism": "temp inventories plus inv_transmit, if_settext and if_sethide",
+      "local_script": "grand_exchange_collection.rs2",
+      "purpose": "collection output presentation"
+    },
+    {
+      "groups": [643],
+      "mechanism": "if_settext plus if_setobject",
+      "local_script": "grand_exchange_history.rs2",
+      "purpose": "history row presentation"
+    }
+  ],
+  "deferred_server_authoritative_state": [
+    "offer side and slot",
+    "price",
+    "offer lifecycle and status",
+    "matching, settlement and persistence"
+  ],
+  "guardrails": [
+    "Do not import opaque r481 varp or varbit numeric IDs unless a reconstructed IF1 component directly requires them.",
+    "Do not import the r481 GE client scripts or add a CS2 runtime solely to reproduce GE presentation state.",
+    "Future interactive GE state is server-authoritative; a client variable may mirror display state only when a concrete r254 widget requirement proves it necessary.",
+    "GE item search/selection must be derived only from the staged native r254 obj.pack and rendered with native r254 inventory icons or object models."
+  ]
+}

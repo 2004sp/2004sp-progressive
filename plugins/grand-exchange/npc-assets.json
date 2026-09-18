@@ -1,0 +1,36 @@
+{
+  "source_npc_id": 6528,
+  "local_npc_id": 1200,
+  "name": "Grand Exchange clerk",
+  "spawn": {
+    "x": 3180,
+    "z": 3440,
+    "level": 0
+  },
+  "models": [
+    {
+      "source_id": 29890,
+      "local_id": 4010,
+      "name": "r481_ge_clerk_body_29890",
+      "file": "assets/npc/model_29890.bin",
+      "format": "r481-new",
+      "sha256": "d5731b8d6c902f5312f3050573690602d5f8e448cf73707bf1ac5880da95c43c"
+    },
+    {
+      "source_id": 29887,
+      "local_id": 4008,
+      "name": "r481_ge_clerk_body_29887",
+      "file": "assets/npc/model_29887.bin",
+      "format": "r481-new",
+      "sha256": "161f08af4851d6d007a63e3cebb99e8454e84bf559f580ddbd2f5d32ad5da9f5"
+    },
+    {
+      "source_id": 103,
+      "local_id": 4000,
+      "name": "r481_ge_clerk_head_103",
+      "file": "assets/npc/model_103.bin",
+      "format": "r254-old",
+      "sha256": "9c7bc0d7ec53049c71dda5aad512271c5e54aa1804d88622c4004e84386afe81"
+    }
+  ]
+}
