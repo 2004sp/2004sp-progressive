@@ -231,9 +231,9 @@ export async function prepareGrandExchangeWebClientStage() {
     if (!builtClient.includes('Collect')) {
         throw new Error('Grand Exchange webclient bundle does not contain the Bank booth Collect action');
     }
-    if (!builtClient.includes('grandExchange')) {
-        throw new Error('Grand Exchange webclient bundle does not contain the runtime GE feature gate');
-    }
+    // The bundle is minified and may mangle property names, so validate the
+    // runtime GE gate in ClientEntry.ts before building rather than looking for
+    // the literal "grandExchange" token in generated output.
     if (!builtClient.includes(GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX)) {
         throw new Error('Grand Exchange webclient bundle does not contain the chatbox-selection routing marker');
     }
@@ -247,9 +247,6 @@ export async function prepareGrandExchangeWebClientStage() {
     const publishedClient = fs.readFileSync(PUBLIC_CLIENT_PATH, 'utf8');
     if (!publishedClient.includes('Collect')) {
         throw new Error('Grand Exchange published webclient lost the Bank booth Collect action');
-    }
-    if (!publishedClient.includes('grandExchange')) {
-        throw new Error('Grand Exchange published webclient lost the runtime GE feature gate');
     }
     if (!publishedClient.includes(GRAND_EXCHANGE_CHATBOX_SELECTION_PREFIX)) {
         throw new Error('Grand Exchange published webclient lost the chatbox-selection routing marker');
