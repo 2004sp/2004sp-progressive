@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gnome Ball guide for the 7 September 2004 RuneScape snapshot and 2004scape Progressive build 254, including travel, passing, tackling, shooting, XP, rewards and implementation notes.">
+  <title>Gnome Ball — Minigame Guide — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="../assets/wiki.css">
+  <link rel="stylesheet" href="../assets/quest-guide.css">
+</head>
+<body class="manual-page guide-page">
+<header class="topbar guide-topbar">
+  <a class="brandlink" href="../../wiki.html" aria-label="2004scape Progressive Wiki homepage"><span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span></a>
+  <nav class="header-links" aria-label="Featured wiki pages"><a href="../../wiki.html">Main page</a><a href="../quests.html">Quests</a><a href="../skills.html">Skills</a><a href="../minigames.html">Minigames</a></nav>
+</header>
+<div class="guide-shell"><main class="page"><article class="article-card">
+  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../minigames.html">Minigames</a> &rsaquo; Gnome Ball</p>
+  <h1 class="pagetitle">Gnome Ball</h1>
+  <p class="byline guide-meta">Minigame guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Gnome Ball</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Released</dt><dd>28 January 2003</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members</dd></div>
+    <div class="row"><dt>Location</dt><dd>North-west Tree Gnome Stronghold</dd></div>
+    <div class="row"><dt>Entry fee</dt><dd>None</dd></div>
+    <div class="row"><dt>Skill requirement</dt><dd>None; Ranged and Agility improve play</dd></div>
+    <div class="row"><dt>Quest requirement</dt><dd>None</dd></div>
+    <div class="row"><dt>Win condition</dt><dd>Score 5 goals</dd></div>
+    <div class="row"><dt>Direct reward</dt><dd>Ranged/Agility XP and one Gnomeball per completed game</dd></div>
+    <div class="row"><dt>Reward currency</dt><dd>None</dd></div>
+    <div class="row"><dt>Build folder</dt><dd><code>game_gnomeball</code></dd></div>
+    <div class="row"><dt>Audit status</dt><dd>AUDITED</dd></div>
+  </div>
+
+  <p class="lede">Gnome Ball is a members-only sport on the pitch in the north-west of the Tree Gnome Stronghold. Talk to the <strong>Gnome ball referee</strong> for a ball, carry or pass it through the defending gnomes, then shoot at the eastern goal. Defenders can tackle you and steal possession; green <strong>Gnome wingers</strong> are friendly passing targets. Your personal score increases for each successful goal, and <strong>5 goals wins a game</strong>.</p>
+
+  <div class="callout"><p><strong>Historical/build split:</strong> Gnome Ball was released on 28 January 2003 and was well inside this wiki's 7 September 2004 cutoff. A guide entered into RuneHQ's database on 11 March 2004 preserves a 4/5/6/7/30 XP progression in <em>both</em> Agility and Ranged for goals 1&ndash;5. Build 254 preserves the same Ranged progression, but its audited source awards Agility only on the fifth goal. This page therefore keeps the period reward table separate from the build-254 implementation table.</p></div>
+
+  <h3>Getting there</h3>
+  <p>The Gnome Ball pitch is in the <strong>north-west corner of the Tree Gnome Stronghold</strong>, west of the Grand Tree. The pitch entrance is on its western side beside the Gnome ball referee; the scoring goal is at the far eastern end.</p>
+  <ul>
+    <li><strong>From East Ardougne:</strong> travel north-west to the Tree Gnome Stronghold's main entrance, enter the Stronghold, then continue north-west through the settlement to the Gnome Ball pitch.</li>
+    <li><strong>Spirit tree:</strong> after completing <a href="../quests/tree-gnome-village.html">Tree Gnome Village</a>, the period-valid spirit-tree network can take you to the Tree Gnome Stronghold. Walk west/north-west from the Stronghold tree to the pitch.</li>
+    <li><strong>Gnome glider:</strong> after completing <a href="../quests/the-grand-tree.html">The Grand Tree</a>, the glider network can bring you to the Grand Tree. From there, walk west to the Gnome Ball field.</li>
+  </ul>
+  <div class="table-wrap"><table><thead><tr><th>Requirement</th><th>7 September 2004 rule</th><th>Build-254 check</th></tr></thead><tbody>
+    <tr><td>Members</td><td><strong>Required.</strong> Gnome Ball is members content.</td><td>The Gnomeball item itself is configured <code>members=yes</code>, and the activity sits in the members Stronghold content.</td></tr>
+    <tr><td>Quest / quest points</td><td>None to play. Quests are only needed for the optional spirit-tree or glider shortcuts.</td><td>No quest or quest-point check exists in <code>game_gnomeball</code>.</td></tr>
+    <tr><td>Ranged</td><td>No minimum. Higher Ranged improves the chance of scoring.</td><td><code>gnomeball_shoot.rs2</code> feeds the Ranged stat and shot distance into the success roll; there is no level gate.</td></tr>
+    <tr><td>Agility</td><td>No minimum. Agility is used for the rough tackling side of the game.</td><td><code>gnome_baller.rs2</code> feeds Agility into both defender tackles and the player's tackle attempts; there is no level gate.</td></tr>
+    <tr><td>Entry fee</td><td>None.</td><td>No coins or items are charged by the gate or referee.</td></tr>
+    <tr><td>Required items</td><td>None; the referee supplies the play ball.</td><td>The gate removes/returns Gnomeballs brought in, and the referee creates the in-game ball.</td></tr>
+    <tr><td>Inventory space</td><td>Keep your hands free for the ball.</td><td>The entry gate unequips both hand slots and refuses entry if your inventory cannot hold what you are carrying.</td></tr>
+    <tr><td>Recommended supplies</td><td>Food is sensible at low Hitpoints because tackles can hurt.</td><td>Successful defender tackles queue ordinary damage; this is a recommendation, not an entry requirement.</td></tr>
+  </tbody></table></div>
+
+  <h3>Starting a game</h3>
+  <ol>
+    <li>Open the gate and enter the pitch. Build 254 clears your hands for play and enables the player-to-player <strong>Pass</strong> interaction.</li>
+    <li>Talk to the <strong>Gnome ball referee</strong> beside the western entrance. On the first conversation he explains that you use Ranged to throw at the net and can pass to the green wingers.</li>
+    <li>Choose to play. The referee whistles, throws the Gnomeball into the air, and your character catches it in the right-hand slot.</li>
+    <li>The score overlay appears in the upper-right corner and starts at 0.</li>
+  </ol>
+  <p>If you miss a shot or otherwise lose a ball without a defender still carrying it, talk to the referee again for a new ball. If a defending gnome has stolen your ball, the referee considers that ball still in play; tackle the carrier to regain possession instead.</p>
+
+  <h3>Passing</h3>
+  <p>The two <strong>green Gnome wingers</strong> are on your side. Pass the ball to a winger, run downfield while the winger holds it, then catch the return pass closer to the goal. In build 254 the winger's return timer is randomised after receiving the ball, producing a short delay before the pass comes back.</p>
+  <ul>
+    <li><strong>To a winger:</strong> use the ball on a green Gnome winger. The ball leaves your hand, the winger changes to a ball-carrying state, then throws it back if you are still on the pitch with a free right hand.</li>
+    <li><strong>To another player:</strong> build 254 also supports passing between players. Both players must be on the pitch, the receiver must have a free right hand, and the receiver cannot already have another defender-carried ball registered in play.</li>
+    <li><strong>No passing XP:</strong> no <code>stat_advance</code> call exists in either passing path. Passing is tactical movement, not a direct XP action in build 254.</li>
+  </ul>
+
+  <h3>Tackling and possession</h3>
+  <p>Yellow, orange and red <strong>Gnome ballers</strong> are defenders. Their hunt config targets a player carrying the Gnomeball when there is line of sight. When a defender reaches you, Agility is used in the tackle roll.</p>
+  <div class="table-wrap"><table><thead><tr><th>Situation</th><th>Build-254 behaviour</th></tr></thead><tbody>
+    <tr><td>Defender fails to tackle you</td><td>The gnome performs a failed tackle, falls, then gets back up. You keep the ball.</td></tr>
+    <tr><td>Defender successfully tackles you</td><td>Your action is stopped, you are knocked down, ordinary damage is queued, the ball is removed from your hand, and that gnome changes to its ball-carrying form.</td></tr>
+    <tr><td>You tackle a defender without the ball</td><td>An Agility roll decides whether the tackle lands. A successful tackle knocks the gnome down, but there is no ball to recover.</td></tr>
+    <tr><td>You tackle the ball carrier</td><td>An Agility roll decides the attempt. On success the Gnomeball is equipped directly into your right hand and the gnome is knocked down.</td></tr>
+    <tr><td>You try to tackle while holding a ball</td><td>The build refuses: “You may not tackle when you have a ball.”</td></tr>
+    <tr><td>Tackle XP</td><td>None. The Gnome Ball tackle scripts contain no XP award.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Accuracy reconstruction note:</strong> the build's tackle source explicitly labels parts of its <code>stat_random</code> setup as a “50% guess for now”. The scripts definitely use Agility, but exact reconstructed tackle probabilities should not be presented as verified September-2004 percentages.</p></div>
+
+  <h3>Shooting and scoring</h3>
+  <p>The goal is at the eastern end of the field. You must be on the pitch, have the Gnomeball in your right hand, and stand in front of the goal. Use <strong>Shoot</strong> on the goal to throw the ball.</p>
+  <ul>
+    <li><strong>Ranged matters:</strong> build 254 uses your Ranged stat in the shot-success roll.</li>
+    <li><strong>Distance matters:</strong> the same build roll also includes distance to the goal, so closer attempts are favoured.</li>
+    <li><strong>Miss:</strong> the ball lands away from the goal, is removed from play, your score does not change, and no XP is awarded. Talk to the referee for another ball.</li>
+    <li><strong>Goal:</strong> your score increases by 1, the cheerleaders call “GOAL”, and the shot awards XP according to the current score.</li>
+    <li><strong>Fifth goal:</strong> the build displays “You win!”, marks you as owed a reward Gnomeball, awards the win XP, and immediately resets the score to 0 so another five-goal cycle can begin.</li>
+  </ul>
+
+  <h3>Score, rounds and leaving</h3>
+  <p>Each player has a personal <strong>Gnomeball Score</strong> overlay. There is no fixed match timer and no opposing team score to beat: completing a game means reaching <strong>5 successful goals</strong>.</p>
+  <ul>
+    <li><strong>After a win:</strong> the score resets from 5 to 0 immediately. You are not forced out; you can ask the referee for another play ball and continue.</li>
+    <li><strong>Leaving normally:</strong> open the west gate. The activity resets your score, removes any in-game Gnomeball, and clears the pass interaction. If you are owed a reward ball, one Gnomeball is returned to you as you leave.</li>
+    <li><strong>Leaving the map zone mid-game:</strong> build 254 calls you out of the game, deletes play balls from inventory/equipment and resets the activity state.</li>
+    <li><strong>Dropping a play ball:</strong> trying to drop the Gnomeball while in the pitch deletes it with a message saying it magically returns to the referee. Talk to him for a replacement.</li>
+    <li><strong>Logging in inside the pitch:</strong> the login procedure teleports the player to the entrance area and clears the active score/possession state. The source contains special reconstruction notes around whether an equipped owed ball survives this path.</li>
+  </ul>
+
+  <h3>Death and item-loss rules</h3>
+  <p>Gnome Ball is not implemented as a protected safe-death minigame. Successful defender tackles use the ordinary player-damage queue, and the audited Gnome Ball folder contains no special death override that protects carried items. If tackle damage kills a player, normal build-254 death/item-loss handling applies. The referee dialogue itself warns that humans have died on the field, so low-Hitpoints players should bring food.</p>
+
+  <h3>Historical XP and reward table</h3>
+  <p>A RuneHQ Gnome Ball guide whose database entry date is <strong>11 March 2004</strong> records the following five-goal progression for both skills. This is the best cutoff-period-style reward table located for the September-2004 guide and is kept separate from the reconstructed build behaviour below.</p>
+  <div class="table-wrap"><table><thead><tr><th>Successful goal</th><th>Agility XP</th><th>Ranged XP</th><th>Reward note</th></tr></thead><tbody>
+    <tr><td>1</td><td>4</td><td>4</td><td>Score becomes 1.</td></tr>
+    <tr><td>2</td><td>5</td><td>5</td><td>Score becomes 2.</td></tr>
+    <tr><td>3</td><td>6</td><td>6</td><td>Score becomes 3.</td></tr>
+    <tr><td>4</td><td>7</td><td>7</td><td>Score becomes 4.</td></tr>
+    <tr><td>5</td><td>30</td><td>30</td><td>Win; one Gnomeball is the completion reward.</td></tr>
+    <tr><td><strong>Total per five-goal game</strong></td><td><strong>52</strong></td><td><strong>52</strong></td><td>Historical guide total.</td></tr>
+  </tbody></table></div>
+  <p>Passing, tackling and missed shots are not listed as separate XP rewards in the target-period guide. The direct item reward is a <strong>Gnomeball</strong>, received for completing the five-goal game. It is reusable outside the minigame and can be passed to another player.</p>
+
+  <h3>Build-254 XP and reward table</h3>
+  <p>Build 254 stores XP in tenths in these script calls, so the values <code>40/50/60/70/300</code> correspond to 4/5/6/7/30 displayed XP.</p>
+  <div class="table-wrap"><table><thead><tr><th>Action</th><th>Agility XP</th><th>Ranged XP</th><th>Build-254 result</th></tr></thead><tbody>
+    <tr><td>Pass to winger/player</td><td>0</td><td>0</td><td>No XP call.</td></tr>
+    <tr><td>Tackle / dodge tackle</td><td>0</td><td>0</td><td>Agility affects success rolls, but no XP call is made.</td></tr>
+    <tr><td>Miss a shot</td><td>0</td><td>0</td><td>Ball is consumed from play; get another from the referee.</td></tr>
+    <tr><td>Goal 1</td><td>0</td><td>4</td><td><code>stat_advance(ranged, 40)</code>.</td></tr>
+    <tr><td>Goal 2</td><td>0</td><td>5</td><td><code>stat_advance(ranged, 50)</code>.</td></tr>
+    <tr><td>Goal 3</td><td>0</td><td>6</td><td><code>stat_advance(ranged, 60)</code>.</td></tr>
+    <tr><td>Goal 4</td><td>0</td><td>7</td><td><code>stat_advance(ranged, 70)</code>.</td></tr>
+    <tr><td>Goal 5 / win</td><td>30</td><td>30</td><td>Sets the reward-ball flag, resets score to 0, then advances both skills by 300 internal units.</td></tr>
+    <tr><td><strong>Total per five-goal game</strong></td><td><strong>30</strong></td><td><strong>52</strong></td><td>Build-254 total.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Build deviation:</strong> the first four goals do not award Agility XP in <code>gnomeball_shoot.rs2</code>, despite the March-2004-origin guide recording matching Agility and Ranged XP for every goal. The guide does not “correct” the source; it records the difference explicitly.</p></div>
+
+  <h3>Gnomeball reward and repeatability</h3>
+  <p>Winning a five-goal game sets <code>gnomeball_owedball</code>. The reward is actually handed over when you leave the pitch: if there is inventory space the build adds one <strong>Gnomeball</strong> to the inventory; if the inventory is full it equips the ball in the right hand as part of the exit path.</p>
+  <ul>
+    <li>The reward is repeatable: complete another five-goal cycle to become owed another ball for that visit.</li>
+    <li>There is no cooldown or daily limit in the audited source.</li>
+    <li>However, the owed-ball state is a single boolean, not a counter. Multiple wins before leaving do <strong>not</strong> accumulate multiple owed reward balls in build 254.</li>
+    <li>If you enter while already carrying one or more Gnomeballs, the gate removes them for “safe keeping” and sets the same single owed-ball flag. Because the flag is only boolean, bringing multiple balls in can collapse them to a single returned ball on exit.</li>
+  </ul>
+
+  <h3>Reward shop / exchange</h3>
+  <p><strong>No Gnome Ball ticket, point or reward shop exists.</strong> The audited folder has no ticket currency, exchange NPC, reward-shop inventory or shop interface. Rewards are direct XP from successful goals plus the completion Gnomeball. There are no coin rewards, random reward tables, stock limits or purchase requirements.</p>
+
+  <h3>Multiplayer behaviour and shared-state limitations</h3>
+  <p>Gnome Ball supports multiple players on the field, including direct player-to-player passing. Each player's score and game progress are personal vars, but the ballers and wingers are shared world NPCs.</p>
+  <ul>
+    <li><strong>Personal score:</strong> one player's goal does not increment another player's score.</li>
+    <li><strong>Player passing:</strong> two active players can throw the Gnomeball directly between their right-hand slots.</li>
+    <li><strong>Winger contention:</strong> a winger tracks one attacking player UID and has a busy window, so concurrent users can temporarily block one another from using that winger.</li>
+    <li><strong>Defender possession is not fully isolated:</strong> a ball-carrying defender is a shared NPC state. The carrier-tackle path does not verify that the tackling player is the UID for whom that defender originally stole the ball, so another player can potentially recover it.</li>
+    <li><strong>No team score:</strong> multiplayer is cooperative/interactive possession play, not a formal player team versus a scored gnome team.</li>
+  </ul>
+
+  <h3>Build-254 implementation audit</h3>
+  <p>The complete <code>Content/scripts/minigames/game_gnomeball/</code> folder was inventoried for this guide: <strong>7 scripts, 7 config files and 1 interface</strong>. The global player equipment script was also checked because it contains the pitch-specific hand-item restriction.</p>
+  <div class="table-wrap"><table><thead><tr><th>Area audited</th><th>Build-254 finding</th></tr></thead><tbody>
+    <tr><td>Entry / reset</td><td><code>gnomeball.rs2</code> handles the gate, hand-slot unequipping, brought-in Gnomeballs, score reset, leaving, map-zone exit, dropping the play ball and login recovery.</td></tr>
+    <tr><td>Referee / start</td><td><code>gnomeball_referee.rs2</code> contains first-time rules, repeat dialogue and <code>gnomeball_game_start</code>, which whistles, throws the ball and equips it in the player's right hand.</td></tr>
+    <tr><td>Passing</td><td><code>gnome_winger.rs2</code> implements green-winger passes and delayed returns. <code>gnomeball_pass.rs2</code> implements direct player-to-player Gnomeball passing both inside and outside the minigame.</td></tr>
+    <tr><td>Defenders / tackling</td><td><code>gnome_baller.rs2</code> implements defender auto-tackles, player tackle attempts, possession transfer, knockdown states and damage. <code>gnomeball.hunt</code> makes defenders hunt visible players carrying the ball.</td></tr>
+    <tr><td>Shooting / score</td><td><code>gnomeball_shoot.rs2</code> checks pitch/ball/goal position, rolls shot success from Ranged and distance, increments the personal score, resets at 5 and contains every Gnome Ball XP call.</td></tr>
+    <tr><td>Reward item</td><td><code>gnomeball.obj</code> defines the members-only wearable <strong>Gnomeball</strong>. The gate/owed-ball logic in <code>gnomeball.rs2</code> supplies the completion item on exit.</td></tr>
+    <tr><td>NPC configs</td><td><code>gnomeball.npc</code> defines red/orange/yellow Gnome ballers, green Gnome wingers, the Gnome ball referee and Cheerleaders, including ball-carrier/tackled variants.</td></tr>
+    <tr><td>Objects / pitch</td><td><code>gnomeball.loc</code> defines the Shoot-able goal and pitch gate; <code>gnomeball.dbrow</code> defines the pitch zone rectangles used by entry, shooting, passing and reset checks.</td></tr>
+    <tr><td>Score interface</td><td><code>gnomeball.if</code> is a small overlay headed “Gnomeball / Score” that transmits <code>score_gnomeball_game</code>.</td></tr>
+    <tr><td>Equipment restriction</td><td><code>Content/scripts/player/scripts/equip.rs2</code> blocks equipping right- or left-hand items on the pitch and blocks putting the play Gnomeball into the backpack while still on the pitch.</td></tr>
+    <tr><td>Persistent vars</td><td><code>gnomeball_progress</code> and <code>gnomeball_owedball</code> are permanent vars; the score var is transmitted but not permanent. Reset/login code actively normalises these states.</td></tr>
+    <tr><td>Reward shop</td><td>No Gnome Ball shop or exchange inventory/config/interface exists in the module. Direct XP + the Gnomeball are the complete activity rewards.</td></tr>
+  </tbody></table></div>
+
+  <h3>Build deviations, bugs and reconstruction notes</h3>
+  <ul>
+    <li><strong>Agility XP mismatch:</strong> build 254 omits Agility XP on goals 1&ndash;4 compared with the March-2004-origin reward table.</li>
+    <li><strong>Single owed-ball flag:</strong> reward ownership is boolean rather than counted, so multiple wins before leaving do not accumulate multiple balls and multiple brought-in balls can collapse to one return.</li>
+    <li><strong>Tackle odds reconstructed:</strong> comments in <code>gnome_baller.rs2</code> label tackle-roll tuning as a guess. Agility involvement is authoritative; exact historical percentages are not.</li>
+    <li><strong>Shared defender possession:</strong> a different player can potentially tackle a shared ball-carrying defender and take a ball associated with someone else's play state.</li>
+    <li><strong>Shared winger state:</strong> winger ownership/busy timing is NPC-scoped, so simultaneous players can contend for the same passing NPC.</li>
+    <li><strong>Login edge cases:</strong> the login recovery source contains explicit test notes about equipped and smuggled Gnomeballs, showing that this path is reconstructed around observed edge behaviour rather than a clean isolated session model.</li>
+  </ul>
+
+  <h3>Historical evidence and cutoff notes</h3>
+  <ul>
+    <li><strong>Jagex, “Gnomeball” (28 January 2003), preserved by the RuneScape Classic Wiki:</strong> establishes the release date, Gnome Stronghold setting and the deliberately rough tackling premise.</li>
+    <li><strong>RuneHQ Gnome Ball guide, database entry dated 11 March 2004:</strong> preserves the north-west Stronghold location, referee start, winger passing, five-goal win, Gnomeball completion reward and 4/5/6/7/30 Agility + Ranged XP table used for the cutoff-period comparison.</li>
+    <li><strong>RuneScape/Old School historical reference pages:</strong> corroborate members-only status, no skill requirement, the west-of-Grand-Tree pitch, green wingers, the five-point Gnomeball reward and the use of Ranged/Agility.</li>
+    <li><strong>Build-254 source:</strong> all scripts/configs/interfaces under <code>Content/scripts/minigames/game_gnomeball/</code>, plus the Gnome Ball checks in <code>Content/scripts/player/scripts/equip.rs2</code> and the relevant varp definitions.</li>
+  </ul>
+  <div class="callout"><p><strong>Post-cutoff exclusions:</strong> Gnome Restaurant did not arrive until 2006, so its later Gnomeball reward source is not part of this September-2004 activity guide. Modern achievements, Surge, later interface changes and other post-2004 convenience mechanics are likewise excluded from the historical instructions.</p></div>
+
+  <nav class="page-navigation" aria-label="Previous and next minigame guides"><a class="prev" href="duel-arena.html">&larr; Duel Arena</a><a class="next" href="party-room.html">Party Room &rarr;</a></nav>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 implementation. Historical instructions are kept separate from build-specific deviations. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+</article></main></div>
+</body>
+</html>

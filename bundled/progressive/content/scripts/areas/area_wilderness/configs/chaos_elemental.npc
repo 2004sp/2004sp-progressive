@@ -1,0 +1,65 @@
+[chaos_elemental]
+size=4
+readyanim=kalphite_queen_ready
+walkanim=kalphite_queen_ready
+resizeh=160
+resizev=160
+name=Chaos Elemental
+desc=A chaotic force of elemental power.
+op2=Attack
+vislevel=305
+model1=chaos_elem_1_relabelled
+model2=chaos_elem_2_relabelled
+wanderrange=20
+maxrange=20
+huntrange=20
+attackrange=10
+respawnrate=150
+regenrate=12000
+hitpoints=500
+attack=160
+strength=168
+defence=120
+magic=160
+param=stabdefence,20
+param=slashdefence,20
+param=crushdefence,20
+param=magicdefence,60
+param=rangedefence,20
+param=damagetype,^magic_style
+param=attack_sound,dragon_attack
+param=defend_sound,dragon_hit
+param=death_sound,dragon_death
+huntmode=chaos_elemental
+
+// Keeper NPC - looks like a small rat, cannot be attacked, hidden from minimap
+[chaos_elemental_keeper]
+name=Rat
+desc=A popular dwarven delicacy.
+model1=model_2927_npc
+readyanim=rat_ready
+walkanim=rat_walk
+minimap=no
+wanderrange=0
+maxrange=0
+blockwalk=none
+
+[chaos_elemental_pet]
+vislevel=hide
+name=Chaos elemental jr
+desc=A miniature Chaos Elemental.
+readyanim=kalphite_queen_ready
+walkanim=kalphite_queen_ready
+op1=Pick-up
+op3=Stroke
+op4=Shoo-away
+resizeh=56
+resizev=56
+model1=chaos_elem_1_relabelled
+model2=chaos_elem_2_relabelled
+members=yes
+size=1
+category=petcat
+timer=1
+param=pet_item_id,chaos_elemental_pet_item
+blockwalk=none

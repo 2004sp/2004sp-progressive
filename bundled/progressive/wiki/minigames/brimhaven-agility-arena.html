@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Brimhaven Agility Arena guide for the 7 September 2004 RuneScape snapshot and 2004scape Progressive build 254, including routes, obstacles, tickets, rewards and implementation notes.">
+  <title>Brimhaven Agility Arena — Minigame Guide — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="../assets/wiki.css">
+  <link rel="stylesheet" href="../assets/quest-guide.css">
+</head>
+<body class="manual-page guide-page">
+<header class="topbar guide-topbar">
+  <a class="brandlink" href="../../wiki.html" aria-label="2004scape Progressive Wiki homepage"><span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span></a>
+  <nav class="header-links" aria-label="Featured wiki pages"><a href="../../wiki.html">Main page</a><a href="../quests.html">Quests</a><a href="../skills.html">Skills</a><a href="../minigames.html">Minigames</a></nav>
+</header>
+<div class="guide-shell"><main class="page"><article class="article-card">
+  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../minigames.html">Minigames</a> &rsaquo; Brimhaven Agility Arena</p>
+  <h1 class="pagetitle">Brimhaven Agility Arena</h1>
+  <p class="byline guide-meta">Agility activity guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Brimhaven Agility Arena</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Released</dt><dd>27 July 2004</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members</dd></div>
+    <div class="row"><dt>Location</dt><dd>North-east Brimhaven, Karamja</dd></div>
+    <div class="row"><dt>Entry fee</dt><dd>200 coins per historical visit</dd></div>
+    <div class="row"><dt>Skill requirement</dt><dd>None to enter; 20/40 Agility for harder routes</dd></div>
+    <div class="row"><dt>Quest requirement</dt><dd>None</dd></div>
+    <div class="row"><dt>Reward currency</dt><dd>Agility arena ticket</dd></div>
+    <div class="row"><dt>Build folder</dt><dd><code>game_agilityarena</code></dd></div>
+    <div class="row"><dt>Audit status</dt><dd>AUDITED</dd></div>
+  </div>
+
+  <p class="lede">The Brimhaven Agility Arena is a members-only Agility activity beneath the bamboo hut in north-east Brimhaven. Cap'n Izzy No-Beard admits players for 200 coins. Inside, a flashing arrow points to one active ticket dispenser at a time. Reach and tag consecutive active dispensers to earn <strong>Agility arena tickets</strong>, then exchange those tickets with Pirate Jackie the Fruit for Agility experience, Toadflax, Snapdragon, or a Pirate's hook.</p>
+
+  <div class="callout"><p><strong>Historical/build split:</strong> Jagex's 27 July 2004 release announcement states that there is no Agility requirement to enter, that the target changes every minute, and that the first successful tag in a streak gives no ticket while each following consecutive tag does. Build 254 implements that same core loop, but its paid-entry flag is never cleared, so the build appears to charge a character only once instead of the historical 200 coins per visit.</p></div>
+
+  <h3>Getting there</h3>
+  <p>The entrance is the <strong>bamboo hut in north-east Brimhaven</strong>. Speak to <strong>Cap'n Izzy No-Beard</strong> outside the ladder. He explains the arena and takes the entrance fee.</p>
+  <ul>
+    <li><strong>From East Ardougne:</strong> use Captain Barnaby's ship at the East Ardougne docks. The route to Brimhaven costs <strong>30 coins</strong> and predates the target snapshot. From the Brimhaven dock, walk north-east to the bamboo hut.</li>
+    <li><strong>From Port Sarim:</strong> pay <strong>30 coins</strong> to sail to Musa Point, then walk west across northern Karamja into Brimhaven and continue to the north-east hut. This is longer but period-valid.</li>
+  </ul>
+  <div class="table-wrap"><table><thead><tr><th>Requirement</th><th>Target-period rule</th><th>Build-254 note</th></tr></thead><tbody>
+    <tr><td>Members</td><td>Required.</td><td>The arena content and ticket are members content.</td></tr>
+    <tr><td>Quest / quest points</td><td>None.</td><td>No quest or quest-point gate is checked by the arena scripts.</td></tr>
+    <tr><td>Agility</td><td>No level is required to enter. Some routes require 20 or 40 Agility.</td><td>The ladder has no Agility gate; level checks are obstacle-specific.</td></tr>
+    <tr><td>Coins</td><td><strong>200 coins per visit</strong>.</td><td><code>agilityarena_paid</code> is set after payment and never cleared in the audited Content tree, making later entries free in build 254.</td></tr>
+    <tr><td>Required equipment</td><td>None beyond the entry coins.</td><td>No equipment or inventory item is checked at entry besides coins.</td></tr>
+    <tr><td>Recommended supplies</td><td>Food is strongly recommended because failed obstacles can deal damage. An Agility potion is useful if darts lower Agility.</td><td>These are recommendations, not hard requirements.</td></tr>
+  </tbody></table></div>
+
+  <h3>How to start and play</h3>
+  <ol>
+    <li>Talk to Cap'n Izzy No-Beard or use his Pay option. Historically, pay <strong>200 coins</strong> for that visit.</li>
+    <li>Climb down the ladder. An arena overlay appears and a flashing-arrow hint points to the currently active ticket dispenser.</li>
+    <li>Cross the platform network by clicking its obstacles. Routes vary in difficulty, and some obstacles require 20 or 40 Agility.</li>
+    <li>Click <strong>Tag</strong> on the dispenser under the flashing arrow before the target moves.</li>
+    <li>The first correct tag starts a streak but gives no ticket. Tag the next active dispenser successfully to receive one <strong>Agility arena ticket</strong>. Continue tagging every target in sequence for one ticket per further successful target.</li>
+    <li>If you miss a target, your streak is broken. The next successful target primes the streak again; the following consecutive success is the next one that awards a ticket.</li>
+    <li>When finished, climb the ladder in the north-east area back to Brimhaven and trade tickets with Pirate Jackie the Fruit.</li>
+  </ol>
+
+  <h3>Target timing, scoring and multiplayer behaviour</h3>
+  <p>Historically the flashing arrow changes to another platform <strong>every minute</strong>. Build 254 picks one of the 24 dispenser coordinates, refuses to repeat the current index, and schedules the next change at <code>map_clock + 98</code>, which is the implementation's near-one-minute cycle. The same selected dispenser is used for everyone in the arena, while each player's streak/ticket eligibility is held in that player's arena state.</p>
+  <ul>
+    <li><strong>There is no round win condition:</strong> the activity runs continuously. Your practical success condition is reaching consecutive active dispensers.</li>
+    <li><strong>No teams:</strong> players share the target but do not share tickets, streaks or rewards.</li>
+    <li><strong>Leaving:</strong> climbing out clears the personal target timer/overlay and streak bits. Tickets already in the inventory remain yours.</li>
+    <li><strong>Re-entering:</strong> historically another 200-coin fee is due for another visit. Build 254's persistent paid bit is a deviation and does not charge again after the first payment.</li>
+    <li><strong>Death:</strong> the arena is not scripted as a safe-death activity. If obstacle damage kills the player, normal build-254 death/item-loss handling applies.</li>
+  </ul>
+
+  <h3>Obstacles, requirements and Agility XP</h3>
+  <p>The target-period obstacle values below are also the values implemented by build 254. The arena may be entered at level 1, but level 20 and level 40 obstacles can block the shortest routes.</p>
+  <div class="table-wrap"><table><thead><tr><th>Obstacle</th><th>Agility</th><th>XP on success</th><th>Failure / special behaviour in build 254</th></tr></thead><tbody>
+    <tr><td>Plank</td><td>1</td><td>6</td><td>Broken planks drop the player to the lower level and deal damage. Plank layouts are regenerated when the active target changes.</td></tr>
+    <tr><td>Low wall</td><td>1</td><td>8</td><td>Can fail with a stumble and pushback; this script does not deal damage on failure.</td></tr>
+    <tr><td>Balancing rope</td><td>1</td><td>10</td><td>Failure drops the player to the lower level and deals damage.</td></tr>
+    <tr><td>Log balance</td><td>1</td><td>12</td><td>Failure drops the player to the lower level and deals damage.</td></tr>
+    <tr><td>Monkey bars</td><td>1</td><td>14</td><td>Failure drops the player and deals damage.</td></tr>
+    <tr><td>Balancing ledge</td><td>1</td><td>16</td><td>Failure drops the player and deals damage.</td></tr>
+    <tr><td>Pillars</td><td>1</td><td>18</td><td>Failure drops the player and deals damage.</td></tr>
+    <tr><td>Rope swing</td><td>1</td><td>20</td><td>A miss drops the player and deals damage.</td></tr>
+    <tr><td>Blade</td><td>1</td><td>0</td><td>Timed hazard rather than an XP obstacle. A hit pushes the player back and deals damage.</td></tr>
+    <tr><td>Hand holds</td><td>20</td><td>22</td><td>Below 20, passage is refused. Failure drops the player and deals damage.</td></tr>
+    <tr><td>Floor spikes</td><td>20</td><td>24</td><td>Below 20, the trap cannot be passed. Failure deals damage and pushes the player back.</td></tr>
+    <tr><td>Pressure pad</td><td>20</td><td>26</td><td>Below 20, the trap cannot be passed. Failure triggers falling rocks, damage and pushback.</td></tr>
+    <tr><td>Spinning blades</td><td>40</td><td>28</td><td>Below 40, the trap cannot be passed. Failure deals damage and pushes the player back.</td></tr>
+    <tr><td>Darts</td><td>40</td><td>30</td><td>Below 40, the trap cannot be passed. Failure deals damage, pushes the player back and temporarily drains <strong>2 Agility levels</strong>.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Build damage formula:</strong> most damaging failures in <code>game_agilityarena</code> call the common expression <code>calc((stat(hitpoints) * 5 / 100) + 2)</code>. This guide leaves that source formula explicit rather than guessing at a different display-unit interpretation. Falling below the platforms is recoverable: use a nearby <strong>climbing rope</strong> to return to the top level.</p></div>
+
+  <h3>Tickets and rewards</h3>
+  <p>The period currency is the stackable, untradeable <strong>Agility arena ticket</strong>. Tickets are retained when you leave and can be saved for larger XP bundles. Larger bundles give more Agility XP per ticket.</p>
+  <p><strong>Pirate Jackie the Fruit</strong>, beside the arena entrance, opens the <strong>Brimhaven Agility Arena Ticket Exchange</strong>. This is a fixed exchange interface rather than a stock-based coin shop: there are no stock quantities or restock timers.</p>
+  <div class="table-wrap"><table><thead><tr><th>Reward</th><th>Quantity</th><th>Cost</th><th>Currency</th><th>Other requirements</th><th>Historical / build note</th></tr></thead><tbody>
+    <tr><td>Agility XP</td><td>240 XP</td><td>1</td><td>Agility arena ticket</td><td>None</td><td>240 XP per ticket.</td></tr>
+    <tr><td>Toadflax</td><td>1</td><td>3</td><td>Agility arena ticket</td><td>None</td><td>Original 27 July 2004 reward herb; exact 3-ticket cost is implemented by build 254 and preserved in later contemporary-style guides.</td></tr>
+    <tr><td>Agility XP</td><td>2,480 XP</td><td>10</td><td>Agility arena ticket</td><td>None</td><td>248 XP per ticket.</td></tr>
+    <tr><td>Snapdragon</td><td>1</td><td>10</td><td>Agility arena ticket</td><td>None</td><td>Original 27 July 2004 reward herb; build 254 cost is 10 tickets.</td></tr>
+    <tr><td>Agility XP</td><td>6,500 XP</td><td>25</td><td>Agility arena ticket</td><td>None</td><td>260 XP per ticket.</td></tr>
+    <tr><td>Agility XP</td><td>28,000 XP</td><td>100</td><td>Agility arena ticket</td><td>None</td><td>280 XP per ticket.</td></tr>
+    <tr><td>Pirate's hook</td><td>1</td><td>800</td><td>Agility arena ticket</td><td>None</td><td>Build 254 and period-style reward tables agree on the 800-ticket cost.</td></tr>
+    <tr><td>Agility XP</td><td>320,000 XP</td><td>1,000</td><td>Agility arena ticket</td><td>None</td><td>320 XP per ticket; the best XP-per-ticket bundle.</td></tr>
+  </tbody></table></div>
+  <p>There are no random grab-bag rewards, no coin payout, no reward cooldown, and no success-round requirement beyond having enough tickets. The exchange can be repeated whenever you have the tickets.</p>
+  <div class="callout"><p><strong>Post-cutoff exclusions:</strong> Wergali is not a September-2004 reward; it was introduced years later and is absent from build 254. Modern Karamja diary bonuses, vouchers, amylase packs, graceful recolours and later reward-system changes are also outside this guide's cutoff.</p></div>
+
+  <h3>Build-254 implementation audit</h3>
+  <div class="table-wrap"><table><thead><tr><th>Area audited</th><th>Build-254 finding</th></tr></thead><tbody>
+    <tr><td>Start / entry</td><td><code>agilityarena_clerk.rs2</code> charges 200 coins, sets <code>agilityarena_paid</code>, and the ladder in <code>agilityarena.rs2</code> refuses entry until that bit is set.</td></tr>
+    <tr><td>Entry deviation</td><td>The paid bit is declared in the permanent arena varbit and is never cleared anywhere in the Content tree. Once paid, later entries appear free.</td></tr>
+    <tr><td>Active target</td><td>The clerk AI timer selects a random dispenser index from 0&ndash;23, avoids repeating the current one, sets the next change to <code>map_clock + 98</code>, and calls the plank-regeneration procedure.</td></tr>
+    <tr><td>Ticket streak</td><td><code>agilityarena.rs2</code> tracks whether the current pillar was tagged, whether the player is eligible for tickets, and whether this was the first pillar of the streak. The first tag primes; later consecutive tags add one ticket.</td></tr>
+    <tr><td>Missing a target</td><td>When the target timer fires without the current pillar tagged, ticket eligibility and first-pillar state are cleared, forcing the player to rebuild the streak.</td></tr>
+    <tr><td>Obstacles</td><td><code>agilityarena.rs2</code> and <code>agilityarena_zones.rs2</code> contain every route interaction, XP award, level gate, failure roll, fall, damage call and the dart Agility drain.</td></tr>
+    <tr><td>Reward exchange</td><td><code>agilityarena_tickettrader.rs2</code> implements XP bundles of 1/10/25/100/1000 tickets and items at 3/10/800 tickets. <code>agilityarena_trade.if</code> exposes the matching interface buttons.</td></tr>
+    <tr><td>Configs</td><td><code>agilityarena.npc</code> names Cap'n Izzy No-Beard and Pirate Jackie the Fruit; <code>agilityarena.obj</code> defines the ticket and Pirate's hook; <code>agilityarena.loc</code> defines dispensers, obstacles, ladders and recovery ropes.</td></tr>
+    <tr><td>Multiplayer/shared world</td><td>The selected target/time is shared arena state, so participants pursue the same active dispenser. Ticket streak state is player-specific; there is no team scoring or shared reward pool.</td></tr>
+  </tbody></table></div>
+
+  <h3>Historical evidence and cutoff notes</h3>
+  <ul>
+    <li><strong>Jagex, “Agility, Potions and Parties!” (27 July 2004):</strong> release date, Cap'n Izzy No-Beard, north-east Brimhaven bamboo-hut entrance, 200 gp entry, one-minute flashing-arrow cycle, consecutive-tag ticket rule, no Agility entry requirement, and Toadflax/Snapdragon as ticket rewards.</li>
+    <li><strong>Preserved RuneScape Knowledge Base, Brimhaven Agility Arena:</strong> members-only access, 200-coin fee, obstacle level/XP table, Pirate Jackie the Fruit, and the complete 1/3/10/25/100/800/1000 ticket reward structure.</li>
+    <li><strong>Captain Barnaby transport history:</strong> the East Ardougne-to-Brimhaven ship route and 30-coin fare predate the target snapshot and provide a period-valid route.</li>
+    <li><strong>Build-254 source:</strong> <code>Content/scripts/minigames/game_agilityarena/</code>, including all scripts, configs and interfaces in that folder.</li>
+  </ul>
+
+  <nav class="page-navigation" aria-label="Previous and next minigame guides"><a class="prev" href="../minigames.html">&larr; Minigames overview</a><a class="next" href="duel-arena.html">Duel Arena &rarr;</a></nav>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 implementation. Historical instructions are kept separate from build-specific deviations. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+</article></main></div>
+</body>
+</html>

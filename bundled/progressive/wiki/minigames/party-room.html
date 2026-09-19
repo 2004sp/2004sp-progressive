@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Seers' Village Party Room guide for the 7 September 2004 RuneScape snapshot and 2004scape Progressive build 254, including the shared drop chest, Balloon Bonanza, Nightly Dance, rewards and implementation notes.">
+  <title>Party Room — Minigame Guide — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="../assets/wiki.css">
+  <link rel="stylesheet" href="../assets/quest-guide.css">
+</head>
+<body class="manual-page guide-page">
+<header class="topbar guide-topbar">
+  <a class="brandlink" href="../../wiki.html" aria-label="2004scape Progressive Wiki homepage"><span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span></a>
+  <nav class="header-links" aria-label="Featured wiki pages"><a href="../../wiki.html">Main page</a><a href="../quests.html">Quests</a><a href="../skills.html">Skills</a><a href="../minigames.html">Minigames</a></nav>
+</header>
+<div class="guide-shell"><main class="page"><article class="article-card">
+  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../minigames.html">Minigames</a> &rsaquo; Party Room</p>
+  <h1 class="pagetitle">Seers' Village Party Room</h1>
+  <p class="byline guide-meta">Minigame guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Party Room</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>RS2 form released</dt><dd>29 March 2004</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members</dd></div>
+    <div class="row"><dt>Location</dt><dd>Seers' Village, south-east of the bank</dd></div>
+    <div class="row"><dt>Entry fee</dt><dd>None</dd></div>
+    <div class="row"><dt>Balloon Bonanza</dt><dd>1,000 coins</dd></div>
+    <div class="row"><dt>Nightly Dance</dt><dd>500 coins</dd></div>
+    <div class="row"><dt>Skill requirement</dt><dd>None</dd></div>
+    <div class="row"><dt>Quest requirement</dt><dd>None</dd></div>
+    <div class="row"><dt>Direct reward</dt><dd>Player-deposited items released by balloons</dd></div>
+    <div class="row"><dt>Reward currency</dt><dd>None</dd></div>
+    <div class="row"><dt>Build folder</dt><dd><code>game_partyroom</code></dd></div>
+    <div class="row"><dt>Audit status</dt><dd>AUDITED</dd></div>
+  </div>
+
+  <p class="lede">The September-2004 Party Room is the <strong>Seers' Village</strong> version, in the building south-east of the bank. Its main activity is a player-funded drop party: place tradeable items into the gold Party Drop Chest, permanently accept the deposit, then pay <strong>1,000 coins</strong> at the lever for <strong>200 party balloons</strong>. Players burst the balloons; some release items from the shared chest onto the floor for anyone to race for. The same lever can instead summon the dancing Party Room Knights for <strong>500 coins</strong>.</p>
+
+  <div class="callout"><p><strong>Historical/build split:</strong> the structured RuneScape 2 Party Room with its chest, lever and staff was present at the 29 March 2004 launch. Jagex's 27 July 2004 <em>Agility, Potions and Parties!</em> update made Party Pete's events cheaper, increased the chance of a prize when the chest held many items, and added periodic junk clearing. Build 254 implements those post-27-July rules. The later Falador Party Room and its free-to-play access are deliberately excluded.</p></div>
+
+  <h3>Getting there</h3>
+  <p>The target-period building stands in <strong>Seers' Village, immediately south-east of the bank</strong>, on the site later replaced by the Seers' Village Courthouse. In build coordinates the Party Room zone covers the ground-floor rectangle beginning in map square <code>42_54</code>; the source explicitly labels the zone <code>party room (seers)</code>.</p>
+  <ul>
+    <li><strong>From Camelot:</strong> walk west from Camelot into Seers' Village, reach the bank, then go south-east to the Party Room. The members-only Camelot Teleport was already period-valid for players with the required Magic level and runes.</li>
+    <li><strong>From East Ardougne:</strong> travel north from Ardougne through Kandarin toward Hemenster and Seers' Village, then use the bank as the landmark and head south-east.</li>
+    <li><strong>From Catherby:</strong> travel north-west to Seers' Village and continue to the building south-east of the bank.</li>
+  </ul>
+  <div class="table-wrap"><table><thead><tr><th>Requirement</th><th>7 September 2004 rule</th><th>Build-254 check</th></tr></thead><tbody>
+    <tr><td>Members</td><td><strong>Required.</strong> The Seers' Village location was in members territory. The Party Room only became available to free players after its later move to Falador.</td><td>No separate membership gate is needed inside <code>game_partyroom</code>; access is controlled by the target-period world location.</td></tr>
+    <tr><td>Quest / quest points</td><td>None.</td><td>No quest or quest-point check exists in the module.</td></tr>
+    <tr><td>Skills</td><td>None.</td><td>No skill check exists for the chest, lever, balloons or dancing event.</td></tr>
+    <tr><td>Entry fee</td><td>None to enter the building.</td><td>No entry charge exists.</td></tr>
+    <tr><td>Balloon event fee</td><td><strong>1,000 coins</strong> per lever activation.</td><td><code>partyroom_balloons</code> checks for 1,000 coins, asks for confirmation, then the lever procedure removes exactly 1,000.</td></tr>
+    <tr><td>Knight event fee</td><td><strong>500 coins</strong> per summon.</td><td><code>partyroom_knights</code> removes exactly 500 coins after confirmation if the knights are not already active.</td></tr>
+    <tr><td>Required items</td><td>None to attend or pop balloons. Coins are only required to start an event; donated rewards are supplied by players.</td><td>The balloon-burst interaction has no equipment or inventory-item requirement.</td></tr>
+    <tr><td>Recommended supplies</td><td>None.</td><td>There is no combat, damage or activity-specific survival requirement.</td></tr>
+  </tbody></table></div>
+
+  <h3>People and objects in the room</h3>
+  <div class="table-wrap"><table><thead><tr><th>NPC / object</th><th>Role in the target guide</th></tr></thead><tbody>
+    <tr><td><strong>Party Pete</strong></td><td>Explains the room, the lever and the gold chest, demonstrates his dance, and periodically inspects the shared chest for low-value junk.</td></tr>
+    <tr><td><strong>Gold Party Drop Chest</strong></td><td>Holds the shared pool of player-donated items used by balloon drops. It can be opened, deposited into and shut.</td></tr>
+    <tr><td><strong>Lever</strong></td><td>Starts either Balloon Bonanza, Nightly Dance, or no action.</td></tr>
+    <tr><td><strong>Megan</strong></td><td>Barmaid. She sells a beer for 2 coins, can dance with the player, and has period-style room dialogue.</td></tr>
+    <tr><td><strong>Lucy</strong></td><td>Barmaid. She sells a beer for 2 coins. This is ordinary bar service, not a minigame reward.</td></tr>
+    <tr><td><strong>Party Room Knights</strong></td><td>Six temporary dancing knights summoned by the 500-coin Nightly Dance option.</td></tr>
+    <tr><td><strong>Party Balloons</strong></td><td>Temporary burstable objects spawned during Balloon Bonanza; they may release a donated chest item onto the floor.</td></tr>
+  </tbody></table></div>
+
+  <h3>Using the Party Drop Chest</h3>
+  <ol>
+    <li>Open the gold chest and choose <strong>Deposit</strong>. The main Party Drop Chest interface shows the shared chest contents while the side panel shows your inventory.</li>
+    <li>Choose <strong>Store 1</strong>, <strong>Store 5</strong>, <strong>Store 10</strong>, <strong>Store All</strong> or <strong>Store X</strong>. Only <strong>tradeable</strong> items are accepted by build 254.</li>
+    <li>Your proposed donation first moves into a private temporary offer area. This buffer has <strong>8 slots</strong>. Before accepting, you may withdraw 1, 5, 10, all or a chosen amount back to your inventory.</li>
+    <li>Press <strong>Accept</strong> to move the temporary offer into the shared Party Room chest. The interface explicitly warns that once Accept is pressed, the items cannot be taken out again.</li>
+    <li>If you close the interface <em>before</em> accepting, the temporary items are moved back to your inventory. If the shared chest cannot hold the offer, the build leaves it in the temporary area and tells you the chest cannot hold it.</li>
+  </ol>
+  <p>The shared chest inventory has <strong>216 slots</strong>. Deposits are world-shared rather than personal: everyone using the same world contributes to, sees and draws prizes from the same chest.</p>
+
+  <div class="callout"><p><strong>Important:</strong> “Deposit” is not a bank. You can revise the eight-slot temporary offer before pressing Accept, but an accepted donation has no player withdrawal path. It remains available for Party Room events until balloons release it or Party Pete's junk-cleaning logic removes it.</p></div>
+
+  <h3>Starting Balloon Bonanza</h3>
+  <ol>
+    <li>Pull the lever and choose <strong>Balloon Bonanza</strong>.</li>
+    <li>The game states the <strong>1,000-coin</strong> price. If you have enough coins, choose <strong>Yes</strong> at the confirmation prompt.</li>
+    <li>With Party Pete present in the room, the lever animates and exactly 1,000 coins are removed.</li>
+    <li>The build begins adding balloons across random unblocked indoor tiles in the Party Room zone. It spawns them in batches of <strong>4</strong> until the counter reaches <strong>200 balloons</strong>.</li>
+    <li>Burst balloons as they appear. The player stamps on the balloon, its burst animation plays, and the reward-selection logic checks the shared chest.</li>
+  </ol>
+  <p>The event has no score, personal points, team assignment, minimum contribution or formal win condition. Starting the event creates a pool of burstable balloons; participation simply means reaching and bursting them before other players do.</p>
+
+  <h3>How balloon rewards are selected</h3>
+  <p>Build 254 does <strong>not</strong> assign a prize to each balloon when the event starts. The chest is consulted at the moment a balloon is burst, so the shared chest contents can change while balloons are still present.</p>
+  <div class="table-wrap"><table><thead><tr><th>Chest / item state</th><th>Build-254 result</th></tr></thead><tbody>
+    <tr><td>Fewer than 100 occupied chest slots</td><td>The burst first passes a 1-in-4 chest-attempt roll. A failed roll produces no item.</td></tr>
+    <tr><td>100 or more occupied chest slots</td><td>The chest-attempt roll is forced to succeed, matching the July-2004 change that made full parties more rewarding.</td></tr>
+    <tr><td>Selected slot is empty</td><td>No item is produced. The reconstruction deliberately allows holes in the shared inventory to affect selection.</td></tr>
+    <tr><td>Ordinary unstackable item</td><td>One item is removed from the shared chest and dropped on the ground at the burst balloon's tile.</td></tr>
+    <tr><td>Stackable or certificate-style entry</td><td>A random quantity from <strong>1 up to the whole stack</strong> is removed and dropped at the balloon tile.</td></tr>
+    <tr><td>No chest item available / no selection</td><td>The balloon simply bursts with no reward.</td></tr>
+  </tbody></table></div>
+  <p>Items are dropped to the <strong>ground</strong>, not placed directly into the bursting player's inventory. That preserves the drop-party race: nearby players must pick the item up after it appears.</p>
+
+  <h3>What happens to unclaimed chest items?</h3>
+  <p>A single 200-balloon event does <strong>not</strong> empty the Party Drop Chest. Any items not selected remain in the world-shared chest and can be released by later balloon drops. There is no per-event refund to the original donor and no automatic “end of party” return.</p>
+  <p>After the 27 July 2004 update, Party Pete also periodically checks for worthless junk. Build 254's cleanup iterates the chest and removes entries that are all of the following: <strong>non-stackable</strong>, not explicitly marked as Party Room cleanup-exempt, and worth <strong>under 100 coins</strong> by the object's configured cost. Those rejected items are dropped around Pete rather than converted into prizes or coins. The project's build-254 release notes describe this as Pete cleaning the chest every minute.</p>
+
+  <h3>Nightly Dance</h3>
+  <p>The second lever option is <strong>Nightly Dance</strong>. It is a period-valid entertainment event and is fully implemented in build 254.</p>
+  <ol>
+    <li>Pull the lever and choose <strong>Nightly Dance</strong>.</li>
+    <li>The game quotes a <strong>500-coin</strong> fee and asks for confirmation.</li>
+    <li>If a Party Room Knight is already present, the build refuses to start another dance and does not proceed with a second summon.</li>
+    <li>Otherwise the lever takes 500 coins and spawns <strong>six Knights</strong> in a row.</li>
+    <li>The knights dance through a scripted sequence of sung lines, including the “Knights of the Party Room” refrain, then the temporary group is removed.</li>
+  </ol>
+  <p>The Nightly Dance is entertainment only. It gives no XP, items, coins, tickets, points or persistent unlock.</p>
+
+  <h3>Other Party Room entertainment</h3>
+  <p>Party Pete can perform his own dance through dialogue, and Megan can dance with the player. Megan and Lucy each sell a <strong>beer for 2 coins</strong>. These interactions are part of the build's period Party Room atmosphere, but they are not minigame rewards and do not affect the drop chest.</p>
+
+  <h3>Rewards</h3>
+  <p>The Party Room has no built-in prize table. Its balloon rewards are whatever <strong>players have already donated to the shared Party Drop Chest</strong>.</p>
+  <div class="table-wrap"><table><thead><tr><th>Reward type</th><th>Source</th><th>Guaranteed?</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>Tradeable item from chest</td><td>Another player's or your own accepted donation</td><td>No</td><td>A balloon may release an item to the floor. Unstackables release one at a time; stackable/certificate-style entries may release a random 1-to-full-stack quantity.</td></tr>
+    <tr><td>XP</td><td>None</td><td>No XP exists</td><td>The module contains no skill-advance call for chest use, lever use, balloon bursting or the dance.</td></tr>
+    <tr><td>System-generated item</td><td>None</td><td>No</td><td>The balloon event does not create its own reward items.</td></tr>
+    <tr><td>Coins</td><td>None as a reward</td><td>No</td><td>Coins are event costs, not payouts. Donated coin stacks could themselves appear as ordinary chest prizes.</td></tr>
+    <tr><td>Entertainment</td><td>Nightly Dance / NPC dances</td><td>Yes when successfully started</td><td>Cosmetic social event only; no persistent unlock.</td></tr>
+  </tbody></table></div>
+
+  <h3>Reward shop / exchange</h3>
+  <p><strong>No persistent Party Room ticket, point or reward shop exists.</strong> There is no activity currency, exchange NPC, reward inventory, XP-for-points option, stock system or purchase table. Megan and Lucy's 2-coin beer service is ordinary direct NPC commerce and is not a Party Room reward exchange.</p>
+
+  <h3>Leaving, failure and recovery</h3>
+  <ul>
+    <li><strong>No round lock-in:</strong> players may leave the building while balloons are active. There is no personal session state to forfeit.</li>
+    <li><strong>No death rule:</strong> the activity has no combat or damage mechanics and no Party Room-specific death/item-protection override.</li>
+    <li><strong>Missed balloons:</strong> if another player bursts a balloon first, find another. There is no personal entitlement to any specific balloon.</li>
+    <li><strong>Accepted donation mistake:</strong> there is no recovery or withdrawal mechanism. Accepted items are intentionally committed to the shared chest.</li>
+    <li><strong>Closed interface before Accept:</strong> the temporary offer is returned to your inventory automatically.</li>
+    <li><strong>Items left after a drop:</strong> they stay in the shared chest for later events unless Pete's junk cleanup removes them.</li>
+  </ul>
+
+  <h3>Multiplayer and shared-world behaviour</h3>
+  <p>The Party Room is inherently multiplayer. The chest inventory is configured <code>scope=shared</code>, and balloon spawns and temporary knights are world objects/NPCs rather than private instances.</p>
+  <ul>
+    <li><strong>Shared donations:</strong> all accepted offers on the world feed the same 216-slot chest.</li>
+    <li><strong>Shared prizes:</strong> balloon bursts remove prizes from that same shared chest, so one player's burst changes what remains for everyone.</li>
+    <li><strong>Ground pickup race:</strong> rewards appear on the floor. The minigame script does not award a prize directly to the player who burst the balloon.</li>
+    <li><strong>Overlapping balloon drops:</strong> <code>partyroom_drop_balloons</code> has no global “drop already active” flag. More than one confirmed lever activation can therefore run overlapping 200-balloon sequences if the world allows the pulls to occur while Party Pete is present.</li>
+    <li><strong>Knight duplicate guard:</strong> the dance path checks for an existing Party Room Knight and refuses another summon while they are already there.</li>
+    <li><strong>Pete cleanup limitation:</strong> the source comment notes that his cleanup hunt checks only one nearby player for protected access; if that access fails, the cleanup pass can do nothing.</li>
+  </ul>
+
+  <h3>Build-254 implementation audit</h3>
+  <p>The complete <code>Content/scripts/minigames/game_partyroom/</code> module was inventoried for this guide: <strong>5 scripts, 5 config files and 2 interfaces</strong>. The shared Party Room zone definition outside the module was also checked because it determines balloon placement and marks the location as Seers' Village.</p>
+  <div class="table-wrap"><table><thead><tr><th>Area audited</th><th>Build-254 finding</th></tr></thead><tbody>
+    <tr><td>Lever / event start</td><td><code>partyroom.rs2</code> implements the three-option lever menu, the 1,000-coin Balloon Bonanza, the 500-coin Nightly Dance, confirmation prompts and lever animation/payment.</td></tr>
+    <tr><td>Balloon spawning</td><td><code>partyroom_drop_balloons</code> recursively adds four random balloon objects per world delay until 200 have been created on valid indoor Party Room tiles.</td></tr>
+    <tr><td>Balloon bursting / rewards</td><td>The category handler in <code>partyroom.rs2</code> stamps and bursts the balloon, consults the shared chest, applies the chest-fullness chance rule, chooses an item/quantity and ground-drops it.</td></tr>
+    <tr><td>Shared chest</td><td><code>partyroom.inv</code> defines <code>partyroom_dropinv</code> as a shared 216-slot inventory. <code>partyroom_chest.rs2</code> implements the private 8-slot temporary offer, tradeability check, pre-Accept withdrawal and irreversible Accept transfer.</td></tr>
+    <tr><td>Chest interface</td><td><code>party_drop_chest.if</code> and <code>party_drop_chest_side.if</code> define the shared chest display, temporary player-offer row, Store/Withdraw quantity options, Accept control and permanent-donation warning.</td></tr>
+    <tr><td>Party Pete</td><td><code>party_pete.rs2</code> contains period-style room explanations and the recurring low-value junk cleanup. It also handles one medium Treasure Trail anagram clue, which is separate from the Party Room reward system.</td></tr>
+    <tr><td>Knights</td><td><code>partyroom.rs2</code> spawns six temporary <code>partyroom_knight</code> NPCs and queues their dance/song sequence before deleting the group.</td></tr>
+    <tr><td>Barmaids</td><td><code>partyroom_megan.rs2</code> and <code>partyroom_lucy.rs2</code> sell beer for 2 coins; Megan also performs the paired dance dialogue.</td></tr>
+    <tr><td>NPC configs</td><td><code>partyroom.npc</code> defines Party Pete, the Knight, Megan and Lucy, including partyhat appearances and the Knight's dance-ready animation.</td></tr>
+    <tr><td>Object configs</td><td><code>partyroom.loc</code> defines the lever, closed/open gold chest and burstable balloon variants.</td></tr>
+    <tr><td>Junk-clean exemption</td><td><code>partyroom.param</code> defines <code>party_clean_exempt</code>; selected holiday/trail/other items elsewhere in Content set it so Pete will not remove them merely for having a low configured value.</td></tr>
+    <tr><td>Location / zone</td><td><code>party_room_zones.dbrow</code> explicitly labels the relevant rectangles <code>party room (seers)</code>, including ground and upper floor coordinates.</td></tr>
+    <tr><td>Reward shop</td><td>No Party Room ticket/point shop or exchange config exists. Player donations are the complete item-reward pool.</td></tr>
+  </tbody></table></div>
+
+  <h3>Build deviations, bugs and reconstruction notes</h3>
+  <ul>
+    <li><strong>Reward odds reconstructed from later behaviour:</strong> the balloon script itself comments that its chest selection was “estimated off OSRS”. The 27 July 2004 update verifies the direction of the mechanic&mdash;more items means a greater chance&mdash;but the exact build formula should be treated as the project's reconstruction, not claimed as a proven 2004 server formula.</li>
+    <li><strong>Overlapping drops:</strong> there is no global active-drop lock around the recursive balloon spawner, so concurrent lever starts can overlap.</li>
+    <li><strong>Chest holes affect rolls:</strong> reward selection explicitly counts empty slots within the occupied span, so a successful chest-attempt roll can still select a null slot and produce nothing.</li>
+    <li><strong>Occasional reorganisation:</strong> when an item stack is fully removed, the script only reorganises the shared chest on two out of three random outcomes, preserving observed old-video behaviour rather than forcing a tidy inventory every time.</li>
+    <li><strong>Pete's cleanup is player-access dependent:</strong> the cleanup hunts nearby players and checks one protected-access target before processing the chest; the source notes that failure on that one target prevents the pass.</li>
+    <li><strong>Lucy interaction reconstruction:</strong> her script uses an approach trigger with a comment noting that the direct NPC option only existed after July 2007; this preserves old-style interaction behaviour rather than silently applying the later interface.</li>
+  </ul>
+
+  <h3>Historical evidence and cutoff notes</h3>
+  <ul>
+    <li><strong>RuneScape 2 launch / historical object and NPC records (29 March 2004):</strong> the gold Party Drop Chest form and Megan's RS2 NPC record date to the permanent RuneScape 2 launch. The Seers' Village party hall itself predates this in RuneScape Classic, but this guide is specifically for the structured RS2 version used by build 254.</li>
+    <li><strong>Archived RuneHQ Seers' Village city guide (7 June 2004):</strong> the build's Party Room source links directly to this Wayback snapshot as period evidence for the room before the July price change.</li>
+    <li><strong>Jagex, “Agility, Potions and Parties!” (27 July 2004):</strong> verifies that Party Pete began periodically clearing worthless junk, that a chest with many items gave a better balloon-reward chance, and that pulling the lever / summoning knights became cheaper.</li>
+    <li><strong>2004scape build-254 release notes:</strong> explicitly describe the July Party Room changes as cheaper Party Pete events and chest junk cleaning, matching the implementation audited here.</li>
+    <li><strong>Seers' Village historical references:</strong> place the Party Room south-east of the bank. Later references confirm that the courthouse replaced this exact site and that moving the Party Room to Falador made it accessible to free players.</li>
+    <li><strong>Build-254 source:</strong> all scripts/configs/interfaces under <code>Content/scripts/minigames/game_partyroom/</code>, plus <code>Content/scripts/skill_firemaking/configs/party_room_zones.dbrow</code> and the item configs that set <code>party_clean_exempt</code>.</li>
+  </ul>
+  <div class="callout"><p><strong>Post-cutoff exclusions:</strong> do not travel to Falador for this guide. The Seers' Village Party Room was moved in 2007, which also opened it to free players. Later bankers' announcements, modern account/trade restrictions, Ironman-specific balloon rules, later graphical/interface revisions and other post-2004 Party Room changes are outside the 7 September 2004 target.</p></div>
+
+  <nav class="page-navigation" aria-label="Previous and next minigame guides"><a class="prev" href="gnome-ball.html">&larr; Gnome Ball</a><a class="next" href="ranging-guild-shooting-range.html">Ranging Guild Shooting Range &rarr;</a></nav>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 implementation. Historical instructions are kept separate from build-specific deviations. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+</article></main></div>
+</body>
+</html>

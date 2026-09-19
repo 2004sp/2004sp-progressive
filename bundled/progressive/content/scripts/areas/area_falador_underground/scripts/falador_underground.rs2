@@ -1,0 +1,14 @@
+// Climbing rope exits — zone-gated so one handler covers all underground rope locations
+[oploc1,loc_1762]
+if (inzone(0_54_152_0_0, 0_54_152_63_63, coord) = true) {
+    anim(human_reachforladder, 0);
+    p_delay(1);
+    p_telejump(0_47_52_11_42);
+    return;
+}
+if (inzone(0_34_77_0_0, 0_34_77_63_63, coord) = true) {
+    anim(human_reachforladder, 0);
+    p_delay(1);
+    p_telejump(0_50_61_34_39);
+    return;
+}

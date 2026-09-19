@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bot Debugger</title>
+<link rel="stylesheet" href="/debug/bots.css">
+</head>
+<body>
+<div id="app">
+    <header id="topbar">
+        <div class="brand">BOT DEBUGGER</div>
+        <div id="statline" class="statline">connecting&hellip;</div>
+        <div id="wsStatus" class="ws-status ws-down">WS: down</div>
+    </header>
+
+    <div id="filters">
+        <input id="fSearch" type="text" placeholder="Search bot name&hellip;">
+        <select id="fTask"><option value="">All tasks</option></select>
+        <select id="fPlanner"><option value="">All planners</option></select>
+        <select id="fStatus">
+            <option value="">All statuses</option>
+            <option value="stuck">Stuck</option>
+            <option value="failing">Failing actions</option>
+            <option value="idle">Idle</option>
+            <option value="warning">Has warning</option>
+            <option value="error">Has error</option>
+            <option value="script">Active script</option>
+        </select>
+        <select id="fSort">
+            <option value="name">Sort: Name</option>
+            <option value="task">Sort: Task</option>
+            <option value="ticksInTask">Sort: Task duration</option>
+            <option value="stuck">Sort: Stuck first</option>
+            <option value="warnings">Sort: Warnings</option>
+        </select>
+    </div>
+
+    <main id="content">
+        <section id="botListPane">
+            <table id="botTable">
+                <thead>
+                <tr>
+                    <th>Bot</th><th>Task</th><th>State</th><th>Pos</th><th>HP</th><th>Flags</th>
+                </tr>
+                </thead>
+                <tbody id="botTableBody"></tbody>
+            </table>
+        </section>
+
+        <section id="inspectorPane">
+            <div id="inspectorEmpty">Select a bot to inspect.</div>
+            <div id="inspector" class="hidden">
+                <div id="inspectorHeader">
+                    <span id="inspName" class="insp-name"></span>
+                    <span id="inspFlags"></span>
+                </div>
+                <nav id="tabs">
+                    <button class="tab active" data-tab="overview">Overview</button>
+                    <button class="tab" data-tab="task">Task</button>
+                    <button class="tab" data-tab="planner">Planner</button>
+                    <button class="tab" data-tab="skills">Skills</button>
+                    <button class="tab" data-tab="inventory">Inventory</button>
+                    <button class="tab" data-tab="movement">Movement</button>
+                    <button class="tab" data-tab="actions">Actions</button>
+                    <button class="tab" data-tab="events">Events</button>
+                </nav>
+                <div id="tabpanes">
+                    <div class="pane active" id="pane-overview"></div>
+                    <div class="pane" id="pane-task"></div>
+                    <div class="pane" id="pane-planner"></div>
+                    <div class="pane" id="pane-skills"></div>
+                    <div class="pane" id="pane-inventory"></div>
+                    <div class="pane" id="pane-movement"></div>
+                    <div class="pane" id="pane-actions"></div>
+                    <div class="pane" id="pane-events"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer id="globalStream">
+        <div id="streamHeader">
+            <span>GLOBAL EVENT STREAM</span>
+            <input id="streamFilter" type="text" placeholder="filter text&hellip;">
+            <select id="streamCategory">
+                <option value="">all categories</option>
+                <option value="task">task</option>
+                <option value="state">state</option>
+                <option value="planner">planner</option>
+                <option value="movement">movement</option>
+                <option value="npc">npc</option>
+                <option value="loc">loc</option>
+                <option value="inventory">inventory</option>
+                <option value="xp">xp</option>
+                <option value="combat">combat</option>
+                <option value="script">script</option>
+                <option value="stuck">stuck</option>
+                <option value="recovery">recovery</option>
+                <option value="warning">warning</option>
+                <option value="error">error</option>
+            </select>
+            <button id="streamPause">Pause</button>
+            <button id="streamClear">Clear</button>
+        </div>
+        <div id="streamBody"></div>
+    </footer>
+</div>
+<script src="/debug/bots.js"></script>
+</body>
+</html>

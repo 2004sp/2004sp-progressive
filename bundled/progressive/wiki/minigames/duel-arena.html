@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Al Kharid Duel Arena guide for the 7 September 2004 RuneScape snapshot and 2004scape Progressive build 254, including travel, duel rules, stakes, forfeits, spectating and implementation notes.">
+  <title>Duel Arena — Minigame Guide — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="../assets/wiki.css">
+  <link rel="stylesheet" href="../assets/quest-guide.css">
+</head>
+<body class="manual-page guide-page">
+<header class="topbar guide-topbar">
+  <a class="brandlink" href="../../wiki.html" aria-label="2004scape Progressive Wiki homepage"><span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span></a>
+  <nav class="header-links" aria-label="Featured wiki pages"><a href="../../wiki.html">Main page</a><a href="../quests.html">Quests</a><a href="../skills.html">Skills</a><a href="../minigames.html">Minigames</a></nav>
+</header>
+<div class="guide-shell"><main class="page"><article class="article-card">
+  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../minigames.html">Minigames</a> &rsaquo; Duel Arena</p>
+  <h1 class="pagetitle">Al Kharid Duel Arena</h1>
+  <p class="byline guide-meta">Minigame guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Al Kharid Duel Arena</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Released</dt><dd>25 March 2004</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members</dd></div>
+    <div class="row"><dt>Location</dt><dd>North-east of Al Kharid</dd></div>
+    <div class="row"><dt>Entry fee</dt><dd>None</dd></div>
+    <div class="row"><dt>Skill requirement</dt><dd>None</dd></div>
+    <div class="row"><dt>Quest requirement</dt><dd>None</dd></div>
+    <div class="row"><dt>Players</dt><dd>2 per duel</dd></div>
+    <div class="row"><dt>Direct reward</dt><dd>Opponent's agreed stake, if any</dd></div>
+    <div class="row"><dt>Build folder</dt><dd><code>game_duelarena</code></dd></div>
+    <div class="row"><dt>Audit status</dt><dd>AUDITED</dd></div>
+  </div>
+
+  <p class="lede">The Duel Arena is a members-only player-versus-player activity north-east of Al Kharid. Two players challenge one another from the arena walkways, agree rules and optional stakes, review the agreement a second time, then enter one of six fight arenas. The winner receives the opponent's agreed stake; an unstaked duel has no separate minigame prize.</p>
+
+  <div class="callout"><p><strong>Historical/build split:</strong> the arena, its six fighting areas, stakes, rule selection and wall-side spectating all existed before the 7 September 2004 cutoff. Build 254 also contains a last-50-duels scoreboard, but Jagex announced that scoreboard on <strong>27 September 2004</strong>, so this guide labels it as post-cutoff implementation content. The build also contains a 60-minute draw timer whose own source comment cites much later evidence; that timer is documented as build behaviour, not asserted as a September-2004 rule.</p></div>
+
+  <h3>Getting there</h3>
+  <p>The Duel Arena lies <strong>north-east of Al Kharid</strong>. There is no arena entry fee and no starting NPC who must be paid or spoken to: once you reach the challenge walkways, the player interaction changes to <strong>Challenge</strong>.</p>
+  <ul>
+    <li><strong>From Al Kharid:</strong> walk north-east out of the town toward the large arena complex and go up onto the walkways surrounding the six fighting arenas.</li>
+    <li><strong>From Lumbridge:</strong> travel east toward the Al Kharid gate. Before completing <strong>Prince Ali Rescue</strong>, the gate toll is <strong>10 coins</strong>; after the quest it is free. A player who does not want to pay can take the longer route north around the fence, then continue through Al Kharid to the arena.</li>
+  </ul>
+  <div class="table-wrap"><table><thead><tr><th>Requirement</th><th>7 September 2004 rule</th><th>Build-254 check</th></tr></thead><tbody>
+    <tr><td>Members</td><td><strong>Required.</strong> The Duel Arena was introduced for members; free-player access was a much later change.</td><td>The challenge script explicitly blocks duelling on a non-members world.</td></tr>
+    <tr><td>Quest / quest points</td><td>None to use the arena. Prince Ali Rescue only affects the convenient Al Kharid gate toll.</td><td>No quest or quest-point requirement is checked before a challenge.</td></tr>
+    <tr><td>Skills / combat level</td><td>No minimum is required to challenge another player.</td><td>No skill or combat-level gate is present in <code>game_duelarena</code>.</td></tr>
+    <tr><td>Entry fee</td><td>None.</td><td>No coin or item fee is charged by the duel start path.</td></tr>
+    <tr><td>Required items</td><td>None for an unstaked normal duel. Any stake is chosen by the players.</td><td>The build accepts tradeable inventory items as optional stakes.</td></tr>
+    <tr><td>Recommended preparation</td><td>Bring only equipment and supplies permitted by the rules you intend to accept, and leave enough inventory space for equipment that a rule may remove and for any winnings.</td><td>The first acceptance screen refuses to continue if required unequips or stake returns would exceed inventory space.</td></tr>
+  </tbody></table></div>
+
+  <h3>Useful arena NPCs and facilities</h3>
+  <div class="table-wrap"><table><thead><tr><th>NPC / object</th><th>Role in build 254</th><th>Guide relevance</th></tr></thead><tbody>
+    <tr><td>Mubariz</td><td>Information NPC explaining the arena, challenges, stakes and duel options.</td><td>Useful orientation; talking to him is not required to duel.</td></tr>
+    <tr><td>Fadli</td><td>Provides bank access and runs the <strong>Shop of Distaste</strong>, which stocks rotten tomatoes.</td><td>Useful for banking before/after a duel. The shop is a normal coin shop, not a reward exchange.</td></tr>
+    <tr><td>A'abla, Sabreen and Tafani</td><td>Nurses with a Heal interaction.</td><td>Each heal interaction restores 12 Hitpoints in the build when the player is injured.</td></tr>
+    <tr><td>Jaraah</td><td>Surgeon NPC with the same direct Heal interaction.</td><td>Another recovery option in the arena hospital.</td></tr>
+    <tr><td>Bank chest</td><td>Opens the bank from the arena complex.</td><td>Lets players make room for stakes and rule-forced equipment removal.</td></tr>
+    <tr><td>Walkway walls</td><td>Can be leaned against for a fixed spectator camera.</td><td>Period-valid spectating feature; walking cancels the camera.</td></tr>
+  </tbody></table></div>
+
+  <h3>How to challenge another player</h3>
+  <ol>
+    <li>Stand in the Duel Arena <strong>challenge area</strong> on the walkways. Both players must be inside the challenge area and neither may already be inside a fight arena.</li>
+    <li>Right-click the other player and choose <strong>Challenge</strong>. The sender receives “Sending duel offer...” and the other player receives a duel request.</li>
+    <li>The other player accepts the invitation by using <strong>Challenge</strong> on the sender. The rule-and-stake interface then opens for both players.</li>
+    <li>Choose any optional duel rules and add any stake items. Changing a rule or changing either stake resets both players' acceptance state, so the revised agreement must be accepted again.</li>
+    <li>Both players press <strong>Accept</strong> on the first screen. The build checks that each player has enough inventory space for any equipment that must be removed and for the stake-return paths.</li>
+    <li>A second confirmation screen shows both stakes and a text summary of what will change before the duel and which restrictions apply during it. Both players must accept this second screen before either is moved into an arena.</li>
+    <li>The build chooses a standard or obstacle arena, moves both players inside, marks the opponent with a hint arrow, counts down <strong>3, 2, 1, FIGHT!</strong>, then enables combat against that opponent only.</li>
+  </ol>
+  <p>Closing either negotiation interface before final confirmation declines the duel. The player's own offered items are returned from the temporary stake inventory, and the opponent is notified that the stake and duel options were declined.</p>
+
+  <h3>Staking items and the confirmation screens</h3>
+  <p>Stakes are optional. The build's stake inventory has <strong>28 slots</strong>. On the side inventory, an item can be staked in quantities of <strong>1, 5, 10, All</strong> or a typed amount; the same quantity choices remove it from the offer. Only tradeable items are accepted by the build.</p>
+  <ul>
+    <li><strong>First screen:</strong> both players can still edit rules and stakes. Any edit clears previous acceptance.</li>
+    <li><strong>Inventory-space check:</strong> the build estimates space needed for equipment removed by No Weapons, No Armour or No Jewelry, then space needed to return the stakes if the duel is cancelled or drawn. It will not advance if that check fails.</li>
+    <li><strong>Second screen:</strong> both stakes are shown again beside a written rule summary. This is the final review step before the arena transfer.</li>
+    <li><strong>Final acceptance:</strong> only when both players accept the second screen are both interfaces closed and the duel-start queues scheduled.</li>
+  </ul>
+
+  <h3>Duel rules available in build 254</h3>
+  <p>The target build exposes <strong>14 rule bits</strong>. The first eleven options below are named in Jagex's 25 March 2004 Duel Arena launch announcement. <strong>Flower Power</strong> and <strong>No Jewelry</strong> were added on 10 May 2004 and therefore also belong in this snapshot. <strong>No Sp. Atk</strong> is present in the audited build after special attacks had been introduced on 14 June 2004; I did not find a separate pre-cutoff news post naming that exact Duel Arena toggle, so its cutoff evidence here is the build-254 interface itself rather than a dedicated announcement.</p>
+  <div class="table-wrap"><table><thead><tr><th>Rule</th><th>Build-254 effect</th><th>Cutoff status</th></tr></thead><tbody>
+    <tr><td>No Forfeit</td><td>The entrance flags/trapdoor cannot be used to surrender. The build refuses this combination with No Melee because ammunition could run out.</td><td>Period-valid; listed at launch on 25 March 2004.</td></tr>
+    <tr><td>No Movement</td><td>A walk trigger prevents either duellist from moving after the fight starts. The build refuses this combination with No Melee.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Weapons</td><td>The right-hand weapon slot is unequipped at the start and weapon-slot equipment is blocked during the duel.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Armour</td><td>Armour slots are unequipped at the start and cannot be re-equipped. The build covers head/hat, cape, shield/left hand, torso, arms, legs, hands, feet and jaw slots.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Ranged</td><td>Ranged attacks are blocked.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Melee</td><td>Melee attacks are blocked. The build prevents combinations that would leave no usable attack style or could strand a no-forfeit/no-movement duel after ammunition runs out.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Magic</td><td>Magic attacks are blocked.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Potions</td><td>Boosted stats are reset before the duel and potion-category consumption is blocked during it.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Food</td><td>Non-potion consumables are blocked by the Duel Arena consume check.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Prayer</td><td>Existing prayers are deactivated at the start and prayer activation is blocked during the duel.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>Obstacles</td><td>The pair is placed into one of three obstacle arenas instead of one of three standard arenas.</td><td>Period-valid; listed at launch.</td></tr>
+    <tr><td>No Jewelry</td><td>Ring and amulet/front slots are unequipped and blocked from re-equipping.</td><td>Period-valid; added 10 May 2004.</td></tr>
+    <tr><td>Flower Power</td><td>Both players must already be wielding flowers to enable it. During the duel the right hand may hold flowers only, and magic is also blocked by the flower-power check.</td><td>Period-valid; added 10 May 2004.</td></tr>
+    <tr><td>No Sp. Atk</td><td>Special attacks are disabled for the duel.</td><td>Present in build 254. Special attacks existed from 14 June 2004; exact toggle announcement not independently located.</td></tr>
+  </tbody></table></div>
+  <div class="callout"><p><strong>Rule-combination guards:</strong> build 254 will not allow No Ranged + No Melee + No Magic together; it also prevents Flower Power with No Weapons or No Melee, and prevents the No Melee combinations with No Forfeit or No Movement described above.</p></div>
+
+  <h3>Winning, losing, forfeiting, drawing and disconnecting</h3>
+  <div class="table-wrap"><table><thead><tr><th>Outcome</th><th>Build-254 behaviour</th><th>Stake result</th></tr></thead><tbody>
+    <tr><td>Defeat opponent</td><td>The losing player enters the duel death path; the winner is marked victorious and both are reset to the hospital/challenge area flow.</td><td>The winner's own offer is returned. The opponent's offer is moved to the winner's winnings inventory and shown on the victory/claim interface.</td></tr>
+    <tr><td>Lose by combat</td><td>The build uses a duel-specific death flow and then restores/resets the player rather than treating the agreed fight like an ordinary wilderness item-loss event.</td><td>You lose the items you explicitly staked; ordinary carried/equipped items are not transferred as the winner's duel spoils.</td></tr>
+    <tr><td>Forfeit</td><td>If No Forfeit is off, use an arena entrance flag or trapdoor and confirm “Do you wish to forfeit?”.</td><td>The forfeiter loses the duel; the other player receives the stake through the same winnings path as a combat victory.</td></tr>
+    <tr><td>Build timer draw</td><td>Build 254 starts a timer labelled in source as a <strong>60 minute</strong> limit. If it expires, the duel resets with an “honourable draw” message.</td><td>Each player's own offer is returned; there is no winner. This timer is later-derived build behaviour and is not asserted as a 7 September 2004 historical rule.</td></tr>
+    <tr><td>Opponent disconnects</td><td>The disconnected player clears duel state; the remaining player is queued into a timeout reset and receives “Your opponent timed out, there was no winner!”.</td><td>The build returns each player's own offered stake rather than awarding the disconnecting player's stake to the opponent.</td></tr>
+    <tr><td>Login while inside arena</td><td>The Duel Arena login procedure immediately runs the duel reset path.</td><td>No win is created by logging back into a fight arena.</td></tr>
+  </tbody></table></div>
+  <p>After a normal win or forfeit win, the winner sees the defeated player's name, combat level and the stake spoils. If the winner closes that interface with enough inventory space, the winnings move into the inventory. <strong>If there is not enough space, build 254 drops all remaining winnings on the ground at the winner's location for the normal loot-drop duration.</strong> That is an important implementation-specific risk and a reason to keep free inventory slots.</p>
+
+  <h3>Death and recovery</h3>
+  <p>The Duel Arena was designed as controlled PvP rather than open-world item-loss PvP. Jagex's launch description states that winner and loser are put back together in the arena hospital. Build 254's duel death path transfers only the temporary stake inventories, then its reset routine restores combat state, statistics/energy, clears poison/skull state, returns tracked arrows, and teleports the player back to the hospital-side challenge area. The nurses and Jaraah can also be used to heal an injured player outside the duel.</p>
+
+  <h3>Spectating</h3>
+  <p>The six duel arenas are surrounded by walkways. Players can stand around them and watch fights without joining. Several arena-wall objects have a <strong>Lean against</strong> interaction; build 254 teleports the spectator into the correct wall position, plays the leaning animation and switches to a fixed camera aimed into the nearest arena. Moving away cancels the lean and resets the camera. This feature is described in the original March 2004 release announcement and is valid for the target snapshot.</p>
+
+  <h3>Scoreboard: present in build, post-cutoff historically</h3>
+  <p>Build 254 contains a scoreboard object and <code>duel_arena_scoreboard.rs2</code>. Every recorded victory shifts a 50-entry server list and stores a line in the form <code>Winner (combat level) beat Loser (combat level)</code>; using the scoreboard opens an interface headed “Last fifty duels on this server”.</p>
+  <div class="callout"><p><strong>Do not treat that scoreboard as 7 September 2004 content.</strong> Jagex announced the Duel Arena scoreboard on <strong>27 September 2004</strong>, specifically describing a display of the last 50 duels on that server. It is therefore a clear post-cutoff feature retained in this build's Content tree. There is no target-period ranking/reward system attached to it.</p></div>
+
+  <h3>Rewards and stakes</h3>
+  <p>The Duel Arena has <strong>no system-generated win prize</strong> in the audited build: there is no dedicated coin payout, item award, ticket, point currency or minigame XP reward for simply winning. The meaningful reward is the other player's optional, player-defined stake.</p>
+  <div class="table-wrap"><table><thead><tr><th>Reward / return</th><th>When</th><th>Build-254 handling</th></tr></thead><tbody>
+    <tr><td>Your own stake</td><td>You win</td><td>Returned from your <code>dueloffer</code> inventory to your normal inventory during the spoils procedure.</td></tr>
+    <tr><td>Opponent's stake</td><td>You win by combat or forfeit</td><td>Transferred to <code>duelwinnings</code>, displayed on the victory interface, then claimed to inventory or dropped to the ground if inventory space is insufficient.</td></tr>
+    <tr><td>Your own stake</td><td>Duel is declined before start</td><td>Returned to your inventory when the negotiation/confirmation interface closes.</td></tr>
+    <tr><td>Your own stake</td><td>Build timer draw</td><td>Returned; no winner's spoils are created.</td></tr>
+    <tr><td>Your own stake</td><td>Disconnect/timeout reset</td><td>Returned; the opponent is told there was no winner.</td></tr>
+    <tr><td>Dedicated win XP / coins / items</td><td>Any ordinary win</td><td>None in the Duel Arena reward path. Normal combat systems may still award whatever combat XP their attacks ordinarily produce; there is no separate Duel Arena completion XP call.</td></tr>
+  </tbody></table></div>
+
+  <h3>Reward shop / exchange</h3>
+  <p><strong>No Duel Arena ticket, point or reward exchange exists</strong> in build 254, and there is no persistent minigame currency to spend. Fadli's <strong>Shop of Distaste</strong> is a separate ordinary shop that stocks rotten tomatoes for spectators; it is not funded by wins, stakes, points or tickets and is not a Duel Arena reward shop.</p>
+
+  <h3>Build-254 implementation audit</h3>
+  <p>The complete <code>Content/scripts/minigames/game_duelarena/</code> folder was inventoried for this guide: <strong>16 scripts, 8 config files and 5 interfaces</strong>.</p>
+  <div class="table-wrap"><table><thead><tr><th>Area audited</th><th>Build-254 finding</th></tr></thead><tbody>
+    <tr><td>Challenge state</td><td><code>duel_arena.rs2</code> manages challenge-area checks, request/reciprocal acceptance, opponent UID state, interface opening/closing and decline cleanup.</td></tr>
+    <tr><td>Rule-selection state</td><td><code>duel_arena_settings.rs2</code> implements all 14 rule bits, conflict guards, equipment/consume/prayer/combat checks and Flower Power restrictions. <code>duel_select_type.if</code> exposes the matching controls.</td></tr>
+    <tr><td>Stake state</td><td><code>duel_arena.rs2</code> moves tradeable items between <code>inv</code> and the 28-slot <code>dueloffer</code>, resets acceptance after edits, checks inventory space and performs the two-stage accept flow. <code>duel_side.if</code> and <code>duel_confirm.if</code> provide the stake interfaces.</td></tr>
+    <tr><td>Start state</td><td><code>duel_arena_start.rs2</code> chooses standard versus obstacle zones, removes prohibited equipment, resets boosts/prayers where selected, applies opponent hinting, starts the build timer and runs the 3-2-1-FIGHT countdown.</td></tr>
+    <tr><td>Combat restriction</td><td><code>duel_arena_checks</code> permits attacks only on the stored opponent and only after both duel statuses reach the started state.</td></tr>
+    <tr><td>Death / victory</td><td><code>duel_arena_finish.rs2</code> marks the loser/winner, transfers the temporary stake inventories, resets the duel, opens <code>duel_win.if</code> and handles claim-or-ground-drop behaviour.</td></tr>
+    <tr><td>Forfeit</td><td><code>duel_forfeit.rs2</code> handles the entrance flags/trapdoor, No Forfeit check, confirmation prompt and stake transfer to the non-forfeiting player.</td></tr>
+    <tr><td>Disconnect / login</td><td><code>duel_arena.rs2</code> returns the disconnected player's offer, queues a no-winner timeout reset for the opponent, and resets a player who logs in inside a fight arena.</td></tr>
+    <tr><td>Spectators</td><td><code>duel_arena_lean.rs2</code> controls leaning and fixed cameras; <code>duel_arena_spectator.rs2</code> contains ambient spectator dialogue. <code>rotten_tomato.rs2</code> implements throwing rotten tomatoes at players.</td></tr>
+    <tr><td>Scoreboard</td><td><code>duel_arena_scoreboard.rs2</code> maintains 50 server-scoped result strings and feeds <code>duel_scoreboard.if</code>. Historically this is post-cutoff 27 September content.</td></tr>
+    <tr><td>NPCs / facilities</td><td><code>duelarena.npc</code> defines Mubariz, Fadli, healers, Jaraah, Hamid, Zahwa and spectators. <code>misc_locs.rs2</code> implements the bank chest, rotten-tomato crate/shop and members gates.</td></tr>
+    <tr><td>Shop / inventories</td><td><code>duelarena.inv</code> defines the 28-slot duel offer/winnings inventories, arrow return inventory and the Shop of Distaste stock. No ticket/point reward inventory exists.</td></tr>
+  </tbody></table></div>
+
+  <h3>Build deviations, reconstruction notes and multiplayer limitations</h3>
+  <ul>
+    <li><strong>Post-cutoff scoreboard:</strong> the source implements the last-50 board even though the feature was announced on 27 September 2004, 20 days after this wiki's cutoff.</li>
+    <li><strong>Later-derived 60-minute draw:</strong> <code>duel_arena_start.rs2</code> sets a 6,000-cycle timer and labels it a 60-minute limit, but the source comment itself points to much later evidence. This guide therefore records it only as build behaviour.</li>
+    <li><strong>Arena allocation is not pair-reserved:</strong> the allocator selects the first suitable standard/obstacle zone with fewer than 24 players. It does not reserve an arena to one pair, so separate duels can be placed in the same fight zone. The combat check still restricts each player to their stored opponent.</li>
+    <li><strong>Full-inventory winnings can hit the floor:</strong> closing the victory interface without enough inventory space makes the build drop the remaining <code>duelwinnings</code> at the player's location instead of banking them.</li>
+    <li><strong>Some text is reconstructed from later sources:</strong> comments in the Duel Arena scripts explicitly cite 2006 videos, RS3 messages or guesses for individual messages. Those comments are implementation provenance, not evidence that every exact line of dialogue belongs to September 2004.</li>
+  </ul>
+
+  <h3>Historical evidence and cutoff notes</h3>
+  <ul>
+    <li><strong>Jagex, “Duelling for members” (25 March 2004):</strong> members-only release, north-east Al Kharid location, six arenas and walkways, challenge-and-watch flow, optional stakes, the original eleven rule choices, opponent arrow, wall leaning, Fadli storage and hospital recovery.</li>
+    <li><strong>Jagex, “Dueling changes” (10 May 2004):</strong> arrow recovery after duels plus the Flower Power and No Jewellery rule additions.</li>
+    <li><strong>Jagex, “Special attacks” (14 June 2004):</strong> establishes that the special-attack system itself existed before the target snapshot; build 254 exposes the No Sp. Atk duel rule.</li>
+    <li><strong>Jagex, Duel Arena scoreboard update (27 September 2004):</strong> establishes that the last-50-duels scoreboard in the current Content tree is post-cutoff and must not be projected back to 7 September.</li>
+    <li><strong>Jagex, free-player Duel Arena opening (10 December 2007):</strong> confirms that free-to-play Duel Arena access belongs years after this snapshot.</li>
+    <li><strong>Build-254 source:</strong> all scripts, configs and interfaces under <code>Content/scripts/minigames/game_duelarena/</code>.</li>
+  </ul>
+
+  <nav class="page-navigation" aria-label="Previous and next minigame guides"><a class="prev" href="brimhaven-agility-arena.html">&larr; Brimhaven Agility Arena</a><a class="next" href="gnome-ball.html">Gnome Ball &rarr;</a></nav>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 implementation. Historical instructions are kept separate from build-specific deviations. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+</article></main></div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "revisionOrder": [
+    "225",
+    "244",
+    "245.2",
+    "254",
+    "274"
+  ],
+  "revisions": {
+    "225": {
+      "date": "May 18, 2004"
+    },
+    "244": {
+      "date": "June 28, 2004"
+    },
+    "245.2": {
+      "date": "July 13, 2004"
+    },
+    "254": {
+      "date": "September 7, 2004"
+    },
+    "274": {
+      "date": "November 23, 2004"
+    }
+  },
+  "progressive": {
+    "revision": "254",
+    "bundledPath": "bundled/progressive"
+  },
+  "persistentPaths": [
+    "engine/.env",
+    "engine/db.sqlite",
+    "engine/db.sqlite-wal",
+    "engine/db.sqlite-shm",
+    "engine/data/players",
+    "engine/data/config/world.json"
+  ],
+  "backupLimit": 5,
+  "javaClientIncluded": false,
+  "store": {
+    "algorithm": "sha256-pack-v1",
+    "uniqueObjects": 23356,
+    "referencedFiles": 50121,
+    "uniqueBytes": 157254357
+  }
+}

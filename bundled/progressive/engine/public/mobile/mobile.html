@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/mobile/manifest.json">
+
+    <!-- Android / Chrome PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+
+    <!-- Apple PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RuneScape">
+    <link rel="apple-touch-icon" href="/mobile/icon.svg">
+
+    <title>RuneScape</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas {
+            display: block;
+            width: min(100vw, calc(100vh * 765 / 503));
+            height: min(100vh, calc(100vw * 503 / 765));
+            touch-action: none;
+            image-rendering: pixelated;
+            cursor: default;
+            -webkit-user-select: none;
+            user-select: none;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #tap-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            /* Let all touch/pointer events pass through to the canvas below.
+               The first canvas touch unlocks audio and removes the overlay. */
+            pointer-events: none;
+        }
+
+        #tap-overlay span {
+            color: #aaa;
+            font-size: 18px;
+            font-family: sans-serif;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        #mobile-controls {
+            position: fixed;
+            top: max(8px, env(safe-area-inset-top));
+            right: max(8px, env(safe-area-inset-right));
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: opacity 0.3s;
+        }
+
+        #mobile-controls.hidden { opacity: 0; pointer-events: none; }
+
+        #mobile-controls button {
+            width: 36px; height: 36px;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        #mobile-controls button:active { background: rgba(80,80,80,0.85); }
+        #mobile-controls button.active { background: rgba(140,17,17,0.85); border-color: rgba(255,100,100,0.6); }
+
+        #scale-group {
+            display: flex; flex-direction: column; gap: 2px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px; padding: 2px;
+            background: rgba(0,0,0,0.4);
+        }
+
+        #scale-group button { border: none; font-size: 11px; font-family: monospace; width: 36px; height: 28px; }
+
+        #wsdbg { display: none; }
+
+        #chrome-banner {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 999999;
+            padding: 24px;
+            text-align: center;
+        }
+
+        #chrome-banner p {
+            color: #ccc;
+            font-family: sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 320px;
+        }
+
+        #chrome-banner a {
+            display: inline-block;
+            padding: 12px 28px;
+            background: #1a73e8;
+            color: #fff;
+            font-family: sans-serif;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+
+        #chrome-banner button {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #888;
+            font-family: sans-serif;
+            font-size: 13px;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="765" height="503"></canvas>
+
+    <!-- Shown only on iOS Safari (not Chrome, not standalone PWA) -->
+    <div id="chrome-banner" style="display:none">
+        <p>For the best experience, open this page in <strong style="color:#fff">Chrome</strong>.<br>Safari has compatibility issues with this game.</p>
+        <a id="chrome-link" href="#">Open in Chrome</a>
+        <button onclick="document.getElementById('chrome-banner').remove()">Continue in Safari anyway</button>
+    </div>
+
+    <div id="tap-overlay"><span>Tap to play</span></div>
+
+    <div id="mobile-controls" class="hidden">
+        <button id="btn-fullscreen" title="Enter fullscreen">⛶</button>
+        <button id="btn-orient" title="Lock landscape">↔</button>
+        <button id="btn-debug" title="Toggle debug log">🐛</button>
+        <button id="btn-afk" title="AFK timer: off">AFK</button>
+        <div id="scale-group">
+            <button id="btn-scale-fit"  title="Fit">Fit</button>
+            <button id="btn-scale-fill" title="Fill">Fill</button>
+            <button id="btn-scale-2x"   title="2×">2×</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            var isChrome = /CriOS/.test(navigator.userAgent);
+            var isStandalone = window.navigator.standalone === true;
+
+            // Show "Open in Chrome" banner on iOS Safari only
+            if (isIos && !isChrome && !isStandalone) {
+                var banner = document.getElementById('chrome-banner');
+                var link = document.getElementById('chrome-link');
+                link.href = window.location.href.replace(/^https?:\/\//, 'googlechrome://');
+                banner.style.display = 'flex';
+            }
+
+            // On Chrome iOS: request fullscreen on first touch so the address bar
+            // and navigation strip disappear. iOS blocks programmatic fullscreen
+            // without a user gesture, so we wait for the first tap.
+            if (isIos && isChrome && !isStandalone) {
+                document.addEventListener('touchstart', function tryFs() {
+                    document.removeEventListener('touchstart', tryFs);
+                    var el = document.documentElement;
+                    var req = el.requestFullscreen || el.webkitRequestFullscreen;
+                    if (req) req.call(el);
+                }, { once: true, passive: true });
+            }
+        })();
+
+        // On-screen debug log (visible without Safari Web Inspector)
+        (function () {
+            var dbg = document.createElement('div');
+            dbg.id = 'wsdbg';
+            dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:140px;overflow-y:auto;' +
+                'background:rgba(0,0,0,0.82);color:#0f0;font:11px/1.4 monospace;padding:4px 6px;' +
+                'z-index:9999999;pointer-events:none;word-break:break-all;';
+            document.body.appendChild(dbg);
+            window.__wsdbg = function (msg) {
+                var t = new Date().toISOString().slice(11, 23);
+                var line = document.createElement('div');
+                line.textContent = '[' + t + '] ' + msg;
+                dbg.appendChild(line);
+                dbg.scrollTop = dbg.scrollHeight;
+            };
+            window.__wsdbg('page loaded, UA: ' + navigator.userAgent.slice(0, 80));
+        })();
+
+        // Draw "Loading..." immediately so the canvas isn't blank while the module loads
+        var canvas = document.getElementById('canvas');
+        if (canvas) {
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Loading...', canvas.width / 2, canvas.height / 2);
+        }
+
+    </script>
+
+    <script type="module">
+        import { Client } from '/mobile/mobileclient.js';
+
+        // ---- URL params ----
+        const params = new URLSearchParams(window.location.search);
+        const nodeid  = parseInt(params.get('nodeid')  ?? '10', 10);
+        const lowmem  = params.get('lowmem')  === '1';
+        const members = params.get('members') !== '0';
+
+        // ---- scale ----
+        const SCALE_KEY = 'rs_mobile_scale';
+        const GAME_W = 765, GAME_H = 503;
+
+        function applyScale(mode) {
+            const c = document.getElementById('canvas');
+            if (!c) return;
+            if (mode === 'fit') {
+                c.style.width  = `min(100vw, calc(100vh * ${GAME_W} / ${GAME_H}))`;
+                c.style.height = `min(100vh, calc(100vw * ${GAME_H} / ${GAME_W}))`;
+            } else if (mode === 'fill') {
+                c.style.width  = '100vw';
+                c.style.height = '100vh';
+            } else if (mode === '2x') {
+                const vw = window.innerWidth, vh = window.innerHeight;
+                if (GAME_W * 2 <= vw && GAME_H * 2 <= vh) {
+                    c.style.width  = (GAME_W * 2) + 'px';
+                    c.style.height = (GAME_H * 2) + 'px';
+                } else {
+                    c.style.width  = `min(100vw, calc(100vh * ${GAME_W} / ${GAME_H}))`;
+                    c.style.height = `min(100vh, calc(100vw * ${GAME_H} / ${GAME_W}))`;
+                }
+            }
+            localStorage.setItem(SCALE_KEY, mode);
+        }
+
+        function setActiveScale(mode) {
+            applyScale(mode);
+            ['fit','fill','2x'].forEach(m => document.getElementById('btn-scale-' + m)?.classList.remove('active'));
+            document.getElementById('btn-scale-' + mode)?.classList.add('active');
+        }
+
+        const savedScale = localStorage.getItem(SCALE_KEY) || 'fit';
+        setActiveScale(savedScale);
+
+        document.getElementById('btn-scale-fit') ?.addEventListener('pointerup', e => { e.preventDefault(); setActiveScale('fit');  });
+        document.getElementById('btn-scale-fill')?.addEventListener('pointerup', e => { e.preventDefault(); setActiveScale('fill'); });
+        document.getElementById('btn-scale-2x')  ?.addEventListener('pointerup', e => { e.preventDefault(); setActiveScale('2x');   });
+
+        window.addEventListener('resize', () => applyScale(localStorage.getItem(SCALE_KEY) || 'fit'));
+        window.addEventListener('orientationchange', () => setTimeout(() => applyScale(localStorage.getItem(SCALE_KEY) || 'fit'), 100));
+
+        // ---- fullscreen ----
+        function enterFullscreen() {
+            const el = document.documentElement;
+            (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+        }
+        function exitFullscreen() {
+            (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+        }
+        function isFullscreen() {
+            return !!(document.fullscreenElement || document.webkitFullscreenElement);
+        }
+
+        document.getElementById('btn-fullscreen')?.addEventListener('pointerup', e => {
+            e.preventDefault();
+            isFullscreen() ? exitFullscreen() : enterFullscreen();
+        });
+
+        function onFullscreenChange() {
+            document.getElementById('btn-fullscreen')?.setAttribute('title', isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen');
+            if (isFullscreen()) {
+                screen.orientation?.lock?.('landscape').catch(() => {});
+            } else {
+                screen.orientation?.unlock?.();
+            }
+        }
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+        // ---- orientation ----
+        let orientLocked = null;
+        document.getElementById('btn-orient')?.addEventListener('pointerup', e => {
+            e.preventDefault();
+            if (!isFullscreen()) { enterFullscreen(); return; }
+            if (orientLocked === 'landscape') {
+                screen.orientation?.lock?.('portrait').catch(() => {});
+                orientLocked = 'portrait';
+                document.getElementById('btn-orient').textContent = '↕';
+            } else {
+                screen.orientation?.lock?.('landscape').catch(() => {});
+                orientLocked = 'landscape';
+                document.getElementById('btn-orient').textContent = '↔';
+            }
+        });
+
+        // ---- controls auto-hide ----
+        let hideTimer = null;
+        function showControls() {
+            const ctrl = document.getElementById('mobile-controls');
+            if (!ctrl) return;
+            ctrl.classList.remove('hidden');
+            clearTimeout(hideTimer);
+            hideTimer = setTimeout(() => ctrl.classList.add('hidden'), 3000);
+        }
+
+        document.addEventListener('touchstart', showControls, { passive: true });
+        document.addEventListener('mousemove',  showControls, { passive: true });
+
+        // ---- audio unlock ----
+        // iOS Safari requires playing actual audio within a user gesture to unlock
+        // the AudioContext. resume() alone is not enough — play a silent buffer.
+        function unlockAudio() {
+            const ctx = window.audioContext;
+            if (!ctx) return;
+            try {
+                const buf = ctx.createBuffer(1, 1, 22050);
+                const src = ctx.createBufferSource();
+                src.buffer = buf;
+                src.connect(ctx.destination);
+                src.start(0);
+            } catch (e) {}
+            if (ctx.state !== 'running') ctx.resume().catch(() => {});
+        }
+
+        // ---- tap overlay ----
+        // pointer-events:none lets touches reach the canvas directly.
+        // The first canvas touch unlocks audio and removes the overlay.
+        const overlay = document.getElementById('tap-overlay');
+        function onFirstTouch() {
+            unlockAudio();
+            overlay?.remove();
+            showControls();
+        }
+        document.addEventListener('touchstart', onFirstTouch, { once: true, passive: true });
+        document.addEventListener('click',      onFirstTouch, { once: true, passive: true });
+        document.addEventListener('touchstart', unlockAudio,  { passive: true });
+        document.addEventListener('click',      unlockAudio,  { passive: true });
+
+        // ---- AFK timer ----
+        (function () {
+            const MODES = [
+                { label: 'AFK',  title: 'AFK timer: off',        duration: 0         },
+                { label: '1.5m', title: 'AFK: 90 seconds',       duration: 90        },
+                { label: '30m',  title: 'AFK: 30 minutes',       duration: 30 * 60   },
+                { label: '∞',    title: 'AFK: never logout',     duration: Infinity  },
+            ];
+            let modeIndex = 0;
+            let afkInterval = null;
+            let afkExpiry   = null;
+            let wakeLock    = null;
+
+            const btn = document.getElementById('btn-afk');
+
+            async function acquireWakeLock() {
+                try {
+                    if (navigator.wakeLock) {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        wakeLock.addEventListener('release', () => { wakeLock = null; });
+                    }
+                } catch (_) {}
+            }
+
+            function releaseWakeLock() {
+                wakeLock?.release().catch(() => {});
+                wakeLock = null;
+            }
+
+            // Simulate a tiny mouse nudge on the canvas so the server doesn't
+            // detect idleness. Uses the centre of the canvas, which is safe.
+            function nudge() {
+                const c = document.getElementById('canvas');
+                if (!c) return;
+                const rect = c.getBoundingClientRect();
+                const cx = rect.left + rect.width  / 2;
+                const cy = rect.top  + rect.height / 2;
+                c.dispatchEvent(new PointerEvent('pointermove', {
+                    bubbles: true, cancelable: true, isPrimary: true,
+                    clientX: cx, clientY: cy
+                }));
+            }
+
+            function stopAfk() {
+                clearInterval(afkInterval);
+                clearTimeout(afkExpiry);
+                afkInterval = afkExpiry = null;
+                releaseWakeLock();
+                btn.classList.remove('active');
+            }
+
+            async function startAfk(mode) {
+                stopAfk();
+                if (mode.duration === 0) return;
+
+                await acquireWakeLock();
+                btn.classList.add('active');
+
+                // Nudge every 60 s to stay under the server's ~5-min idle limit.
+                afkInterval = setInterval(nudge, 60000);
+
+                if (isFinite(mode.duration)) {
+                    afkExpiry = setTimeout(() => {
+                        stopAfk();
+                        modeIndex = 0;
+                        btn.textContent = MODES[0].label;
+                        btn.title       = MODES[0].title;
+                    }, mode.duration * 1000);
+                }
+            }
+
+            btn?.addEventListener('pointerup', e => {
+                e.preventDefault();
+                modeIndex = (modeIndex + 1) % MODES.length;
+                const mode = MODES[modeIndex];
+                btn.textContent = mode.label;
+                btn.title       = mode.title;
+                startAfk(mode);
+            });
+
+            // Re-acquire wake lock if it gets released (e.g. tab becomes visible again).
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && afkInterval && !wakeLock) {
+                    acquireWakeLock();
+                }
+            });
+        })();
+
+        // ---- debug toggle ----
+        document.getElementById('btn-debug')?.addEventListener('pointerup', e => {
+            e.preventDefault();
+            const dbg = document.getElementById('wsdbg');
+            if (!dbg) return;
+            const visible = dbg.style.display !== 'none';
+            dbg.style.display = visible ? 'none' : 'block';
+            document.getElementById('btn-debug')?.classList.toggle('active', !visible);
+
+            // Play a 440 Hz test tone for 0.4s so you can confirm audio routing works
+            if (!visible && window.audioContext) {
+                try {
+                    const ctx = window.audioContext;
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    g.gain.value = 0.2;
+                    osc.frequency.value = 440;
+                    osc.connect(g);
+                    g.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                    window.__wsdbg?.('audio: test tone played (440 Hz, 0.4s) — did you hear it?');
+                } catch (ex) {
+                    window.__wsdbg?.('audio: test tone failed: ' + ex);
+                }
+            }
+        });
+
+        // ---- start game ----
+        new Client(nodeid, lowmem, members);
+    </script>
+</body>
+</html>

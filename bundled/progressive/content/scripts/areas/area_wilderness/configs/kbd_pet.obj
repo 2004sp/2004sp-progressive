@@ -1,0 +1,8 @@
+[kbd_pet_item]
+name=Prince black dragon
+desc=A miniature King black dragon.
+model=model_2855_npc
+members=yes
+tradeable=no
+param=follower_id,king_dragon_pet
+param=destroy_drop,^true

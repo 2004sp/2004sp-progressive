@@ -1,0 +1,281 @@
+// todo osrs and 2004 seems to have different level req messages.
+// note: we have correct level up messages for 2004.
+// https://youtu.be/RHwRNK4ZuOM?t=411
+// todo need more info on 2004 messages. all of these are osrs messages.
+
+[label,levelrequire_attack](int $level, int $slot)
+if (stat_base(attack) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have an attack level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_defence](int $level, int $slot)
+if (stat_base(defence) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a defence level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_attack_caps](int $level, int $slot)
+if (stat_base(attack) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have an Attack level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_defence_caps](int $level, int $slot)
+if (stat_base(defence) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Defence level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_ranged](int $level, int $slot)
+if (stat_base(ranged) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Ranged level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_ranged_lower](int $level, int $slot)
+if (stat_base(ranged) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a ranged level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_magic](int $level, int $slot)
+if (stat_base(magic) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Magic level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_magic_and_attack](int $magic_level, int $attack_level, int $slot)
+if (stat_base(magic) < $magic_level | stat_base(attack) < $attack_level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Magic level of <tostring($magic_level)> and an Attack level of <tostring($attack_level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_ranged_and_defence](int $ranged_level, int $defence_level, int $slot)
+if (stat_base(ranged) < $ranged_level | stat_base(defence) < $defence_level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a ranged level of <tostring($ranged_level)> and a defence level of <tostring($defence_level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_defence_and_strength](int $level, int $slot)
+if (stat_base(strength) < $level | stat_base(defence) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have Defence and Strength levels of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+
+[label,levelrequire_dragon_slayer_quest_defence](int $level, int $slot)
+if (~levelrequire_dragon_slayer_quest = false) {
+    return;
+}
+@levelrequire_defence($level, $slot);
+
+[label,levelrequire_dragon_slayer_quest_ranged_and_defence](int $ranged_level, int $defence_level, int $slot)
+if (~levelrequire_dragon_slayer_quest = false) {
+    return;
+}
+@levelrequire_ranged_and_defence($ranged_level, $defence_level, $slot);
+
+[label,levelrequire_heroes_quest_attack](int $level, int $slot)
+if (~levelrequire_heroes_quest = false) {
+    return;
+}
+@levelrequire_attack_caps($level, $slot);
+
+[label,levelrequire_legends_quest_defence](int $level, int $slot)
+if (~levelrequire_legends_quest = false) {
+    return;
+}
+@levelrequire_defence_caps($level, $slot);
+
+[label,levelrequire_zanaris_quest_attack](int $level, int $slot)
+if (~levelrequire_zanaris_quest = false) {
+    return;
+}
+@levelrequire_attack_caps($level, $slot);
+
+[proc,levelrequire_dragon_slayer_quest]()(boolean)
+if (%dragonquest < ^dragon_complete) {
+    mes("You have not earned the right to wear this yet.");
+    mes("You need to complete the Dragon Slayer quest first."); // todo confirm for 2004
+    return(false);
+}
+return(true);
+
+[proc,levelrequire_heroes_quest]()(boolean)
+if (%heroquest < ^hero_complete) {
+    mes("You have not earned the right to wield this yet.");
+    mes("You need to complete the Heroes' Guild entry quest."); // todo confirm for 2004
+    return(false);
+}
+return(true);
+
+[proc,levelrequire_legends_quest]()(boolean)
+if (%legendsquest < ^legends_complete) {
+    mes("You have not earned the right to wear this yet.");
+    mes("You need to complete the Legends' Quest."); // todo confirm for 2004
+    return(false);
+}
+return(true);
+
+[proc,levelrequire_zanaris_quest]()(boolean)
+if (%zanaris < ^zanaris_complete) {
+    mes("You have not earned the right to wear this yet.");
+    mes("You need to complete the Lost City of Zanaris Quest."); // todo confirm for 2004
+    return(false);
+}
+return(true);
+
+[label,levelrequire_iban_staff](int $slot)
+// https://youtu.be/FKFdDdH5rlE?si=rTj214wpX9RKHiMy&t=188
+if (stat_base(magic) < 50) {
+    mes("You are not a high enough level to use this item,");
+    mes("You need to have a Magic level of 50.");
+    return;
+}
+if (stat_base(attack) < 50) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have an Attack level of 50.");
+    return;
+}
+~equip($slot);
+
+
+[label,levelrequire_agility](int $level, int $slot)
+if (stat_base(agility) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have an Agility level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_crafting](int $level, int $slot)
+if (stat_base(crafting) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Crafting level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_fletching](int $level, int $slot)
+if (stat_base(fletching) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Fletching level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_herblore](int $level, int $slot)
+if (stat_base(herblore) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Herblore level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_hitpoints](int $level, int $slot)
+if (stat_base(hitpoints) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Hitpoints level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_mining](int $level, int $slot)
+if (stat_base(mining) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Mining level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_prayer](int $level, int $slot)
+if (stat_base(prayer) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Prayer level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_runecraft](int $level, int $slot)
+if (stat_base(runecraft) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Runecraft level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_smithing](int $level, int $slot)
+if (stat_base(smithing) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Smithing level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_strength](int $level, int $slot)
+if (stat_base(strength) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Strength level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_thieving](int $level, int $slot)
+if (stat_base(thieving) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Thieving level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_cooking](int $level, int $slot)
+if (stat_base(cooking) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Cooking level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_firemaking](int $level, int $slot)
+if (stat_base(firemaking) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Firemaking level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_woodcutting](int $level, int $slot)
+if (stat_base(woodcutting) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Woodcutting level of <tostring($level)>.");
+    return;
+}
+~equip($slot);
+ 
+[label,levelrequire_fishing](int $level, int $slot)
+if (stat_base(fishing) < $level) {
+    mes("You are not a high enough level to use this item.");
+    mes("You need to have a Fishing level of <tostring($level)>.");
+    return;
+}
+~equip($slot);

@@ -1,0 +1,32 @@
+// ============================================================
+// Scorpia's offspring — retaliate on hit
+[ai_queue1,scorpia_offspring] ~npc_default_retaliate_ap;
+
+
+// ============================================================
+// Scorpia's offspring — take damage
+[ai_queue2,scorpia_offspring] ~npc_default_damage(last_int);
+
+
+// ============================================================
+// Scorpia's offspring — death (no notable drops)
+[ai_queue3,scorpia_offspring] gosub(npc_death);
+
+
+// ============================================================
+// Scorpia's offspring — player in range, begin attacking
+[ai_opplayer2,scorpia_offspring] npc_setmode(applayer2);
+
+[ai_applayer2,scorpia_offspring]
+if (%npc_action_delay > map_clock) {
+    return;
+}
+if (~npc_check_notcombat = false) {
+    npc_setmode(null);
+    return;
+}
+if (~npc_check_notcombat_self = false) {
+    return;
+}
+~npc_rangeattack;
+npc_sethuntmode(scorpia_offspring);

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RuneScape HiScores</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+  :root {
+    --brown-dark:    #0c0c0f;
+    --brown-mid:     #1a1a22;
+    --brown-light:   #2a2a36;
+
+    --gold:          #b1b1b1;
+    --gold-light:    #a5a5a5;
+    --gold-bright:   #ffffff;
+
+    --parchment:     #16161d;
+    --parchment-mid: #1f1f28;
+    --parchment-dark:#2b2b36;
+
+    --text-dark:     #f4f4f7;
+    --text-mid:      #d7d7e0;
+
+    --border:        #4a4a5c;
+    --border-dark:   #2f2f3d;
+
+    --row-even:      #1a1a22;
+    --row-odd:       #20202a;
+    --row-hover:     #2a2a36;
+
+    --header-bg:     #12121a;
+    --red-dark:      #d66a6a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--brown-dark);
+    background-image:
+      radial-gradient(ellipse at 50% 0%, #1f1f2a 0%, #0b0b10 60%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Cpath d='M30 0v60M0 30h60' stroke='%23ffffff08' stroke-width='0.5'/%3E%3C/svg%3E");
+    min-height: 100vh;
+    font-family: 'IM Fell English', Georgia, serif;
+    color: var(--text-dark);
+  }
+
+  /* ── PAGE WRAPPER ── */
+  #page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 12px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    padding: 18px 10px 12px;
+    border-bottom: 3px solid var(--gold);
+    margin-bottom: 14px;
+    position: relative;
+  }
+  header::before, header::after {
+    content: '❖';
+    color: var(--gold);
+    font-size: 1.4em;
+    position: absolute;
+    top: 20px;
+  }
+  header::before { left: 16px; }
+  header::after  { right: 16px; }
+
+  .logo-rune {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--gold-bright);
+    text-shadow: 2px 2px 0 #000, 0 0 20px #ffdd6655;
+    letter-spacing: 0.12em;
+    line-height: 1;
+  }
+  .logo-sub {
+    font-family: 'Cinzel', serif;
+    font-size: 0.78em;
+    color: var(--gold-light);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-top: 2px;
+    display: block;
+  }
+
+  /* ── SKILL TABS ── */
+  #skill-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: #14141b;
+    border: 2px solid var(--border-dark);
+    border-radius: 4px;
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: linear-gradient(180deg, #252532 0%, #17171f 100%);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--gold-light);
+    font-family: 'IM Fell English', serif;
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: all 0.1s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover {
+    background: linear-gradient(180deg, #313142 0%, #20202a 100%);
+    color: var(--gold-bright);
+    border-color: var(--gold);
+  }
+  .tab-btn.active {
+    background: linear-gradient(180deg, #c8a84b 0%, #8b6914 100%);
+    color: #111;
+    font-weight: bold;
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 6px #ffd70033;
+  }
+  .tab-btn svg { flex-shrink: 0; }
+
+  /* ── MAIN PANEL ── */
+  #main-panel {
+    background: var(--parchment);
+    background-image:
+      linear-gradient(180deg, #16161d 0%, #111117 100%),
+      url("data:image/svg+xml,%3Csvg width='4' height='4' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='4' height='4' fill='%23c8a84b08'/%3E%3Ccircle cx='1' cy='1' r='0.5' fill='%23c8a84b10'/%3E%3C/svg%3E");
+    border: 3px solid var(--border-dark);
+    border-top: 4px solid var(--gold);
+    border-radius: 0 0 4px 4px;
+    overflow: hidden;
+  }
+
+  /* ── TABLE HEAD ── */
+  .table-head {
+    background: linear-gradient(180deg, #1f1f28 0%, #12121a 100%);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .table-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.05em;
+    color: var(--gold-bright);
+    text-shadow: 1px 1px 0 #000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .page-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .page-btn {
+    padding: 3px 10px;
+    background: linear-gradient(180deg, #252532 0%, #16161d 100%);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--gold-light);
+    font-family: 'IM Fell English', serif;
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .page-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #c8a84b 0%, #8b6914 100%);
+    color: #111;
+  }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .page-info { color: var(--gold-light); font-size: 0.82em; }
+
+  /* ── HISCORES TABLE ── */
+  #hiscores-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  #hiscores-table thead tr {
+    background: linear-gradient(180deg, #1e1e28 0%, #13131a 100%);
+  }
+  #hiscores-table thead th {
+    padding: 7px 12px;
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 0.82em;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    letter-spacing: 0.05em;
+  }
+  #hiscores-table thead th:first-child { width: 60px; text-align: center; }
+  #hiscores-table thead th:last-child  { text-align: right; }
+
+  #hiscores-table tbody tr {
+    border-bottom: 1px solid var(--parchment-dark);
+    transition: background 0.1s;
+  }
+  #hiscores-table tbody tr:nth-child(even) { background: var(--row-even); }
+  #hiscores-table tbody tr:nth-child(odd)  { background: var(--row-odd); }
+  #hiscores-table tbody tr:hover {
+    background: var(--row-hover);
+    cursor: pointer;
+  }
+
+  #hiscores-table tbody td {
+    padding: 7px 12px;
+    color: var(--text-mid);
+  }
+  .rank-cell {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: #b9b9c6;
+    font-size: 0.88em;
+  }
+  .rank-cell.top3 { color: var(--red-dark); font-size: 1em; }
+  .rank-cell.rank1 { color: #d4af37; }
+  .rank-cell.rank2 { color: #9aa7b3; }
+  .rank-cell.rank3 { color: #b87333; }
+
+  .username-cell {
+    font-weight: bold;
+    color: var(--text-dark);
+  }
+  .username-cell a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .username-cell a:hover {
+    text-decoration: underline;
+    color: var(--gold-bright);
+  }
+
+  .level-cell {
+    text-align: right;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: #9fd18b;
+    font-size: 1em;
+  }
+  .xp-cell {
+    text-align: right;
+    color: #c0b48a;
+    font-size: 0.85em;
+  }
+
+  /* ── LOADING / EMPTY STATES ── */
+  .state-msg {
+    text-align: center;
+    padding: 30px;
+    color: #a9a9b6;
+    font-style: italic;
+    font-size: 1em;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 12px;
+    color: var(--gold);
+    font-size: 0.75em;
+    font-family: 'Cinzel', serif;
+    opacity: 0.6;
+    margin-top: 10px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .logo-rune { font-size: 1.5em; }
+    .xp-cell { display: none; }
+    #hiscores-table thead th:nth-child(4) { display: none; }
+    .tab-btn span { display: none; }
+    .tab-btn { padding: 5px 7px; }
+    #skill-tabs { gap: 3px; padding: 5px; }
+  }
+</style>
+</head>
+<body>
+<div id="page">
+
+  <header>
+    <div class="logo-rune">2004 SINGLEPLAYER PROGRESSION</div>
+    <span class="logo-sub">HiScores</span>
+  </header>
+
+  <div id="skill-tabs">
+    <!-- injected by JS -->
+  </div>
+
+  <div id="main-panel">
+    <div class="table-head">
+      <div class="table-title" id="table-title">
+        <!-- skill icon + name -->
+      </div>
+      <div class="page-controls">
+        <button class="page-btn" id="btn-prev" onclick="changePage(-1)" disabled>◄ Prev</button>
+        <span class="page-info" id="page-info">Page 1</span>
+        <button class="page-btn" id="btn-next" onclick="changePage(1)">Next ►</button>
+      </div>
+    </div>
+    <table id="hiscores-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Username</th>
+          <th style="text-align:right">Level</th>
+          <th style="text-align:right">XP</th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="4" class="state-msg">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer style="display:flex; align-items:center; justify-content:center; gap:16px; padding:10px;">
+
+  <!-- Buy Me a Coffee -->
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="attackishere" data-color="#000000" data-emoji="" data-font="Lato" data-text="Buy me a coffee" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00" ></script>
+
+  <!-- Discord Link -->
+  <a 
+    href="https://discord.gg/pWNjzFKU4V" 
+    target="_blank" 
+    style="
+      color:#fff;
+      text-decoration:none;
+      font-weight:600;
+      padding:8px 12px;
+      border:1px solid #444;
+      border-radius:6px;
+      background:#2b2b2b;
+    "
+  >
+    Join our Discord
+  </a>
+
+</footer>
+</div>
+
+<script src="skills.js"></script>
+<script>
+let currentSkill = 'overall';
+let currentPage  = 0;
+
+function buildTabs() {
+  const container = document.getElementById('skill-tabs');
+  // Overall tab first
+  const overall = document.createElement('button');
+  overall.className = 'tab-btn active';
+  overall.dataset.skill = 'overall';
+  overall.innerHTML = svgIcons.overall + '<span>Overall</span>';
+  overall.onclick = () => selectSkill('overall');
+  container.appendChild(overall);
+
+  SKILLS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn';
+    btn.dataset.skill = s.id;
+    btn.innerHTML = svgIcons[s.key] + `<span>${s.name}</span>`;
+    btn.onclick = () => selectSkill(s.id);
+    container.appendChild(btn);
+  });
+}
+
+function selectSkill(skillId) {
+  currentSkill = skillId;
+  currentPage  = 0;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.skill == skillId);
+  });
+  updateTitle();
+  loadPage();
+}
+
+function updateTitle() {
+  const title = document.getElementById('table-title');
+  if (currentSkill === 'overall') {
+    title.innerHTML = svgIcons.overall + '&nbsp; Overall HiScores';
+  } else {
+    const s = SKILLS.find(x => x.id == currentSkill);
+    title.innerHTML = (svgIcons[s.key] || '') + `&nbsp; ${s.name} HiScores`;
+  }
+}
+
+function changePage(delta) {
+  currentPage = Math.max(0, currentPage + delta);
+  loadPage();
+}
+
+function fmt(n) {
+  return Number(n).toLocaleString();
+}
+
+async function loadPage() {
+  const tbody = document.getElementById('rows');
+  tbody.innerHTML = '<tr><td colspan="4" class="state-msg">Loading…</td></tr>';
+
+  const params = new URLSearchParams({ skill: currentSkill, page: currentPage });
+  const res = await fetch('/api/hiscores?' + params);
+  if (!res.ok) {
+    tbody.innerHTML = '<tr><td colspan="4" class="state-msg">HiScores are currently unavailable.</td></tr>';
+    return;
+  }
+  const data = await res.json();
+
+  document.getElementById('page-info').textContent = `Page ${currentPage + 1}`;
+  document.getElementById('btn-prev').disabled = currentPage === 0;
+  document.getElementById('btn-next').disabled = data.length < 25;
+
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="state-msg">No players found.</td></tr>';
+    return;
+  }
+
+  const baseRank = currentPage * 25;
+  tbody.innerHTML = data.map((p, i) => {
+    const rank = baseRank + i + 1;
+    let rankClass = 'rank-cell';
+    if      (rank === 1) rankClass += ' top3 rank1';
+    else if (rank === 2) rankClass += ' top3 rank2';
+    else if (rank === 3) rankClass += ' top3 rank3';
+    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+    return `<tr onclick="location.href='player.html?user=${encodeURIComponent(p.username)}'">
+      <td class="${rankClass}">${medal}</td>
+      <td class="username-cell"><a href="player.html?user=${encodeURIComponent(p.username)}">${esc(p.username)}</a></td>
+      <td class="level-cell">${fmt(p.level)}</td>
+      <td class="xp-cell">${fmt(p.xp)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+buildTabs();
+updateTitle();
+loadPage();
+</script>
+</body>
+</html>

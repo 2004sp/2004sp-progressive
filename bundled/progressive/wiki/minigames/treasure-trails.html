@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Treasure Trails guide for the 7 September 2004 RuneScape snapshot and 2004scape Progressive build 254, including clue types, coordinate tools, guardians, clue lengths and complete easy, medium and hard reward tables with cutoff notes.">
+  <title>Treasure Trails — Minigame Guide — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="../assets/wiki.css">
+  <link rel="stylesheet" href="../assets/quest-guide.css">
+</head>
+<body class="manual-page guide-page">
+<header class="topbar guide-topbar">
+  <a class="brandlink" href="../../wiki.html" aria-label="2004scape Progressive Wiki homepage"><span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span></a>
+  <nav class="header-links" aria-label="Featured wiki pages"><a href="../../wiki.html">Main page</a><a href="../quests.html">Quests</a><a href="../skills.html">Skills</a><a href="../minigames.html">Minigames</a></nav>
+</header>
+<div class="guide-shell"><main class="page"><article class="article-card">
+  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../minigames.html">Minigames</a> &rsaquo; Treasure Trails</p>
+  <h1 class="pagetitle">Treasure Trails</h1>
+  <p class="byline guide-meta">Minigame/activity guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Treasure Trails</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Introduced</dt><dd>5 May 2004</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members-only trail generation/completion</dd></div>
+    <div class="row"><dt>Area</dt><dd>Across Gielinor; no single starting location</dd></div>
+    <div class="row"><dt>Target-period tiers</dt><dd>Easy, medium and hard</dd></div>
+    <div class="row"><dt>Build clue lengths</dt><dd>Easy 2&ndash;4; medium 3&ndash;5; hard 4&ndash;6 steps</dd></div>
+    <div class="row"><dt>Entry fee</dt><dd>None</dd></div>
+    <div class="row"><dt>Core item</dt><dd>Clue scroll; spade for dig steps</dd></div>
+    <div class="row"><dt>Reward shop</dt><dd>None</dd></div>
+    <div class="row"><dt>Build folder</dt><dd><code>game_trail</code></dd></div>
+    <div class="row"><dt>Audit status</dt><dd>AUDITED</dd></div>
+  </div>
+
+  <p class="lede">Treasure Trails are a members-only chain of clue scrolls. A qualifying monster or other build-specific source gives an <strong>easy, medium or hard clue</strong>; solving it either advances directly to another clue or gives a casket that advances the trail when opened. Continue until the tier's completion roll succeeds, then the game generates several reward rolls from that tier's table. There is <strong>no ticket currency, points system or reward shop</strong>: the items listed below are generated directly by the reward scripts.</p>
+
+  <div class="callout"><p><strong>Historical/build split:</strong> Treasure Trails launched on <strong>5 May 2004</strong>, and the launch announcement described clues as members-server NPC drops, stronger monsters tending to give harder clues, and only one active trail at a time. The historical cutoff for this wiki is <strong>7 September 2004</strong>. The current <code>game_trail</code> source also contains clue and reward additions from the <strong>26 October 2004</strong> Treasure Trails expansion and god pages from <strong>17 November 2004</strong>. Those later entries are labelled below and are not presented as September-2004 content.</p></div>
+
+  <h3>Where Treasure Trails start</h3>
+  <p>There is no minigame lobby, entrance gate or fixed starting NPC. In the target period, Treasure Trails begin when a members-server NPC/monster drops a clue. Build 254 implements that model with tier-specific clue-drop procedures and also has a later, post-cutoff Mort'ton catacomb reward path that can call the generic clue generators.</p>
+  <div class="table-wrap"><table><thead><tr><th>Requirement</th><th>7 September 2004 / build-254 rule</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>Membership</td><td><strong>Required to generate and complete trails.</strong></td><td>The build clue-drop procedures return immediately on a non-members map.</td></tr>
+    <tr><td>Quest / quest points</td><td>No universal requirement.</td><td>Individual clues can point into areas or to NPCs whose access depends on other content. Coordinate-tool dialogue also has an Observatory Quest state caveat described below.</td></tr>
+    <tr><td>Skill requirement</td><td>No universal requirement.</td><td>Travel, combat or quest access can make individual clues impractical for a low-level account.</td></tr>
+    <tr><td>Entry fee</td><td>None.</td><td>Clues are drops/rewards, not purchased entry tickets.</td></tr>
+    <tr><td>Spade</td><td>Required for map/coordinate dig steps.</td><td>Use a spade while standing on or within one tile of the configured dig coordinate in build 254.</td></tr>
+    <tr><td>Coordinate tools</td><td>Sextant, watch and navigation chart for coordinate clues.</td><td>The build refuses coordinate digging if any of the three tools is missing.</td></tr>
+    <tr><td>Combat supplies</td><td>Recommended for hard coordinate clues.</td><td>Period-valid hard wilderness coordinates can summon a Zamorak wizard. Bring food, armour and an escape plan appropriate to the area.</td></tr>
+  </tbody></table></div>
+
+  <h3>Build-254 clue sources</h3>
+  <p>The following table is a source-code inventory of direct clue-drop call sites. It is <strong>not</strong> a claim that every listed NPC existed or dropped clues by 7 September 2004; later quest/area scripts are present in the current Content tree. The 5 May launch evidence only establishes the broader period rule that NPCs on members servers could drop clues and that stronger monsters tended to produce harder tiers.</p>
+  <div class="table-wrap"><table><thead><tr><th>Tier</th><th>Build procedure</th><th>Direct build call sites</th><th>Chance passed to procedure</th></tr></thead><tbody>
+    <tr><td>Easy</td><td><code>trail_easycluedrop</code></td><td>Man, Barbarian, Rogue, Thug, Goblin, Mugger, Afflicted, Viking citizen and rock crab scripts</td><td>All direct call sites use <strong>1/128</strong>. Afflicted/Viking/rock-crab content is later than this wiki's September cutoff.</td></tr>
+    <tr><td>Medium</td><td><code>trail_mediumcluedrop</code></td><td>Death Guard, Vampire, Viking Guard, Guard, Paladin, Tribesman, Jogre, Bandit Camp leaders, Ice Warrior and Horror-from-the-Deep dagannoth scripts</td><td>Usually <strong>1/128</strong>; Tribesman passes <strong>1/138</strong> and Jogre <strong>1/129</strong>. Later-content call sites must not be projected backwards.</td></tr>
+    <tr><td>Hard</td><td><code>trail_hardcluedrop</code></td><td>Blue, black, red and green dragon; hellhound; Kalphite Queen; greater demon; King Black Dragon; Dark Elf</td><td>Usually <strong>1/128</strong>; Hellhound passes <strong>1/64</strong>. The Dark Elf call site belongs to later Regicide-era content.</td></tr>
+    <tr><td>All tiers, later path</td><td><code>trail_geteasyclue</code>, <code>trail_getmediumclue</code>, <code>trail_gethardclue</code></td><td>Mort'ton catacomb reward code</td><td>Called by the catacomb reward table rather than the NPC-drop routines. This route is <strong>post-cutoff</strong>.</td></tr>
+  </tbody></table></div>
+  <p>All three drop procedures first check that the player is on a members map and does not already have a clue/casket. If eligible, the procedure rolls the supplied denominator; on success it chooses a random entry from that tier's clue enum and clears the existing trail-progress bits.</p>
+
+  <h3>Only one active trail</h3>
+  <p>The original 5 May 2004 announcement explicitly says a player cannot be on more than one Treasure Trail at once. Build 254 enforces this more concretely than a modern one-per-tier system: <code>trail_hasclue_all</code> searches both the <strong>inventory and bank</strong> for any easy, medium or hard clue or casket. If any one is present, another clue drop is suppressed and ground-pickup code replies, “You already have a clue scroll.”</p>
+  <p>Challenge scrolls and puzzle boxes have their own duplicate checks, but the main trail gate is cross-tier. In practical build-254 terms, banking an easy clue still prevents a medium or hard clue from being generated.</p>
+
+  <h3>How a Treasure Trail works</h3>
+  <ol>
+    <li><strong>Obtain one clue.</strong> The build chooses a random clue object from the tier enum and resets the trail step counter.</li>
+    <li><strong>Read it.</strong> Text clues open the short or long parchment interface. Map clues open a dedicated map interface.</li>
+    <li><strong>Solve the clue type.</strong> This can mean speaking to an NPC, searching/opening an object, obtaining a key, answering a challenge, solving an anagram, digging at a map/coordinate location, or completing a sliding puzzle.</li>
+    <li><strong>Advance the trail.</strong> A solved non-dig clue calls that tier's progress routine directly. Dig clues usually replace the clue with a casket; opening the casket then calls the same progress routine.</li>
+    <li><strong>Roll for completion.</strong> The progress counter increments first. Easy can finish after 2&ndash;4 solved steps, medium after 3&ndash;5, and hard after 4&ndash;6. At the first two eligible near-cap steps the build has a 50% finish roll; the maximum step is guaranteed.</li>
+    <li><strong>If not finished, receive another clue.</strong> The current clue/challenge/casket is removed and another random clue from the same tier enum is added.</li>
+    <li><strong>If finished, roll rewards.</strong> The tier reward script fills the temporary reward inventory, displays the Treasure Trail completion message/jingle and moves those items into the player's inventory.</li>
+  </ol>
+
+  <h3>Clue types and controls</h3>
+  <div class="table-wrap"><table><thead><tr><th>Clue type</th><th>How it works in the target period / build</th></tr></thead><tbody>
+    <tr><td><strong>Text / cryptic / simple clues</strong></td><td>Read the parchment and identify the named or described NPC/object/location. Easy clues use many direct “speak to/search here” and vague-description steps.</td></tr>
+    <tr><td><strong>Map clues</strong></td><td>Reading opens one of the map interfaces. Bring a spade to the pictured location and dig. The map clue has a configured coordinate and casket result.</td></tr>
+    <tr><td><strong>Coordinate clues</strong></td><td>Medium and hard clues can give degrees/minutes north/south and east/west. Carry a sextant, watch and navigation chart, navigate to the coordinate, then use a spade. Build 254 accepts a dig within one tile of the configured square.</td></tr>
+    <tr><td><strong>Riddles / locked chest or drawers</strong></td><td>Some medium clues lead to locked scenery. While carrying the corresponding clue, a specified NPC/monster can drop a one-use key; use it on the target chest/drawers to advance.</td></tr>
+    <tr><td><strong>Anagrams</strong></td><td>Medium anagram clues existed in the original May 2004 pool. Decode the NPC name and speak to that NPC. Some then issue a numeric challenge scroll; enter the correct number to progress.</td></tr>
+    <tr><td><strong>Puzzle boxes</strong></td><td>Hard clues can give a 5&times;5 sliding puzzle with 24 pieces and one blank. Build 254 initializes a solved image, shuffles it with 101 legal adjacent moves and lets only a tile next to the blank slide. Return/continue through the clue NPC after solving as required by that clue's handler.</td></tr>
+    <tr><td><strong>Hard-clue guardian digs</strong></td><td>Some hard coordinate steps have a guardian parameter. The period-valid initial wilderness set uses a Zamorak wizard. Digging first summons the wizard; after the assigned wizard is defeated, dig again to receive the casket. Later source entries also use a Saradomin wizard and are post-cutoff.</td></tr>
+  </tbody></table></div>
+
+  <h3>Coordinate tools: sextant, watch and chart</h3>
+  <p>You only need the navigation set when carrying a clue with the coordinate/sextant flag. In build 254 the helper dialogue is available only while such a clue is present.</p>
+  <ol>
+    <li>Speak to the <strong>Observatory Professor</strong> and choose the Treasure Trails dialogue. He explains coordinates and sends you to Murphy for a sextant and to the Clock Tower for a watch.</li>
+    <li>Speak to <strong>Murphy</strong> at <strong>Port Khazard</strong>. He gives you a sextant.</li>
+    <li>Speak to <strong>Brother Kojo</strong> at the <strong>Clock Tower south of Ardougne</strong>. He gives you a watch.</li>
+    <li>Return to the Observatory Professor with both. He gives you the navigation chart.</li>
+  </ol>
+  <p>The Professor's Treasure Trails dialogue is available before starting the Observatory Quest and again after completing it, but the build does not expose it during the quest's intermediate states. Once the navigation progression is complete, Murphy, Brother Kojo and the Professor can replace their respective lost tool if you no longer own it.</p>
+  <p>Using the sextant opens its own interface. To obtain a reading you must also carry the watch and chart, be above ground and outside disabled zones, then align the horizon and sun in the eyepiece. The output is measured relative to the Observatory in degrees and minutes north/south and east/west.</p>
+
+  <h3>Dropping, abandoning and recovery</h3>
+  <ul>
+    <li><strong>Historical rule:</strong> the launch announcement says dropping the current clue abandons the trail and allows NPCs to drop clues again.</li>
+    <li><strong>Build-254 nuance:</strong> dropping a clue removes it from the inventory/bank check, so new clues can generate, but there is no dedicated drop handler that clears the step counter at the instant of dropping. The counter is cleared when a new clue is generated. Picking the same dropped clue back up before starting another trail can therefore preserve the existing build progress.</li>
+    <li><strong>Picking up while holding another clue:</strong> blocked across all tiers with “You already have a clue scroll.”</li>
+    <li><strong>Lost coordinate tools:</strong> after the navigation dialogue has progressed, Murphy, Brother Kojo and the Observatory Professor can replace missing sextant/watch/chart items.</li>
+    <li><strong>Lost key/challenge/puzzle item:</strong> re-trigger the clue's relevant NPC/monster interaction where the script supports it. The main clue itself is still required to satisfy those clue-specific checks.</li>
+    <li><strong>Death:</strong> Treasure Trails define no universal safe-death override. Hard clues can take you into the Wilderness or spawn combat guardians, so ordinary build-254 death/item-loss rules still matter.</li>
+    <li><strong>Multiplayer:</strong> trail progress and guardian-defeated state are player variables. Spawned hard-clue wizards are assigned to the triggering player, while world NPCs/objects used for ordinary clue interactions remain shared entities.</li>
+  </ul>
+
+  <h3>Clue pools and the September cutoff</h3>
+  <div class="table-wrap"><table><thead><tr><th>Tier</th><th>Build enum</th><th>Pre-cutoff block</th><th>Later entries present in source</th><th>Known unobtainable source objects</th></tr></thead><tbody>
+    <tr><td>Easy</td><td><strong>66</strong> enum entries</td><td><strong>64</strong>: 3 map clues, 31 simple clues and 30 vague clues from the original block</td><td>2 extra map clues appended for the 26 October 2004 expansion</td><td>None in the easy enum</td></tr>
+    <tr><td>Medium</td><td><strong>56</strong> enum entries</td><td><strong>31</strong>: 1 map, 13 coordinate, 5 riddle/key and 12 anagram clues</td><td>25 appended entries from the October expansion: additional coordinates, maps, riddles and anagrams</td><td><code>trail_clue_medium_map002</code> exists in config/handler data but is explicitly flagged unobtainable and is absent from the enum</td></tr>
+    <tr><td>Hard</td><td><strong>64</strong> enum entries</td><td><strong>31</strong>: 1 map, 13 coordinate and 17 riddle/NPC/puzzle clues</td><td>33 appended October-expansion entries, including more maps, coordinates and riddles</td><td><code>trail_clue_hard_sextant026</code> is explicitly flagged unobtainable and is omitted from the enum</td></tr>
+  </tbody></table></div>
+  <p>The October expansion is historically real, but it falls seven weeks after this wiki's target date. The guide therefore describes the original easy/medium/hard system as historical and treats the appended clue block as build/source contamination outside the target snapshot.</p>
+
+  <h3>Reward generation</h3>
+  <p>Rewards are rolled once per tier completion, with multiple independent reward rolls. A roll first decides whether to use that tier's normal or rare table, then selects uniformly within the chosen table. Duplicate items can therefore occur and stack where the object is stackable.</p>
+  <div class="table-wrap"><table><thead><tr><th>Tier</th><th>Reward rolls</th><th>Rare-table chance per roll</th><th>Normal entry weighting</th><th>Rare entry weighting</th></tr></thead><tbody>
+    <tr><td>Easy</td><td><strong>2&ndash;4</strong></td><td><strong>1/84</strong></td><td>28 equal normal cases after the 83/84 normal branch; each case = 83/2352 (about 1/28.34) per roll</td><td>15 equal rare cases; each = <strong>1/1260</strong> per roll</td></tr>
+    <tr><td>Medium</td><td><strong>3&ndash;5</strong></td><td><strong>1/66</strong></td><td>27 equal normal cases after the 65/66 normal branch; each case = 65/1782 (about 1/27.42) per roll</td><td>14 equal rare cases; each = <strong>1/924</strong> per roll</td></tr>
+    <tr><td>Hard</td><td><strong>4&ndash;6</strong></td><td><strong>1/45</strong></td><td>21 equal normal cases after the 44/45 normal branch; each case = 44/945 (about 1/21.48) per roll</td><td>31 equal first-stage rare cases; each direct case = <strong>1/1395</strong> per roll before any nested ultra-rare roll</td></tr>
+  </tbody></table></div>
+  <p>These probabilities are <strong>build implementation values</strong>. The source comments reconstruct historical odds using later Jagex/OSRS disclosures and item-count scaling, so the exact denominators should not be presented as proven 7 September 2004 server odds.</p>
+
+  <h3>Easy clue rewards</h3>
+  <p>Easy completions make 2&ndash;4 reward rolls. The following table lists every object reachable from the build's easy reward script. “Period-valid” means the item existed by 7 September 2004; later entries are kept visible because they are present in the source but are excluded from the historical reward set.</p>
+  <div class="table-wrap"><table><thead><tr><th>Pool</th><th>Reward(s)</th><th>Quantity</th><th>Cutoff note</th></tr></thead><tbody>
+    <tr><td>Normal</td><td>Coins</td><td>50&ndash;200</td><td>Period-valid ordinary supply</td></tr>
+    <tr><td>Normal</td><td>Trout certificate; Salmon certificate</td><td>6&ndash;10 certificates</td><td>Period-valid certificate-era supplies</td></tr>
+    <tr><td>Normal</td><td>Air rune; Fire rune; Water rune; Earth rune; Mind rune; Body rune</td><td>30&ndash;50</td><td>Period-valid supplies</td></tr>
+    <tr><td>Normal</td><td>Law rune; Chaos rune; Nature rune</td><td>5&ndash;10</td><td>Period-valid supplies</td></tr>
+    <tr><td>Normal</td><td>Black platebody; Black longsword; Black full helm; Black platelegs; Black battleaxe; Black axe; Black dagger</td><td>1</td><td>Period-valid ordinary equipment</td></tr>
+    <tr><td>Normal</td><td>Steel pickaxe; Staff of air; Studded chaps; Studded body; Willow shortbow; Coif; Amulet of magic; Willow longbow</td><td>1</td><td>Period-valid ordinary equipment</td></tr>
+    <tr><td>Normal</td><td>Saradomin pages 1&ndash;4; Zamorak pages 1&ndash;4; Guthix pages 1&ndash;4</td><td>1 page selected uniformly if the god-page case is rolled</td><td><strong>Post-cutoff:</strong> god pages arrived with Horror from the Deep on 17 November 2004</td></tr>
+    <tr><td>Rare</td><td>Black platebody (t); Black platelegs (t); Black full helm (t); Black kiteshield (t)</td><td>1</td><td>Period-valid clue-exclusive trim set</td></tr>
+    <tr><td>Rare</td><td>Black platebody (g); Black platelegs (g); Black full helm (g); Black kiteshield (g)</td><td>1</td><td>Period-valid clue-exclusive gold-trim set</td></tr>
+    <tr><td>Rare</td><td>Highwayman mask; Blue beret; Black beret; White beret; Wizard boots</td><td>1</td><td>Period-valid clue-exclusive clothing</td></tr>
+    <tr><td>Rare</td><td>Black plateskirt (t); Black plateskirt (g)</td><td>1</td><td><strong>Post-cutoff:</strong> plateskirt reward variants belong to the 26 October 2004 expansion</td></tr>
+  </tbody></table></div>
+
+  <h3>Medium clue rewards</h3>
+  <p>Medium completions make 3&ndash;5 reward rolls. The build rare pool has fourteen cases; the two decorated adamant plateskirts are October additions, leaving the earlier twelve-entry rare-item block represented by ranger boots, eight decorated armour pieces and three headbands.</p>
+  <div class="table-wrap"><table><thead><tr><th>Pool</th><th>Reward(s)</th><th>Quantity</th><th>Cutoff note</th></tr></thead><tbody>
+    <tr><td>Normal</td><td>Coins</td><td>200&ndash;1,000</td><td>Period-valid ordinary supply</td></tr>
+    <tr><td>Normal</td><td>Lobster certificate; Swordfish certificate</td><td>8&ndash;12 certificates</td><td>Period-valid certificate-era supplies</td></tr>
+    <tr><td>Normal</td><td>Death rune; Law rune; Nature rune; Chaos rune</td><td>10&ndash;20</td><td>Period-valid supplies</td></tr>
+    <tr><td>Normal</td><td>Fire rune; Earth rune; Water rune; Mind rune; Air rune</td><td>50&ndash;100</td><td>Period-valid supplies</td></tr>
+    <tr><td>Normal</td><td>Adamant full helm; Adamant platebody; Adamant platelegs; Adamant longsword; Adamant battleaxe; Adamant axe; Adamant dagger; Adamant pickaxe</td><td>1</td><td>Period-valid ordinary equipment</td></tr>
+    <tr><td>Normal</td><td>Dragonhide body; Dragonhide chaps; Yew shortbow; Fire battlestaff; Yew longbow; Amulet of power</td><td>1</td><td>Period-valid ordinary equipment</td></tr>
+    <tr><td>Normal</td><td>Saradomin pages 1&ndash;4; Zamorak pages 1&ndash;4; Guthix pages 1&ndash;4</td><td>1 page selected uniformly if the god-page case is rolled</td><td><strong>Post-cutoff:</strong> 17 November 2004</td></tr>
+    <tr><td>Rare</td><td>Ranger boots</td><td>1</td><td>Period-valid clue-exclusive footwear</td></tr>
+    <tr><td>Rare</td><td>Adamant full helm (t); Adamant platebody (t); Adamant platelegs (t); Adamant kiteshield (t)</td><td>1</td><td>Period-valid clue-exclusive trim set</td></tr>
+    <tr><td>Rare</td><td>Adamant platebody (g); Adamant platelegs (g); Adamant full helm (g); Adamant kiteshield (g)</td><td>1</td><td>Period-valid clue-exclusive gold-trim set</td></tr>
+    <tr><td>Rare</td><td>Red headband; Black headband; Brown headband</td><td>1</td><td>Period-valid clue-exclusive clothing</td></tr>
+    <tr><td>Rare</td><td>Adamant plateskirt (t); Adamant plateskirt (g)</td><td>1</td><td><strong>Post-cutoff:</strong> added 26 October 2004</td></tr>
+  </tbody></table></div>
+
+  <h3>Hard clue rewards</h3>
+  <p>Hard completions make 4&ndash;6 reward rolls. The build's first-stage rare table has 31 equally selected cases. Cases 0&ndash;24 are the original direct unique block, cases 26&ndash;30 are October plateskirt additions, and case 25 enters a nested “ultra-rare” branch.</p>
+  <div class="table-wrap"><table><thead><tr><th>Pool</th><th>Reward(s)</th><th>Quantity</th><th>Cutoff note</th></tr></thead><tbody>
+    <tr><td>Normal</td><td>Coins</td><td>1,000&ndash;5,000</td><td>Period-valid ordinary supply</td></tr>
+    <tr><td>Normal</td><td>Lobster certificate; Shark certificate</td><td>12&ndash;15 certificates</td><td>Period-valid certificate-era supplies</td></tr>
+    <tr><td>Normal</td><td>Nature rune; Law rune</td><td>30&ndash;50</td><td>Period-valid supplies</td></tr>
+    <tr><td>Normal</td><td>Blood rune</td><td>20&ndash;30</td><td>Period-valid supply</td></tr>
+    <tr><td>Normal</td><td>Rune full helm; Rune platebody; Rune platelegs; Rune plateskirt; Rune kiteshield; Rune longsword; Rune dagger; Rune battleaxe; Rune axe; Rune pickaxe</td><td>1</td><td>Period-valid ordinary equipment</td></tr>
+    <tr><td>Normal</td><td>Black dragonhide body; Black dragonhide chaps; Magic shortbow; Magic longbow</td><td>1</td><td>Period-valid ordinary equipment</td></tr>
+    <tr><td>Normal</td><td>Saradomin pages 1&ndash;4; Zamorak pages 1&ndash;4; Guthix pages 1&ndash;4</td><td>1 page selected uniformly if the god-page case is rolled</td><td><strong>Post-cutoff:</strong> 17 November 2004</td></tr>
+    <tr><td>Rare</td><td>Robin hood hat</td><td>1</td><td>Period-valid clue-exclusive headwear</td></tr>
+    <tr><td>Rare</td><td>Rune full helm (t); Rune platebody (t); Rune platelegs (t); Rune kiteshield (t)</td><td>1</td><td>Period-valid clue-exclusive trim set</td></tr>
+    <tr><td>Rare</td><td>Rune full helm (g); Rune platebody (g); Rune platelegs (g); Rune kiteshield (g)</td><td>1</td><td>Period-valid clue-exclusive gold-trim set</td></tr>
+    <tr><td>Rare</td><td>Pirate hat; Brown cavalier; Dark cavalier; Black cavalier</td><td>1</td><td>Period-valid clue-exclusive clothing</td></tr>
+    <tr><td>Rare</td><td>Zamorak rune full helm; platebody; platelegs; kiteshield</td><td>1</td><td>Period-valid god-coloured rune armour</td></tr>
+    <tr><td>Rare</td><td>Guthix rune full helm; platebody; platelegs; kiteshield</td><td>1</td><td>Period-valid god-coloured rune armour</td></tr>
+    <tr><td>Rare</td><td>Saradomin rune full helm; platebody; platelegs; kiteshield</td><td>1</td><td>Period-valid god-coloured rune armour</td></tr>
+    <tr><td>Rare</td><td>Rune plateskirt (Guthix); Rune plateskirt (Saradomin); Rune plateskirt (Zamorak); Rune plateskirt (t); Rune plateskirt (g)</td><td>1</td><td><strong>Post-cutoff:</strong> plateskirt variants added 26 October 2004</td></tr>
+    <tr><td>Ultra-rare nested branch</td><td>15 certificates of 4-dose super energy potion; 15 certificates of 4-dose super restore potion; 15 certificates of 4-dose anti-dragon/antifire potion; or a bundle of 5 super attack + 5 super strength + 5 super defence potion certificates</td><td>As stated</td><td>The underlying potion items existed by the cutoff, but this exact nested hard-clue reward branch is documented here as <strong>build behaviour</strong> rather than asserted as a proven September-2004 table.</td></tr>
+    <tr><td>Ultra-rare nested branch</td><td>Gilded rune platebody; Gilded rune platelegs; Gilded rune full helm; Gilded rune plateskirt; Gilded rune kiteshield</td><td>1</td><td><strong>Post-cutoff:</strong> gilded armour was added 26 October 2004</td></tr>
+  </tbody></table></div>
+  <p>If hard rare case 25 is selected, the script chooses the potion/certificate side or gilded side with equal 1/2 probability. Each of the four potion outcomes is therefore <strong>1/11,160 per reward roll</strong>; each of the five gilded items is <strong>1/13,950 per reward roll</strong>. Again, these are build-script probabilities, not claimed historical September odds.</p>
+
+  <h3>No reward shop or points exchange</h3>
+  <p>Treasure Trails have <strong>no ticket shop, points currency, exchange NPC, stock inventory, restock timer or XP-for-points option</strong> in build 254. The <code>trail_reward</code> interface only displays the random reward inventory created by the completion script. It must not be described as a shop. There is also no direct XP reward from completing a trail.</p>
+
+  <h3>Build-254 implementation audit</h3>
+  <p>The complete <code>Content/scripts/minigames/game_trail/</code> tree was inventoried for this guide: <strong>50 files</strong> total &mdash; 15 config files, 22 interfaces and 13 scripts across the root/easy/medium/hard folders. Cross-repository call sites for clue drops, clue progress, navigation tools and the shared spade handler were also traced.</p>
+  <div class="table-wrap"><table><thead><tr><th>Area audited</th><th>Build-254 finding</th></tr></thead><tbody>
+    <tr><td>Generation gate</td><td><code>trail_clue_drop.rs2</code> blocks clue generation on free maps and whenever <code>trail_hasclue_all</code> detects any clue/casket in inventory or bank.</td></tr>
+    <tr><td>Tier selection</td><td>Easy, medium and hard generation each choose uniformly from <code>trail_easy_enum</code>, <code>trail_medium_enum</code> or <code>trail_hard_enum</code>.</td></tr>
+    <tr><td>Progress state</td><td><code>%trail_status</code> bits 0&ndash;3 store solved-step progress; bit 4 stores the hard-clue guardian-defeated flag; bits 5&ndash;8 store sextant/watch/chart dialogue progress.</td></tr>
+    <tr><td>Step length</td><td><code>trail.constant</code> caps easy/medium/hard at 4/5/6. Completion is checked after incrementing progress and can succeed two steps before the cap with a 50% roll, producing build lengths 2&ndash;4 / 3&ndash;5 / 4&ndash;6.</td></tr>
+    <tr><td>Reading clues</td><td><code>trail_clue_read.rs2</code> opens map interfaces directly for maps and dynamically selects the short/long parchment interface for text clues by line count.</td></tr>
+    <tr><td>Digging</td><td>The global <code>spade.rs2</code> handler detects carried Treasure Trail clues with configured coordinates/caskets, checks coordinate-tool possession where required and accepts distance &le; 1 from the configured dig square.</td></tr>
+    <tr><td>Hard guardians</td><td>The spade handler checks <code>trail_guardian</code>, spawns the assigned wizard for the player and withholds the casket until bit 4 records that the guardian was defeated.</td></tr>
+    <tr><td>Zamorak wizard</td><td><code>zamorak_wizard.rs2</code> implements the level-65 hard-clue guardian using Flames of Zamorak and player ownership/despawn checks. This guardian appears in the original coordinate block.</td></tr>
+    <tr><td>Saradomin wizard</td><td><code>saradomin_wizard.rs2</code> implements a stronger level-108 melee/magic guardian with poison handling. Its clue uses belong to the later appended clue block and are outside 7 September.</td></tr>
+    <tr><td>Medium locked clues</td><td><code>trail_clue_medium.rs2</code> conditionally drops clue-specific keys from the named NPC/monster while the matching clue is carried, consumes the key at the configured chest/drawers and progresses the trail.</td></tr>
+    <tr><td>Challenges</td><td>The medium challenge helper opens a numeric input dialog and compares the entered value with the challenge object's <code>trail_challenge_answer</code> parameter.</td></tr>
+    <tr><td>Puzzle boxes</td><td><code>trail_puzzle.rs2</code> supports three 5&times;5 images, initializes 24 tiles plus a blank, performs 101 legal random moves and tests every occupied slot for the solved arrangement.</td></tr>
+    <tr><td>Navigation</td><td><code>trail_sextant.rs2</code> requires the watch and chart, rejects underground/disabled zones, requires centered horizon/sun state and converts map displacement from the Observatory into degrees/minutes.</td></tr>
+    <tr><td>Navigation items</td><td>Murphy supplies the sextant, Brother Kojo the watch and the Observatory Professor the chart once the clue-gated dialogue sequence reaches each stage. Lost-item replacements are scripted.</td></tr>
+    <tr><td>Easy rewards</td><td><code>trail_clue_easy_reward.rs2</code>: 2&ndash;4 rolls, 1/84 rare-table branch, 28 normal cases and 15 rare cases.</td></tr>
+    <tr><td>Medium rewards</td><td><code>trail_clue_medium_reward.rs2</code>: 3&ndash;5 rolls, 1/66 rare-table branch, 27 normal cases and 14 rare cases.</td></tr>
+    <tr><td>Hard rewards</td><td><code>trail_clue_hard_reward.rs2</code>: 4&ndash;6 rolls, 1/45 rare-table branch, 21 normal cases, 31 first-stage rare cases and the nested case-25 potion/gilded branch.</td></tr>
+    <tr><td>God pages</td><td>The shared <code>trail_reward_godpage</code> helper chooses uniformly among 12 Saradomin, Zamorak and Guthix pages. These items are post-cutoff despite being reachable from all three build reward tables.</td></tr>
+    <tr><td>Final payout</td><td><code>trail_complete</code> clears progress, plays the Treasure Trail completion jingle, opens the reward interface and queues movement of all generated reward-inventory slots into the player's inventory.</td></tr>
+    <tr><td>Unobtainable data</td><td>Medium <code>map002</code> and hard <code>sextant026</code> are explicitly marked unobtainable in source and omitted from their active enums.</td></tr>
+    <tr><td>Shared-world assumptions</td><td>Trail progress is player-scoped. Ordinary clue NPCs/scenery are shared; hard guardians store the triggering player's UID and reject attacks/interactions from players they are not assigned to.</td></tr>
+  </tbody></table></div>
+
+  <h3>Build deviations and cutoff exclusions</h3>
+  <ul>
+    <li><strong>26 October clue expansion:</strong> the current clue enums contain appended easy, medium and hard clues released after the target date. They are source-visible but not September history.</li>
+    <li><strong>26 October reward expansion:</strong> decorated plateskirts and gilded rune armour are present in reward code but post-date the cutoff.</li>
+    <li><strong>17 November god pages:</strong> all three reward scripts can roll god pages through a shared helper, but Horror from the Deep and the pages were released after the cutoff.</li>
+    <li><strong>Later acquisition call sites:</strong> Afflicted/Mort'ton, Rellekka/Fremennik, Horror-from-the-Deep and Regicide-era scripts call clue helpers in the current source tree. Those calls are build/source evidence only for this audit, not target-date historical instructions.</li>
+    <li><strong>Drop-to-abandon state:</strong> historical launch text treats dropping the clue as abandonment; build 254 does not clear the progress bits until another clue is generated.</li>
+    <li><strong>Reward odds reconstruction:</strong> comments in the reward scripts explicitly derive/scaled rare rates from later disclosed odds. The exact 1/84, 1/66 and 1/45 build denominators are therefore not asserted as original May/September server values.</li>
+    <li><strong>Sextant reconstruction:</strong> the sextant script contains source comments acknowledging uncertainty around disabled zones and randomized needle positioning. The coordinate output and tool requirement are usable build mechanics, while those low-level details remain reconstruction notes.</li>
+  </ul>
+
+  <h3>Historical evidence and cutoff notes</h3>
+  <ul>
+    <li><strong>5 May 2004 official update:</strong> introduced Treasure Trails, described random NPC clue drops on members servers, harder clues from stronger monsters, chained clues leading to treasure and the one-active-trail rule.</li>
+    <li><strong>26 October 2004 official update:</strong> explicitly added more clues and new Treasure Trail rewards, making that expansion later than the 7 September snapshot.</li>
+    <li><strong>Reward item histories:</strong> decorated plateskirts and gilded rune armour date to 26 October 2004, while god pages date to 17 November 2004. The older decorated platelegs/helms/bodies/shields and original clothing rewards remain period-valid.</li>
+    <li><strong>Clue item histories:</strong> surviving clue records identify original medium anagrams such as ARE COL/GOBLIN KERN as 5 May 2004 items, while later appended coordinates are dated 26 October 2004. This matches the build enum/config boundary used in the audit.</li>
+    <li><strong>Build-254 source:</strong> all 50 files under <code>Content/scripts/minigames/game_trail/</code>, plus the global spade handler and cross-module NPC/drop/progress call sites described above.</li>
+  </ul>
+
+  <nav class="page-navigation" aria-label="Previous and next minigame guides"><a class="prev" href="ranging-guild-shooting-range.html">&larr; Ranging Guild Shooting Range</a><a class="next" href="fishing-trawler.html">Fishing Trawler &rarr;</a></nav>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 implementation. Historical instructions are kept separate from build-specific and post-cutoff source content. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+</article></main></div>
+</body>
+</html>

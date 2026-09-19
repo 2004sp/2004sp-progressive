@@ -1,0 +1,8 @@
+[callum_shop]
+scope=shared
+size=40
+restock=yes
+stackall=yes
+allstock=no
+stock1=bunnyears,5,1000000
+stock2=scythe,5,1000000

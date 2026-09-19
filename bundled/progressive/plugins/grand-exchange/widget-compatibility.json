@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "source": {
+    "cache": "runescape/568",
+    "revision_family": 481,
+    "provided_timestamp": "2007-12-12",
+    "archive_sha256": "868027c9ccf770b8bbb60c89aeeb9603796b40dcd501f32610176ffbf5bf1495"
+  },
+  "scope": {
+    "in_scope_interface_groups": [
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      643
+    ],
+    "excluded_interface_groups": [
+      645,
+      646
+    ],
+    "source_component_count": 679,
+    "source_widget_type_counts": {
+      "0": 129,
+      "3": 75,
+      "4": 99,
+      "5": 368,
+      "6": 8
+    }
+  },
+  "feature_envelope": {
+    "hidden_components": 28,
+    "tiled_sprite_components": 207,
+    "transparent_rect_components": 44,
+    "transparent_sprite_components": 1,
+    "sprite_shadow_components": 2,
+    "custom_line_height_components": 4,
+    "unshadowed_text_components": 3,
+    "model_components": 8,
+    "static_model_components": 1,
+    "action_components": 49,
+    "listener_components": 78,
+    "sprite_rotation_components": 0,
+    "sprite_outline_components": 0,
+    "sprite_flip_components": 0,
+    "drag_components": 0,
+    "scrollbar_components": 0,
+    "spell_action_components": 0
+  },
+  "groups": [
+    {
+      "source_group_id": 105,
+      "interface_name": "grand_exchange_overview",
+      "synthetic_if1_root_local_id": 8990,
+      "source_component_block_base": 9000,
+      "source_component_count": 214
+    },
+    {
+      "source_group_id": 106,
+      "interface_name": "grand_exchange_group_106",
+      "synthetic_if1_root_local_id": 8991,
+      "source_component_block_base": 9256,
+      "source_component_count": 146
+    },
+    {
+      "source_group_id": 107,
+      "interface_name": "grand_exchange_group_107",
+      "synthetic_if1_root_local_id": 8992,
+      "source_component_block_base": 9512,
+      "source_component_count": 19
+    },
+    {
+      "source_group_id": 108,
+      "interface_name": "grand_exchange_group_108",
+      "synthetic_if1_root_local_id": 8993,
+      "source_component_block_base": 9768,
+      "source_component_count": 98
+    },
+    {
+      "source_group_id": 109,
+      "interface_name": "grand_exchange_group_109",
+      "synthetic_if1_root_local_id": 8994,
+      "source_component_block_base": 10024,
+      "source_component_count": 58
+    },
+    {
+      "source_group_id": 110,
+      "interface_name": "grand_exchange_group_110",
+      "synthetic_if1_root_local_id": 8995,
+      "source_component_block_base": 10280,
+      "source_component_count": 93
+    },
+    {
+      "source_group_id": 643,
+      "interface_name": "grand_exchange_group_643",
+      "synthetic_if1_root_local_id": 8996,
+      "source_component_block_base": 10536,
+      "source_component_count": 51
+    }
+  ],
+  "compatibility": {
+    "native_if1_types": [
+      "layer",
+      "rect",
+      "text",
+      "graphic",
+      "model",
+      "inv"
+    ],
+    "native_font_names": [
+      "p11",
+      "p12",
+      "b12"
+    ],
+    "strategies": [
+      "IF3 type-0 containers use native IF1 layers with explicit scroll extents.",
+      "IF3 type-3 fill/alpha rectangles use native IF1 rect fill/trans fields.",
+      "IF3 type-4 text uses the frozen 494/495/496 to p11/p12/b12 font mapping and native alignment/shadow fields.",
+      "IF3 type-5 sprites use native IF1 graphics; tiling/component-canvas cases are materialized as option-2-only derived media.",
+      "IF3 initial hidden state is restored with server-authoritative if_sethide calls rather than importing a CS2 runtime.",
+      "IF3 actions/listeners are reduced to native IF1 button/hover fields plus explicit server scripts; generic r481 listeners are not imported.",
+      "IF3 type-6 item/model hosts remain native r254 runtime item hosts; the single direct r481 static model reference is not imported.",
+      "No sprite rotation, outline, flip, drag, scrollbar or spell-targeting compatibility is added because the in-scope source does not use it."
+    ]
+  }
+}

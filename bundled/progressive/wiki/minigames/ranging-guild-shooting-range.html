@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ranging Guild Shooting Range guide for the 7 September 2004 RuneScape snapshot and 2004scape Progressive build 254, including access, scoring, Ranged XP, Archery tickets and the complete ticket exchange.">
+  <title>Ranging Guild Shooting Range — Minigame Guide — 2004scape Progressive Wiki</title>
+  <link rel="stylesheet" href="../assets/wiki.css">
+  <link rel="stylesheet" href="../assets/quest-guide.css">
+</head>
+<body class="manual-page guide-page">
+<header class="topbar guide-topbar">
+  <a class="brandlink" href="../../wiki.html" aria-label="2004scape Progressive Wiki homepage"><span class="wordmark"><span class="name">2004scape Progressive</span><span class="sub">The Coverage Wiki</span></span></a>
+  <nav class="header-links" aria-label="Featured wiki pages"><a href="../../wiki.html">Main page</a><a href="../quests.html">Quests</a><a href="../skills.html">Skills</a><a href="../minigames.html">Minigames</a></nav>
+</header>
+<div class="guide-shell"><main class="page"><article class="article-card">
+  <p class="breadcrumbs"><a href="../../wiki.html">Coverage Wiki</a> &rsaquo; <a href="../minigames.html">Minigames</a> &rsaquo; Ranging Guild Shooting Range</p>
+  <h1 class="pagetitle">Ranging Guild Shooting Range</h1>
+  <p class="byline guide-meta">Minigame guide &middot; 7 September 2004 snapshot &middot; 2004scape Progressive build 254</p>
+
+  <div class="infobox guide-infobox">
+    <div class="ibhead">Ranging Guild Shooting Range</div><div class="ibicon" aria-hidden="true"></div>
+    <div class="row"><dt>Introduced</dt><dd>21 January 2004 RS2 beta; permanent by 29 March 2004</dd></div>
+    <div class="row"><dt>Access</dt><dd>Members</dd></div>
+    <div class="row"><dt>Location</dt><dd>Ranging Guild, east of Hemenster</dd></div>
+    <div class="row"><dt>Guild requirement</dt><dd>40 current Ranged in build 254</dd></div>
+    <div class="row"><dt>Competition fee</dt><dd>200 coins per attempt</dd></div>
+    <div class="row"><dt>Shots</dt><dd>10</dd></div>
+    <div class="row"><dt>Required equipment</dt><dd>A bow; bronze arrows are supplied</dd></div>
+    <div class="row"><dt>Reward currency</dt><dd>Archery ticket</dd></div>
+    <div class="row"><dt>Build folder</dt><dd><code>game_ranging</code></dd></div>
+    <div class="row"><dt>Audit status</dt><dd>AUDITED</dd></div>
+  </div>
+
+  <p class="lede">The Ranging Guild's target competition is a members-only shooting activity inside the guild east of Hemenster. Pay the <strong>Competition Judge 200 coins</strong>, receive <strong>10 bronze arrows</strong>, equip your own bow, and fire ten shots at the competition targets. Each shot can score 0, 10, 20, 30, 50 or 100 points and awards Ranged XP equal to half of the points scored. When all ten shots are finished, the judge converts the final score into <strong>one Archery ticket for every 10 points</strong>. Tickets can then be spent with the <strong>Ticket Merchant</strong> on the six fixed rewards documented below.</p>
+
+  <div class="callout"><p><strong>Historical/build split:</strong> the guild and competition existed before the 7 September 2004 cutoff. Build 254 reconstructs the period competition and deliberately preserves the old Ticket Merchant interaction style: the NPC still has a Talk-to option rather than the later mid-2005 Trade option. The build's target-hit probability is reconstructed from later documented behaviour, so the exact random accuracy formula is a project implementation detail rather than a proven September-2004 server formula.</p></div>
+
+  <h3>Getting there</h3>
+  <p>The <strong>Ranging Guild</strong> is in Kandarin, <strong>east of Hemenster</strong>, between Seers' Village and East Ardougne. Enter through the guild door beside the <strong>Ranging Guild Doorman</strong>. The target competition and its Competition Judge are on the eastern side of the guild; the Ticket Merchant is in the western side.</p>
+  <ul>
+    <li><strong>From Seers' Village:</strong> walk south-west from the village toward Hemenster, then continue to the guild immediately east of Hemenster. This is a straightforward period-valid route.</li>
+    <li><strong>From East Ardougne:</strong> leave the city to the north-west and follow the road toward Hemenster and Seers' Village; the Ranging Guild is east of Hemenster before reaching Seers' Village.</li>
+    <li><strong>From Camelot:</strong> Camelot Teleport was already available by the target date. From Camelot, walk west into Seers' Village and then south-west to the guild. This is optional convenience, not an activity requirement.</li>
+  </ul>
+
+  <div class="table-wrap"><table><thead><tr><th>Requirement</th><th>7 September 2004 / build-254 rule</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>Members</td><td><strong>Required.</strong></td><td>The Ranging Guild is members content.</td></tr>
+    <tr><td>Ranged</td><td><strong>40 Ranged to pass the guild door.</strong></td><td>Build 254 checks <code>stat(ranged)</code>, so a current boosted level of 40 satisfies the implementation's door test.</td></tr>
+    <tr><td>Quest / quest points</td><td>None.</td><td>No quest or quest-point check exists in <code>game_ranging</code>.</td></tr>
+    <tr><td>Competition fee</td><td><strong>200 coins per attempt.</strong></td><td>The Competition Judge removes exactly 200 coins when a new round starts.</td></tr>
+    <tr><td>Bow</td><td><strong>Required and not supplied.</strong></td><td>The target handler checks for an equipped object in the bow weapon category.</td></tr>
+    <tr><td>Bronze arrows</td><td><strong>10 supplied with the 200-coin entry.</strong></td><td>The target handler specifically requires equipped bronze arrows. If you run out during an active attempt, the judge can sell another 10 bronze arrows for 100 coins.</td></tr>
+    <tr><td>Other equipment</td><td>Not required.</td><td>Ranged attack bonus affects the build's hit roll, so better Ranged equipment can improve the implementation's accuracy.</td></tr>
+    <tr><td>Recommended supplies</td><td>Enough coins for repeated rounds; suitable Ranged gear.</td><td>There is no combat damage in the target competition itself, so food is not a shooting-range requirement.</td></tr>
+  </tbody></table></div>
+
+  <h3>Competition NPCs and objects</h3>
+  <div class="table-wrap"><table><thead><tr><th>NPC / object</th><th>Role</th></tr></thead><tbody>
+    <tr><td><strong>Competition Judge</strong></td><td>Starts the 200-coin competition, supplies ten bronze arrows, repeats the rules, reports the current score and pays out Archery tickets after the tenth shot.</td></tr>
+    <tr><td><strong>Target</strong></td><td>Use <strong>Fire-at</strong> while an attempt is active. Build 254 refuses practice shots outside a paid attempt.</td></tr>
+    <tr><td><strong>Ticket Merchant</strong></td><td>Opens the fixed Archery-ticket reward interface. In the target-period presentation the NPC uses Talk-to rather than the later Trade option.</td></tr>
+    <tr><td><strong>Ranging Guild Doorman / guild door</strong></td><td>Controls access to the guild through the level-40 Ranged gate.</td></tr>
+  </tbody></table></div>
+
+  <h3>How to start and play</h3>
+  <ol>
+    <li>Bring <strong>200 coins</strong> and an equipable <strong>bow</strong> into the Ranging Guild.</li>
+    <li>Talk to the <strong>Competition Judge</strong> and agree to enter. The judge removes 200 coins and gives you <strong>10 bronze arrows</strong>.</li>
+    <li>Equip your bow and the supplied bronze arrows.</li>
+    <li>Stand behind the shooting line/haystack. Build 254 refuses a shot if you are fewer than five tiles from the target.</li>
+    <li>Use <strong>Fire-at</strong> on a target. The game consumes one bronze arrow, rolls a target region, adds the corresponding score and Ranged XP, and opens the target-view interface showing the result and running score.</li>
+    <li>Repeat until all <strong>10 shots</strong> have been fired. The Competition Judge can tell you your current score during the attempt.</li>
+    <li>After the tenth shot, talk to the judge. If the judge is nearby when you try to fire again, build 254 can also trigger the payout from that interaction.</li>
+    <li>Your total score is divided by 10 using integer division. You receive that many <strong>Archery tickets</strong>, and the attempt's score/count state is reset so you can pay for another round.</li>
+  </ol>
+
+  <h3>Target scoring and Ranged XP</h3>
+  <p>Where you click on the target does not select the ring. Build 254 rolls the result from the player's Ranged attack value and then maps it to one of the target regions below. A miss gives neither points nor XP.</p>
+  <div class="table-wrap"><table><thead><tr><th>Result</th><th>Points</th><th>Ranged XP</th><th>Ticket contribution</th></tr></thead><tbody>
+    <tr><td>Miss</td><td>0</td><td>0</td><td>0 points toward final total</td></tr>
+    <tr><td>Black</td><td>10</td><td>5 XP</td><td>Equivalent to 1 ticket before final total conversion</td></tr>
+    <tr><td>Blue</td><td>20</td><td>10 XP</td><td>Equivalent to 2 tickets before final total conversion</td></tr>
+    <tr><td>Red</td><td>30</td><td>15 XP</td><td>Equivalent to 3 tickets before final total conversion</td></tr>
+    <tr><td>Yellow</td><td>50</td><td>25 XP</td><td>Equivalent to 5 tickets before final total conversion</td></tr>
+    <tr><td>Bull's-eye</td><td>100</td><td>50 XP</td><td>Equivalent to 10 tickets before final total conversion</td></tr>
+  </tbody></table></div>
+  <p>Because every non-zero score is a multiple of ten, the final conversion is exact for normal play: <strong>Archery tickets = total score &divide; 10</strong>. The theoretical maximum from ten bull's-eyes is <strong>1,000 points, 500 Ranged XP and 100 Archery tickets</strong> for one 200-coin attempt.</p>
+
+  <h3>Success, failure, leaving and recovery</h3>
+  <ul>
+    <li><strong>Success condition:</strong> there is no minimum score. Completing ten shots ends the attempt; the score determines the ticket payout.</li>
+    <li><strong>All misses:</strong> a score of zero produces zero tickets, then the build resets the attempt normally.</li>
+    <li><strong>Running out of arrows:</strong> if the attempt is still active and you have no bronze arrows in inventory or equipped, the judge offers <strong>10 more for 100 coins</strong>. This is recovery stock, not an extra entry fee.</li>
+    <li><strong>No bow equipped:</strong> the target refuses to fire. Equip a bow and try again; the attempt is not cancelled.</li>
+    <li><strong>Too close to the target:</strong> move back behind the haystack/shooting line and retry.</li>
+    <li><strong>Leaving / logging out:</strong> build 254 stores <code>targetcount</code>, <code>targetscore</code> and <code>targethit</code> as permanent player variables and has no zone-exit reset. An unfinished attempt therefore persists in the implementation rather than being forfeited merely by leaving the range.</li>
+    <li><strong>Death:</strong> the shooting activity itself deals no damage and defines no safe-death override. Any unrelated death follows ordinary build-254 death/item-loss rules.</li>
+    <li><strong>Multiplayer:</strong> score and attempt state are player-specific. The physical targets are shared world objects, but one player firing does not consume or lock a target for another player.</li>
+  </ul>
+
+  <h3>Archery tickets</h3>
+  <p>The build item is named <strong>Archery ticket</strong>. It is members-only and stackable. The Competition Judge's final dialogue calls the payout “Archery Coupons”, but the actual inventory item, Ticket Merchant interface and purchase messages all use <strong>Archery ticket(s)</strong>; the guide follows the item name rather than the dialogue inconsistency.</p>
+  <p>Tickets are the only persistent competition currency. There is no coin payout, random prize roll, reward cooldown or one-time unlock. You can repeat the 200-coin competition and save tickets across rounds until you can afford a reward.</p>
+
+  <h3>Ticket Merchant reward exchange</h3>
+  <p>The <strong>Ticket Merchant</strong> runs a fixed ticket exchange in the western part of the Ranging Guild. It is <strong>not a stock-based shop</strong>: the custom interface has no stock quantities, depletion or restock timer. Every purchase simply checks your Archery-ticket total, removes the fixed cost and adds the fixed item quantity.</p>
+  <div class="table-wrap"><table><thead><tr><th>Reward</th><th>Quantity</th><th>Cost</th><th>Currency</th><th>Use / equip requirement</th><th>Historical / build note</th></tr></thead><tbody>
+    <tr><td>Coif</td><td>1</td><td>100</td><td>Archery tickets</td><td>20 Ranged to wear</td><td>Cheapest exchange reward; exact 100-ticket build price matches preserved old-style tables.</td></tr>
+    <tr><td>Barb bolttips</td><td>30</td><td>140</td><td>Archery tickets</td><td>No purchase requirement; 51 Fletching to attach them to bronze bolts</td><td>Barb bolttips were already available by March 2004 and are period-valid.</td></tr>
+    <tr><td>Studded body</td><td>1</td><td>150</td><td>Archery tickets</td><td>20 Ranged and 20 Defence to wear</td><td>Fixed one-item purchase.</td></tr>
+    <tr><td>Rune arrows</td><td>50</td><td>2,000</td><td>Archery tickets</td><td>40 Ranged with a compatible period bow</td><td>Build 254 preserves the old 2,000-ticket bundle price; later price reductions are outside this cutoff.</td></tr>
+    <tr><td>Adamant javelins</td><td>20</td><td>2,000</td><td>Archery tickets</td><td>30 Ranged to wield</td><td>Fixed 20-javelin bundle.</td></tr>
+    <tr><td>Dragonhide body (green)</td><td>1</td><td>2,400</td><td>Archery tickets</td><td>40 Ranged, 40 Defence and Dragon Slayer to wear</td><td>The period/build item is named <em>Dragonhide body</em>; later naming distinguishes it as the green dragonhide body.</td></tr>
+  </tbody></table></div>
+  <p>There are <strong>no XP-for-ticket options</strong>, no random/grab-bag rewards, no coin rewards, no stock limits and no reward-specific purchase checks beyond owning enough tickets and having enough inventory space. Equipment requirements apply when using or wearing the item, not when buying it.</p>
+
+  <div class="callout"><p><strong>Post-cutoff exclusions:</strong> do not substitute modern Ranging Guild prices or later interfaces for this table. In particular, later RuneScape reduced several ticket prices, and the Ticket Merchant's direct Trade option replaced the old Talk-to interaction after the target snapshot. Build 254 intentionally uses the older six-reward, 100/140/150/2,000/2,000/2,400-ticket table.</p></div>
+
+  <h3>Other Ranging Guild content is separate</h3>
+  <p>The guild contains ordinary bow, armour and throwing-weapon shops, a Leatherworker, guards and a central practice tower. Those are useful guild features but are <strong>not rewards from the shooting competition</strong>. The practice tower is also a separate combat activity: climbing its ladder spawns groups of Tower Archers, and the Tower Advisors recommend a tower according to Ranged level. It does not feed the target-competition ticket state audited on this page.</p>
+
+  <h3>Build-254 implementation audit</h3>
+  <p>The complete <code>Content/scripts/minigames/game_ranging/</code> module was inventoried for this guide: <strong>10 scripts, 4 config files and 2 interfaces</strong>.</p>
+  <div class="table-wrap"><table><thead><tr><th>Area audited</th><th>Build-254 finding</th></tr></thead><tbody>
+    <tr><td>Guild entry</td><td><code>ranging_guild_door.rs2</code> checks <code>stat(ranged) &lt; 40</code> when entering from outside. If the check fails, the nearby Ranging Guild Doorman refuses access.</td></tr>
+    <tr><td>Competition start</td><td><code>competition_judge.rs2</code> charges exactly 200 coins, gives 10 bronze arrows and sets <code>targetcount</code> to 1 to begin the ten-shot state.</td></tr>
+    <tr><td>Mid-round recovery</td><td>If an active player has no bronze arrows in inventory or equipped, the judge can sell 10 additional bronze arrows for 100 coins.</td></tr>
+    <tr><td>Target controls</td><td><code>target.rs2</code> requires an active attempt, an equipped bow-category item, equipped bronze arrows and at least five tiles of distance from the target.</td></tr>
+    <tr><td>Shot count</td><td>Each valid shot deletes one equipped bronze arrow and increments <code>targetcount</code>. Starting at 1 means the tenth fired shot changes the counter to 11, which is the payout state.</td></tr>
+    <tr><td>Scoring</td><td><code>get_targetpts</code> maps miss/black/blue/red/yellow/bull's-eye to 0/10/20/30/50/100 points. <code>target.if</code> displays the running score, remaining shots and target result.</td></tr>
+    <tr><td>Ranged XP</td><td>The target script advances Ranged by half of the shot score: 0/5/10/15/25/50 displayed XP for the six result bands.</td></tr>
+    <tr><td>Accuracy reconstruction</td><td><code>roll_rangeguild_target</code> rolls against <code>%com_rangeattack</code>. Its source comment says the probability data was taken from later wiki/OSRS documentation, so this exact formula is implementation evidence rather than a claimed 2004 server formula.</td></tr>
+    <tr><td>Ticket payout</td><td>The judge divides <code>targetscore</code> by 10, adds that many <code>archery_ticket</code> items, then resets <code>targetscore</code> and <code>targetcount</code> to zero.</td></tr>
+    <tr><td>Player state</td><td><code>ranging.varp</code> declares <code>targetcount</code>, <code>targetscore</code> and <code>targethit</code> with permanent scope. No leave-zone cleanup script exists in the module.</td></tr>
+    <tr><td>Ticket exchange</td><td><code>ticket_merchant.rs2</code> implements exactly six fixed purchases at 100, 140, 150, 2,000, 2,000 and 2,400 tickets; <code>tickets_shop.if</code> shows the matching quantities and prices.</td></tr>
+    <tr><td>Reward-shop stock</td><td>The ticket exchange is not one of the inventories in <code>ranging.inv</code>. It is a direct interface purchase system and therefore has no reward stock or restock behaviour.</td></tr>
+    <tr><td>Ordinary guild shops</td><td><code>ranging.inv</code> separately defines Dargaud's bow/arrow shop, Aaron's armour shop and the throwing-weapon shop as shared, restocking coin shops. They are not the ticket reward exchange.</td></tr>
+    <tr><td>NPC / object configs</td><td><code>ranging.npc</code> names the Competition Judge, Ticket Merchant, Doorman and other guild NPCs; <code>ranging.loc</code> defines the target, guild door and practice-tower ladders.</td></tr>
+    <tr><td>Practice tower</td><td><code>ranging_guild_tower.rs2</code> controls the four Tower Archer groups and advisors. It is separate from <code>targetscore</code>/<code>targetcount</code> and does not award competition tickets.</td></tr>
+    <tr><td>Multiplayer</td><td>The targets and NPCs are shared world entities, but the competition's score, shot count and last-hit variables are held per player. There is no team score, target ownership or shared ticket pool.</td></tr>
+  </tbody></table></div>
+
+  <h3>Build deviations and reconstruction notes</h3>
+  <ul>
+    <li><strong>Accuracy formula:</strong> the target script explicitly says its accuracy data comes from later OSRS/wiki material. The ring values, ten-shot structure, fee and ticket conversion are well-attested period mechanics; the exact random roll should be treated as build reconstruction.</li>
+    <li><strong>Persistent unfinished attempts:</strong> competition variables are permanent and there is no exit reset, so build 254 allows the state of a partially completed attempt to survive leaving or logging out.</li>
+    <li><strong>Ticket/Coupon wording:</strong> the payout dialogue says “Archery Coupons”, while the actual object and exchange call the currency “Archery ticket”. This is a build text inconsistency, not a second currency.</li>
+    <li><strong>Ticket Merchant interaction:</strong> the build source notes that the NPC's Talk-to option was replaced by Trade in mid-2005; build 254 keeps Talk-to and opens the exchange directly because the exact old dialogue is unknown.</li>
+    <li><strong>Ordinary guild shops:</strong> those shared stock inventories do restock, but that behaviour must not be incorrectly projected onto the fixed ticket exchange.</li>
+  </ul>
+
+  <h3>Historical evidence and cutoff notes</h3>
+  <ul>
+    <li><strong>Ranging Guild historical records:</strong> place the guild east of Hemenster, identify it as members-only and date the original RS2-beta form to 21 January 2004, well before the 7 September cutoff.</li>
+    <li><strong>Competition Judge records and preserved guides:</strong> verify the 200-coin entry, ten supplied bronze arrows, ten shots, one ticket per ten points and the black/blue/red/yellow/bull's-eye score ladder.</li>
+    <li><strong>Preserved early-style Ranging Guild guides:</strong> record 5/10/15/25/50 Ranged XP for the five successful target regions.</li>
+    <li><strong>Ticket Merchant / old exchange tables:</strong> preserve the six target-era rewards and the 100, 140, 150, 2,000, 2,000 and 2,400 ticket prices implemented by build 254.</li>
+    <li><strong>Barb bolttip history:</strong> barbed bolt tips were added on 3 March 2004, so the 30-tip reward is valid for the September cutoff.</li>
+    <li><strong>Build-254 source:</strong> all scripts, configs and interfaces under <code>Content/scripts/minigames/game_ranging/</code>, plus the build's existing Ranged skill/equipment requirements used to interpret the reward equipment.</li>
+  </ul>
+
+  <nav class="page-navigation" aria-label="Previous and next minigame guides"><a class="prev" href="party-room.html">&larr; Party Room</a><a class="next" href="treasure-trails.html">Treasure Trails &rarr;</a></nav>
+  <p class="pagefooter">Historically audited for the 7 September 2004 cutoff and source-checked against the project's build-254 implementation. Historical instructions are kept separate from build-specific deviations. Not affiliated with Jagex, Lost City, or the Progressive project maintainers.</p>
+</article></main></div>
+</body>
+</html>
