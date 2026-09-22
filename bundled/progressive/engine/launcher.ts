@@ -402,9 +402,11 @@ async function runServer(showComplete = true) {
         { from: 80, to: 99, message: 'Starting game server' },
         {
             NODE_FEATURE_GRANDEXCHANGE: 'false',
+            NODE_FEATURE_CUSTOMSHOPS: 'false',
             NODE_QOL_ANTI_MACRO_ROTATION: 'false',
             NODE_ANTI_RANDOM_EVENTS: 'false',
-            NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
+            NODE_QOL_SCROLLWHEEL_ZOOM: 'false',
+            BUILD_VERIFY: 'false'
         }
     );
     if (code !== 0) {
@@ -604,9 +606,11 @@ async function handleInput(input: string) {
                 { from: 92, to: 99, message: 'Starting game server' },
                 {
                     NODE_FEATURE_GRANDEXCHANGE: 'false',
+                    NODE_FEATURE_CUSTOMSHOPS: 'false',
                     NODE_QOL_ANTI_MACRO_ROTATION: 'false',
                     NODE_ANTI_RANDOM_EVENTS: 'false',
-                    NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
+                    NODE_QOL_SCROLLWHEEL_ZOOM: 'false',
+                    BUILD_VERIFY: 'false'
                 }
             );
             return; // server owns the terminal until it exits
