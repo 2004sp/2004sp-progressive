@@ -63,6 +63,7 @@ async function applyTerser(script: BunOutput): Promise<boolean> {
                     'grandExchange',
                     'clans',
                     'middleMouseRotation',
+                    'rotateCameraFromMiddleMouse',
                     'compassReset',
                     'antiMacroRotation',
                     'scrollwheelZoom',

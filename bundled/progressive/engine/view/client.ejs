@@ -492,18 +492,12 @@
             const rotateFromMiddleMouse = (event) => {
                 const dx = event.clientX - middleLastX;
                 const dy = event.clientY - middleLastY;
-                const yawDelta = Math.round(dx * 2);
-                const pitchDelta = Math.round(dy * 0.75);
 
                 middleLastX = event.clientX;
                 middleLastY = event.clientY;
 
-                client.tw = (client.tw - yawDelta) & 2047;
-                client.sw = Math.max(128, Math.min(383, client.sw + pitchDelta));
-                client.ww = 0;
-                client.uw = 0;
+                client.rotateCameraFromMiddleMouse(dx, dy);
                 client.northLock = 0;
-                client.bw = true;
             };
 
             const stopMiddleRotate = (event) => {
@@ -512,8 +506,6 @@
                 }
 
                 middleRotating = false;
-                client.ww = 0;
-                client.uw = 0;
                 event?.preventDefault();
                 event?.stopImmediatePropagation();
             };
@@ -526,8 +518,6 @@
                 middleRotating = true;
                 middleLastX = event.clientX;
                 middleLastY = event.clientY;
-                client.ww = 0;
-                client.uw = 0;
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 if (Number.isFinite(event.pointerId)) {

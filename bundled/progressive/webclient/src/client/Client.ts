@@ -110,9 +110,10 @@ const GRAND_EXCHANGE_QUANTITY_BUTTON_DELTAS = new Map<number, number>([
     [9166, 100],
     [9168, 500],
 ]);
-const CUSTOM_CONTENT = (globalThis as typeof globalThis & { __customContent?: { clans?: boolean; antiMacroRotation?: boolean } }).__customContent;
+const CUSTOM_CONTENT = (globalThis as typeof globalThis & { __customContent?: { clans?: boolean; antiMacroRotation?: boolean; middleMouseRotation?: boolean } }).__customContent;
 const CLANS_ENABLED = CUSTOM_CONTENT?.clans === true;
 const ANTI_MACRO_ROTATION_ENABLED = CUSTOM_CONTENT?.antiMacroRotation !== false;
+const MIDDLE_MOUSE_ROTATION_ENABLED = CUSTOM_CONTENT?.middleMouseRotation === true;
 
 export class Client extends GameShell {
     static levelExperience: number[] = [];
@@ -359,6 +360,20 @@ export class Client extends GameShell {
     private sendCameraDelay: number = 0;
     private sendCamera: boolean = false;
     private cameraPitchClamp: number = 0;
+
+    // Called by the optional middle-mouse plugin in the page template. Keep the
+    // camera fields inside the client so minified property names cannot drift.
+    rotateCameraFromMiddleMouse(dx: number, dy: number): void {
+        if (!MIDDLE_MOUSE_ROTATION_ENABLED || !this.ingame) {
+            return;
+        }
+
+        this.orbitCameraYaw = (this.orbitCameraYaw - Math.round(dx * 2)) & 0x7ff;
+        this.orbitCameraPitch = Math.max(128, Math.min(383, this.orbitCameraPitch + Math.round(dy * 0.75)));
+        this.orbitCameraYawVelocity = 0;
+        this.orbitCameraPitchVelocity = 0;
+        this.sendCamera = true;
+    }
 
     private chatCount: number = 0;
     private chatX: Int32Array = new Int32Array(MAX_CHATS);
