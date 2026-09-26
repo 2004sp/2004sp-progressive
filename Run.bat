@@ -9,5 +9,4 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-node launcher\updater.js
-node launcher\launcher.js
+node launcher\manager.js
