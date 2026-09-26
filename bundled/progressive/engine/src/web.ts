@@ -58,6 +58,12 @@ const MIME_TYPES = new Map<string, string>([
     ['.sf2', 'application/octet-stream'],
 ]);
 
+const NO_CACHE_HEADERS = {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+    Pragma: 'no-cache',
+    Expires: '0',
+} as const;
+
 function resolveContentPath(name: string): string | null {
     let decodedName: string;
     try {
@@ -77,14 +83,20 @@ function resolveContentPath(name: string): string | null {
     return targetPath;
 }
 
-function serveFile(res: ServerResponse, filePath: string, contentType?: string) {
+function serveFile(res: ServerResponse, filePath: string, contentType?: string, noCache = false) {
     const ext = path.extname(filePath);
-    res.writeHead(200, { 'Content-Type': contentType ?? MIME_TYPES.get(ext) ?? 'application/octet-stream' });
+    res.writeHead(200, {
+        'Content-Type': contentType ?? MIME_TYPES.get(ext) ?? 'application/octet-stream',
+        ...(noCache ? NO_CACHE_HEADERS : {}),
+    });
     fs.createReadStream(filePath).pipe(res);
 }
 
 function sendBuffer(res: ServerResponse, buf: Buffer | Uint8Array) {
-    res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+    res.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+        ...NO_CACHE_HEADERS,
+    });
     res.end(buf);
 }
 
@@ -117,11 +129,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
             return sendBuffer(res, Buffer.from(OnDemand.cache.read(0, 8)!));
         } else if (url.pathname.startsWith('/ondemand.zip')) {
             if (fs.existsSync('data/pack/ondemand.zip')) {
-                return serveFile(res, 'data/pack/ondemand.zip', 'application/octet-stream');
+                return serveFile(res, 'data/pack/ondemand.zip', 'application/octet-stream', true);
             }
         } else if (url.pathname.startsWith('/build')) {
             if (fs.existsSync('data/pack/server/build')) {
-                return serveFile(res, 'data/pack/server/build', 'application/octet-stream');
+                return serveFile(res, 'data/pack/server/build', 'application/octet-stream', true);
             }
         } else if (url.pathname === '/rs2.cgi') {
             const plugin = tryParseInt(url.searchParams.get('plugin'), 0);
@@ -146,7 +158,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
                     scrollwheelZoomEnabled: Environment.NODE_QOL_SCROLLWHEEL_ZOOM
                 });
 
-            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.writeHead(200, { 'Content-Type': 'text/html', ...NO_CACHE_HEADERS });
             res.end(html);
             return;
         } else if (url.pathname === '/api/features') {
@@ -168,7 +180,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, wss: Web
             });
         } else if (url.pathname === '/worldmap.jag') {
             if (fs.existsSync('data/pack/mapview/worldmap.jag')) {
-                return serveFile(res, 'data/pack/mapview/worldmap.jag', 'application/octet-stream');
+                return serveFile(res, 'data/pack/mapview/worldmap.jag', 'application/octet-stream', true);
             }
         } else if (Environment.NODE_DEBUG) {
             if (url.pathname === '/maped') {
