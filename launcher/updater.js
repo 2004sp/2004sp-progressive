@@ -2,8 +2,6 @@
 
 const path = require('path');
 const cp = require('child_process');
-const readline = require('readline/promises');
-const { stdin: input, stdout: output } = require('process');
 
 const ROOT = path.resolve(__dirname, '..');
 const REMOTE = 'origin';
@@ -63,62 +61,35 @@ function hasTrackedChanges() {
     ]).length > 0;
 }
 
-async function confirmUpdate(count) {
-    if (process.argv.includes('--yes')) {
-        return true;
-    }
-
-    if (!process.stdin.isTTY || !process.stdout.isTTY) {
-        console.log(
-            `[update] ${count} new commit(s) available; run "node launcher/updater.js --yes" to apply them.`
-        );
-        return false;
-    }
-
-    const rl = readline.createInterface({ input, output });
-
-    try {
-        const answer = (
-            await rl.question(
-                `[update] ${count} new commit(s) available. Pull them now? [Y/n] `
-            )
-        ).trim().toLowerCase();
-
-        return answer === '' || answer === 'y' || answer === 'yes';
-    } finally {
-        rl.close();
-    }
+function result(status, updated = false) {
+    return { status, updated };
 }
 
-async function main() {
-    if (process.env.COMPACT_MANAGER_SKIP_UPDATE === '1') {
-        return 0;
-    }
-
+function updateRepository() {
     if (!gitAvailable()) {
-        console.log('[update] Git is not installed; skipping repository update.');
-        return 0;
+        console.log('[update] Git is not installed, so this copy cannot update itself.');
+        return result('no-git');
     }
 
     if (!isManagedCheckout()) {
-        console.log('[update] Not running from a Git checkout; skipping repository update.');
-        return 0;
+        console.log('[update] This is not a Git checkout. Downloaded ZIP copies cannot pull commits.');
+        return result('not-git-checkout');
     }
 
     const branch = git(['branch', '--show-current']);
 
     if (branch !== UPDATE_BRANCH) {
         console.log(
-            `[update] On branch "${branch || 'detached HEAD'}"; automatic updates only run on "${UPDATE_BRANCH}".`
+            `[update] You are on "${branch || 'detached HEAD'}". Updates are only applied while on "${UPDATE_BRANCH}".`
         );
-        return 0;
+        return result('wrong-branch');
     }
 
     if (hasTrackedChanges()) {
         console.log(
-            '[update] Tracked local changes detected; skipping update so nothing is overwritten.'
+            '[update] Tracked local changes were found. Update cancelled so your edits are not overwritten.'
         );
-        return 0;
+        return result('dirty');
     }
 
     let remoteUrl;
@@ -126,17 +97,17 @@ async function main() {
     try {
         remoteUrl = git(['remote', 'get-url', REMOTE]);
     } catch {
-        console.log(`[update] Git remote "${REMOTE}" is missing; skipping repository update.`);
-        return 0;
+        console.log(`[update] Git remote "${REMOTE}" is missing.`);
+        return result('no-remote');
     }
 
     console.log(`[update] Checking ${remoteUrl} (${UPDATE_BRANCH})...`);
 
     try {
-        git(['fetch', '--quiet', REMOTE]);
+        git(['fetch', '--quiet', REMOTE, UPDATE_BRANCH]);
     } catch (error) {
         console.log(`[update] Could not check for updates: ${error.message}`);
-        return 0;
+        return result('fetch-failed');
     }
 
     const upstream = `${REMOTE}/${UPDATE_BRANCH}`;
@@ -144,51 +115,50 @@ async function main() {
     const ahead = Number(git(['rev-list', '--count', `${upstream}..HEAD`]));
 
     if (!Number.isFinite(behind) || !Number.isFinite(ahead)) {
-        console.log('[update] Could not compare local and remote commits; skipping update.');
-        return 0;
+        console.log('[update] Could not compare local and remote commits.');
+        return result('compare-failed');
     }
 
     if (behind === 0) {
         if (ahead > 0) {
-            console.log(`[update] Local ${UPDATE_BRANCH} is ${ahead} commit(s) ahead of ${upstream}.`);
+            console.log(`[update] Your local ${UPDATE_BRANCH} is ${ahead} commit(s) ahead of ${upstream}.`);
         } else {
             console.log('[update] Already up to date.');
         }
 
-        return 0;
+        return result('up-to-date');
     }
 
     if (ahead > 0) {
         console.log(
-            `[update] Local and remote histories have diverged (${ahead} ahead, ${behind} behind); skipping automatic update.`
+            `[update] Local and remote history have diverged (${ahead} ahead, ${behind} behind). Automatic update cancelled.`
         );
-        return 0;
+        return result('diverged');
     }
 
-    if (!(await confirmUpdate(behind))) {
-        console.log('[update] Update skipped.');
-        return 0;
-    }
-
-    console.log(`[update] Fast-forwarding ${UPDATE_BRANCH}...`);
+    console.log(`[update] ${behind} new commit(s) found. Updating...`);
 
     try {
         git(['merge', '--ff-only', upstream], { inherit: true });
     } catch (error) {
         console.log(`[update] Update failed: ${error.message}`);
-        return 0;
+        return result('merge-failed');
     }
 
-    console.log('[update] Repository updated successfully.');
-    return 0;
+    console.log('[update] Update installed successfully.');
+    return result('updated', true);
 }
 
-main().then(
-    code => {
-        process.exitCode = code;
-    },
-    error => {
-        console.log(`[update] ${error.message}`);
+module.exports = {
+    updateRepository
+};
+
+if (require.main === module) {
+    try {
+        updateRepository();
         process.exitCode = 0;
+    } catch (error) {
+        console.error(`[update] ${error.message}`);
+        process.exitCode = 1;
     }
-);
+}
