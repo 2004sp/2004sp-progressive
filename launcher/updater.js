@@ -133,7 +133,7 @@ async function main() {
     console.log(`[update] Checking ${remoteUrl} (${UPDATE_BRANCH})...`);
 
     try {
-        git(['fetch', '--quiet', REMOTE, UPDATE_BRANCH]);
+        git(['fetch', '--quiet', REMOTE]);
     } catch (error) {
         console.log(`[update] Could not check for updates: ${error.message}`);
         return 0;
