@@ -690,8 +690,8 @@ async function handleInput(input: string) {
                 { from: 92, to: 99, message: 'Starting game server' },
                 {
                     BUILD_VERIFY: 'false',
-            NODE_CLIENT_ROUTEFINDER: 'false',
-            NODE_FEATURE_GRANDEXCHANGE: 'false',
+                    NODE_CLIENT_ROUTEFINDER: 'false',
+                    NODE_FEATURE_GRANDEXCHANGE: 'false',
                     NODE_QOL_ANTI_MACRO_ROTATION: 'false',
                     NODE_ANTI_RANDOM_EVENTS: 'false',
                     NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
