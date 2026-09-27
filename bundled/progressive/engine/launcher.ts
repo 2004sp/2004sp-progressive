@@ -195,10 +195,18 @@ async function runScriptAndWait(name: string, heartbeat?: ProgressRange, envOver
 
     console.log(`Starting ${name}...`);
 
-    const [cmd, ...args] = scripts[name];
+    // Run the world process directly instead of through npm/cmd.exe. This makes
+    // runningProcesses['quickstart'] the actual Node world process, so on
+    // shutdown the launcher cannot mistake an exited wrapper shell for a fully
+    // stopped world while player saves are still flushing.
+    const directWorldProcess = name === 'quickstart';
+    const [cmd, ...args] = directWorldProcess
+        ? [process.execPath, '--import', 'tsx', path.join(__dirname, 'src', 'app.ts')]
+        : scripts[name];
     const proc = spawn(cmd, args, {
         stdio: 'inherit',
-        shell: true,
+        shell: !directWorldProcess,
+        cwd: directWorldProcess ? __dirname : undefined,
         env: envOverrides ? { ...process.env, ...envOverrides } : process.env,
     });
 
