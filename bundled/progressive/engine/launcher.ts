@@ -475,6 +475,8 @@ async function runServer(showComplete = true) {
         'quickstart',
         { from: 80, to: 99, message: 'Starting game server' },
         {
+            BUILD_VERIFY: 'false',
+            NODE_CLIENT_ROUTEFINDER: 'false',
             NODE_FEATURE_GRANDEXCHANGE: 'false',
             NODE_QOL_ANTI_MACRO_ROTATION: 'false',
             NODE_ANTI_RANDOM_EVENTS: 'false',
@@ -516,6 +518,8 @@ async function runCustomServer() {
         }
 
         const option2Env: ScriptEnvOverrides = {
+            BUILD_VERIFY: 'false',
+            NODE_CLIENT_ROUTEFINDER: 'false',
             NODE_FEATURE_GRANDEXCHANGE: String(grandExchangeEnabled),
             ...(stagedBuildSrc ? { BUILD_SRC_DIR: stagedBuildSrc } : {}),
         };
@@ -685,7 +689,9 @@ async function handleInput(input: string) {
                 'quickstart',
                 { from: 92, to: 99, message: 'Starting game server' },
                 {
-                    NODE_FEATURE_GRANDEXCHANGE: 'false',
+                    BUILD_VERIFY: 'false',
+            NODE_CLIENT_ROUTEFINDER: 'false',
+            NODE_FEATURE_GRANDEXCHANGE: 'false',
                     NODE_QOL_ANTI_MACRO_ROTATION: 'false',
                     NODE_ANTI_RANDOM_EVENTS: 'false',
                     NODE_QOL_SCROLLWHEEL_ZOOM: 'false'
