@@ -97,6 +97,7 @@ function safeExit() {
 
 process.on('SIGINT', safeExit);
 process.on('SIGTERM', safeExit);
+process.on('SIGHUP', safeExit);
 
 process.on('uncaughtException', function (err) {
     console.error(err, 'Uncaught exception');
