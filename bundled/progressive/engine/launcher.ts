@@ -53,6 +53,68 @@ const customContentCategories = [
 
 const runningProcesses: Record<string, ChildProcess> = {};
 let rl: readline.Interface;
+let launcherShutdownRequested = false;
+let launcherShutdownPoll: NodeJS.Timeout | undefined;
+
+function requestLauncherShutdown(signal: NodeJS.Signals) {
+    if (launcherShutdownRequested) {
+        console.log('Shutdown already in progress; waiting for the server save flush to finish...');
+        return;
+    }
+
+    launcherShutdownRequested = true;
+    console.log('\n' + signal + ' received. Waiting for managed server processes to shut down cleanly and finish saving players...');
+
+    // On POSIX, explicitly forward service/terminal signals to managed children.
+    // On Windows, console control events are delivered to the foreground process
+    // tree already; calling ChildProcess.kill() on the game server there would be
+    // a hard termination and could interrupt its logout-save pipeline.
+    if (process.platform !== 'win32') {
+        const forwardedSignal: NodeJS.Signals = signal === 'SIGHUP' ? 'SIGTERM' : signal;
+        for (const proc of Object.values(runningProcesses)) {
+            if (proc.exitCode !== null || proc.signalCode !== null) {
+                continue;
+            }
+
+            try {
+                proc.kill(forwardedSignal);
+            } catch {
+                // The child may have exited between the state check and kill().
+            }
+        }
+    } else {
+        // Hiscores is intentionally detached/hidden, so it does not receive the
+        // foreground Ctrl+C event. It has no player-save state and can be stopped
+        // immediately while the game server is allowed to finish gracefully.
+        const hiscores = runningProcesses['hiscores'];
+        if (hiscores && hiscores.exitCode === null && hiscores.signalCode === null) {
+            try {
+                hiscores.kill();
+            } catch {
+                // It may already be gone.
+            }
+        }
+    }
+
+    const finishWhenChildrenStop = () => {
+        if (Object.keys(runningProcesses).length !== 0) {
+            return;
+        }
+
+        if (launcherShutdownPoll) {
+            clearInterval(launcherShutdownPoll);
+            launcherShutdownPoll = undefined;
+        }
+
+        console.log('All managed processes stopped; launcher shutdown complete.');
+        process.exit(0);
+    };
+
+    finishWhenChildrenStop();
+    if (Object.keys(runningProcesses).length !== 0) {
+        launcherShutdownPoll = setInterval(finishWhenChildrenStop, 100);
+    }
+}
 
 function progress(percent: number, message: string) {
     const filled = Math.round(percent / 10);
@@ -76,6 +138,10 @@ function startProgressHeartbeat(range?: ProgressRange) {
 }
 
 function createReadline() {
+    if (launcherShutdownRequested) {
+        return;
+    }
+
     rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -542,6 +608,10 @@ function patchEnv(patches: Record<string, string>) {
 }
 
 function showMenu() {
+    if (launcherShutdownRequested) {
+        return;
+    }
+
     const recommended = kleur.bold().green('[Recommended]');
 
     console.log(`
@@ -581,6 +651,10 @@ ${kleur.bold('Choose an option:')}
 }
 
 async function handleInput(input: string) {
+    if (launcherShutdownRequested) {
+        return;
+    }
+
     switch (input.trim()) {
         case '1':
             await runServer();
@@ -876,6 +950,10 @@ async function changePassword() {
         showMenu();
     }
 }
+
+process.on('SIGINT', () => requestLauncherShutdown('SIGINT'));
+process.on('SIGTERM', () => requestLauncherShutdown('SIGTERM'));
+process.on('SIGHUP', () => requestLauncherShutdown('SIGHUP'));
 
 if (restoreGrandExchangeStage()) {
     console.log('Restored native packed cache from an interrupted Grand Exchange option-2 run.');
