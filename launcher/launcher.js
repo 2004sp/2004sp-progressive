@@ -550,7 +550,11 @@ function buildActive(mode, rev, force = false) {
         fs.existsSync(RUNTIME_DIR) &&
         sameMarker(active, expected)
     ) {
-        restoreUserData(mode, rev);
+        // The existing active runtime is the source of truth. Restoring the
+        // cached userdata here can roll back newer player saves if the previous
+        // launch was interrupted before captureUserData() had a chance to run.
+        // Userdata is still captured after a normal launch and before any
+        // rebuild/mode switch that replaces RUNTIME_DIR.
         return false;
     }
 
